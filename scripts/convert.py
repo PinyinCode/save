@@ -46,6 +46,10 @@ firebase_config_json = json.dumps(CONFIG["firebase_config"], ensure_ascii=False)
 synonyms_json = json.dumps(CONFIG["synonyms"], ensure_ascii=True, separators=(',', ':'))
 fillers_json = json.dumps(CONFIG["filler_words"], ensure_ascii=True, separators=(',', ':'))
 
+# ✅ TELEGRAM CONFIG (lấy từ config.json, fallback chuỗi rỗng nếu chưa cấu hình)
+telegram_bot_token = CONFIG.get("telegram_bot_token", "")
+telegram_chat_id = CONFIG.get("telegram_chat_id", "")
+
 
 # ═══════════════════════════════════════════════════════════════════
 #  BUILD AUTH (CSS + HTML + JS) — 1 LẦN DUY NHẤT
@@ -132,6 +136,10 @@ var TIKTOK_URL = "__TIKTOK_URL__";
 var SYNONYMS = __SYNONYMS__;
 var FILLER_WORDS = __FILLER_WORDS__;
 
+/* ✅ Telegram config */
+var TELEGRAM_BOT_TOKEN = "__TELEGRAM_BOT_TOKEN__";
+var TELEGRAM_CHAT_ID = "__TELEGRAM_CHAT_ID__";
+
 /* Helper $ toàn cục */
 var $ = function(id) { return document.getElementById(id); };
 
@@ -163,6 +171,9 @@ html_output = (HTML_SHELL
     .replace("__TIKTOK_URL__", CONFIG["tiktok_url"])
     .replace("__SYNONYMS__", synonyms_json)
     .replace("__FILLER_WORDS__", fillers_json)
+    # ✅ Telegram
+    .replace("__TELEGRAM_BOT_TOKEN__", telegram_bot_token)
+    .replace("__TELEGRAM_CHAT_ID__", telegram_chat_id)
 )
 
 with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
@@ -178,4 +189,9 @@ print(f"👑 Super admin: {CONFIG['super_admin']}")
 print(f"🎉 Trial: {CONFIG['trial_days']} ngày cho user mới")
 print(f"🏦 Bank: {CONFIG['bank_config']['bank_name']} - {CONFIG['bank_config']['account_no']}")
 print(f"💰 Packages: {len(CONFIG['packages'])} gói")
+# ✅ Thông báo Telegram
+if telegram_bot_token and telegram_chat_id:
+    print(f"📲 Telegram: ĐÃ bật (chat_id: {telegram_chat_id})")
+else:
+    print(f"📲 Telegram: CHƯA cấu hình (thiếu token hoặc chat_id)")
 print(f"✅ Đã ghép 4 template: UI + Social + Auth (gộp Renewal) + Data")
