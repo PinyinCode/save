@@ -1,0 +1,106 @@
+name: Convert Excel to HTML
+
+on:
+  push:
+    paths:
+      - 'data/input.xlsx'
+      - 'scripts/convert.py'
+      - 'scripts/config_loader.py'
+      - 'scripts/data_reader.py'
+      - 'scripts/ui_template.py'
+      - 'scripts/social_template.py'
+      - 'scripts/renewal_template.py'
+      - 'scripts/check.py'
+      - 'scripts/config.json'
+      - '.github/workflows/convert.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install openpyxl
+
+      - name: List files
+        run: |
+          echo "=== Root ==="
+          ls -la
+          echo ""
+          echo "=== scripts/ ==="
+          ls -la scripts/
+          echo ""
+          echo "=== data/ ==="
+          ls -la data/ || echo "No data folder"
+
+      - name: Pre-flight check
+        run: python scripts/check.py
+
+      - name: Run convert script
+        run: python scripts/convert.py
+
+      - name: Verify index.html
+        run: |
+          if [ ! -f index.html ]; then
+            echo "ERROR: index.html not found"
+            exit 1
+          fi
+          SIZE=$(stat -c%s index.html)
+          echo "index.html size: $SIZE bytes"
+          echo ""
+          echo "Checking required elements:"
+          for el in renewalModal grantTrialIfNew dropdownRenewBtn tiktokBar zaloBtn initRenewalUI RAW_DATA; do
+            if grep -q "$el" index.html; then
+              echo "  OK $el"
+            else
+              echo "  MISSING $el"
+            fi
+          done
+
+      - name: Commit & push index.html
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --quiet && git diff --staged --quiet; then
+            echo "No changes"
+          else
+            git commit -m "🤖 Auto convert Excel to HTML"
+            git push
+          fi
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: '.'
+
+  deploy:
+    needs: convert
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
