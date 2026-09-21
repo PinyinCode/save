@@ -614,6 +614,74 @@ var BANK_CONFIG = __BANK_CONFIG__;
 var PACKAGES = __PACKAGES__;
 var RENEWAL_SUPPORT_ZALO = "__RENEWAL_SUPPORT_ZALO__";
 
+/* ============ TELEGRAM NOTIFICATION ============ */
+/* ✅ Gửi thông báo đến Telegram Bot khi user XÁC NHẬN ĐÃ CHUYỂN KHOẢN */
+function sendTelegramNotification(message) {
+    if (typeof TELEGRAM_BOT_TOKEN === 'undefined' || typeof TELEGRAM_CHAT_ID === 'undefined') {
+        console.warn('Telegram config chưa có');
+        return;
+    }
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        console.warn('Telegram chưa được cấu hình');
+        return;
+    }
+    var url = 'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage';
+    var payload = {
+        chat_id: TELEGRAM_CHAT_ID,
+        text: message,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
+    };
+    fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).catch(function(err) {
+        console.warn('Không gửi được Telegram:', err);
+    });
+}
+
+/* ✅ Chỉ gửi sau khi user nhấn "Tôi đã thanh toán" */
+function notifyRenewalClick(source, pkg, transferCode) {
+    try {
+        var email = (currentUser && currentUser.email) || 'Không rõ';
+        var name = (currentUser && currentUser.name) || 'Không rõ';
+        var role = (currentUser && currentUser.role) || 'user';
+        var expiresAt = (currentUser && currentUser.expiresAt) ?
+            new Date(currentUser.expiresAt).toLocaleString('vi-VN') : 'Không rõ';
+        var daysLeft = (typeof getDaysRemaining === 'function') ?
+            getDaysRemaining(currentUser) : null;
+        var now = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
+
+        // Thông tin gói
+        var pkgInfo = '';
+        if (pkg) {
+            pkgInfo = '📦 <b>Gói:</b> ' + pkg.label + '\n' +
+                      '💵 <b>Số tiền:</b> ' + formatMoney(pkg.amount) + ' VNĐ\n' +
+                      '📆 <b>Số ngày:</b> ' + pkg.days + ' ngày\n';
+        }
+
+        // Mã chuyển khoản
+        var codeInfo = transferCode ? '🔑 <b>Mã CK:</b> <code>' + transferCode + '</code>\n' : '';
+
+        var msg = '💰 <b>USER ĐÃ CHUYỂN KHOẢN</b>\n\n' +
+                  '📧 <b>Email:</b> <code>' + email + '</code>\n' +
+                  '👤 <b>Tên:</b> ' + name + '\n' +
+                  '🎭 <b>Role:</b> ' + role + '\n' +
+                  pkgInfo +
+                  codeInfo +
+                  '⏰ <b>Hết hạn cũ:</b> ' + expiresAt + '\n' +
+                  '⏳ <b>Còn lại:</b> ' + (daysLeft !== null ? daysLeft + ' ngày' : 'Vô hạn') + '\n' +
+                  '🖱️ <b>Nguồn:</b> ' + source + '\n' +
+                  '🕐 <b>Thời gian:</b> ' + now + '\n\n' +
+                  '✅ <i>Vào Admin Panel để xác nhận gia hạn</i>';
+
+        sendTelegramNotification(msg);
+    } catch(e) {
+        console.warn('Lỗi notify:', e);
+    }
+}
+
 /* ============ STATE ============ */
 var currentUser = null;
 var isDemo = true;
@@ -1121,6 +1189,7 @@ function logLogin(u) {
 }
 
 /* ============ RENEWAL: MỞ MODAL ============ */
+/* ✅ KHÔNG gửi Telegram khi mở modal — chỉ hiển thị UI */
 window.openRenewalModal = function() {
     if (!currentUser) { showLoginModal(); return; }
     if (currentUser.role === 'admin') { alert('Admin có hạn vĩnh viễn, không cần gia hạn!'); return; }
@@ -1276,6 +1345,7 @@ window.copyText = function(text, btn) {
     }
 };
 
+/* ✅ CHỈ GỬI TELEGRAM KHI USER XÁC NHẬN ĐÃ CHUYỂN KHOẢN */
 window.userConfirmPaid = async function() {
     if (!renewalCurrentReq) return;
     var btn = $('renewalConfirmBtn');
@@ -1286,6 +1356,14 @@ window.userConfirmPaid = async function() {
             userConfirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'user_paid'
         });
+
+        // ✅ GỬI TELEGRAM SAU KHI USER XÁC NHẬN ĐÃ CHUYỂN KHOẢN
+        notifyRenewalClick(
+            'User xác nhận đã chuyển khoản',
+            renewalSelectedPkg,
+            renewalCurrentReq.code
+        );
+
         renderPendingConfirm();
     } catch(e) {
         alert('❌ Lỗi: ' + e.message);
@@ -1397,6 +1475,7 @@ async function refreshCurrentUser() {
         if (typeof applyUserUI === 'function') applyUserUI();
     } catch(e) { console.error('refreshCurrentUser error:', e); }
 }
+
 /* ============ ADMIN PANEL ============ */
 function initAdminPanel() {
     if ($('openAdminBtn')) $('openAdminBtn').addEventListener('click', function() {
