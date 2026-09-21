@@ -53,5 +53,7 @@
             "save": "Tiết kiệm 58%"
         }
     ],
-    "renewal_support_zalo": "0922331886"
+    "renewal_support_zalo": "0922331886",
+    "telegram_bot_token": "8936673606:AAGQtSbDPpIH7kCB3zHEPrzWYETDgTuBOqU",
+    "telegram_chat_id": "949205389"
 }
