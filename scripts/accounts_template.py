@@ -9,6 +9,9 @@ Cách dùng:
     from accounts_template import build_all_auth
     cfg = json.load(open("config.json", encoding="utf-8"))
     css, html, js = build_all_auth(cfg)
+
+LƯU Ý: KHÔNG chứa định nghĩa hàm Telegram (chúng ở build_html.py).
+       Chỉ gọi window.notifyTelegramX nếu có (có guard typeof).
 """
 
 import json
@@ -34,6 +37,10 @@ def build_accounts_css():
 .dropdown-item:hover{background:var(--surface-2)}
 .dropdown-item.danger{color:var(--danger)}
 .dropdown-item.danger:hover{background:var(--danger-light)}
+.dropdown-zalo,.dropdown-tiktok{display:flex;align-items:center;gap:.5rem;width:100%;padding:.65rem .75rem;border-radius:var(--radius-sm);background:transparent;color:var(--text);font-size:.85rem;font-weight:600;cursor:pointer;transition:.15s;text-decoration:none;font-family:inherit;}
+.dropdown-zalo:hover{background:rgba(0,104,255,.1);color:#0068ff}
+.dropdown-tiktok:hover{background:rgba(0,0,0,.06);color:#000}
+[data-theme="dark"] .dropdown-tiktok:hover{background:rgba(255,255,255,.1);color:#fff}
 
 /* ============ DROPDOWN: NÚT GIA HẠN ============ */
 .dropdown-renew{
@@ -541,9 +548,6 @@ def build_accounts_html():
     </div>
 </div>
 
-<!-- USER DROPDOWN ĐÃ ĐƯỢC CHÈN VÀO HEADER (trong ui_template) -->
-<!-- Các modal dưới đây được chèn tự động -->
-
 <div class="edit-modal" id="changeNameModal">
     <div class="edit-box">
         <button class="edit-close" id="changeNameClose"><i class="fas fa-times"></i></button>
@@ -729,7 +733,6 @@ def build_accounts_html():
 
 
 def build_user_dropdown_html():
-    """Trả về HTML của user dropdown — sẽ được chèn vào header trong ui_template"""
     return r"""
 <div class="user-dropdown" id="userDropdown">
     <div class="user-info">
@@ -1553,16 +1556,41 @@ window.copyText = function(text, btn) {
     }
 };
 
+/* ⭐ ĐÃ TÍCH HỢP TELEGRAM — gọi window.notifyTelegramUserPaid nếu có */
 window.userConfirmPaid = async function() {
     if (!renewalCurrentReq) return;
     var btn = $('renewalConfirmBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang gửi...';
     try {
+        /* Lấy data trước để gửi Telegram */
+        var _reqData = null;
+        try {
+            var _snap = await db.collection('renewal_requests').doc(renewalCurrentReq.id).get();
+            if (_snap.exists) _reqData = _snap.data();
+        } catch(_e) { console.warn('Không lấy được reqData:', _e); }
+
         await db.collection('renewal_requests').doc(renewalCurrentReq.id).update({
             userConfirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'user_paid'
         });
+
+        /* Gọi Telegram (chỉ khi module load OK) */
+        if (_reqData && typeof window.notifyTelegramUserPaid === 'function') {
+            try {
+                window.notifyTelegramUserPaid({
+                    email: _reqData.email || currentUser.email,
+                    name: _reqData.name || currentUser.name,
+                    amount: _reqData.amount,
+                    package: _reqData.package,
+                    packageLabel: _reqData.packageLabel,
+                    days: _reqData.days,
+                    isPermanent: _reqData.isPermanent || false,
+                    transferCode: _reqData.transferCode
+                });
+            } catch(_te) { console.warn('Telegram notify lỗi:', _te); }
+        }
+
         renderPendingConfirm();
     } catch(e) {
         alert('❌ Lỗi: ' + e.message);
@@ -2328,6 +2356,7 @@ function loadRenewals() {
     });
 }
 
+/* ⭐ ĐÃ TÍCH HỢP TELEGRAM — gọi window.notifyTelegramAdminConfirmed nếu có */
 window.approveRenewal = async function(reqId) {
     if (!confirm('Xác nhận đã nhận tiền và gia hạn?')) return;
     try {
@@ -2355,6 +2384,7 @@ window.approveRenewal = async function(reqId) {
             confirmedBy: currentUser.email
         };
         var message = '';
+        var _newExpiryStr = '';
 
         if (isPermanent) {
             updateData.expiresAt = null;
@@ -2371,12 +2401,28 @@ window.approveRenewal = async function(reqId) {
             updateData.isPermanent = false;
             reqUpdateData.newExpiresAt = firebase.firestore.Timestamp.fromDate(newExpiry);
             reqUpdateData.isPermanent = false;
+            _newExpiryStr = newExpiry.toLocaleDateString('vi-VN');
             message = '✅ Đã gia hạn ' + req.days + ' ngày cho:\n' + req.email +
-                      '\n\nHạn mới: ' + newExpiry.toLocaleDateString('vi-VN');
+                      '\n\nHạn mới: ' + _newExpiryStr;
         }
 
         await db.collection('allowed_users').doc(req.email).update(updateData);
         await db.collection('renewal_requests').doc(reqId).update(reqUpdateData);
+
+        /* Gọi Telegram (chỉ khi module load OK) */
+        if (typeof window.notifyTelegramAdminConfirmed === 'function') {
+            try {
+                window.notifyTelegramAdminConfirmed({
+                    email: req.email,
+                    name: req.name,
+                    amount: req.amount,
+                    package: req.package,
+                    packageLabel: req.packageLabel,
+                    days: req.days,
+                    isPermanent: isPermanent
+                }, _newExpiryStr);
+            } catch(_te) { console.warn('Telegram notify lỗi:', _te); }
+        }
 
         try { localStorage.removeItem('user_cache_' + req.email); } catch(e) {}
         alert(message);
