@@ -65,7 +65,7 @@
         },
         {
             "id": "forever",
-            "label": "Vĩnh viễn",
+            "label": "Premium",
             "amount": 1000000,
             "days": 36500,
             "popular": false,
