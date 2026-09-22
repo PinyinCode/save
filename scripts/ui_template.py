@@ -5,9 +5,9 @@ Template GIAO DIỆN HỌC: header, search, filter, card, practice full, writer.
 KHÔNG chứa login/admin/social/renewal (đã tách sang file khác).
 
 🎯 PHÂN BIỆT 4 CHẾ ĐỘ:
-   - DEMO     : chưa đăng nhập → giới hạn DEMO_LIMIT câu, HSK1-3, X lượt/ngày
-   - TRIAL    : đã đăng nhập, đang dùng thử → TRIAL_LIMIT_PER_HSK câu/HSK, HSK1-6
-   - ACTIVE   : đã gia hạn / còn hạn → full quyền
+   - DEMO     : chưa đăng nhập → giới hạn DEMO_LIMIT câu, HSK1-3, DEMO_DAILY_LIMIT lượt/ngày
+   - TRIAL    : đã đăng nhập, đang dùng thử → TRIAL_LIMIT_PER_HSK câu/HSK, HSK1-6, TRIAL_DAILY_LIMIT lượt/ngày
+   - ACTIVE   : đã gia hạn / còn hạn → full quyền, không giới hạn
    - EXPIRED  : hết hạn → quay về giới hạn như demo
 """
 
@@ -117,14 +117,28 @@ body{
 }
 .icon-btn:not(.has-badge) .badge{display:none}
 
+/* ============ MODE BADGE (Demo / Trial / Expired) ============ */
 .demo-badge{
     display:flex;align-items:center;gap:.35rem;
     padding:.4rem .75rem;border-radius:50px;
-    background:var(--amber-light);color:#92400e;
     font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
-    border:1px solid rgba(245,158,11,.4);
+    border:1px solid transparent;
 }
-[data-theme="dark"] .demo-badge{color:#fcd34d}
+.demo-badge.mode-demo{
+    background:var(--amber-light);color:#92400e;
+    border-color:rgba(245,158,11,.4);
+}
+.demo-badge.mode-trial{
+    background:#fed7aa;color:#9a3412;
+    border-color:rgba(234,88,12,.4);
+}
+.demo-badge.mode-expired{
+    background:var(--danger-light);color:var(--danger);
+    border-color:rgba(220,38,38,.4);
+}
+[data-theme="dark"] .demo-badge.mode-demo{color:#fcd34d}
+[data-theme="dark"] .demo-badge.mode-trial{background:rgba(234,88,12,.25);color:#fdba74}
+[data-theme="dark"] .demo-badge.mode-expired{color:#fca5a5}
 
 /* ============ SEARCH + FILTER ============ */
 .search-bar{position:relative;margin-bottom:.55rem}
@@ -289,7 +303,7 @@ body.show-practice .card-body{
 
 .main{padding:.5rem 0 3rem}
 
-/* ============ DEMO BANNER ============ */
+/* ============ BANNER (Demo / Trial / Expired) ============ */
 .demo-banner{
     background:linear-gradient(135deg, #fef3c7, #fde68a);
     border:1.5px solid #f59e0b;border-radius:var(--radius);
@@ -355,6 +369,8 @@ body.show-practice .card-body{
 .expiry-banner.mode-expired .expiry-banner-text .desc{color:#991b1b}
 [data-theme="dark"] .expiry-banner.mode-expired .expiry-banner-text .desc{color:#fecaca}
 .expiry-banner-text .desc b{color:#dc2626;font-weight:800}
+.expiry-banner-text .desc a{color:#9a3412;font-weight:800;text-decoration:underline}
+.expiry-banner.mode-expired .expiry-banner-text .desc a{color:var(--danger)}
 .expiry-banner-btn{
     padding:.5rem .9rem;border-radius:50px;border:none;
     background:#ea580c;color:#fff;
@@ -507,6 +523,9 @@ body.show-practice .card-body{
 .load-more:hover,.load-more:active{background:var(--primary-light);border-color:var(--primary)}
 .load-more.locked{border-color:var(--amber);color:#92400e;background:var(--amber-light)}
 [data-theme="dark"] .load-more.locked{color:#fcd34d;background:rgba(245,158,11,.15)}
+/* 🎯 Trial: nút khóa màu cam để phân biệt với demo (vàng) */
+.load-more.locked-trial{border-color:#ea580c;color:#9a3412;background:#ffedd5}
+[data-theme="dark"] .load-more.locked-trial{color:#fdba74;background:rgba(234,88,12,.2)}
 .load-more.locked-upgrade{border-color:#ea580c;color:#9a3412;background:#fed7aa}
 [data-theme="dark"] .load-more.locked-upgrade{color:#fdba74;background:rgba(234,88,12,.2)}
 .end-note{
@@ -1396,6 +1415,9 @@ var displayState = { vi: true, pinyin: false, practice: false };
    ============================================================ */
 var USER_MODE = { DEMO:'demo', TRIAL:'trial', ACTIVE:'active', EXPIRED:'expired' };
 
+/* 🎯 Giới hạn lượt trial mỗi ngày (fallback 100 nếu config không có) */
+var TRIAL_DAILY_LIMIT = (typeof TRIAL_DAILY_LIMIT_CFG !== 'undefined') ? TRIAL_DAILY_LIMIT_CFG : 100;
+
 function getUserMode() {
     // Chưa login → demo
     if (typeof isDemo === 'undefined' || isDemo) return USER_MODE.DEMO;
@@ -1404,17 +1426,22 @@ function getUserMode() {
     // Admin → full
     if (currentUser.role === 'admin') return USER_MODE.ACTIVE;
 
-    // Hết hạn → expired
-    var daysLeft = (typeof getDaysRemaining === 'function') ? getDaysRemaining(currentUser) : null;
+    // Hết hạn
+    var daysLeft = (typeof getDaysRemaining === 'function')
+        ? getDaysRemaining(currentUser) : null;
     if (daysLeft !== null && daysLeft <= 0) return USER_MODE.EXPIRED;
 
-    // Đang trial?
-    var isTrial = (currentUser.isTrial === true) ||
-                  (currentUser.trialStartedAt && !currentUser.renewedAt);
+    /* 🎯 QUY TẮC RIÊNG CHO TRIAL:
+       Chỉ coi là trial khi:
+       - currentUser.isTrial === true (do backend set khi tạo user)
+       - HOẶC có trialStartedAt mà chưa renewedAt
+       - VÀ chưa từng gia hạn (renewedAt == null/undefined)
+    */
+    var hasRenewed = currentUser.renewedAt != null;
+    var isTrialFlag = (currentUser.isTrial === true) ||
+                      (currentUser.trialStartedAt && !hasRenewed);
 
-    var trialDays = (typeof TRIAL_DAYS !== 'undefined') ? TRIAL_DAYS : 3;
-
-    if (isTrial && daysLeft !== null && daysLeft <= trialDays) {
+    if (isTrialFlag && !hasRenewed) {
         return USER_MODE.TRIAL;
     }
     return USER_MODE.ACTIVE;
@@ -1475,6 +1502,7 @@ function getDemoSubjectList() {
     return Object.keys(set).sort();
 }
 
+/* ============ DEMO USAGE ============ */
 function getDemoUsage() {
     try {
         var today = new Date().toDateString();
@@ -1497,18 +1525,77 @@ function incDemoUsage() {
 }
 function getDemoRemaining() { return Math.max(0, DEMO_DAILY_LIMIT - getDemoUsage()); }
 
+/* ============ 🎯 TRIAL USAGE (riêng biệt với demo) ============ */
+function getTrialUsage() {
+    try {
+        var today = new Date().toDateString();
+        var data = JSON.parse(localStorage.getItem('trial_usage') || '{}');
+        if (data.date !== today) {
+            data = { date: today, count: 0 };
+            localStorage.setItem('trial_usage', JSON.stringify(data));
+        }
+        return data.count;
+    } catch(e) { return 0; }
+}
+function incTrialUsage() {
+    try {
+        var today = new Date().toDateString();
+        var data = JSON.parse(localStorage.getItem('trial_usage') || '{}');
+        if (data.date !== today) data = { date: today, count: 0 };
+        data.count++;
+        localStorage.setItem('trial_usage', JSON.stringify(data));
+    } catch(e) {}
+}
+function getTrialRemaining() {
+    return Math.max(0, TRIAL_DAILY_LIMIT - getTrialUsage());
+}
+
 /* ✅ Phân loại quyền theo chế độ */
 function canUseFeature() {
     var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) return getDemoUsage() < DEMO_DAILY_LIMIT;
-    if (mode === USER_MODE.EXPIRED) return false;
-    return true;  // trial + active → OK
+    if (mode === USER_MODE.DEMO) {
+        return getDemoUsage() < DEMO_DAILY_LIMIT;
+    }
+    if (mode === USER_MODE.EXPIRED) {
+        return false;
+    }
+    // ✅ TRIAL: giới hạn riêng theo TRIAL_DAILY_LIMIT
+    if (mode === USER_MODE.TRIAL) {
+        return getTrialUsage() < TRIAL_DAILY_LIMIT;
+    }
+    // ACTIVE: không giới hạn
+    return true;
 }
 
 function updateDemoRemaining() {
     var el = $('demoRemainingText');
     if (!el) return;
-    var remaining = getDemoRemaining();
+    var mode = getUserMode();
+    var remaining = 0;
+    var total = 0;
+
+    if (mode === USER_MODE.DEMO) {
+        remaining = getDemoRemaining();
+        total = DEMO_DAILY_LIMIT;
+    } else if (mode === USER_MODE.TRIAL) {
+        remaining = getTrialRemaining();
+        total = TRIAL_DAILY_LIMIT;
+    } else {
+        return;
+    }
+
+    el.textContent = remaining;
+    var pct = remaining / total;
+    if (pct < 0.2) el.style.color = '#dc2626';
+    else if (pct < 0.5) el.style.color = '#f59e0b';
+    else el.style.color = '#16a34a';
+}
+
+/* 🎯 Cập nhật riêng cho trial banner */
+function updateTrialRemaining() {
+    var el = $('trialRemainingText');
+    if (!el) return;
+    var remaining = getTrialRemaining();
     el.textContent = remaining;
     if (remaining < 20) el.style.color = '#dc2626';
     else if (remaining < 50) el.style.color = '#f59e0b';
@@ -1518,6 +1605,7 @@ function updateDemoRemaining() {
 function showLimitMessage() {
     var mode = getUserMode();
 
+    // ✅ HẾT HẠN → gia hạn
     if (mode === USER_MODE.EXPIRED) {
         if (confirm('🔒 Tài khoản của bạn đã HẾT HẠN.\n\n' +
                     'Vui lòng gia hạn để tiếp tục sử dụng tính năng này.\n\n' +
@@ -1527,6 +1615,18 @@ function showLimitMessage() {
         return;
     }
 
+    // ✅ TRIAL: hết lượt ngày → kêu gọi gia hạn
+    if (mode === USER_MODE.TRIAL) {
+        if (confirm('⏰ Bạn đã dùng hết ' + TRIAL_DAILY_LIMIT +
+                    ' lượt nghe/viết hôm nay (bản dùng thử).\n\n' +
+                    'Gia hạn để dùng KHÔNG GIỚI HẠN!\n\n' +
+                    'Nhấn OK để xem các gói gia hạn.')) {
+            if (typeof openRenewalModal === 'function') openRenewalModal();
+        }
+        return;
+    }
+
+    // ✅ DEMO: hết lượt → đăng nhập
     if (mode === USER_MODE.DEMO) {
         if (confirm('🔒 Bạn đã dùng hết ' + DEMO_DAILY_LIMIT +
                     ' lượt miễn phí hôm nay.\n\n' +
@@ -1561,6 +1661,104 @@ function formatTimeDiff(ms) {
     if (d < 30) return d + ' ngày trước';
     var mo = Math.floor(d / 30);
     return mo + ' tháng trước';
+}
+
+/* ============================================================
+   🎯 CẬP NHẬT TOÀN BỘ UI THEO MODE (badge + banner)
+   ============================================================ */
+function updateModeUI() {
+    var mode = getUserMode();
+    var badge = $('demoBadge');
+    var demoBanner = $('demoBanner');
+    var expiryBanner = $('expiryBanner');
+
+    // Ẩn hết trước
+    if (badge) badge.style.display = 'none';
+    if (demoBanner) demoBanner.style.display = 'none';
+    if (expiryBanner) {
+        expiryBanner.style.display = 'none';
+        expiryBanner.classList.remove('mode-expired');
+    }
+
+    // ✅ DEMO
+    if (mode === USER_MODE.DEMO) {
+        if (badge) {
+            badge.style.display = 'flex';
+            badge.className = 'demo-badge mode-demo';
+            badge.innerHTML = '<i class="fas fa-eye"></i> Demo';
+        }
+        if (demoBanner) demoBanner.style.display = 'flex';
+        updateDemoRemaining();
+    }
+
+    // ✅ TRIAL: badge cam + banner trial
+    else if (mode === USER_MODE.TRIAL) {
+        var daysLeft = (typeof getDaysRemaining === 'function')
+            ? getDaysRemaining(currentUser) : TRIAL_DAYS;
+
+        if (badge) {
+            badge.style.display = 'flex';
+            badge.className = 'demo-badge mode-trial';
+            badge.innerHTML = '<i class="fas fa-hourglass-half"></i> Dùng thử ' +
+                              (daysLeft !== null ? daysLeft : TRIAL_DAYS) + ' ngày';
+        }
+        if (expiryBanner) {
+            expiryBanner.style.display = 'flex';
+            var expiryDateStr = (currentUser && currentUser.expiryDate)
+                ? new Date(currentUser.expiryDate).toLocaleDateString('vi-VN') : '-';
+            var titleEl = expiryBanner.querySelector('.title');
+            var descEl = expiryBanner.querySelector('.desc');
+            if (titleEl) titleEl.textContent = 'Bạn đang dùng thử miễn phí';
+            if (descEl) {
+                descEl.innerHTML = 'Còn <b>' + (daysLeft !== null ? daysLeft : TRIAL_DAYS) +
+                    '</b> ngày (đến <b>' + expiryDateStr + '</b>). ' +
+                    'Nghe/Viết còn <b id="trialRemainingText">' + getTrialRemaining() + '</b>' +
+                    '/' + TRIAL_DAILY_LIMIT + ' lượt hôm nay. ' +
+                    '<a href="javascript:void(0)" onclick="if(typeof openRenewalModal===\'function\')openRenewalModal()">' +
+                    'Gia hạn ngay</a>';
+            }
+        }
+    }
+
+    // ✅ ACTIVE: ẩn badge, chỉ hiện banner nếu ≤ 7 ngày
+    else if (mode === USER_MODE.ACTIVE) {
+        var daysLeft2 = (typeof getDaysRemaining === 'function')
+            ? getDaysRemaining(currentUser) : null;
+        if (daysLeft2 !== null && daysLeft2 <= 7 && daysLeft2 > 0) {
+            if (expiryBanner) {
+                expiryBanner.style.display = 'flex';
+                var expiryDateStr2 = (currentUser && currentUser.expiryDate)
+                    ? new Date(currentUser.expiryDate).toLocaleDateString('vi-VN') : '-';
+                var titleEl2 = expiryBanner.querySelector('.title');
+                var descEl2 = expiryBanner.querySelector('.desc');
+                if (titleEl2) titleEl2.textContent = 'Tài khoản sắp hết hạn';
+                if (descEl2) {
+                    descEl2.innerHTML = 'Còn <b>' + daysLeft2 + '</b> ngày (đến <b>' +
+                        expiryDateStr2 + '</b>). Liên hệ Admin để gia hạn!';
+                }
+            }
+        }
+    }
+
+    // ✅ EXPIRED: badge đỏ + banner đỏ
+    else if (mode === USER_MODE.EXPIRED) {
+        if (badge) {
+            badge.style.display = 'flex';
+            badge.className = 'demo-badge mode-expired';
+            badge.innerHTML = '<i class="fas fa-lock"></i> Hết hạn';
+        }
+        if (expiryBanner) {
+            expiryBanner.style.display = 'flex';
+            expiryBanner.classList.add('mode-expired');
+            var titleEl3 = expiryBanner.querySelector('.title');
+            var descEl3 = expiryBanner.querySelector('.desc');
+            if (titleEl3) titleEl3.textContent = 'Tài khoản đã hết hạn';
+            if (descEl3) {
+                descEl3.innerHTML = 'Vui lòng gia hạn để mở khóa toàn bộ ' +
+                    RAW_DATA.length + ' câu và tất cả tính năng!';
+            }
+        }
+    }
 }
 
 /* ============ INIT APP ============ */
@@ -1629,7 +1827,11 @@ function initApp() {
         applyFilter();
     });
 
-    try { buildFilters(); applyFilter(); }
+    try {
+        buildFilters();
+        applyFilter();
+        updateModeUI();
+    }
     catch(e) { console.error('Init error:', e); }
 }
 
@@ -1639,6 +1841,7 @@ function refreshApp() {
     applyDisplayState();
     updateToggleButtons();
     updateResultCount();
+    updateModeUI();
 }
 
 /* ============ SCROLL DETECT ============ */
@@ -1861,7 +2064,13 @@ window.speakText = function(text, btn, evt) {
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
 
     var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) { incDemoUsage(); updateDemoRemaining(); }
+    if (mode === USER_MODE.DEMO) {
+        incDemoUsage();
+        updateDemoRemaining();
+    } else if (mode === USER_MODE.TRIAL) {
+        incTrialUsage();
+        updateModeUI();
+    }
 
     speechSynthesis.cancel();
     if (currentBtn) currentBtn.classList.remove('speaking');
@@ -1893,13 +2102,11 @@ function buildFilters() {
     var allowedHsk = getAllowedHskList();
     var allHskList = ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
 
-    // Lấy subject từ data thực tế của từng mode
     var baseData = getBaseDataByMode();
     var subjSet = {};
     baseData.forEach(function(r) { if (r.subject) subjSet[r.subject] = 1; });
     var availableSubjects = Object.keys(subjSet).sort();
 
-    // HSK dropdown
     var hskHtml = '<option value="">Tất cả</option>';
     allowedHsk.forEach(function(h) {
         hskHtml += '<option value="' + h + '">' + h + '</option>';
@@ -1913,7 +2120,6 @@ function buildFilters() {
     }
     hskSelect.innerHTML = hskHtml;
 
-    // Subject dropdown
     subjectSelect.innerHTML = '<option value="">Tất cả chủ đề</option>' +
         availableSubjects.map(function(v){
             return '<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>';
@@ -2041,8 +2247,10 @@ function render(reset) {
                 lockedBtn.innerHTML = '<i class="fas fa-lock"></i> Đăng nhập để xem toàn bộ ' + RAW_DATA.length + ' câu';
                 lockedBtn.onclick = function() { showLoginModal(); };
             } else if (mode === USER_MODE.TRIAL) {
-                lockedBtn.classList.add('locked-upgrade');
-                lockedBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn để xem toàn bộ ' + RAW_DATA.length + ' câu';
+                lockedBtn.classList.add('locked-trial');
+                var totalTrial = getBaseDataByMode().length;
+                lockedBtn.innerHTML = '<i class="fas fa-gem"></i> Bản dùng thử: ' + totalTrial +
+                    '/' + RAW_DATA.length + ' câu — Gia hạn để mở toàn bộ';
                 lockedBtn.onclick = function() {
                     if (typeof openRenewalModal === 'function') openRenewalModal();
                 };
@@ -2899,7 +3107,13 @@ window.speakPhrase = function(phrase, btn) {
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
 
     var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) { incDemoUsage(); updateDemoRemaining(); }
+    if (mode === USER_MODE.DEMO) {
+        incDemoUsage();
+        updateDemoRemaining();
+    } else if (mode === USER_MODE.TRIAL) {
+        incTrialUsage();
+        updateModeUI();
+    }
 
     speechSynthesis.cancel();
     document.querySelectorAll('.answer-phrase-btn.speaking').forEach(function(b) { b.classList.remove('speaking'); });
@@ -2918,18 +3132,24 @@ window.speakFullSentence = function() {
     if (!('speechSynthesis' in window)) return;
 
     var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) { incDemoUsage(); updateDemoRemaining(); }
+    if (mode === USER_MODEfunction.DEMO) {
+        incDemoUsage();
+        updateDemoRemaining();
+    } else if (mode === USER_MODE.TRIAL) {
+        incTrialUsage();
+        updateModeUI();
+    }
 
     speechSynthesis.cancel();
     var utterance = new SpeechSynthesisUtterance(pfCurrentAnswer);
     utterance.lang = 'zh-CN';
     utterance.rate = 0.85;
-    var voice = getChineseVoice();
+    init var voice = getChineseVoice();
     if (voice) utterance.voice = voice;
-    setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
+   Practice setTimeout(function(){ speechSynthesis.speak(utterance); }, 30Full);
 };
 
-function initPracticeFull() {
+() {
     $('pfClose').addEventListener('click', closePracticeFull);
     $('pfPrevBtn').addEventListener('click', pfPrev);
     $('pfNextBtn').addEventListener('click', pfNext);
@@ -3023,7 +3243,13 @@ function initPracticeFull() {
             if (!canUseFeature()) { showLimitMessage(); return; }
 
             var mode = getUserMode();
-            if (mode === USER_MODE.DEMO) { incDemoUsage(); updateDemoRemaining(); }
+            if (mode === USER_MODE.DEMO) {
+                incDemoUsage();
+                updateDemoRemaining();
+            } else if (mode === USER_MODE.TRIAL) {
+                incTrialUsage();
+                updateModeUI();
+            }
 
             if (!('speechSynthesis' in window)) {
                 alert('Trình duyệt không hỗ trợ phát âm.');
@@ -3117,7 +3343,13 @@ window.openWriter = function(zh, vi, pinyin, evt) {
     if (typeof HanziWriter === 'undefined') { alert('Thư viện chưa tải xong.'); return; }
 
     var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) { incDemoUsage(); updateDemoRemaining(); }
+    if (mode === USER_MODE.DEMO) {
+        incDemoUsage();
+        updateDemoRemaining();
+    } else if (mode === USER_MODE.TRIAL) {
+        incTrialUsage();
+        updateModeUI();
+    }
 
     currentWriteZh = zh || '';
     currentWriteVi = vi || '';
