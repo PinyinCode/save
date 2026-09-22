@@ -3,8 +3,9 @@
 Chuyển file Excel → HTML tự chứa dữ liệu.
 Ghép 4 template: ui + social + accounts (gộp renewal) + data.
 
-✅ Đã fix căn giữa trên PC: bọc toàn bộ body trong .page-wrap
-   và thêm CSS override ở cuối để chống mọi CSS từ social/auth ghi đè.
+✅ FIX: Toàn bộ giao diện (header, search, filter, cards, banner)
+   tự scale vừa chiều ngang màn hình — giống chế độ practice full-screen.
+   Không còn khoảng trắng 2 bên trên PC.
 """
 import json
 import os
@@ -59,16 +60,20 @@ auth_css, auth_html, auth_js = build_all_auth(CONFIG)
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  CSS OVERRIDE — FIX CĂN GIỮA PC (đặt cuối cùng để thắng mọi rule)
+#  ★ FULLWIDTH SCALE CSS ★
+#  Đặt cuối cùng trong full_css để override mọi CSS từ ui/social/auth.
+#  Bao gồm: header, search, filter, cards, banner — tất cả tự co giãn
+#  vừa chiều ngang màn hình.
 # ═══════════════════════════════════════════════════════════════════
-CENTER_FIX_CSS = r"""
+FULLWIDTH_CSS = r"""
 
 /* ═══════════════════════════════════════════════════════════════════
-   ★ FIX CĂN GIỮA TRÊN PC ★
-   Đặt ở cuối để override mọi CSS từ ui/social/auth phía trên.
+   ★ FULL-WIDTH SCALE ★
+   Toàn bộ giao diện tự co giãn vừa chiều ngang màn hình.
+   Đặt cuối để override mọi CSS từ ui/social/auth phía trên.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Bọc toàn bộ nội dung trong .page-wrap để cô lập layout */
+/* Wrapper bao toàn bộ body */
 .page-wrap {
     width: 100%;
     max-width: 100%;
@@ -76,89 +81,193 @@ CENTER_FIX_CSS = r"""
     overflow-x: hidden;
 }
 
-/* Mặc định: container căn giữa */
+/* Container: dùng hết chiều ngang, chỉ chừa padding co giãn */
 .container {
-    width: 100%;
-    max-width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
 }
 
-/* Sticky top + main + các section đều kế thừa container bên trong */
+/* Sticky top + main đều full width */
 .sticky-top,
 .main,
 #mainContent {
-    width: 100%;
-    max-width: 100%;
+    width: 100% !important;
+    max-width: 100% !important;
 }
 
-/* Banner Demo / Expiry căn giữa theo container */
-.demo-banner,
-.expiry-banner {
-    max-width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
-    margin-bottom: 1rem;
+/* ═══════════════════════════════════════════════════════════════════
+   ★★★ HEADER SCALE ★★★
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Header nội bộ: logo dạt trái, actions dạt phải, gap co giãn */
+.header-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 1rem !important;
+    width: 100% !important;
 }
 
-/* Grid cards căn giữa */
-.mobile-view {
-    max-width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
+/* Logo co giãn nhẹ, không bị bóp chữ */
+.logo {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
 }
 
-/* ═══ BREAKPOINTS ═══ */
-@media (min-width: 1400px) {
-    .container,
-    .demo-banner,
-    .expiry-banner,
-    .mobile-view {
-        max-width: 1300px;
+/* Header actions: đẩy sang phải, không bị bóp */
+.header-actions {
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+    display: flex !important;
+    gap: .5rem !important;
+    align-items: center !important;
+}
+
+/* ═══ SEARCH BAR: trải rộng toàn bộ container ═══ */
+.search-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.search-bar input {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* ═══ FILTERS: chia đều theo chiều ngang ═══ */
+.filters {
+    display: grid !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: .75rem !important;
+}
+
+/* Trên PC lớn: filter gọn hơn, không kéo dài lố */
+@media (min-width: 1000px) {
+    .filters {
+        grid-template-columns: 220px 260px !important;
+        gap: 1rem !important;
     }
+}
+
+/* ═══ RESULT COUNT: dạt trái, ngay dưới filters ═══ */
+.result-count {
+    margin-top: .5rem !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★ GRID CARDS: TỰ ĐỘNG CHIA CỘT THEO CHIỀU NGANG ★
+   ═══════════════════════════════════════════════════════════════════ */
+.mobile-view {
+    display: grid !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    gap: 1rem !important;
+    grid-template-columns: 1fr !important;
+}
+
+@media (min-width: 600px) {
     .mobile-view {
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 1rem !important;
+    }
+}
+
+@media (min-width: 1000px) {
+    .mobile-view {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 1.1rem !important;
+    }
+}
+
+@media (min-width: 1400px) {
+    .mobile-view {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 1.2rem !important;
     }
 }
 
 @media (min-width: 1900px) {
-    .container,
-    .demo-banner,
-    .expiry-banner,
     .mobile-view {
-        max-width: 1600px;
-    }
-    .mobile-view {
-        grid-template-columns: 1fr 1fr 1fr 1fr;
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 1.3rem !important;
     }
 }
 
-/* ═══ MOBILE: giữ nguyên full-width có padding ═══ */
+@media (min-width: 2400px) {
+    .mobile-view {
+        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+        gap: 1.4rem !important;
+    }
+}
+
+/* ═══ Banner Demo / Expiry: full width ═══ */
+.demo-banner,
+.expiry-banner {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-bottom: 1rem !important;
+}
+
+/* ═══ Container padding co giãn theo màn hình ═══ */
+@media (min-width: 1000px) {
+    .container {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+@media (min-width: 1400px) {
+    .container {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+}
+@media (min-width: 1900px) {
+    .container {
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+    }
+}
+@media (min-width: 2400px) {
+    .container {
+        padding-left: 3rem !important;
+        padding-right: 3rem !important;
+    }
+}
+
+/* ═══ MOBILE: thu gọn padding ═══ */
 @media (max-width: 768px) {
     .container {
-        max-width: 100%;
-        padding-left: .7rem;
-        padding-right: .7rem;
+        padding-left: .7rem !important;
+        padding-right: .7rem !important;
     }
-    .demo-banner,
-    .expiry-banner,
     .mobile-view {
-        max-width: 100%;
+        gap: .8rem !important;
+    }
+    .header-inner {
+        gap: .5rem !important;
     }
 }
 """
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  GHÉP CSS (3 khối + override cuối)
+#  GHÉP CSS (3 khối + Fullwidth override cuối)
 # ═══════════════════════════════════════════════════════════════════
 full_css = (
     build_ui_css()
     + "\n/* ==== SOCIAL CSS ==== */\n" + build_social_css()
     + "\n/* ==== ACCOUNTS + RENEWAL CSS ==== */\n" + auth_css
-    + "\n/* ==== CENTER FIX (override cuối cùng) ==== */\n" + CENTER_FIX_CSS
+    + "\n/* ==== FULLWIDTH SCALE (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
 
 
@@ -174,8 +283,8 @@ ui_html = ui_html.replace(
     social_html + '\n<div class="writer-modal" id="writerModal">'
 )
 
-# ─── Bọc toàn bộ body trong .page-wrap để cô lập layout ───
-# Lưu ý: các modal dùng position:fixed nên KHÔNG bị ảnh hưởng bởi wrapper.
+# Bọc toàn bộ body trong .page-wrap để cô lập layout
+# (modals dùng position:fixed nên KHÔNG bị ảnh hưởng)
 full_body = (
     '<div class="page-wrap">\n'
     + ui_html
@@ -391,4 +500,4 @@ if telegram_bot_token and telegram_chat_id:
     print(f"📲 Telegram: ĐÃ bật (chat_id: {telegram_chat_id})")
 else:
     print(f"📲 Telegram: CHƯA cấu hình (thiếu token hoặc chat_id)")
-print(f"✅ Đã ghép 4 template + Center Fix CSS")
+print(f"✅ Đã ghép 4 template + FULLWIDTH SCALE cho header/search/filter/cards")
