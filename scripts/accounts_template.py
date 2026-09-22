@@ -3,10 +3,15 @@
 Module GỘP: Auth + Firebase + Admin panel + Trial + Renewal (QR ngân hàng).
 Đọc config từ file JSON bên ngoài (config.json) — không còn placeholder.
 
-Hỗ trợ 3 chế độ:
-    - DEMO: chưa login HOẶC login nhưng hết hạn (25 câu, 50 lượt/ngày)
-    - TRIAL: login, isTrial=true, còn hạn (60 câu = 10×HSK1-6, 500 lượt TỔNG)
-    - RENEWED: login, đã mua gói (full data, không giới hạn)
+Cách dùng:
+    import json
+    from accounts import (
+        build_accounts_css, build_accounts_html, build_accounts_js,
+        build_renewal_css, build_renewal_html, build_renewal_js,
+        build_all_auth  # helper gộp hết
+    )
+    cfg = json.load(open("config.json", encoding="utf-8"))
+    css, html, js = build_all_auth(cfg)
 """
 
 import json
@@ -28,7 +33,6 @@ def build_accounts_css():
 .user-info .email{font-size:.75rem;color:var(--text-3);word-break:break-all}
 .user-info .role{display:inline-block;margin-top:.4rem;padding:.15rem .5rem;background:var(--primary-light);color:var(--primary-dark);border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
 .user-info .role.admin{background:var(--amber-light);color:#92400e}
-.user-info .role.trial{background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;box-shadow:0 2px 6px rgba(59,130,246,.4);}
 .dropdown-item{display:flex;align-items:center;gap:.5rem;width:100%;padding:.65rem .75rem;border:none;border-radius:var(--radius-sm);background:transparent;color:var(--text);font-size:.85rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;text-align:left;}
 .dropdown-item:hover{background:var(--surface-2)}
 .dropdown-item.danger{color:var(--danger)}
@@ -138,13 +142,11 @@ def build_accounts_css():
 .detail-icon.urgent{background:rgba(220,38,38,.15);color:var(--danger);}
 .detail-icon.permanent{background:var(--primary-light);color:var(--primary-dark);}
 .detail-icon.expired{background:rgba(220,38,38,.25);color:var(--danger);}
-.detail-icon.trial{background:linear-gradient(135deg, rgba(59,130,246,.2), rgba(96,165,250,.25));color:#2563eb;}
 [data-theme="dark"] .detail-icon.ok{background:rgba(22,163,74,.25);color:#4ade80;}
 [data-theme="dark"] .detail-icon.warn{background:rgba(245,158,11,.25);color:#fcd34d;}
 [data-theme="dark"] .detail-icon.urgent{background:rgba(220,38,38,.3);color:#fca5a5;}
 [data-theme="dark"] .detail-icon.permanent{background:rgba(59,130,246,.25);color:#93c5fd;}
 [data-theme="dark"] .detail-icon.expired{background:rgba(220,38,38,.35);color:#fca5a5;}
-[data-theme="dark"] .detail-icon.trial{background:rgba(59,130,246,.3);color:#60a5fa;}
 
 .detail-content{flex:1;min-width:0;}
 .detail-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--text-3);margin-bottom:.15rem;}
@@ -156,8 +158,6 @@ def build_accounts_css():
 .detail-value.permanent{color:var(--primary-dark);}
 [data-theme="dark"] .detail-value.permanent{color:#93c5fd;}
 .detail-value.expired{color:var(--danger);text-decoration:line-through;}
-.detail-value.trial{color:#2563eb;}
-[data-theme="dark"] .detail-value.trial{color:#60a5fa;}
 .detail-sub{font-size:.7rem;color:var(--text-3);margin-top:.15rem;line-height:1.35;}
 .detail-sub b{color:var(--text-2);font-weight:700;}
 .detail-progress{margin-top:.15rem;}
@@ -167,7 +167,6 @@ def build_accounts_css():
 .progress-bar.warn{background:linear-gradient(90deg, #f59e0b, #fbbf24);}
 .progress-bar.urgent{background:linear-gradient(90deg, #dc2626, #ef4444);}
 .progress-bar.permanent{background:linear-gradient(90deg, #2563eb, #3b82f6);}
-.progress-bar.trial{background:linear-gradient(90deg, #3b82f6, #60a5fa);}
 
 .btn-login-header{display:flex;align-items:center;gap:.4rem;padding:.55rem 1rem;border-radius:50px;background:var(--primary);color:#fff;border:none;font-size:.85rem;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit;box-shadow:0 4px 12px rgba(37,99,235,.3);white-space:nowrap;}
 .btn-login-header:hover,.btn-login-header:active{background:var(--primary-dark);transform:translateY(-1px)}
@@ -343,75 +342,6 @@ def build_accounts_css():
 .expiry-banner.urgent .expiry-banner-btn:hover{
     transform:translateY(-2px) scale(1.03);
     box-shadow:0 8px 20px rgba(220,38,38,.7);
-}
-
-/* ============ TRIAL BANNER ============ */
-.trial-banner{
-    background:linear-gradient(135deg, #dbeafe, #bfdbfe);
-    border:1.5px solid #3b82f6;border-radius:var(--radius);
-    padding:.9rem 1.1rem;margin-bottom:1rem;
-    display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
-}
-[data-theme="dark"] .trial-banner{
-    background:linear-gradient(135deg, rgba(59,130,246,.15), rgba(59,130,246,.25));
-    border-color:#3b82f6;
-}
-.trial-banner.warning{
-    background:linear-gradient(135deg, #fef3c7, #fde68a);
-    border-color:#f59e0b;
-}
-[data-theme="dark"] .trial-banner.warning{
-    background:linear-gradient(135deg, rgba(245,158,11,.15), rgba(245,158,11,.25));
-    border-color:#f59e0b;
-}
-.trial-banner.danger{
-    background:linear-gradient(135deg, #fecaca, #fca5a5);
-    border-color:#dc2626;
-}
-[data-theme="dark"] .trial-banner.danger{
-    background:linear-gradient(135deg, rgba(220,38,38,.15), rgba(220,38,38,.25));
-    border-color:#dc2626;
-}
-.trial-banner-icon{
-    width:36px;height:36px;border-radius:50%;
-    background:#3b82f6;color:#fff;
-    display:flex;align-items:center;justify-content:center;
-    font-size:1rem;flex-shrink:0;
-}
-.trial-banner.warning .trial-banner-icon{background:#f59e0b;}
-.trial-banner.danger .trial-banner-icon{background:#dc2626;}
-.trial-banner-text{flex:1;min-width:200px}
-.trial-banner-text .title{font-weight:700;font-size:.9rem;color:#1e40af;margin-bottom:.15rem}
-.trial-banner.warning .trial-banner-text .title{color:#92400e;}
-.trial-banner.danger .trial-banner-text .title{color:#7f1d1d;}
-[data-theme="dark"] .trial-banner-text .title{color:#93c5fd;}
-[data-theme="dark"] .trial-banner.warning .trial-banner-text .title{color:#fcd34d;}
-[data-theme="dark"] .trial-banner.danger .trial-banner-text .title{color:#fca5a5;}
-.trial-banner-text .desc{font-size:.78rem;color:#1e3a8a;line-height:1.5}
-.trial-banner.warning .trial-banner-text .desc{color:#78350f;}
-.trial-banner.danger .trial-banner-text .desc{color:#7f1d1d;}
-[data-theme="dark"] .trial-banner-text .desc{color:#bfdbfe;}
-[data-theme="dark"] .trial-banner.warning .trial-banner-text .desc{color:#fde68a;}
-[data-theme="dark"] .trial-banner.danger .trial-banner-text .desc{color:#fecaca;}
-.trial-banner-text .desc b{color:#1e40af;}
-.trial-banner.warning .trial-banner-text .desc b{color:#dc2626;}
-.trial-banner.danger .trial-banner-text .desc b{color:#7f1d1d;}
-[data-theme="dark"] .trial-banner-text .desc b{color:#93c5fd;}
-[data-theme="dark"] .trial-banner.warning .trial-banner-text .desc b{color:#fca5a5;}
-[data-theme="dark"] .trial-banner.danger .trial-banner-text .desc b{color:#fca5a5;}
-.trial-banner-btn{
-    padding:.5rem .9rem;border-radius:50px;border:none;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);
-    color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;
-    transition:.15s;font-family:inherit;
-    display:flex;align-items:center;gap:.35rem;white-space:nowrap;
-    box-shadow:0 4px 12px rgba(124,58,237,.35);
-}
-.trial-banner.warning .trial-banner-btn{background:linear-gradient(135deg,#d97706,#f59e0b);}
-.trial-banner.danger .trial-banner-btn{background:linear-gradient(135deg,#7f1d1d,#dc2626);}
-.trial-banner-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(124,58,237,.45);}
-.trial-banner.danger .trial-banner-btn{
-    animation:renewUrgent 1.2s infinite;
 }
 
 /* ============ RENEWAL MODAL (QR ngân hàng) ============ */
@@ -842,21 +772,7 @@ async function handleAuthChange(user) {
 
     if (cached && cached.expires > Date.now() && cached.data) {
         currentUser = cached.data;
-        // ✅ Tính lại isDemo từ cache (tránh stale state)
         isDemo = false;
-        if (currentUser.role !== 'admin' && currentUser.expiresAt) {
-            var cachedExpDate = getExpiryDate(currentUser.expiresAt);
-            if (cachedExpDate && !isNaN(cachedExpDate.getTime())) {
-                var cachedExpired = cachedExpDate.getTime() < Date.now();
-                if (cachedExpired) {
-                    isDemo = true;
-                    currentUser.isExpiredOnly = true;
-                    currentUser.isTrial = false;
-                } else {
-                    currentUser.isExpiredOnly = false;
-                }
-            }
-        }
         applyUserUI();
         logLogin(currentUser);
         if (!appInitialized) { initApp(); appInitialized = true; }
@@ -889,16 +805,13 @@ async function handleAuthChange(user) {
         }
 
         var data = doc.data() || {};
-        // ✅ Trial = isTrial=true VÀ chưa từng renew (lastRenewalAt null)
-        var isTrialUser = (data.isTrial === true) && !data.lastRenewalAt;
-
         var userData = {
             email: email,
             name: data.name || user.displayName || email.split('@')[0],
             role: data.role || 'user',
             photo: user.photoURL || '',
             expiresAt: data.expiresAt || null,
-            isTrial: isTrialUser,
+            isTrial: data.isTrial || false,
             isExpiredOnly: false
         };
 
@@ -913,10 +826,8 @@ async function handleAuthChange(user) {
         }
 
         if (isExpiredUser) {
-            // ✅ Hết hạn → chuyển về DEMO hoàn toàn
             isDemo = true;
             currentUser.isExpiredOnly = true;
-            currentUser.isTrial = false;   // tắt trial khi hết hạn
             console.log('⏰ User hết hạn — chuyển sang chế độ demo');
         } else {
             isDemo = false;
@@ -939,7 +850,6 @@ async function handleAuthChange(user) {
         isDemo = true; enterDemoMode();
     }
 }
-
 function getDaysRemaining(userData) {
     if (!userData || !userData.expiresAt) return null;
     if (userData.role === 'admin') return null;
@@ -1009,9 +919,6 @@ function applyUserUI() {
     var demoBadge = $('demoBadge');
     var headerLoginBtn = $('headerLoginBtn');
     var userMenu = $('userMenu');
-
-    // ✅ Ẩn/hiện banner trial (thêm ở bước tiếp theo trong build_ui_html)
-    updateTrialBanner();
 
     var expiryBanner = $('expiryBanner');
     if (expiryBanner) {
@@ -1113,26 +1020,13 @@ function applyUserUI() {
         if (demoBadge) demoBadge.style.display = 'none';
         if (headerLoginBtn) headerLoginBtn.style.display = 'none';
         if (userMenu) userMenu.style.display = 'block';
-        // ✅ Chỉ hiện demoBanner nếu user ĐÃ LOGIN nhưng HẾT HẠN
-        if ($('demoBanner')) {
-            if (currentUser && currentUser.isExpiredOnly) {
-                $('demoBanner').style.display = 'flex';
-            } else {
-                $('demoBanner').style.display = 'none';
-            }
-        }
+        if ($('demoBanner')) $('demoBanner').style.display = 'none';
 
         if ($('userName')) $('userName').textContent = currentUser.name;
         if ($('userEmail')) $('userEmail').textContent = currentUser.email;
         if ($('userRole')) {
-            // ✅ Hiện "trial" badge nếu là trial
-            if (currentUser.isTrial) {
-                $('userRole').textContent = 'trial';
-                $('userRole').className = 'role trial';
-            } else {
-                $('userRole').textContent = currentUser.role;
-                $('userRole').className = 'role' + (currentUser.role === 'admin' ? ' admin' : '');
-            }
+            $('userRole').textContent = currentUser.role;
+            $('userRole').className = 'role' + (currentUser.role === 'admin' ? ' admin' : '');
         }
         if ($('openAdminBtn')) $('openAdminBtn').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
 
@@ -1173,63 +1067,6 @@ function applyUserUI() {
     if (isDemo) document.body.classList.remove('hide-floating');
 }
 
-/* ============ TRIAL BANNER (gọi từ applyUserUI) ============ */
-function updateTrialBanner() {
-    var banner = $('trialBanner');
-    if (!banner) return;
-
-    // Chỉ hiện khi: đã login, không phải admin, là trial (chưa từng renew)
-    var shouldShow = currentUser
-        && !isDemo
-        && currentUser.role !== 'admin'
-        && currentUser.isTrial === true;
-
-    if (!shouldShow) {
-        banner.style.display = 'none';
-        return;
-    }
-
-    banner.style.display = 'flex';
-
-    // Tính số ngày còn lại
-    var daysLeft = getDaysRemaining(currentUser);
-    var daysStr = (daysLeft !== null) ? Math.max(0, daysLeft) : '?';
-
-    // Cập nhật text
-    var daysEl = $('trialDaysLeftText');
-    if (daysEl) daysEl.textContent = daysStr;
-
-    // Lấy usage từ UI (nếu có function)
-    var remainingEl = $('trialRemainingText');
-    if (remainingEl && typeof getTrialRemaining === 'function') {
-        var remaining = getTrialRemaining();
-        remainingEl.textContent = remaining;
-        remainingEl.style.color = remaining < 50
-            ? '#dc2626'
-            : (remaining < 200 ? '#f59e0b' : '#16a34a');
-    }
-
-    // Đổi class theo mức độ khẩn cấp
-    banner.classList.remove('warning', 'danger');
-    if (daysLeft !== null && daysLeft <= 1) {
-        banner.classList.add('danger');
-    } else if (daysLeft !== null && daysLeft <= 3) {
-        banner.classList.add('warning');
-    }
-
-    // Cập nhật title
-    var titleEl = $('trialBannerTitle');
-    if (titleEl) {
-        if (daysLeft !== null && daysLeft <= 1) {
-            titleEl.innerHTML = '⚡ Bản dùng thử sắp hết hạn!';
-        } else if (daysLeft !== null && daysLeft <= 3) {
-            titleEl.innerHTML = '⏳ Bản dùng thử còn ' + daysLeft + ' ngày';
-        } else {
-            titleEl.innerHTML = '💎 Bạn đang dùng bản dùng thử';
-        }
-    }
-}
-
 function updateUserDetails() {
     var detailsEl = $('userDetails');
     if (!detailsEl) return;
@@ -1251,45 +1088,6 @@ function updateUserDetails() {
         if (expiryIcon) expiryIcon.className = 'fas fa-infinity';
         if (expiryIconWrap) expiryIconWrap.className = 'detail-icon permanent';
         if (progressWrap) progressWrap.style.display = 'none';
-        return;
-    }
-
-    // ✅ Xử lý riêng cho trial
-    if (currentUser.isTrial === true) {
-        var trialDaysLeft = getDaysRemaining(currentUser);
-        var trialDateStr = '';
-        if (currentUser.expiresAt) {
-            var tDate = getExpiryDate(currentUser.expiresAt);
-            if (tDate && !isNaN(tDate.getTime())) {
-                trialDateStr = tDate.toLocaleDateString('vi-VN');
-            }
-        }
-
-        expiryValue.className = 'detail-value trial';
-        expiryValue.textContent = 'Dùng thử — còn ' + (trialDaysLeft !== null ? trialDaysLeft : '?') + ' ngày';
-
-        var trialSub = '';
-        if (trialDateStr) trialSub = 'Hết hạn: <b>' + trialDateStr + '</b>';
-        if (typeof getTrialRemaining === 'function') {
-            var tRemain = getTrialRemaining();
-            if (trialSub) trialSub += ' · ';
-            trialSub += 'Còn <b>' + tRemain + '</b> lượt nghe/viết';
-        }
-        expirySub.innerHTML = trialSub || 'Tài khoản dùng thử';
-
-        if (expiryIcon) expiryIcon.className = 'fas fa-gem';
-        if (expiryIconWrap) expiryIconWrap.className = 'detail-icon trial';
-
-        if (progressWrap) {
-            progressWrap.style.display = 'block';
-            progressBar.className = 'progress-bar trial';
-            // Tính % còn lại của trial
-            var totalTrialDays = (typeof TRIAL_DAYS === 'number' && TRIAL_DAYS > 0) ? TRIAL_DAYS : 7;
-            var pct = (trialDaysLeft !== null && totalTrialDays > 0)
-                ? Math.max(0, Math.min(100, (trialDaysLeft / totalTrialDays) * 100))
-                : 50;
-            progressBar.style.width = pct + '%';
-        }
         return;
     }
 
@@ -1401,27 +1199,13 @@ function renderRenewalStep1() {
     var daysLeft = getDaysRemaining(currentUser);
     var isExpired = daysLeft !== null && daysLeft <= 0;
     var isWarn = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
-    var isTrialUser = currentUser && currentUser.isTrial === true;
-
     var currentCls = isExpired ? 'expired' : (isWarn ? 'warn' : '');
-    var currentIcon = isExpired ? 'fa-exclamation-triangle'
-                    : (isTrialUser ? 'fa-gem'
-                    : (isWarn ? 'fa-hourglass-half' : 'fa-gem'));
-    var currentTitle = isExpired ? 'Tài khoản đã hết hạn'
-                     : (isTrialUser ? 'Bạn đang dùng bản dùng thử'
-                     : (isWarn ? 'Sắp hết hạn' : 'Tài khoản đang hoạt động'));
-
+    var currentIcon = isExpired ? 'fa-exclamation-triangle' : (isWarn ? 'fa-hourglass-half' : 'fa-gem');
+    var currentTitle = isExpired ? 'Tài khoản đã hết hạn' : (isWarn ? 'Sắp hết hạn' : 'Tài khoản đang hoạt động');
     var currentDesc = '';
-    if (isTrialUser) {
-        var trialDays = daysLeft !== null ? daysLeft : '?';
-        currentDesc = 'Còn <b>' + trialDays + ' ngày</b> dùng thử. Gia hạn để mở khóa toàn bộ!';
-    } else if (daysLeft === null) {
-        currentDesc = 'Vĩnh viễn, không cần gia hạn';
-    } else if (isExpired) {
-        currentDesc = 'Đã hết hạn <b>' + Math.abs(daysLeft) + ' ngày</b> trước.';
-    } else {
-        currentDesc = 'Còn <b>' + daysLeft + ' ngày</b> sử dụng.';
-    }
+    if (daysLeft === null) currentDesc = 'Vĩnh viễn, không cần gia hạn';
+    else if (isExpired) currentDesc = 'Đã hết hạn <b>' + Math.abs(daysLeft) + ' ngày</b> trước.';
+    else currentDesc = 'Còn <b>' + daysLeft + ' ngày</b> sử dụng.';
 
     var packagesHtml = '';
     PACKAGES.forEach(function(p) {
@@ -1481,7 +1265,6 @@ async function goToPayment() {
             transferCode: transferCode,
             status: 'pending',
             method: 'manual',
-            isTrial: currentUser.isTrial === true,   // ✅ log lại để admin biết
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         renewalCurrentReq = { id: reqRef.id, code: transferCode };
@@ -1650,16 +1433,11 @@ async function refreshCurrentUser() {
         currentUser.expiresAt = data.expiresAt || null;
         currentUser.name = data.name || currentUser.name;
 
-        // ✅ Cập nhật lại isTrial (rất quan trọng — sau khi renew, isTrial phải về false)
-        var isTrialUser = (data.isTrial === true) && !data.lastRenewalAt;
-        currentUser.isTrial = isTrialUser;
-
         if (currentUser.role !== 'admin' && currentUser.expiresAt) {
             var expDate = getExpiryDate(currentUser.expiresAt);
             if (expDate && !isNaN(expDate.getTime())) {
                 var isExpired = expDate.getTime() < Date.now();
                 currentUser.isExpiredOnly = isExpired;
-                if (isExpired) currentUser.isTrial = false;  // hết hạn → tắt trial
                 isDemo = isExpired;
             }
         } else if (currentUser.role === 'admin' || !currentUser.expiresAt) {
@@ -1870,14 +1648,11 @@ window.openUserRenewalHistory = async function(email) {
                 if (ne) newExpiryInfo = '<div class="rh-date"><i class="fas fa-calendar-check" style="color:#16a34a"></i> Hạn mới: <b>' + ne.toLocaleDateString('vi-VN') + '</b></div>';
             }
 
-            // Nhãn trial
-            var trialBadge = d.isTrial ? ' <span style="background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;font-size:.6rem;padding:.1rem .35rem;border-radius:50px;font-weight:800;letter-spacing:.3px;margin-left:.25rem">TRIAL</span>' : '';
-
             html +=
                 '<div class="renewal-history-item">' +
                     '<div class="rh-head">' +
                         '<div>' +
-                            '<div class="rh-pkg">' + escapeHtml(d.packageLabel || d.package || 'Gói') + trialBadge + '</div>' +
+                            '<div class="rh-pkg">' + escapeHtml(d.packageLabel || d.package || 'Gói') + '</div>' +
                             '<div class="rh-date"><i class="fas fa-clock"></i> ' + createdStr + '</div>' +
                         '</div>' +
                         '<div class="rh-amount">' + formatMoney(d.amount || 0) + 'đ</div>' +
@@ -2002,9 +1777,7 @@ function loadUsers(forceRefresh) {
                 email: doc.id,
                 name: data.name || '',
                 role: data.role || 'user',
-                expiresAt: data.expiresAt || null,
-                isTrial: data.isTrial || false,
-                hasRenewed: !!data.lastRenewalAt
+                expiresAt: data.expiresAt || null
             });
         });
         usersCache.sort(function(a, b) { return (a.email || '').localeCompare(b.email || ''); });
@@ -2042,7 +1815,7 @@ function renderAdminStats() {
     var now = Date.now();
     var day1 = 24 * 60 * 60 * 1000;
     var day7 = 7 * 24 * 60 * 60 * 1000;
-    var active = 0, online = 0, never = 0, expired = 0, expiring = 0, trialCount = 0;
+    var active = 0, online = 0, never = 0, expired = 0, expiring = 0;
 
     usersOnly.forEach(function(u) {
         var last = lastLoginMap[(u.email || '').toLowerCase()];
@@ -2057,8 +1830,6 @@ function renderAdminStats() {
                 var daysLeft = Math.ceil((d.getTime() - now) / (24 * 60 * 60 * 1000));
                 if (daysLeft < 0) expired++;
                 else if (daysLeft <= 7) expiring++;
-                // Đếm trial (isTrial=true AND chưa từng renew)
-                if (u.isTrial && !u.hasRenewed && daysLeft >= 0) trialCount++;
             }
         }
     });
@@ -2066,18 +1837,18 @@ function renderAdminStats() {
     if (hidden) {
         $('adminStats').innerHTML =
             '<div class="stat-card"><div class="num">' + users + '</div><div class="label">Tổng User</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#3b82f6">' + trialCount + '</div><div class="label">Đang Trial</div></div>' +
+            '<div class="stat-card"><div class="num" style="color:#16a34a">' + online + '</div><div class="label">Đang hoạt động</div></div>' +
             '<div class="stat-card"><div class="num" style="color:#f59e0b">' + expiring + '</div><div class="label">Sắp hết hạn</div></div>' +
             '<div class="stat-card"><div class="num" style="color:#dc2626">' + expired + '</div><div class="label">Hết hạn</div></div>';
     } else {
         $('adminStats').innerHTML =
             '<div class="stat-card"><div class="num">' + users + '</div><div class="label">Tổng User</div></div>' +
             '<div class="stat-card"><div class="num" style="color:#16a34a">' + online + '</div><div class="label">Đang hoạt động</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#3b82f6">' + trialCount + '</div><div class="label">Đang Trial</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#8b5cf6">' + active + '</div><div class="label">Active 7d</div></div>' +
+            '<div class="stat-card"><div class="num" style="color:#3b82f6">' + active + '</div><div class="label">Active 7d</div></div>' +
+            '<div class="stat-card"><div class="num" style="color:#f59e0b">' + admins + '</div><div class="label">Admin</div></div>' +
+            '<div class="stat-card"><div class="num" style="color:#94a3b8">' + never + '</div><div class="label">Chưa login</div></div>' +
             '<div class="stat-card"><div class="num" style="color:#f59e0b">' + expiring + '</div><div class="label">Sắp hết hạn</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#dc2626">' + expired + '</div><div class="label">Hết hạn</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#94a3b8">' + never + '</div><div class="label">Chưa login</div></div>';
+            '<div class="stat-card"><div class="num" style="color:#dc2626">' + expired + '</div><div class="label">Hết hạn</div></div>';
     }
     $('adminUserCount').textContent = users;
 }
@@ -2168,16 +1939,9 @@ function renderUsers(items) {
             }
         }
 
-        // ✅ Badge vai trò: super / admin / trial / user
-        var isTrialUser = u.isTrial === true && !u.hasRenewed;
-        var roleBadge;
-        if (isAdmin) {
-            roleBadge = '<span class="u-role ' + (targetIsSuper ? 'super' : 'admin') + '">' + (targetIsSuper ? '👑 super' : 'admin') + '</span>';
-        } else if (isTrialUser) {
-            roleBadge = '<span class="u-role" style="background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;box-shadow:0 2px 6px rgba(59,130,246,.4)">trial</span>';
-        } else {
-            roleBadge = '<span class="u-role user">user</span>';
-        }
+        var roleBadge = isAdmin
+            ? '<span class="u-role ' + (targetIsSuper ? 'super' : 'admin') + '">' + (targetIsSuper ? '👑 super' : 'admin') + '</span>'
+            : '<span class="u-role user">user</span>';
 
         return '<div class="user-row" data-email="' + escapeHtml(u.email) + '">' +
             '<div class="u-info">' +
@@ -2285,12 +2049,11 @@ function loadRenewals() {
             var timeStr = formatTimeDiff(Date.now() - created.getTime());
             var statusCls = d.status === 'user_paid' ? 'user_paid' : 'pending';
             var statusText = d.status === 'user_paid' ? '⏳ Chờ xác nhận' : '⏱ Chờ CK';
-            var trialTag = d.isTrial ? ' <span style="background:linear-gradient(135deg,#3b82f6,#60a5fa);color:#fff;font-size:.55rem;padding:.1rem .35rem;border-radius:50px;font-weight:800;letter-spacing:.3px;margin-left:.25rem;vertical-align:middle">TRIAL</span>' : '';
             html +=
                 '<div class="renewal-admin-row">' +
                     '<div class="rar-head">' +
                         '<div>' +
-                            '<div class="rar-email">' + escapeHtml(d.name || d.email) + trialTag + '</div>' +
+                            '<div class="rar-email">' + escapeHtml(d.name || d.email) + '</div>' +
                             '<div class="u-email">' + escapeHtml(d.email) + '</div>' +
                             '<div class="rar-sub"><i class="fas fa-clock"></i> ' + timeStr + '</div>' +
                         '</div>' +
@@ -2334,8 +2097,8 @@ window.approveRenewal = async function(reqId) {
 
         await db.collection('allowed_users').doc(req.email).update({
             expiresAt: firebase.firestore.Timestamp.fromDate(newExpiry),
-            isTrial: false,           // ✅ Tắt trial
-            lastRenewalAt: firebase.firestore.FieldValue.serverTimestamp()  // ✅ Đánh dấu đã renew
+            isTrial: false,
+            lastRenewalAt: firebase.firestore.FieldValue.serverTimestamp()
         });
         await db.collection('renewal_requests').doc(reqId).update({
             status: 'confirmed',
@@ -2725,9 +2488,11 @@ function initAuthUI() {
     if ($('dropdownRenewBtn')) $('dropdownRenewBtn').addEventListener('click', function(e) { e.preventDefault(); openRenewalModal(); });
     if ($('expiryRenewBtn')) $('expiryRenewBtn').addEventListener('click', function(e) { e.preventDefault(); openRenewalModal(); });
 
+    // Modal lịch sử gia hạn
     if ($('renewalHistoryClose')) $('renewalHistoryClose').addEventListener('click', function() { $('renewalHistoryModal').classList.remove('show'); });
     if ($('renewalHistoryModal')) $('renewalHistoryModal').addEventListener('click', function(e) { if (e.target === this) $('renewalHistoryModal').classList.remove('show'); });
 
+    // ✅ Nút "Lịch sử gia hạn" trong user dropdown
     if ($('renewalHistoryBtn')) {
         $('renewalHistoryBtn').addEventListener('click', function() {
             $('userDropdown').classList.remove('show');
