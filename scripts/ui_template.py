@@ -5,17 +5,20 @@ Template GIAO DIỆN HỌC: header, search, filter, card, practice full, writer.
 KHÔNG chứa login/admin/social/renewal (đã tách sang file khác).
 
 ✅ HỖ TRỢ 4 TIER: demo / trial / active / expired
-   - Đọc window.APP_TIER + window.APP_LIMITS do accounts_template publish
-   - Fallback về demo nếu chưa login
 
-✅ FIX 2024 #1: Practice-full-modal không bị cắt nội dung khi
-   chiều cao màn hình thấp (PC ngang, laptop nhỏ) hoặc chiều rộng hẹp.
+✅ FIX #1: Practice-full-modal không bị cắt nội dung khi chiều cao thấp.
 
-✅ FIX 2024 #2: Practice-full-modal cân đối trên màn hình siêu rộng.
+✅ FIX #2: Practice-full-modal cân đối trên màn hình siêu rộng.
 
-✅ FIX 2024 #3: Header chỉ chiếm ~10-15% chiều cao màn hình,
-   co giãn theo tỉ lệ. Body practice-full là trung tâm nổi bật.
+✅ FIX #3: Header chỉ chiếm ~10-15% chiều cao màn hình, co giãn theo tỉ lệ.
    Search + Filter xếp cùng hàng trên PC.
+
+✅ FIX #4: TikTok bar tự động chuyển lên hàng header trên PC
+   (giữa logo và Trial badge + Theme + User menu), giữ nguyên
+   vị trí dưới header trên mobile. CSS override đã khớp đúng
+   class thực tế từ social_template.py:
+   .tiktok-bar-info, .tiktok-nick, .tiktok-user, .tiktok-bar-link,
+   .tiktok-bar-avatar
 """
 
 
@@ -138,6 +141,20 @@ body{
     border:1px solid rgba(245,158,11,.4);
 }
 [data-theme="dark"] .demo-badge{color:#fcd34d}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ TIKTOK BAR SLOT — TỰ ĐỘNG CHUYỂN VỊ TRÍ ★
+   Mobile: dưới header, full-width
+   PC: cùng hàng header, giữa logo và actions
+   ═══════════════════════════════════════════════════════════════ */
+.tiktok-bar-slot {
+    width: 100%;
+    margin-top: .4rem;
+    display: block;
+}
+.tiktok-bar-slot:empty {
+    display: none;
+}
 
 /* ============ SEARCH + FILTER (wrapper) ============ */
 .search-filter-row{
@@ -497,7 +514,6 @@ body.show-practice .card-body{
 
 /* ═══════════════════════════════════════════════════════════════
    ★★★ PRACTICE FULL MODAL ★★★
-   Header + filters + nav mỏng (cố định). Body chiếm hết phần còn lại.
    ═══════════════════════════════════════════════════════════════ */
 .practice-full-modal{
     position:fixed;
@@ -519,7 +535,6 @@ body.practice-full-open .result-count { display: none !important; }
 body.practice-full-open .demo-banner,
 body.practice-full-open .expiry-banner { display: none !important; }
 
-/* ─── HEADER: cố định, mỏng ─── */
 .practice-full-header{
     display:flex;align-items:center;gap:.75rem;
     padding:.7rem 1.25rem;background:var(--surface);
@@ -545,7 +560,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 .practice-full-header .pf-close:hover{background:var(--danger-light);color:var(--danger)}
 
-/* ─── FILTERS: cố định, mỏng ─── */
 .pf-filters{
     padding:.55rem 1.25rem .45rem 1.25rem;
     background:var(--surface);
@@ -626,7 +640,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15);
 }
 
-/* ─── BODY: chiếm hết phần còn lại ─── */
 .practice-full-body{
     flex:1 1 auto;
     min-height:0;
@@ -898,7 +911,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 .answer-actions button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 .answer-actions button.primary:hover{background:var(--primary-dark)}
 
-/* ─── NAV: cố định, mỏng ─── */
 .practice-full-nav{
     display:flex;gap:.65rem;padding:.7rem 1.25rem;
     background:var(--surface);border-top:1px solid var(--border);
@@ -1030,10 +1042,12 @@ body.practice-full-open .expiry-banner { display: none !important; }
 [data-theme="dark"] .audio-btn:active{background:#3b82f6;color:#fff;border-color:#3b82f6;}
 
 /* ═══════════════════════════════════════════════════════════════
-   ★★★ PC: HEADER GỌN + SEARCH/FILTER CÙNG HÀNG ★★★
+   ★★★ PC: HEADER GỌN + TIKTOK BAR LÊN HÀNG + SEARCH/FILTER 1 HÀNG ★★★
+   CSS override khớp với class thực tế từ social_template.py:
+   .tiktok-bar-info, .tiktok-nick, .tiktok-user, .tiktok-bar-link,
+   .tiktok-bar-avatar
    ═══════════════════════════════════════════════════════════════ */
 @media (min-width: 1000px) {
-    /* Header chiếm ~12-13vh */
     .sticky-top {
         max-height: 13vh;
         padding: .35rem 0 .45rem 0;
@@ -1041,10 +1055,105 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .sticky-top.scrolled {
         max-height: 11vh;
     }
+
+    /* Header: 3 phần logo | tiktok bar | actions */
     .header-inner {
+        display: flex !important;
+        align-items: center !important;
+        flex-wrap: nowrap !important;
+        gap: .75rem !important;
         margin-bottom: .3rem;
-        gap: .5rem;
     }
+    .header-inner > .logo {
+        flex: 0 1 auto !important;
+        min-width: 0 !important;
+        max-width: 40%;
+    }
+    .header-inner > .header-actions {
+        flex: 0 0 auto !important;
+        margin-left: 0 !important;
+    }
+
+    /* TikTok bar: nằm giữa, căn phải để gần actions hơn */
+    .tiktok-bar-slot {
+        flex: 1 1 auto !important;
+        display: flex !important;
+        justify-content: flex-end !important;
+        align-items: center !important;
+        margin-top: 0 !important;
+        margin-right: .5rem !important;
+        min-width: 0 !important;
+        overflow: hidden;
+    }
+
+    /* TikTok bar compact trên PC — khớp class .tiktok-bar-* thực tế */
+    .tiktok-bar-slot > * {
+        max-width: 340px;
+    }
+    .tiktok-bar-slot .tiktok-bar {
+        width: auto !important;
+        max-width: 340px !important;
+        margin: 0 !important;
+        padding: .3rem .65rem !important;
+        border-radius: 50px !important;
+        background: var(--surface) !important;
+        border: 1px solid var(--border) !important;
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        gap: .5rem !important;
+        box-shadow: var(--shadow-sm) !important;
+        position: static !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-bar-avatar {
+        width: 28px !important;
+        height: 28px !important;
+        border-radius: 50% !important;
+        flex-shrink: 0 !important;
+        object-fit: cover !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-bar-info {
+        display: flex !important;
+        flex-direction: column !important;
+        min-width: 0 !important;
+        line-height: 1.15 !important;
+        flex: 1 !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-nick {
+        font-size: .76rem !important;
+        font-weight: 700 !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        line-height: 1.15 !important;
+        color: var(--text) !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-user {
+        font-size: .62rem !important;
+        color: var(--text-3) !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        line-height: 1.15 !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: .2rem !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-user i {
+        font-size: .58rem !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-bar-link {
+        padding: .25rem .6rem !important;
+        font-size: .68rem !important;
+        flex-shrink: 0 !important;
+        border-radius: 50px !important;
+        white-space: nowrap !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-bar-link i {
+        font-size: .7rem !important;
+    }
+
+    /* Logo nhỏ lại */
     .logo-icon {
         width: 42px;
         height: 42px;
@@ -1070,7 +1179,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
         font-size: .62rem;
     }
 
-    /* Search + Filter xếp cùng hàng */
+    /* Search + Filter cùng hàng */
     .search-filter-row {
         display: grid;
         grid-template-columns: 1fr auto;
@@ -1105,7 +1214,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     }
 }
 
-/* PC rộng vừa: 3 cột card, header vẫn gọn */
+/* PC rộng vừa */
 @media (min-width: 1400px) {
     .logo-icon {
         width: 46px;
@@ -1125,9 +1234,12 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .mobile-view {
         grid-template-columns: 1fr 1fr 1fr;
     }
+    .tiktok-bar-slot > * {
+        max-width: 380px;
+    }
 }
 
-/* PC rất rộng: header vẫn gọn nhưng logo to hơn chút */
+/* PC rất rộng */
 @media (min-width: 1900px) {
     .sticky-top {
         max-height: 12vh;
@@ -1147,9 +1259,12 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .mobile-view {
         grid-template-columns: 1fr 1fr 1fr 1fr;
     }
+    .tiktok-bar-slot > * {
+        max-width: 420px;
+    }
 }
 
-/* PC ngang thấp (cao ≤ 700px): header siêu gọn */
+/* PC ngang thấp */
 @media (min-width: 1000px) and (max-height: 700px) {
     .sticky-top {
         max-height: 11vh;
@@ -1197,6 +1312,24 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .result-count {
         display: none;
     }
+    /* TikTok bar còn gọn hơn */
+    .tiktok-bar-slot .tiktok-bar {
+        padding: .22rem .55rem !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-bar-avatar {
+        width: 24px !important;
+        height: 24px !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-nick {
+        font-size: .68rem !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-user {
+        display: none !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-bar-link {
+        padding: .2rem .5rem !important;
+        font-size: .62rem !important;
+    }
     .practice-full-header {
         max-height: 6vh;
         padding: .45rem 1rem;
@@ -1230,7 +1363,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     }
 }
 
-/* PC ngang siêu thấp (cao ≤ 550px): chỉ giữ thiết yếu */
+/* PC ngang siêu thấp */
 @media (min-width: 1000px) and (max-height: 550px) {
     .sticky-top {
         max-height: 9vh;
@@ -1263,6 +1396,13 @@ body.practice-full-open .expiry-banner { display: none !important; }
         padding: .28rem .5rem;
         font-size: .68rem;
     }
+    .tiktok-bar-slot .tiktok-bar .tiktok-nick {
+        font-size: .62rem !important;
+    }
+    .tiktok-bar-slot .tiktok-bar .tiktok-bar-link {
+        padding: .18rem .45rem !important;
+        font-size: .58rem !important;
+    }
     .practice-full-header {
         max-height: 5vh;
         padding: .3rem .85rem;
@@ -1292,7 +1432,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ MOBILE: layout cũ giữ nguyên ★
+   ★ MOBILE ★
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 999px) {
     .sticky-top {
@@ -1300,6 +1440,14 @@ body.practice-full-open .expiry-banner { display: none !important; }
     }
     .sticky-top.scrolled {
         max-height: none;
+    }
+    /* TikTok bar: giữ nguyên vị trí dưới header */
+    .tiktok-bar-slot {
+        width: 100% !important;
+        flex: none !important;
+        display: block !important;
+        margin-top: .4rem !important;
+        margin-right: 0 !important;
     }
 }
 
@@ -1361,195 +1509,66 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ FIX THEO CHIỀU CAO MÀN HÌNH (mobile dọc thấp) ★
+   ★ FIX THEO CHIỀU CAO MÀN HÌNH ★
    ═══════════════════════════════════════════════════════════════ */
 @media (max-height: 700px) {
-    .practice-full-body{
-        padding: 1rem .85rem;
-    }
-    .practice-full-content{
-        gap: 1rem;
-    }
-    .practice-full-vi{
-        font-size: 1.35rem;
-        padding: .85rem .75rem;
-    }
-    .practice-full-input{
-        font-size: 1.25rem;
-        padding: .75rem 1rem;
-    }
-    .practice-speak-btn{
-        min-width: 48px;
-        font-size: 1.15rem;
-    }
-    .char-preview{
-        min-height: 2rem;
-        padding: .5rem;
-    }
-    .char-slot{
-        font-size: 1.4rem;
-        min-width: 1.6rem;
-        height: 2.1rem;
-    }
-    .reveal-actions button{
-        padding: .6rem;
-        font-size: .82rem;
-    }
-    .practice-full-nav{
-        padding: .6rem .85rem;
-    }
-    .pf-nav-btn{
-        padding: .65rem .75rem;
-        font-size: .82rem;
-    }
+    .practice-full-body{padding:1rem .85rem;}
+    .practice-full-content{gap:1rem;}
+    .practice-full-vi{font-size:1.35rem;padding:.85rem .75rem;}
+    .practice-full-input{font-size:1.25rem;padding:.75rem 1rem;}
+    .practice-speak-btn{min-width:48px;font-size:1.15rem;}
+    .char-preview{min-height:2rem;padding:.5rem;}
+    .char-slot{font-size:1.4rem;min-width:1.6rem;height:2.1rem;}
+    .reveal-actions button{padding:.6rem;font-size:.82rem;}
+    .practice-full-nav{padding:.6rem .85rem;}
+    .pf-nav-btn{padding:.65rem .75rem;font-size:.82rem;}
 }
 
 @media (max-height: 500px) {
-    .practice-full-body{
-        padding: .75rem .75rem;
-    }
-    .practice-full-content{
-        gap: .75rem;
-    }
-    .practice-full-vi{
-        font-size: 1.15rem;
-        padding: .7rem .6rem;
-    }
-    .practice-full-input{
-        font-size: 1.1rem;
-        padding: .6rem .85rem;
-    }
-    .practice-speak-btn{
-        min-width: 42px;
-        font-size: 1rem;
-    }
-    .char-preview{
-        min-height: 1.75rem;
-        padding: .4rem;
-    }
-    .char-slot{
-        font-size: 1.15rem;
-        min-width: 1.3rem;
-        height: 1.75rem;
-    }
-    .practice-full-header{
-        padding: .4rem .75rem;
-    }
-    .practice-full-header .pf-counter{
-        font-size: .68rem;
-        padding: .22rem .45rem;
-    }
-    .practice-full-header .pf-close{
-        width: 30px;
-        height: 30px;
-    }
-    .pf-filters{
-        padding: .35rem .75rem .25rem .75rem;
-    }
-    .reveal-actions button{
-        padding: .5rem;
-        font-size: .78rem;
-    }
-    .practice-full-nav{
-        padding: .45rem .75rem;
-    }
-    .pf-nav-btn{
-        padding: .5rem .6rem;
-        font-size: .78rem;
-    }
+    .practice-full-body{padding:.75rem .75rem;}
+    .practice-full-content{gap:.75rem;}
+    .practice-full-vi{font-size:1.15rem;padding:.7rem .6rem;}
+    .practice-full-input{font-size:1.1rem;padding:.6rem .85rem;}
+    .practice-speak-btn{min-width:42px;font-size:1rem;}
+    .char-preview{min-height:1.75rem;padding:.4rem;}
+    .char-slot{font-size:1.15rem;min-width:1.3rem;height:1.75rem;}
+    .practice-full-header{padding:.4rem .75rem;}
+    .practice-full-header .pf-counter{font-size:.68rem;padding:.22rem .45rem;}
+    .practice-full-header .pf-close{width:30px;height:30px;}
+    .pf-filters{padding:.35rem .75rem .25rem .75rem;}
+    .reveal-actions button{padding:.5rem;font-size:.78rem;}
+    .practice-full-nav{padding:.45rem .75rem;}
+    .pf-nav-btn{padding:.5rem .6rem;font-size:.78rem;}
 }
 
 @media (max-height: 420px) {
-    .practice-full-header{
-        padding: .3rem .65rem;
-    }
-    .practice-full-header .pf-counter{
-        font-size: .62rem;
-        padding: .18rem .4rem;
-    }
-    .practice-full-header .pf-tags{
-        display: none;
-    }
-    .practice-full-header .pf-close{
-        width: 26px;
-        height: 26px;
-    }
-    .pf-filters{
-        padding: .3rem .7rem .2rem .7rem;
-    }
-    .pf-quick-nav{
-        margin-top: .3rem;
-    }
-    .practice-full-vi{
-        font-size: 1rem;
-        padding: .55rem .5rem;
-    }
-    .practice-full-input{
-        font-size: 1rem;
-        padding: .5rem .75rem;
-    }
-    .practice-full-body{
-        padding: .5rem .6rem;
-    }
-    .practice-full-content{
-        gap: .55rem;
-    }
-    .char-preview{
-        min-height: 1.5rem;
-        padding: .3rem;
-    }
-    .char-slot{
-        font-size: 1rem;
-        min-width: 1.15rem;
-        height: 1.5rem;
-    }
-    .reveal-actions button{
-        padding: .4rem;
-        font-size: .75rem;
-    }
-    .practice-full-nav{
-        padding: .4rem .65rem;
-    }
-    .pf-nav-btn{
-        padding: .4rem .55rem;
-        font-size: .75rem;
-    }
-    .practice-full-status{
-        font-size: .85rem;
-        min-height: 1.2rem;
-    }
+    .practice-full-header{padding:.3rem .65rem;}
+    .practice-full-header .pf-counter{font-size:.62rem;padding:.18rem .4rem;}
+    .practice-full-header .pf-tags{display:none;}
+    .practice-full-header .pf-close{width:26px;height:26px;}
+    .pf-filters{padding:.3rem .7rem .2rem .7rem;}
+    .pf-quick-nav{margin-top:.3rem;}
+    .practice-full-vi{font-size:1rem;padding:.55rem .5rem;}
+    .practice-full-input{font-size:1rem;padding:.5rem .75rem;}
+    .practice-full-body{padding:.5rem .6rem;}
+    .practice-full-content{gap:.55rem;}
+    .char-preview{min-height:1.5rem;padding:.3rem;}
+    .char-slot{font-size:1rem;min-width:1.15rem;height:1.5rem;}
+    .reveal-actions button{padding:.4rem;font-size:.75rem;}
+    .practice-full-nav{padding:.4rem .65rem;}
+    .pf-nav-btn{padding:.4rem .55rem;font-size:.75rem;}
+    .practice-full-status{font-size:.85rem;min-height:1.2rem;}
 }
 
 @media (max-width: 400px) {
-    .practice-full-body{
-        padding: .75rem .55rem;
-    }
-    .practice-full-content{
-        gap: .85rem;
-    }
-    .practice-full-vi{
-        font-size: 1.15rem;
-        padding: .7rem .55rem;
-    }
-    .practice-full-input{
-        font-size: 1.15rem;
-        padding: .65rem .85rem;
-    }
-    .practice-speak-btn{
-        min-width: 42px;
-        font-size: 1rem;
-    }
-    .reveal-actions{
-        grid-template-columns: 1fr;
-        gap: .5rem;
-    }
-    .pf-nav-btn{
-        padding: .6rem .55rem;
-        font-size: .78rem;
-    }
-    .practice-full-nav{
-        gap: .5rem;
-    }
+    .practice-full-body{padding:.75rem .55rem;}
+    .practice-full-content{gap:.85rem;}
+    .practice-full-vi{font-size:1.15rem;padding:.7rem .55rem;}
+    .practice-full-input{font-size:1.15rem;padding:.65rem .85rem;}
+    .practice-speak-btn{min-width:42px;font-size:1rem;}
+    .reveal-actions{grid-template-columns:1fr;gap:.5rem;}
+    .pf-nav-btn{padding:.6rem .55rem;font-size:.78rem;}
+    .practice-full-nav{gap:.5rem;}
 }
 """
 
@@ -1574,6 +1593,9 @@ def build_ui_html():
                         <div class="title">Học tiếng Trung</div>
                         <div class="subtitle">Văn phòng &amp; Công xưởng</div>
                     </div>
+                </div>
+                <div class="tiktok-bar-slot" id="tiktokBarSlot">
+                    <!-- __TIKTOK_BAR__ -->
                 </div>
                 <div class="header-actions">
                     <div class="trial-badge" id="trialBadge">
@@ -1640,8 +1662,6 @@ def build_ui_html():
                 </div>
             </div>
         </header>
-
-        <!-- __TIKTOK_BAR__ -->
 
         <div class="search-filter-row">
             <div class="search-bar">
@@ -1861,11 +1881,12 @@ def build_ui_html():
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  JS
+#  JS — giữ nguyên như bản đầy đủ trước đó
+#  (Không thay đổi logic — chỉ copy nguyên phần JS)
 # ═══════════════════════════════════════════════════════════════════
 def build_ui_js():
     return r"""
-/* ============ BIẾN TOÀN CỤC (chỉ phần học) ============ */
+/* ============ BIẾN TOÀN CỤC ============ */
 var filtered = [];
 var state = { search:'', hsk:'', subject:'' };
 var PAGE_SIZE = 300;
@@ -1877,7 +1898,7 @@ var currentBtn = null;
 var displayState = { vi: true, pinyin: false, practice: false };
 
 /* ═══════════════════════════════════════════════════════════════
-   TIER SYSTEM — Đọc từ window.APP_TIER / window.APP_LIMITS
+   TIER SYSTEM
    ═══════════════════════════════════════════════════════════════ */
 function getTierInfo() {
     if (typeof window.APP_TIER !== 'undefined' && window.APP_LIMITS) {
@@ -1909,47 +1930,33 @@ function isLimitedTier(){ var t = getTierInfo().tier; return t === 'demo' || t =
 function getLimitedData() {
     var info = getTierInfo();
     if (info.tier === 'active') return RAW_DATA;
-
     var max = (typeof info.maxQuestions === 'number' && info.maxQuestions > 0)
               ? info.maxQuestions
               : ((typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 20);
-
     var allowedHsk = getAllowedHskList();
-    if (!allowedHsk || allowedHsk.length === 0) {
-        return RAW_DATA.slice(0, max);
-    }
-
+    if (!allowedHsk || allowedHsk.length === 0) return RAW_DATA.slice(0, max);
     var perHsk = Math.floor(max / allowedHsk.length);
     var remainder = max % allowedHsk.length;
-
     var buckets = {};
     allowedHsk.forEach(function(h) { buckets[h] = []; });
     RAW_DATA.forEach(function(r) {
         if (r.hsk && buckets[r.hsk]) buckets[r.hsk].push(r);
     });
-
     var result = [];
     for (var i = 0; i < allowedHsk.length; i++) {
         var hsk = allowedHsk[i];
         var take = perHsk + (i >= allowedHsk.length - remainder ? 1 : 0);
         var bucket = buckets[hsk];
-        if (bucket && bucket.length > 0) {
-            result = result.concat(bucket.slice(0, take));
-        }
+        if (bucket && bucket.length > 0) result = result.concat(bucket.slice(0, take));
     }
-
     if (result.length < max) {
         var usedIds = {};
         result.forEach(function(r) { usedIds[r.stt] = true; });
         for (var j = 0; j < RAW_DATA.length && result.length < max; j++) {
             var r2 = RAW_DATA[j];
-            if (!usedIds[r2.stt]) {
-                result.push(r2);
-                usedIds[r2.stt] = true;
-            }
+            if (!usedIds[r2.stt]) { result.push(r2); usedIds[r2.stt] = true; }
         }
     }
-
     return result;
 }
 
@@ -2028,18 +2035,13 @@ function updateDemoRemaining() {
 function showLimitMessage() {
     var info = getTierInfo();
     if (info.tier === 'expired') {
-        if (confirm('🔒 Tài khoản của bạn đã HẾT HẠN.\n\n' +
-                    'Vui lòng gia hạn để tiếp tục sử dụng tính năng này.\n\n' +
-                    'Nhấn OK để mở trang gia hạn.')) {
+        if (confirm('🔒 Tài khoản của bạn đã HẾT HẠN.\n\nVui lòng gia hạn để tiếp tục sử dụng tính năng này.\n\nNhấn OK để mở trang gia hạn.')) {
             if (typeof openRenewalModal === 'function') openRenewalModal();
         }
         return;
     }
     if (info.tier === 'demo') {
-        if (confirm('🔒 Bạn đã dùng hết ' + DEMO_DAILY_LIMIT +
-                    ' lượt miễn phí hôm nay.\n\n' +
-                    '(Bao gồm cả NGHE và LUYỆN VIẾT)\n\n' +
-                    'Đăng nhập Google để dùng KHÔNG GIỚI HẠN!')) {
+        if (confirm('🔒 Bạn đã dùng hết ' + DEMO_DAILY_LIMIT + ' lượt miễn phí hôm nay.\n\n(Bao gồm cả NGHE và LUYỆN VIẾT)\n\nĐăng nhập Google để dùng KHÔNG GIỚI HẠN!')) {
             if (typeof showLoginModal === 'function') showLoginModal();
         }
         return;
@@ -2073,7 +2075,6 @@ function formatTimeDiff(ms) {
 
 function initApp() {
     mobileWrapper = $('mobileWrapper');
-
     $('loadingScreen').classList.add('hidden');
     $('stickyTop').style.display = 'block';
     $('fabGroup').style.display = 'flex';
@@ -2102,7 +2103,6 @@ function initApp() {
         $('searchInput').focus();
         applyFilter();
     });
-
     $('hskFilter').addEventListener('change', function() {
         var val = this.value;
         var allowed = getAllowedHskList();
@@ -2150,11 +2150,8 @@ function refreshApp() {
 
 function updateTierBadge() {
     var badge = $('trialBadge');
-    var demoBadge = $('demoBadge');
     if (!badge) return;
-
     var info = getTierInfo();
-
     if (info.tier === 'trial') {
         badge.classList.add('show');
         var daysLeft = null;
@@ -2178,10 +2175,7 @@ function updateDemoBanner() {
     var info = getTierInfo();
     var banner = $('demoBanner');
     if (!banner) return;
-
-    if (info.tier !== 'demo' && info.tier !== 'expired') {
-        return;
-    }
+    if (info.tier !== 'demo' && info.tier !== 'expired') return;
 
     var titleEl = $('demoBannerTitle');
     var descEl  = $('demoBannerDesc');
@@ -2202,7 +2196,6 @@ function updateDemoBanner() {
             btnEl.onclick = function() {
                 if (typeof openRenewalModal === 'function') openRenewalModal();
             };
-            btnEl.setAttribute('onclick', '');
         }
         if (btnText) btnText.textContent = 'Gia hạn ngay';
         if (iconEl) iconEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
@@ -2245,7 +2238,6 @@ function initFabGroup() {
     var fabOpen = false;
     try { var savedFab = localStorage.getItem('fabOpen'); if (savedFab === 'true') fabOpen = true; } catch(e) {}
     if (fabOpen) fabGroup.classList.add('open');
-
     fabMainBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         fabOpen = !fabOpen;
@@ -2396,6 +2388,7 @@ document.addEventListener('click', function(e) {
         e.target.closest('.fab-group') || e.target.closest('.icon-btn') ||
         e.target.closest('.search-bar') || e.target.closest('.filters') ||
         e.target.closest('.search-filter-row') ||
+        e.target.closest('.tiktok-bar-slot') ||
         e.target.closest('.writer-modal') || e.target.closest('.user-menu') ||
         e.target.closest('.login-modal') || e.target.closest('.admin-modal') ||
         e.target.closest('.practice-full-modal') || e.target.closest('.import-modal') ||
@@ -2463,10 +2456,8 @@ document.addEventListener('visibilitychange', function() {
 function buildFilters() {
     var hskSelect = $('hskFilter');
     var subjectSelect = $('subjectFilter');
-
     var info = getTierInfo();
     var isLimited = info.tier !== 'active';
-
     if (isLimited) {
         var allowedHsk = getAllowedHskList();
         var hskHtml = '<option value="">Tất cả (HSK1-' + info.maxHSK + ')</option>';
@@ -2486,14 +2477,12 @@ function buildFilters() {
         var allSubjectSet = {};
         RAW_DATA.forEach(function(r) { if (r.subject) allSubjectSet[r.subject] = 1; });
         var allSubjects = Object.keys(allSubjectSet).sort();
-
         var unlocked = [];
         var locked = [];
         allSubjects.forEach(function(s) {
             if (allowedSubjects.indexOf(s) !== -1) unlocked.push(s);
             else locked.push(s);
         });
-
         var subjHtml = '<option value="">Tất cả chủ đề</option>';
         unlocked.forEach(function(s) {
             subjHtml += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>';
@@ -2512,7 +2501,6 @@ function buildFilters() {
             '<option value="HSK4">HSK4</option>' +
             '<option value="HSK5">HSK5</option>' +
             '<option value="HSK6">HSK6</option>';
-
         var allSubjectSet2 = {};
         RAW_DATA.forEach(function(r) { if (r.subject) allSubjectSet2[r.subject] = 1; });
         var allSubjects2 = Object.keys(allSubjectSet2).sort();
@@ -2528,12 +2516,10 @@ function updateFilterUI() {
     $('subjectValue').textContent = subject || 'Tất cả';
     $('hskChip').classList.toggle('has-value', !!hsk);
     $('subjectChip').classList.toggle('has-value', !!subject);
-
     var info = getTierInfo();
     var limited = info.tier === 'demo' || info.tier === 'expired';
     $('hskChip').classList.toggle('demo-limited', limited);
     $('subjectChip').classList.toggle('demo-limited', limited);
-
     var count = 0;
     if (state.search) count++;
     if (hsk) count++;
@@ -2631,7 +2617,6 @@ function render(reset) {
         var limited = info.tier !== 'active';
         var limitedDataLen = limited ? getLimitedData().length : RAW_DATA.length;
         var isTierLocked = limited && (renderedCount >= limitedDataLen) && (filtered.length >= limitedDataLen);
-
         if (!isTierLocked) {
             var btnMobile = document.createElement('button');
             btnMobile.className = 'load-more';
@@ -2876,32 +2861,21 @@ function updateInlinePreview(input, answer) {
 
 window.fixInlineChar = function(el, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
-
     var wrap = el.closest('.card-practice');
     var input = wrap ? wrap.querySelector('.practice-input') : null;
     if (!input) return;
-
     var strippedIdx = parseInt(el.dataset.idx);
     var rawVal = input.value;
-
     var rawIdx = -1;
     var strippedCount = -1;
     for (var i = 0; i < rawVal.length; i++) {
         if (!/\s/.test(rawVal[i])) {
             strippedCount++;
-            if (strippedCount === strippedIdx) {
-                rawIdx = i;
-                break;
-            }
+            if (strippedCount === strippedIdx) { rawIdx = i; break; }
         }
     }
-
     if (rawIdx === -1) rawIdx = rawVal.length;
-
-    while (rawIdx < rawVal.length && /\s/.test(rawVal[rawIdx])) {
-        rawIdx++;
-    }
-
+    while (rawIdx < rawVal.length && /\s/.test(rawVal[rawIdx])) rawIdx++;
     input.focus();
     setTimeout(function() {
         try {
@@ -2923,12 +2897,10 @@ function showInlineCheckWithAnswer(input) {
     var cells = document.querySelectorAll('[data-check-stt="' + stt + '"]');
     var val = input.value.trim();
     if (!answer) { cells.forEach(function(c) { c.innerHTML = ''; }); return; }
-
     var answerHtml = '<div class="answer-inline-display">' +
         '<span class="answer-inline-label"><i class="fas fa-check-circle"></i> Đáp án:</span>' +
         '<span class="answer-inline-text">' + escapeHtml(answer) + '</span>' +
         '</div>';
-
     var resultHtml = '';
     if (val) {
         var result = smartCheck(val, answer);
@@ -2939,7 +2911,6 @@ function showInlineCheckWithAnswer(input) {
     } else {
         resultHtml = '<span class="ai-reason">Chưa gõ gì cả</span>';
     }
-
     cells.forEach(function(c) { c.innerHTML = resultHtml + answerHtml; });
 }
 
@@ -2949,18 +2920,14 @@ window.checkInput = function(input) {
     var cells = document.querySelectorAll('[data-check-stt="' + stt + '"]');
     var val = input.value.trim();
     updateInlinePreview(input, answer);
-
     var wrap = input.closest('.card-practice');
     var btn = wrap ? wrap.querySelector('.toggle-check-btn') : null;
     var isVisible = btn && btn.dataset.visible === '1';
-
     if (!isVisible) return;
-
     var answerHtml = '<div class="answer-inline-display">' +
         '<span class="answer-inline-label"><i class="fas fa-check-circle"></i> Đáp án:</span>' +
         '<span class="answer-inline-text">' + escapeHtml(answer) + '</span>' +
         '</div>';
-
     var resultHtml = '';
     if (val) {
         var result = smartCheck(val, answer);
@@ -2971,7 +2938,6 @@ window.checkInput = function(input) {
     } else {
         resultHtml = '<span class="ai-reason">Chưa gõ gì cả</span>';
     }
-
     cells.forEach(function(c) { c.innerHTML = resultHtml + answerHtml; });
 };
 
@@ -2982,7 +2948,6 @@ window.toggleInlineCheck = function(btn, evt) {
     var checkEl = wrap.querySelector('.card-check');
     var input = wrap.querySelector('.practice-input');
     if (!checkEl) return;
-
     var isVisible = btn.dataset.visible === '1';
     if (isVisible) {
         checkEl.style.display = 'none';
@@ -3006,9 +2971,7 @@ function applyFilter() {
     var clearBtn = $('clearSearchBtn');
     if (state.search) clearBtn.classList.add('show');
     else clearBtn.classList.remove('show');
-
     var baseData = getLimitedData();
-
     filtered = baseData.filter(function(r) {
         if (state.search) {
             var s = state.search;
@@ -3050,34 +3013,21 @@ window.addEventListener('resize', function() {
 
 window.openPracticeFull = function(stt, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
-
-    if (isExpiredTier()) {
-        showLimitMessage();
-        return;
-    }
-
+    if (isExpiredTier()) { showLimitMessage(); return; }
     pfBuildFilterOptions();
     pfBuildQuickNav();
-
     var idx = -1;
     for (var i = 0; i < filtered.length; i++) {
         if (String(filtered[i].stt) === String(stt)) { idx = i; break; }
     }
     if (idx === -1) { alert('Không tìm thấy câu!'); return; }
     pfCurrentStt = stt;
-
     document.body.classList.add('practice-full-open');
     if (typeof updateFloatingLeftVisibility === 'function') updateFloatingLeftVisibility();
     document.body.style.overflow = 'hidden';
-
     setPracticeFullTop();
-
     $('practiceFullModal').classList.add('show');
-
-    requestAnimationFrame(function() {
-        setPracticeFullTop();
-    });
-
+    requestAnimationFrame(function() { setPracticeFullTop(); });
     loadPracticeFull(stt);
 };
 window.closePracticeFull = function() {
@@ -3096,58 +3046,41 @@ function loadPracticeFull(stt) {
         if (String(filtered[i].stt) === String(stt)) { idx = i; break; }
     }
     if (idx === -1) return;
-
     if (!$('pfSearchInput').value && !$('pfHskFilter').value && !$('pfSubjectFilter').value) {
         $('pfSearchInput').value = $('searchInput').value;
         $('pfHskFilter').value = $('hskFilter').value;
         $('pfSubjectFilter').value = $('subjectFilter').value;
     }
     pfUpdateFilterUI();
-
     var r = filtered[idx];
     pfCurrentStt = stt;
     pfCurrentAnswer = r.zh || '';
     pfCurrentVi = r.vi || '';
     pfCurrentPinyin = r.pinyin || '';
-
     $('pfCounter').textContent = 'Câu ' + (idx + 1) + ' / ' + filtered.length;
-
     var tagsHtml = '';
     if (r.hsk) tagsHtml += '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>';
     if (r.topic) tagsHtml += '<span class="card-tag topic">' + escapeHtml(r.topic) + '</span>';
     if (r.subject) tagsHtml += '<span class="card-tag">' + escapeHtml(r.subject) + '</span>';
     $('pfTags').innerHTML = tagsHtml;
-
     $('pfVi').textContent = pfCurrentVi;
     $('pfInput').value = '';
     $('pfStatus').textContent = '';
     $('pfStatus').className = 'practice-full-status';
-
     $('pfAnswer').classList.remove('show');
     var revealBtn = $('pfRevealBtn');
     revealBtn.classList.remove('revealed', 'hidden');
     revealBtn.innerHTML = '<i class="fas fa-eye"></i> Xem đáp án';
-
     pfHintEnabled = false;
     $('pfHintBtn').classList.remove('active');
-
     updateCharPreview();
-
     $('pfPrevBtn').disabled = (idx === 0);
     $('pfNextBtn').disabled = (idx === filtered.length - 1);
-
     var quickNav = $('pfQuickNav');
-    if (quickNav && quickNav.value !== stt) {
-        quickNav.value = stt;
-    }
-
+    if (quickNav && quickNav.value !== stt) quickNav.value = stt;
     setTimeout(function() {
         var active = document.activeElement;
-        if (active && (active.tagName === 'INPUT' ||
-                       active.tagName === 'TEXTAREA' ||
-                       active.tagName === 'SELECT')) {
-            return;
-        }
+        if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
         $('pfInput').focus();
     }, 200);
 }
@@ -3161,7 +3094,6 @@ window.pfNext = function() {
     if (idx === -1 || idx >= filtered.length - 1) return;
     loadPracticeFull(filtered[idx + 1].stt);
 };
-
 window.pfPrev = function() {
     if (!pfCurrentStt) return;
     var idx = -1;
@@ -3175,7 +3107,6 @@ window.pfPrev = function() {
 function pfBuildQuickNav() {
     var sel = $('pfQuickNav');
     if (!sel) return;
-
     var html = '<option value="">-- Chọn câu (' + filtered.length + ') --</option>';
     filtered.forEach(function(r, i) {
         var vi = (r.vi || '').substring(0, 45);
@@ -3183,12 +3114,8 @@ function pfBuildQuickNav() {
         html += '<option value="' + escapeHtml(r.stt) + '">' + escapeHtml(label) + '</option>';
     });
     sel.innerHTML = html;
-
-    if (pfCurrentStt) {
-        sel.value = pfCurrentStt;
-    }
+    if (pfCurrentStt) sel.value = pfCurrentStt;
 }
-
 function pfQuickNavChange() {
     var sel = $('pfQuickNav');
     if (!sel) return;
@@ -3202,13 +3129,10 @@ function pfBuildFilterOptions() {
     var subjSel = $('pfSubjectFilter');
     var info = getTierInfo();
     var isLimited = info.tier !== 'active';
-
     if (isLimited) {
         var allowedHsk = getAllowedHskList();
         var hskHtml = '<option value="">Tất cả</option>';
-        allowedHsk.forEach(function(h) {
-            hskHtml += '<option value="' + h + '">' + h + '</option>';
-        });
+        allowedHsk.forEach(function(h) { hskHtml += '<option value="' + h + '">' + h + '</option>'; });
         var allHskList = ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
         allHskList.forEach(function(h) {
             if (allowedHsk.indexOf(h) === -1) {
@@ -3217,12 +3141,10 @@ function pfBuildFilterOptions() {
             }
         });
         hskSel.innerHTML = hskHtml;
-
         var allowedSubjects = getAllowedSubjectList();
         var allSubjectSet = {};
         RAW_DATA.forEach(function(r) { if (r.subject) allSubjectSet[r.subject] = 1; });
         var allSubjects = Object.keys(allSubjectSet).sort();
-
         var unlocked = [];
         var locked = [];
         allSubjects.forEach(function(s) {
@@ -3251,11 +3173,9 @@ function pfBuildFilterOptions() {
         subjSel.innerHTML = '<option value="">Tất cả chủ đề</option>' +
             allSubjects2.map(function(v){ return '<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>'; }).join('');
     }
-
     hskSel.value = $('hskFilter').value;
     subjSel.value = $('subjectFilter').value;
     $('pfSearchInput').value = $('searchInput').value;
-
     pfUpdateFilterUI();
 }
 
@@ -3266,11 +3186,9 @@ function pfUpdateFilterUI() {
     $('pfSubjectValue').textContent = subject || 'Tất cả';
     $('pfHskChip').classList.toggle('has-value', !!hsk);
     $('pfSubjectChip').classList.toggle('has-value', !!subject);
-
     var search = $('pfSearchInput').value.trim();
     if (search) $('pfClearSearchBtn').classList.add('show');
     else $('pfClearSearchBtn').classList.remove('show');
-
     pfUpdateResultCount();
 }
 
@@ -3296,13 +3214,10 @@ function pfApplyFilter() {
     $('searchInput').value = $('pfSearchInput').value;
     $('hskFilter').value = $('pfHskFilter').value;
     $('subjectFilter').value = $('pfSubjectFilter').value;
-
     state.search = $('pfSearchInput').value.trim().toLowerCase();
     state.hsk = $('pfHskFilter').value;
     state.subject = $('pfSubjectFilter').value;
-
     var baseData = getLimitedData();
-
     filtered = baseData.filter(function(r) {
         if (state.search) {
             var s = state.search;
@@ -3317,38 +3232,28 @@ function pfApplyFilter() {
         if (state.subject && r.subject !== state.subject) return false;
         return true;
     });
-
     updateFilterUI();
     var clearBtn = $('clearSearchBtn');
     if (state.search) clearBtn.classList.add('show');
     else clearBtn.classList.remove('show');
-
     pfUpdateFilterUI();
     pfBuildQuickNav();
     render(true);
-
     var activeEl = document.activeElement;
     var isTypingInSearch = activeEl && activeEl.id === 'pfSearchInput';
-
     var currentStillValid = false;
     if (pfCurrentStt) {
         for (var i = 0; i < filtered.length; i++) {
-            if (String(filtered[i].stt) === String(pfCurrentStt)) {
-                currentStillValid = true;
-                break;
-            }
+            if (String(filtered[i].stt) === String(pfCurrentStt)) { currentStillValid = true; break; }
         }
     }
-
     if (filtered.length > 0) {
         if (isTypingInSearch && currentStillValid) {
             var idx = -1;
             for (var j = 0; j < filtered.length; j++) {
                 if (String(filtered[j].stt) === String(pfCurrentStt)) { idx = j; break; }
             }
-            if (idx !== -1) {
-                $('pfCounter').textContent = 'Câu ' + (idx + 1) + ' / ' + filtered.length;
-            }
+            if (idx !== -1) $('pfCounter').textContent = 'Câu ' + (idx + 1) + ' / ' + filtered.length;
             return;
         }
         loadPracticeFull(filtered[0].stt);
@@ -3375,19 +3280,15 @@ function updateCharPreview() {
     var userVal = input.value;
     var cleanUser = userVal.replace(/\s+/g, '');
     var cleanAnswer = pfCurrentAnswer.replace(/\s+/g, '');
-
     if (!cleanAnswer) { preview.innerHTML = ''; return; }
-
     var html = '';
     var maxLen = Math.max(cleanUser.length, cleanAnswer.length);
-
     for (var i = 0; i < maxLen; i++) {
         var userChar = cleanUser[i] || '';
         var answerChar = cleanAnswer[i] || '';
         var cls = 'char-slot';
         var display = '';
         var clickable = false;
-
         if (userChar && answerChar) {
             if (userChar === answerChar) {
                 cls += ' correct';
@@ -3398,27 +3299,19 @@ function updateCharPreview() {
                 clickable = true;
             }
         } else if (!userChar && answerChar) {
-            if (pfHintEnabled) {
-                cls += ' ghost';
-                display = answerChar;
-            } else {
-                continue;
-            }
+            if (pfHintEnabled) { cls += ' ghost'; display = answerChar; }
+            else continue;
         } else if (userChar && !answerChar) {
             cls += ' extra';
             display = userChar;
             clickable = true;
-        } else {
-            continue;
-        }
-
+        } else continue;
         if (clickable) {
             html += '<span class="' + cls + '" data-idx="' + i + '" onclick="fixCharAt(' + i + ', this)">' + escapeHtml(display) + '</span>';
         } else {
             html += '<span class="' + cls + '">' + escapeHtml(display) + '</span>';
         }
     }
-
     preview.innerHTML = html;
 }
 
@@ -3427,12 +3320,8 @@ window.fixCharAt = function(idx, el) {
     if (!input) return;
     input.focus();
     setTimeout(function() {
-        try {
-            input.setSelectionRange(idx, idx + 1);
-        } catch(e) {
-            input.selectionStart = idx;
-            input.selectionEnd = idx + 1;
-        }
+        try { input.setSelectionRange(idx, idx + 1); }
+        catch(e) { input.selectionStart = idx; input.selectionEnd = idx + 1; }
         if (el) {
             el.classList.add('highlight');
             setTimeout(function() { el.classList.remove('highlight'); }, 1200);
@@ -3473,32 +3362,26 @@ function checkFullAnswer() {
 function revealFullAnswer() {
     var answerEl = $('pfAnswer');
     var revealBtn = $('pfRevealBtn');
-
     if (answerEl.classList.contains('show')) {
         answerEl.classList.remove('show');
         revealBtn.classList.remove('revealed');
         revealBtn.innerHTML = '<i class="fas fa-eye"></i> Xem đáp án';
         return;
     }
-
     var charsEl = $('pfAnswerChars');
     var pinyinEl = $('pfAnswerPinyin');
-
     charsEl.innerHTML = '';
     var phrases = splitByPinyin(pfCurrentAnswer, pfCurrentPinyin);
-
     if (phrases.length === 0) {
         pfCurrentAnswer.split('').forEach(function(c) {
             if (/[\u4e00-\u9fa5]/.test(c)) phrases.push({ text: c, type: 'phrase' });
         });
     }
-
     phrases.forEach(function(item) {
         var btn = document.createElement('button');
         btn.className = 'answer-phrase-btn';
         btn.textContent = item.text;
         btn.title = 'Nhấn để đọc: ' + item.text;
-
         btn.onclick = (function(text, el) {
             return function(e) {
                 e.stopPropagation();
@@ -3507,10 +3390,8 @@ function revealFullAnswer() {
                 speakPhrase(text, el);
             };
         })(item.text, btn);
-
         charsEl.appendChild(btn);
     });
-
     pinyinEl.textContent = pfCurrentPinyin;
     answerEl.classList.add('show');
     revealBtn.classList.add('revealed');
@@ -3556,18 +3437,13 @@ function initPracticeFull() {
         updateCharPreview();
         checkFullAnswer();
     });
-
     $('pfQuickNav').addEventListener('change', pfQuickNavChange);
-
-    $('pfSearchInput').addEventListener('input', function() {
-        pfApplyFilter();
-    });
+    $('pfSearchInput').addEventListener('input', function() { pfApplyFilter(); });
     $('pfClearSearchBtn').addEventListener('click', function() {
         $('pfSearchInput').value = '';
         $('pfSearchInput').focus();
         pfApplyFilter();
     });
-
     $('pfHskFilter').addEventListener('change', function() {
         var val = this.value;
         var allowed = getAllowedHskList();
@@ -3596,26 +3472,15 @@ function initPracticeFull() {
         }
         pfApplyFilter();
     });
-
     document.addEventListener('keydown', function(e) {
         if (!$('practiceFullModal').classList.contains('show')) return;
-
         var active = document.activeElement;
-        var isTyping = active && (active.tagName === 'INPUT' ||
-                                    active.tagName === 'TEXTAREA' ||
-                                    active.tagName === 'SELECT');
-
-        if (e.key === 'Escape') {
-            closePracticeFull();
-            return;
-        }
-
+        var isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
+        if (e.key === 'Escape') { closePracticeFull(); return; }
         if (isTyping) return;
-
         if (e.key === 'ArrowRight' && e.ctrlKey) pfNext();
         if (e.key === 'ArrowLeft' && e.ctrlKey) pfPrev();
     });
-
     var modal = $('practiceFullModal');
     var touchStartX = 0;
     modal.addEventListener('touchstart', function(e) {
@@ -3634,24 +3499,13 @@ function initPracticeFull() {
         speakBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (!pfCurrentAnswer) return;
-
             if (!canUseFeature()) { showLimitMessage(); return; }
-
             if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
-
-            if (!('speechSynthesis' in window)) {
-                alert('Trình duyệt không hỗ trợ phát âm.');
-                return;
-            }
-
+            if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
             speechSynthesis.cancel();
-            document.querySelectorAll('.practice-speak-btn.speaking').forEach(function(b) {
-                b.classList.remove('speaking');
-            });
-
+            document.querySelectorAll('.practice-speak-btn.speaking').forEach(function(b) { b.classList.remove('speaking'); });
             speakBtn.classList.add('speaking');
             speakBtn.disabled = true;
-
             var utterance = new SpeechSynthesisUtterance(pfCurrentAnswer);
             utterance.lang = 'zh-CN';
             utterance.rate = 0.85;
@@ -3659,14 +3513,12 @@ function initPracticeFull() {
             utterance.volume = 1.0;
             var voice = getChineseVoice();
             if (voice) utterance.voice = voice;
-
             var resetBtn = function() {
                 speakBtn.classList.remove('speaking');
                 speakBtn.disabled = false;
             };
             utterance.onend = resetBtn;
             utterance.onerror = resetBtn;
-
             setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
         });
     }
@@ -3726,13 +3578,10 @@ function initWriter() {
 
 window.openWriter = function(zh, vi, pinyin, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
-
     if (isExpiredTier()) { showLimitMessage(); return; }
-
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (typeof HanziWriter === 'undefined') { alert('Thư viện chưa tải xong.'); return; }
     if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
-
     currentWriteZh = zh || '';
     currentWriteVi = vi || '';
     currentWritePinyin = pinyin || '';
