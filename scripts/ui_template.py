@@ -120,17 +120,6 @@ body{
 }
 [data-theme="dark"] .demo-badge{color:#fcd34d}
 
-.trial-badge{
-    display:none;align-items:center;gap:.35rem;
-    padding:.4rem .75rem;border-radius:50px;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);
-    color:#fff;
-    font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
-    border:1px solid rgba(124,58,237,.5);
-    box-shadow:0 2px 8px rgba(124,58,237,.35);
-}
-.trial-badge.show{display:flex}
-
 /* ============ SEARCH + FILTER ============ */
 .search-bar{position:relative;margin-bottom:.55rem}
 .search-bar i.fa-search{
@@ -326,42 +315,6 @@ body.show-practice .card-body{
 }
 .demo-banner-btn:hover{background:#d97706;transform:translateY(-1px)}
 
-/* ============ TRIAL BANNER ============ */
-.trial-banner{
-    display:none;
-    background:linear-gradient(135deg, rgba(79,70,229,.1), rgba(124,58,237,.15));
-    border:1.5px solid rgba(124,58,237,.5);border-radius:var(--radius);
-    padding:.9rem 1.1rem;margin-bottom:1rem;
-    align-items:center;gap:.75rem;flex-wrap:wrap;
-}
-.trial-banner.show{display:flex}
-[data-theme="dark"] .trial-banner{
-    background:linear-gradient(135deg, rgba(79,70,229,.2), rgba(124,58,237,.25));
-    border-color:rgba(124,58,237,.7);
-}
-.trial-banner-icon{
-    width:36px;height:36px;border-radius:50%;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
-    display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;
-    box-shadow:0 4px 12px rgba(124,58,237,.4);
-}
-.trial-banner-text{flex:1;min-width:200px}
-.trial-banner-text .title{font-weight:700;font-size:.9rem;color:#5b21b6;margin-bottom:.15rem}
-[data-theme="dark"] .trial-banner-text .title{color:#c4b5fd}
-.trial-banner-text .desc{font-size:.78rem;color:#4c1d95;line-height:1.5}
-[data-theme="dark"] .trial-banner-text .desc{color:#ddd6fe}
-.trial-banner-text .desc b{color:#7c3aed}
-[data-theme="dark"] .trial-banner-text .desc b{color:#c4b5fd}
-.trial-banner-btn{
-    padding:.5rem .9rem;border-radius:50px;border:none;
-    background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;
-    font-size:.8rem;font-weight:700;cursor:pointer;
-    transition:.15s;font-family:inherit;
-    display:flex;align-items:center;gap:.35rem;white-space:nowrap;
-    box-shadow:0 4px 12px rgba(124,58,237,.4);
-}
-.trial-banner-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(124,58,237,.6)}
-
 /* ============ CARDS ============ */
 .mobile-view{display:grid;grid-template-columns:1fr;gap:.8rem;max-width:100%}
 @media(min-width:769px){.mobile-view{grid-template-columns:1fr 1fr;gap:1.2rem;}}
@@ -527,7 +480,6 @@ body.practice-full-open .search-bar,
 body.practice-full-open .filters,
 body.practice-full-open .result-count { display: none !important; }
 body.practice-full-open .demo-banner,
-body.practice-full-open .trial-banner,
 body.practice-full-open .expiry-banner { display: none !important; }
 
 .practice-full-header{
@@ -1088,9 +1040,6 @@ def build_ui_html():
                     <div class="demo-badge" id="demoBadge" style="display:none">
                         <i class="fas fa-eye"></i> Demo
                     </div>
-                    <div class="trial-badge" id="trialBadge">
-                        <i class="fas fa-gem"></i> Trial
-                    </div>
                     <button class="btn-login-header" id="headerLoginBtn" style="display:none">
                         <i class="fas fa-sign-in-alt"></i> <span>Đăng nhập</span>
                     </button>
@@ -1229,22 +1178,6 @@ def build_ui_html():
             </div>
             <button class="demo-banner-btn" onclick="showLoginModal()">
                 <i class="fas fa-sign-in-alt"></i> Đăng nhập ngay
-            </button>
-        </div>
-
-        <div class="trial-banner" id="trialBanner">
-            <div class="trial-banner-icon"><i class="fas fa-gem"></i></div>
-            <div class="trial-banner-text">
-                <div class="title">💎 Bạn đang dùng bản Trial</div>
-                <div class="desc">
-                    Được xem <b id="trialLimitText">10</b> câu/HSK × HSK1-<span id="trialHskMaxText">6</span>
-                    = <b id="trialTotalText">60</b> câu đa dạng chủ đề.
-                    Còn <b id="trialDaysText">3</b> ngày dùng thử.
-                    Gia hạn ngay để mở khóa <b>TOÀN BỘ CÂU</b>!
-                </div>
-            </div>
-            <button class="trial-banner-btn" onclick="openRenewalModal()">
-                <i class="fas fa-crown"></i> Gia hạn ngay
             </button>
         </div>
 
@@ -1418,72 +1351,6 @@ function getDemoSubjectList() {
     return Object.keys(set).sort();
 }
 
-/* ✅ Lấy data cho TRIAL: 10 câu/HSK, đa dạng chủ đề */
-function getTrialData() {
-    var result = [];
-    var hskLevels = [];
-    for (var i = 1; i <= TRIAL_HSK_MAX; i++) hskLevels.push('HSK' + i);
-
-    hskLevels.forEach(function(hsk) {
-        var hskData = RAW_DATA.filter(function(r) { return r.hsk === hsk; });
-        if (!hskData.length) return;
-
-        var bySubject = {};
-        hskData.forEach(function(r) {
-            var subj = r.subject || 'Khác';
-            if (!bySubject[subj]) bySubject[subj] = [];
-            bySubject[subj].push(r);
-        });
-
-        var subjects = Object.keys(bySubject);
-        var pointers = {};
-        subjects.forEach(function(s) { pointers[s] = 0; });
-
-        var picked = [];
-        while (picked.length < TRIAL_LIMIT_PER_HSK) {
-            var added = false;
-            for (var i = 0; i < subjects.length && picked.length < TRIAL_LIMIT_PER_HSK; i++) {
-                var subj = subjects[i];
-                var arr = bySubject[subj];
-                var ptr = pointers[subj];
-                if (ptr < arr.length) {
-                    picked.push(arr[ptr]);
-                    pointers[subj] = ptr + 1;
-                    added = true;
-                }
-            }
-            if (!added) break;
-        }
-
-        result = result.concat(picked);
-    });
-
-    return result;
-}
-
-/* ✅ Lấy data theo trạng thái user hiện tại */
-function getUserData() {
-    if (currentUser && currentUser.role === 'admin') return RAW_DATA;
-    if (isDemo) return getDemoData();
-    if (currentUser) {
-        var dl = getDaysRemaining(currentUser);
-        if (dl !== null && dl <= 0) return getDemoData();
-        if (currentUser.isTrial) return getTrialData();
-        return RAW_DATA;
-    }
-    return getDemoData();
-}
-
-/* ✅ Trả về loại user: 'guest' / 'trial' / 'full' / 'expired' */
-function getUserState() {
-    if (currentUser && currentUser.role === 'admin') return 'full';
-    if (isDemo || !currentUser) return 'guest';
-    var dl = getDaysRemaining(currentUser);
-    if (dl !== null && dl <= 0) return 'expired';
-    if (currentUser.isTrial) return 'trial';
-    return 'full';
-}
-
 function getDemoUsage() {
     try {
         var today = new Date().toDateString();
@@ -1506,11 +1373,17 @@ function incDemoUsage() {
 }
 function getDemoRemaining() { return Math.max(0, DEMO_DAILY_LIMIT - getDemoUsage()); }
 
+/* ✅ FIX: Chặn tính năng khi hết hạn */
 function canUseFeature() {
-    var st = getUserState();
-    if (st === 'guest' || st === 'expired') {
-        return getDemoUsage() < DEMO_DAILY_LIMIT;
+    if (isDemo) return getDemoUsage() < DEMO_DAILY_LIMIT;
+
+    if (currentUser && currentUser.role !== 'admin') {
+        var daysLeft = getDaysRemaining(currentUser);
+        if (daysLeft !== null && daysLeft <= 0) {
+            return false;
+        }
     }
+
     return true;
 }
 
@@ -1524,16 +1397,18 @@ function updateDemoRemaining() {
     else el.style.color = '#16a34a';
 }
 
+/* ✅ FIX: showLimitMessage phân biệt demo vs hết hạn */
 function showLimitMessage() {
-    var st = getUserState();
-
-    if (st === 'expired') {
-        if (confirm('🔒 Tài khoản của bạn đã HẾT HẠN.\n\n' +
-                    'Vui lòng gia hạn để tiếp tục sử dụng tính năng này.\n\n' +
-                    'Nhấn OK để mở trang gia hạn.')) {
-            if (typeof openRenewalModal === 'function') openRenewalModal();
+    if (!isDemo && currentUser && currentUser.role !== 'admin') {
+        var daysLeft = getDaysRemaining(currentUser);
+        if (daysLeft !== null && daysLeft <= 0) {
+            if (confirm('🔒 Tài khoản của bạn đã HẾT HẠN.\n\n' +
+                        'Vui lòng gia hạn để tiếp tục sử dụng tính năng này.\n\n' +
+                        'Nhấn OK để mở trang gia hạn.')) {
+                if (typeof openRenewalModal === 'function') openRenewalModal();
+            }
+            return;
         }
-        return;
     }
 
     if (confirm('🔒 Bạn đã dùng hết ' + DEMO_DAILY_LIMIT +
@@ -1603,8 +1478,7 @@ function initApp() {
     });
 
     $('hskFilter').addEventListener('change', function() {
-        var st = getUserState();
-        if (st === 'guest' || st === 'expired') {
+        if (isDemo) {
             var val = this.value;
             var allowed = getDemoHskList();
             if (val && allowed.indexOf(val) === -1) {
@@ -1617,8 +1491,7 @@ function initApp() {
         applyFilter();
     });
     $('subjectFilter').addEventListener('change', function() {
-        var st = getUserState();
-        if (st === 'guest' || st === 'expired') {
+        if (isDemo) {
             var val = this.value;
             var allowed = getDemoSubjectList();
             if (val && allowed.indexOf(val) === -1) {
@@ -1641,49 +1514,6 @@ function refreshApp() {
     applyDisplayState();
     updateToggleButtons();
     updateResultCount();
-    updateUserModeBadges();
-}
-
-function updateUserModeBadges() {
-    var st = getUserState();
-    var demoBadge = $('demoBadge');
-    var trialBadge = $('trialBadge');
-    var demoBanner = $('demoBanner');
-    var trialBanner = $('trialBanner');
-
-    if (demoBadge) demoBadge.style.display = (st === 'guest' || st === 'expired') ? 'flex' : 'none';
-    if (trialBadge) {
-        if (st === 'trial') trialBadge.classList.add('show');
-        else trialBadge.classList.remove('show');
-    }
-
-    if (demoBanner) demoBanner.style.display = (st === 'guest' || st === 'expired') ? 'flex' : 'none';
-    if (trialBanner) {
-        if (st === 'trial') trialBanner.classList.add('show');
-        else trialBanner.classList.remove('show');
-    }
-
-    if (st === 'trial' && currentUser) {
-        var dl = $('trialLimitText');
-        var hm = $('trialHskMaxText');
-        var tm = $('trialTotalText');
-        var dd = $('trialDaysText');
-        if (dl) dl.textContent = TRIAL_LIMIT_PER_HSK;
-        if (hm) hm.textContent = TRIAL_HSK_MAX;
-        if (tm) tm.textContent = TRIAL_LIMIT_PER_HSK * TRIAL_HSK_MAX;
-        if (dd) {
-            var daysLeft = getDaysRemaining(currentUser);
-            dd.textContent = Math.max(0, daysLeft || 0);
-        }
-    }
-
-    var hskChip = $('hskChip');
-    var subjectChip = $('subjectChip');
-    var isLimited = (st === 'guest' || st === 'expired');
-    if (hskChip && subjectChip) {
-        if (isLimited) { hskChip.classList.add('demo-limited'); subjectChip.classList.add('demo-limited'); }
-        else { hskChip.classList.remove('demo-limited'); subjectChip.classList.remove('demo-limited'); }
-    }
 }
 
 /* ============ SCROLL DETECT ============ */
@@ -1902,12 +1732,10 @@ function getChineseVoice() {
 
 window.speakText = function(text, btn, evt) {
     if (evt) evt.stopPropagation();
-    if (!canUseFeature()) { showLimitMessage(); return; }
+    if (isDemo && !canUseFeature()) { showLimitMessage(); return; }
+    if (!isDemo && !canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-
-    var st = getUserState();
-    if (st === 'guest' || st === 'expired') { incDemoUsage(); updateDemoRemaining(); }
-
+    if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
     speechSynthesis.cancel();
     if (currentBtn) currentBtn.classList.remove('speaking');
     if (btn) { btn.classList.add('speaking'); currentBtn = btn; }
@@ -1939,9 +1767,7 @@ function buildFilters() {
     RAW_DATA.forEach(function(r) { if (r.subject) allSubjectSet[r.subject] = 1; });
     var allSubjects = Object.keys(allSubjectSet).sort();
 
-    var st = getUserState();
-
-    if (st === 'guest' || st === 'expired') {
+    if (isDemo) {
         var demoHsk = getDemoHskList();
         var hskHtml = '<option value="">Tất cả (HSK1-' + DEMO_HSK_MAX + ')</option>';
         demoHsk.forEach(function(h) { hskHtml += '<option value="' + h + '">' + h + '</option>'; });
@@ -1970,26 +1796,6 @@ function buildFilters() {
             subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' + escapeHtml(s) + ' (đăng nhập)</option>';
         });
         subjectSelect.innerHTML = subjHtml;
-
-    } else if (st === 'trial') {
-        var hskHtmlT = '<option value="">Tất cả (HSK1-' + TRIAL_HSK_MAX + ')</option>';
-        for (var i = 1; i <= TRIAL_HSK_MAX; i++) {
-            var h = 'HSK' + i;
-            hskHtmlT += '<option value="' + h + '">' + h + '</option>';
-        }
-        hskSelect.innerHTML = hskHtmlT;
-
-        var trialData = getTrialData();
-        var trialSubjectSet = {};
-        trialData.forEach(function(r) { if (r.subject) trialSubjectSet[r.subject] = 1; });
-        var trialSubjects = Object.keys(trialSubjectSet).sort();
-
-        var subjHtmlT = '<option value="">Tất cả chủ đề</option>';
-        trialSubjects.forEach(function(s) {
-            subjHtmlT += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>';
-        });
-        subjectSelect.innerHTML = subjHtmlT;
-
     } else {
         hskSelect.innerHTML =
             '<option value="">Tất cả</option>' +
@@ -2106,8 +1912,7 @@ function render(reset) {
     if (oldEndNote) oldEndNote.remove();
 
     if (renderedCount < filtered.length) {
-        var st = getUserState();
-        var isDemoLock = (st === 'guest' || st === 'expired') && renderedCount >= DEMO_LIMIT;
+        var isDemoLock = isDemo && renderedCount >= DEMO_LIMIT;
         if (!isDemoLock) {
             var btnMobile = document.createElement('button');
             btnMobile.className = 'load-more';
@@ -2472,7 +2277,12 @@ function applyFilter() {
     if (state.search) clearBtn.classList.add('show');
     else clearBtn.classList.remove('show');
 
-    var baseData = getUserData();
+    var isLimitedUser = isDemo;
+    if (!isDemo && currentUser && currentUser.role !== 'admin') {
+        var dl = getDaysRemaining(currentUser);
+        if (dl !== null && dl <= 0) isLimitedUser = true;
+    }
+    var baseData = isLimitedUser ? getDemoData() : RAW_DATA;
 
     filtered = baseData.filter(function(r) {
         if (state.search) {
@@ -2517,10 +2327,12 @@ window.addEventListener('resize', function() {
 window.openPracticeFull = function(stt, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
 
-    var st = getUserState();
-    if (st === 'expired') {
-        showLimitMessage();
-        return;
+    if (!isDemo && currentUser && currentUser.role !== 'admin') {
+        var dl = getDaysRemaining(currentUser);
+        if (dl !== null && dl <= 0) {
+            showLimitMessage();
+            return;
+        }
     }
 
     pfBuildFilterOptions();
@@ -2672,9 +2484,7 @@ function pfBuildFilterOptions() {
     RAW_DATA.forEach(function(r) { if (r.subject) allSubjectSet[r.subject] = 1; });
     var allSubjects = Object.keys(allSubjectSet).sort();
 
-    var st = getUserState();
-
-    if (st === 'guest' || st === 'expired') {
+    if (isDemo) {
         var demoHsk = getDemoHskList();
         var hskHtml = '<option value="">Tất cả</option>';
         demoHsk.forEach(function(h) { hskHtml += '<option value="' + h + '">' + h + '</option>'; });
@@ -2697,23 +2507,6 @@ function pfBuildFilterOptions() {
         unlocked.forEach(function(s) { subjHtml += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
         locked.forEach(function(s) { subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' + escapeHtml(s) + '</option>'; });
         subjSel.innerHTML = subjHtml;
-
-    } else if (st === 'trial') {
-        var hskHtmlT = '<option value="">Tất cả</option>';
-        for (var i = 1; i <= TRIAL_HSK_MAX; i++) {
-            var h = 'HSK' + i;
-            hskHtmlT += '<option value="' + h + '">' + h + '</option>';
-        }
-        hskSel.innerHTML = hskHtmlT;
-
-        var trialData = getTrialData();
-        var trialSubjectSet = {};
-        trialData.forEach(function(r) { if (r.subject) trialSubjectSet[r.subject] = 1; });
-        var trialSubjects = Object.keys(trialSubjectSet).sort();
-        var subjHtmlT = '<option value="">Tất cả chủ đề</option>';
-        trialSubjects.forEach(function(s) { subjHtmlT += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
-        subjSel.innerHTML = subjHtmlT;
-
     } else {
         hskSel.innerHTML =
             '<option value="">Tất cả</option>' +
@@ -2776,7 +2569,12 @@ function pfApplyFilter() {
     state.hsk = $('pfHskFilter').value;
     state.subject = $('pfSubjectFilter').value;
 
-    var baseData = getUserData();
+    var isLimitedUser = isDemo;
+    if (!isDemo && currentUser && currentUser.role !== 'admin') {
+        var dl = getDaysRemaining(currentUser);
+        if (dl !== null && dl <= 0) isLimitedUser = true;
+    }
+    var baseData = isLimitedUser ? getDemoData() : RAW_DATA;
 
     filtered = baseData.filter(function(r) {
         if (state.search) {
@@ -2993,12 +2791,10 @@ function revealFullAnswer() {
 }
 
 window.speakPhrase = function(phrase, btn) {
-    if (!canUseFeature()) { showLimitMessage(); return; }
+    if (isDemo && !canUseFeature()) { showLimitMessage(); return; }
+    if (!isDemo && !canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-
-    var st = getUserState();
-    if (st === 'guest' || st === 'expired') { incDemoUsage(); updateDemoRemaining(); }
-
+    if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
     speechSynthesis.cancel();
     document.querySelectorAll('.answer-phrase-btn.speaking').forEach(function(b) { b.classList.remove('speaking'); });
     btn.classList.add('speaking');
@@ -3012,12 +2808,10 @@ window.speakPhrase = function(phrase, btn) {
 };
 
 window.speakFullSentence = function() {
-    if (!canUseFeature()) { showLimitMessage(); return; }
+    if (isDemo && !canUseFeature()) { showLimitMessage(); return; }
+    if (!isDemo && !canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) return;
-
-    var st = getUserState();
-    if (st === 'guest' || st === 'expired') { incDemoUsage(); updateDemoRemaining(); }
-
+    if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
     speechSynthesis.cancel();
     var utterance = new SpeechSynthesisUtterance(pfCurrentAnswer);
     utterance.lang = 'zh-CN';
@@ -3050,8 +2844,7 @@ function initPracticeFull() {
     });
 
     $('pfHskFilter').addEventListener('change', function() {
-        var st = getUserState();
-        if (st === 'guest' || st === 'expired') {
+        if (isDemo) {
             var val = this.value;
             var allowed = getDemoHskList();
             if (val && allowed.indexOf(val) === -1) {
@@ -3063,8 +2856,7 @@ function initPracticeFull() {
         pfApplyFilter();
     });
     $('pfSubjectFilter').addEventListener('change', function() {
-        var st = getUserState();
-        if (st === 'guest' || st === 'expired') {
+        if (isDemo) {
             var val = this.value;
             var allowed = getDemoSubjectList();
             if (val && allowed.indexOf(val) === -1) {
@@ -3108,6 +2900,7 @@ function initPracticeFull() {
         }
     }, { passive: true });
 
+    /* ✅ Nút loa nghe câu tiếng Trung */
     var speakBtn = $('pfSpeakBtn');
     if (speakBtn) {
         speakBtn.addEventListener('click', function(e) {
@@ -3116,8 +2909,7 @@ function initPracticeFull() {
 
             if (!canUseFeature()) { showLimitMessage(); return; }
 
-            var st = getUserState();
-            if (st === 'guest' || st === 'expired') { incDemoUsage(); updateDemoRemaining(); }
+            if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
 
             if (!('speechSynthesis' in window)) {
                 alert('Trình duyệt không hỗ trợ phát âm.');
@@ -3209,10 +3001,7 @@ window.openWriter = function(zh, vi, pinyin, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (typeof HanziWriter === 'undefined') { alert('Thư viện chưa tải xong.'); return; }
-
-    var st = getUserState();
-    if (st === 'guest' || st === 'expired') { incDemoUsage(); updateDemoRemaining(); }
-
+    if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
     currentWriteZh = zh || '';
     currentWriteVi = vi || '';
     currentWritePinyin = pinyin || '';
@@ -3267,12 +3056,12 @@ function showWriterChar(char) {
                 width: targetSize, height: targetSize, padding: padSize,
                 strokeColor: '#1e293b', radicalColor: '#7c3aed',
                 highlightColor: '#f59e0b', outlineColor: '#cbd5e1',
-                drawingColor: '#7c3aed', drawing })
-Width: drawWidth,
+                drawingColor: '#7c3aed', drawingWidth: drawWidth,
                 showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 250,
                 charDataLoader: function(ch, onComplete, onError) {
                     fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/' + encodeURIComponent(ch) + '.json')
-                        .then(function(res) { if (!res.ok) throw new Error('Không có dữ liệu'); return res.json();                        .then(onComplete)
+                        .then(function(res) { if (!res.ok) throw new Error('Không có dữ liệu'); return res.json(); })
+                        .then(onComplete)
                         .catch(function(err) {
                             if (onError) onError(err);
                             target.innerHTML = '<div class="writer-loading"><i class="fas fa-exclamation-triangle" style="color:#dc2626"></i>Không tải được dữ liệu.</div>';
