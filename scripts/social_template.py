@@ -4,7 +4,9 @@ Template cho Zalo + TikTok (bar, floating button, hover card).
 KHÔNG CẦN SỬA khi đổi cấu trúc Excel hay giao diện học.
 Chỉ cần chỉnh config.json để đổi số Zalo / username TikTok.
 
-✅ FIX: Trên mobile (≤768px) 2 nút Zalo/TikTok chuyển thành nút tròn compact
+✅ FIX v3:
+- Trên mobile (≤768px): 2 nút Zalo/TikTok chuyển thành nút tròn compact
+- Vị trí góc trái dưới, cách đáy 36px (cao vừa phải cho đẹp)
 """
 
 
@@ -131,8 +133,8 @@ def build_social_css():
 }
 .thc-avatar-fallback{
     width:60px;height:60px;border-radius:50%;
-    background:linear-gradient(135deg,#fe2c55,#25f4ee);
-    color:#fff;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135degdark,#fe2c55,#25f4ee);
+    color:#fff;display"] .tikt:flex;align-items:center;justify-content:center;
     font-size:1.7rem;font-weight:800;flex-shrink:0;
     border:3px solid var(--surface);box-shadow:0 4px 12px rgba(0,0,0,.15);
 }
@@ -185,7 +187,7 @@ def build_social_css():
     width:fit-content;max-width:100%;
     transition:.15s;box-shadow:var(--shadow-sm);text-decoration:none;
 }
-[data-theme="dark"] .tiktok-bar{
+[data-theme="ok-bar{
     background:linear-gradient(135deg, rgba(254,44,85,.1), rgba(37,244,238,.1));
 }
 .tiktok-bar:hover{border-color:var(--text-2);box-shadow:0 4px 12px rgba(0,0,0,.08);transform:translateY(-1px);}
@@ -237,17 +239,17 @@ body.hide-floating .tiktok-bar { display: none !important; }
 
 /* ═══════════════════════════════════════════════════════════════
    MOBILE FIX — Thu nhỏ nút Zalo + TikTok
-   Chuyển thành nút tròn compact, chỉ hiện icon
+   Chuyển thành nút tròn compact, kéo xuống góc trái dưới
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
-    /* Wrapper — dồn về góc trái, gap nhỏ hơn */
+    /* Wrapper — góc trái dưới, cao vừa phải cho đẹp */
     .floating-left-group {
-        gap: 0.4rem;
-        left: 12px;
-        bottom: calc(80px + env(safe-area-inset-bottom));
+        gap: 0.5rem;
+        left: 14px;
+        bottom: calc(36px + env(safe-area-inset-bottom));
     }
 
-    /* Nút Zalo — chuyển thành nút tròn */
+    /* Nút Zalo — nút tròn */
     .zalo-btn {
         width: 46px;
         height: 46px;
@@ -256,23 +258,12 @@ body.hide-floating .tiktok-bar { display: none !important; }
         justify-content: center;
         gap: 0;
     }
-    .zalo-btn i {
-        font-size: 1.25rem;
-    }
-    .zalo-btn .zalo-text {
-        opacity: 0;
-        max-width: 0;
-        overflow: hidden;
-    }
-    .zalo-btn::before {
-        border-radius: 50%;
-    }
-    .zalo-btn:hover,
-    .zalo-btn:active {
-        transform: scale(1.08);
-    }
+    .zalo-btn i { font-size: 1.25rem; }
+    .zalo-btn .zalo-text { opacity: 0; max-width: 0; overflow: hidden; }
+    .zalo-btn::before { border-radius: 50%; }
+    .zalo-btn:hover, .zalo-btn:active { transform: scale(1.08); }
 
-    /* Nút TikTok — chuyển thành nút tròn */
+    /* Nút TikTok — nút tròn */
     .tiktok-float-btn {
         width: 46px;
         height: 46px;
@@ -281,51 +272,25 @@ body.hide-floating .tiktok-bar { display: none !important; }
         justify-content: center;
         gap: 0;
     }
-    .tiktok-float-btn i {
-        font-size: 1.25rem;
-    }
-    .tiktok-float-btn .tiktok-text {
-        opacity: 0;
-        max-width: 0;
-        overflow: hidden;
-    }
-    .tiktok-float-btn::before {
-        border-radius: 50%;
-    }
-    .tiktok-float-btn:hover,
-    .tiktok-float-btn:active {
-        transform: scale(1.08);
-    }
+    .tiktok-float-btn i { font-size: 1.25rem; }
+    .tiktok-float-btn .tiktok-text { opacity: 0; max-width: 0; overflow: hidden; }
+    .tiktok-float-btn::before { border-radius: 50%; }
+    .tiktok-float-btn:hover, .tiktok-float-btn:active { transform: scale(1.08); }
 
-    /* Hover card TikTok trên mobile — hiện khi double-tap, thu nhỏ */
+    /* Hover card TikTok trên mobile */
     .tiktok-float-wrap.show-mobile .tiktok-hover-card {
         left: -4px;
         width: min(280px, calc(100vw - 32px));
         padding: 0.85rem;
     }
 
-    /* TikTok bar dưới header — thu nhỏ */
-    .tiktok-bar {
-        padding: 0.4rem 0.65rem;
-        gap: 0.5rem;
-    }
-    .tiktok-bar-avatar {
-        width: 28px;
-        height: 28px;
-    }
-    .tiktok-bar-info .tiktok-nick {
-        font-size: 0.85rem;
-    }
-    .tiktok-bar-info .tiktok-user {
-        font-size: 0.7rem;
-    }
-    .tiktok-bar-link {
-        padding: 0.35rem 0.65rem;
-        font-size: 0.7rem;
-    }
-    .tiktok-bar-link i {
-        font-size: 0.75rem;
-    }
+    /* TikTok bar — thu nhỏ */
+    .tiktok-bar { padding: 0.4rem 0.65rem; gap: 0.5rem; }
+    .tiktok-bar-avatar { width: 28px; height: 28px; }
+    .tiktok-bar-info .tiktok-nick { font-size: 0.85rem; }
+    .tiktok-bar-info .tiktok-user { font-size: 0.7rem; }
+    .tiktok-bar-link { padding: 0.35rem 0.65rem; font-size: 0.7rem; }
+    .tiktok-bar-link i { font-size: 0.75rem; }
 }
 
 /* Mobile rất nhỏ (≤ 400px) — thu nhỏ thêm */
