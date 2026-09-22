@@ -2403,9 +2403,55 @@ function isLimitedTier(){ var t = getTierInfo().tier; return t === 'demo' || t =
 function getLimitedData() {
     var info = getTierInfo();
     if (info.tier === 'active') return RAW_DATA;
+
     var max = (typeof info.maxQuestions === 'number' && info.maxQuestions > 0)
-              ? info.maxQuestions : ((typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25);
-    return RAW_DATA.slice(0, max);
+              ? info.maxQuestions
+              : ((typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 20);
+
+    /* Lấy danh sách HSK được phép */
+    var allowedHsk = getAllowedHskList();
+    if (!allowedHsk || allowedHsk.length === 0) {
+        return RAW_DATA.slice(0, max);
+    }
+
+    /* Chia đều max câu cho các HSK, phần dư dồn vào HSK cao nhất */
+    var perHsk = Math.floor(max / allowedHsk.length);
+    var remainder = max % allowedHsk.length;
+
+    /* Gom data theo HSK */
+    var buckets = {};
+    allowedHsk.forEach(function(h) { buckets[h] = []; });
+    RAW_DATA.forEach(function(r) {
+        if (r.hsk && buckets[r.hsk]) buckets[r.hsk].push(r);
+    });
+
+    /* Lấy đều */
+    var result = [];
+    for (var i = 0; i < allowedHsk.length; i++) {
+        var hsk = allowedHsk[i];
+        var take = perHsk + (i >= allowedHsk.length - remainder ? 1 : 0);
+        var bucket = buckets[hsk];
+        if (bucket && bucket.length > 0) {
+            /* Lấy N câu đầu của mỗi HSK
+               (đổi thành random nếu muốn mỗi lần load khác nhau) */
+            result = result.concat(bucket.slice(0, take));
+        }
+    }
+
+    /* Nếu vẫn chưa đủ max (do HSK nào đó ít câu), lấy thêm từ RAW_DATA */
+    if (result.length < max) {
+        var usedIds = {};
+        result.forEach(function(r) { usedIds[r.stt] = true; });
+        for (var j = 0; j < RAW_DATA.length && result.length < max; j++) {
+            var r2 = RAW_DATA[j];
+            if (!usedIds[r2.stt]) {
+                result.push(r2);
+                usedIds[r2.stt] = true;
+            }
+        }
+    }
+
+    return result;
 }
 
 /* Danh sách HSK được phép */
