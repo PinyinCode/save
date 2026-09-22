@@ -12,6 +12,16 @@ Cách dùng:
 
 LƯU Ý: KHÔNG chứa định nghĩa hàm Telegram (chúng ở build_html.py).
        Chỉ gọi window.notifyTelegramX nếu có (có guard typeof).
+
+═══════════════════════════════════════════════════════════════
+PHÂN QUYỀN:
+  • Super Admin   — Toàn quyền, thấy tất cả, quản lý admin khác
+  • Admin thường  — TOÀN QUYỀN (xem/thêm/xóa user, chỉnh hạn, duyệt
+                    gia hạn, import/export, xem log) TRỪ:
+                    - Không thấy admin khác trong danh sách
+                    - Không nâng/hạ/xóa/phân quyền admin khác
+  • User          — Chỉ học, không vào Admin Panel
+═══════════════════════════════════════════════════════════════
 """
 
 import json
@@ -758,7 +768,7 @@ def build_accounts_html():
         </div>
         <div class="permission-note">
             <i class="fas fa-info-circle"></i>
-            <div>Admin thường <b>mặc định có quyền duyệt gia hạn</b>. Super Admin có thể bật/tắt từng quyền chi tiết bên dưới. Quyền <b>Quản lý Admin</b> chỉ dành riêng cho Super Admin.</div>
+            <div>Admin thường <b>mặc định có toàn quyền</b> (xem/thêm/xóa user, chỉnh hạn, duyệt gia hạn, import/export, xem log). Chỉ <b>Quản lý Admin</b> là dành riêng cho Super Admin.</div>
         </div>
         <div class="permission-list" id="permissionList"></div>
         <div class="form-actions">
@@ -970,7 +980,7 @@ var editingPermissionEmail = null;
 var ADMIN_PERMISSIONS = [
     { key: 'canViewUsers',      name: 'Xem danh sách user',   desc: 'Xem thông tin tất cả tài khoản user' },
     { key: 'canEditExpiry',     name: 'Chỉnh hạn sử dụng',    desc: 'Thay đổi ngày hết hạn của user' },
-    { key: 'canRenew',          name: 'Duyệt gia hạn',        desc: 'Xác nhận/từ chối yêu cầu gia hạn của user (mặc định BẬT)' },
+    { key: 'canRenew',          name: 'Duyệt gia hạn',        desc: 'Xác nhận/từ chối yêu cầu gia hạn của user' },
     { key: 'canAddUser',        name: 'Thêm user mới',        desc: 'Tạo tài khoản user mới' },
     { key: 'canDeleteUser',     name: 'Xóa user',             desc: 'Xóa tài khoản user khỏi hệ thống' },
     { key: 'canImportExport',   name: 'Import/Export Excel',  desc: 'Nhập/xuất danh sách user' },
@@ -978,16 +988,16 @@ var ADMIN_PERMISSIONS = [
     { key: 'canManageAdmin',    name: 'Quản lý Admin',        desc: 'Thêm/xóa/phân quyền admin khác (chỉ Super Admin)' }
 ];
 
-/* Quyền mặc định cho admin thường */
+/* ⭐ Quyền mặc định cho admin thường: TOÀN QUYỀN trừ quản lý admin khác */
 var DEFAULT_ADMIN_PERMS = {
     canViewUsers: true,
     canEditExpiry: true,
     canRenew: true,
-    canAddUser: false,
-    canDeleteUser: false,
-    canImportExport: false,
-    canViewLogs: false,
-    canManageAdmin: false
+    canAddUser: true,          // ⭐ BẬT
+    canDeleteUser: true,       // ⭐ BẬT
+    canImportExport: true,     // ⭐ BẬT
+    canViewLogs: true,         // ⭐ BẬT
+    canManageAdmin: false      // 🔒 Luôn khóa cho admin thường
 };
 
 /* ============ HELPERS ============ */
@@ -2371,6 +2381,11 @@ function initAdminPanel() {
 }
 
 async function doAddUser() {
+    /* ⭐ Check quyền */
+    if (!isSuperAdmin() && !hasPermission('canAddUser')) {
+        alert('Bạn không có quyền thêm user!');
+        return;
+    }
     var email = $('newUserEmail').value.trim().toLowerCase();
     var name = $('newUserName').value.trim();
     var role = $('newUserRole').value;
@@ -2414,6 +2429,16 @@ async function doAddUser() {
 function openAdminPanel() {
     if (!currentUser || currentUser.role !== 'admin') return;
     $('adminModal').classList.add('show');
+
+    /* ⭐ Ẩn/hiện nút Export/Import theo quyền */
+    var canIE = isSuperAdmin() || hasPermission('canImportExport');
+    if ($('exportExcelBtn')) $('exportExcelBtn').style.display = canIE ? 'inline-flex' : 'none';
+    if ($('importExcelBtn')) $('importExcelBtn').style.display = canIE ? 'inline-flex' : 'none';
+
+    /* ⭐ Ẩn/hiện nút "Thêm" theo quyền */
+    var canAdd = isSuperAdmin() || hasPermission('canAddUser');
+    if ($('showAddUserBtn')) $('showAddUserBtn').style.display = canAdd ? 'inline-flex' : 'none';
+
     loadUsers(false);
     loadLogs();
     loadPendingRenewals();
@@ -2587,13 +2612,19 @@ function renderUsers(items) {
             permBtn = '<button class="u-btn" style="background:rgba(6,182,212,.1);color:#06b6d4;border-color:rgba(6,182,212,.4);" onclick="openPermissionModal(\'' + escapeJs(u.email) + '\')" title="Phân quyền"><i class="fas fa-user-shield"></i></button>';
         }
 
+        /* ⭐ Nút Xóa: check quyền canDeleteUser */
+        var canDelete = superAdmin || hasPermission('canDeleteUser');
         var deleteBtn = isMe
             ? '<button class="u-btn danger" disabled title="Không thể tự xóa"><i class="fas fa-trash"></i></button>'
             : (targetIsSuper
                 ? '<button class="u-btn danger" disabled title="Không thể xóa Super Admin"><i class="fas fa-trash"></i></button>'
-                : (isAdmin && !canModifyAdmin
-                    ? '<button class="u-btn danger" disabled title="Chỉ Super Admin"><i class="fas fa-trash"></i></button>'
-                    : '<button class="u-btn danger" onclick="deleteUser(\'' + escapeJs(u.email) + '\')" title="Xóa"><i class="fas fa-trash"></i></button>'));
+                : (isAdmin
+                    ? (canModifyAdmin
+                        ? '<button class="u-btn danger" onclick="deleteUser(\'' + escapeJs(u.email) + '\')" title="Xóa"><i class="fas fa-trash"></i></button>'
+                        : '<button class="u-btn danger" disabled title="Chỉ Super Admin"><i class="fas fa-trash"></i></button>')
+                    : (canDelete
+                        ? '<button class="u-btn danger" onclick="deleteUser(\'' + escapeJs(u.email) + '\')" title="Xóa"><i class="fas fa-trash"></i></button>'
+                        : '<button class="u-btn danger" disabled title="Không có quyền xóa"><i class="fas fa-trash"></i></button>')));
 
         var expiryBtn = '';
         if (!isAdmin) {
@@ -2693,6 +2724,11 @@ window.changeRole = async function(email, newRole) {
 };
 
 window.deleteUser = async function(email) {
+    /* ⭐ Check quyền */
+    if (!isSuperAdmin() && !hasPermission('canDeleteUser')) {
+        alert('Bạn không có quyền xóa user!');
+        return;
+    }
     var target = usersCache.find(function(u) { return u.email === email; });
     if (!target) return alert('Không tìm thấy user!');
     var isMe = email === currentUser.email;
@@ -2712,7 +2748,7 @@ window.deleteUser = async function(email) {
 };
 
 function loadLogs() {
-    /* ⭐ Chỉ ẩn nếu không có quyền xem log */
+    /* ⭐ Admin thường vẫn thấy nếu có canViewLogs (mặc định BẬT) */
     if (!isSuperAdmin() && !hasPermission('canViewLogs')) {
         if ($('logsTitle')) $('logsTitle').style.display = 'none';
         $('logsList').style.display = 'none';
@@ -2802,7 +2838,6 @@ function buildRenewalRowHtml(d, isPending) {
 
 /* ═══ LOAD: TK ĐANG GỬI YÊU CẦU GIA HẠN (pending + user_paid) ═══ */
 function loadPendingRenewals() {
-    /* ⭐ Admin thường vẫn thấy nếu có quyền canRenew (mặc định BẬT) */
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
         if ($('pendingRenewalsTitle')) $('pendingRenewalsTitle').style.display = 'none';
         if ($('pendingRenewalsList')) $('pendingRenewalsList').style.display = 'none';
@@ -2825,7 +2860,6 @@ function loadPendingRenewals() {
         var badge = $('pendingRenewalsBadge');
         if (badge) badge.textContent = items.length;
 
-        /* ⭐ Highlight khung khi có yêu cầu chờ */
         var section = $('adminPendingRenewalsSection');
         if (section) {
             section.classList.toggle('has-pending', items.length > 0);
@@ -2851,7 +2885,6 @@ function loadPendingRenewals() {
 
 /* ═══ LOAD: TK ĐÃ GIA HẠN (confirmed) ═══ */
 function loadConfirmedRenewals() {
-    /* ⭐ Admin thường vẫn thấy nếu có quyền canRenew (mặc định BẬT) */
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
         if ($('confirmedRenewalsTitle')) $('confirmedRenewalsTitle').style.display = 'none';
         if ($('confirmedRenewalsList')) $('confirmedRenewalsList').style.display = 'none';
@@ -3070,6 +3103,11 @@ async function doChangeName() {
 }
 
 function doExportExcel() {
+    /* ⭐ Check quyền */
+    if (!isSuperAdmin() && !hasPermission('canImportExport')) {
+        alert('Bạn không có quyền Export!');
+        return;
+    }
     var usersOnly = usersCache.filter(function(u) { return u.role !== 'admin'; });
     if (!usersOnly.length) return alert('Không có user nào để export!');
 
@@ -3228,6 +3266,11 @@ function renderImportPreview() {
 }
 
 async function doImport() {
+    /* ⭐ Check quyền */
+    if (!isSuperAdmin() && !hasPermission('canImportExport')) {
+        alert('Bạn không có quyền Import!');
+        return;
+    }
     var skipDuplicates = $('importSkipDuplicates').checked;
     var skipInvalid = $('importSkipInvalid').checked;
     var toImport = importRows.filter(function(r) {
