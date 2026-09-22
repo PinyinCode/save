@@ -1277,6 +1277,10 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .dropdown-item:hover{background:var(--surface-2)}
 .dropdown-item.danger{color:var(--danger)}
 .dropdown-item.danger:hover{background:var(--danger-light)}
+.dropdown-zalo,.dropdown-tiktok{display:flex;align-items:center;gap:.5rem;width:100%;padding:.65rem .75rem;border-radius:var(--radius-sm);background:transparent;color:var(--text);font-size:.85rem;font-weight:600;cursor:pointer;transition:.15s;text-decoration:none;font-family:inherit;}
+.dropdown-zalo:hover{background:rgba(0,104,255,.1);color:#0068ff}
+.dropdown-tiktok:hover{background:rgba(0,0,0,.06);color:#000}
+[data-theme="dark"] .dropdown-tiktok:hover{background:rgba(255,255,255,.1);color:#fff}
 
 /* ============ DROPDOWN: NÚT GIA HẠN ============ */
 .dropdown-renew{
@@ -1414,19 +1418,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .progress-bar.warn{background:linear-gradient(90deg, #f59e0b, #fbbf24);}
 .progress-bar.urgent{background:linear-gradient(90deg, #dc2626, #ef4444);}
 .progress-bar.permanent{background:linear-gradient(90deg, #2563eb, #3b82f6);}
-
-/* Tier badge nhỏ */
-.tier-badge{
-    display:inline-flex;align-items:center;gap:.25rem;
-    padding:.15rem .5rem;margin-top:.35rem;
-    border-radius:50px;font-size:.62rem;font-weight:900;
-    text-transform:uppercase;letter-spacing:.3px;
-    white-space:nowrap;
-}
-.tier-badge.trial{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e1b4b;box-shadow:0 2px 6px rgba(245,158,11,.4);}
-.tier-badge.active{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;box-shadow:0 2px 6px rgba(124,58,237,.4);}
-.tier-badge.permanent{background:linear-gradient(135deg,#dc2626,#7c2d12);color:#fde68a;box-shadow:0 2px 6px rgba(220,38,38,.5);}
-.tier-badge.expired{background:linear-gradient(135deg,#64748b,#475569);color:#fff;box-shadow:0 2px 6px rgba(71,85,105,.4);}
 
 .btn-login-header{display:flex;align-items:center;gap:.4rem;padding:.55rem 1rem;border-radius:50px;background:var(--primary);color:#fff;border:none;font-size:.85rem;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit;box-shadow:0 4px 12px rgba(37,99,235,.3);white-space:nowrap;}
 .btn-login-header:hover,.btn-login-header:active{background:var(--primary-dark);transform:translateY(-1px)}
@@ -2136,9 +2127,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
         </div>
     </div>
 </div>
-
-<!-- USER DROPDOWN ĐÃ ĐƯỢC CHÈN VÀO HEADER (trong ui_template) -->
-<!-- Các modal dưới đây được chèn tự động -->
 
 <div class="edit-modal" id="changeNameModal">
     <div class="edit-box">
@@ -5040,12 +5028,12 @@ function updateUserDetails() {
 
 /* ============ LOGIN UI ============ */
 window.showLoginModal = function() {
-    $('loginModal').classList.add('show');
-    $('loginError').classList.remove('show');
+    var m = $('loginModal'); if (m) m.classList.add('show');
+    var e = $('loginError'); if (e) e.classList.remove('show');
 };
-function hideLoginModal() { $('loginModal').classList.remove('show'); }
+function hideLoginModal() { var m = $('loginModal'); if (m) m.classList.remove('show'); }
 function showLoginError(msg) {
-    var el = $('loginError');
+    var el = $('loginError'); if (!el) return;
     el.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + msg;
     el.classList.add('show');
 }
@@ -5061,6 +5049,101 @@ function logLogin(u) {
             userAgent: navigator.userAgent.substring(0, 100)
         }).then(function() { try { localStorage.setItem(logKey, today); } catch(e) {} }).catch(function(){});
     } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TELEGRAM NOTIFICATION
+   ═══════════════════════════════════════════════════════════════ */
+function sendTelegramMessage(text) {
+    var token = '';
+    var chatId = '';
+    try {
+        if (typeof TELEGRAM_BOT_TOKEN !== 'undefined' && TELEGRAM_BOT_TOKEN) token = TELEGRAM_BOT_TOKEN;
+        if (typeof TELEGRAM_CHAT_ID !== 'undefined' && TELEGRAM_CHAT_ID) chatId = TELEGRAM_CHAT_ID;
+    } catch(e) {}
+
+    if (!token || !chatId) {
+        console.log('⚠️ Telegram chưa cấu hình — bỏ qua gửi tin');
+        return Promise.resolve(false);
+    }
+
+    var url = 'https://api.telegram.org/bot' + token + '/sendMessage';
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: chatId,
+            text: text,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        })
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.ok) { console.log('✅ Đã gửi Telegram'); return true; }
+        console.warn('⚠️ Telegram lỗi:', data.description);
+        return false;
+    })
+    .catch(function(err) {
+        console.error('❌ Fetch Telegram lỗi:', err);
+        return false;
+    });
+}
+
+function escapeTelegramHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function notifyTelegramUserPaid(reqData) {
+    try {
+        var isPermanent = reqData.isPermanent || false;
+        var timeStr = new Date().toLocaleString('vi-VN', { hour12: false });
+        var moneyStr = (typeof formatMoney === 'function') ? formatMoney(reqData.amount) : String(reqData.amount);
+
+        var msg = '';
+        msg += '🔔 <b>CÓ YÊU CẦU GIA HẠN MỚI</b>\n';
+        msg += '━━━━━━━━━━━━━━━━━━━━\n';
+        msg += '👤 <b>User:</b> ' + escapeTelegramHtml(reqData.name || reqData.email) + '\n';
+        msg += '📧 <b>Email:</b> <code>' + escapeTelegramHtml(reqData.email) + '</code>\n';
+        msg += '💰 <b>Số tiền:</b> ' + moneyStr + 'đ\n';
+        msg += '📦 <b>Gói:</b> ' + escapeTelegramHtml(reqData.packageLabel || reqData.package);
+        if (isPermanent) msg += ' 💎 <b>VĨNH VIỄN</b>';
+        msg += '\n';
+        msg += '⏱ <b>Thời hạn:</b> ' + (isPermanent ? 'Mãi mãi' : reqData.days + ' ngày') + '\n';
+        msg += '🔑 <b>Mã CK:</b> <code>' + escapeTelegramHtml(reqData.transferCode) + '</code>\n';
+        msg += '🕐 <b>Lúc:</b> ' + timeStr + '\n';
+        msg += '━━━━━━━━━━━━━━━━━━━━\n';
+        msg += '⚡ <b>Vào Admin Panel để xác nhận!</b>';
+        return sendTelegramMessage(msg);
+    } catch(e) {
+        console.error('❌ notifyTelegramUserPaid error:', e);
+        return Promise.resolve(false);
+    }
+}
+
+function notifyTelegramAdminConfirmed(reqData, newExpiry) {
+    try {
+        var isPermanent = reqData.isPermanent || false;
+        var timeStr = new Date().toLocaleString('vi-VN', { hour12: false });
+        var adminEmail = (currentUser && currentUser.email) ? currentUser.email : 'admin';
+        var moneyStr = (typeof formatMoney === 'function') ? formatMoney(reqData.amount) : String(reqData.amount);
+
+        var msg = '';
+        msg += '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n';
+        msg += '━━━━━━━━━━━━━━━━━━━━\n';
+        msg += '👤 <b>User:</b> ' + escapeTelegramHtml(reqData.name || reqData.email) + '\n';
+        msg += '📧 <b>Email:</b> <code>' + escapeTelegramHtml(reqData.email) + '</code>\n';
+        msg += '💰 <b>Số tiền:</b> ' + moneyStr + 'đ\n';
+        if (isPermanent) msg += '💎 <b>Đã kích hoạt VĨNH VIỄN</b>\n';
+        else if (newExpiry) msg += '📅 <b>Hạn mới:</b> ' + escapeTelegramHtml(newExpiry) + '\n';
+        msg += '👮 <b>Xác nhận bởi:</b> ' + escapeTelegramHtml(adminEmail) + '\n';
+        msg += '🕐 <b>Lúc:</b> ' + timeStr;
+        return sendTelegramMessage(msg);
+    } catch(e) {
+        console.error('❌ notifyTelegramAdminConfirmed error:', e);
+        return Promise.resolve(false);
+    }
 }
 
 /* ============ RENEWAL: MỞ MODAL ============ */
@@ -5253,16 +5336,40 @@ window.copyText = function(text, btn) {
     }
 };
 
+/* ⭐ ĐÃ TÍCH HỢP TELEGRAM */
 window.userConfirmPaid = async function() {
     if (!renewalCurrentReq) return;
     var btn = $('renewalConfirmBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang gửi...';
+
+    var reqData = null;
     try {
+        /* Lấy data để gửi Telegram */
+        var docSnap = await db.collection('renewal_requests').doc(renewalCurrentReq.id).get();
+        if (docSnap.exists) reqData = docSnap.data();
+
         await db.collection('renewal_requests').doc(renewalCurrentReq.id).update({
             userConfirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'user_paid'
         });
+
+        /* 🔔 Gửi Telegram (không await) */
+        if (reqData && typeof notifyTelegramUserPaid === 'function') {
+            try {
+                notifyTelegramUserPaid({
+                    email: reqData.email || currentUser.email,
+                    name: reqData.name || currentUser.name,
+                    amount: reqData.amount,
+                    package: reqData.package,
+                    packageLabel: reqData.packageLabel,
+                    days: reqData.days,
+                    isPermanent: reqData.isPermanent || false,
+                    transferCode: reqData.transferCode
+                });
+            } catch(te) { console.warn('Telegram notify failed:', te); }
+        }
+
         renderPendingConfirm();
     } catch(e) {
         alert('❌ Lỗi: ' + e.message);
@@ -6028,6 +6135,7 @@ function loadRenewals() {
     });
 }
 
+/* ⭐ ĐÃ TÍCH HỢP TELEGRAM */
 window.approveRenewal = async function(reqId) {
     if (!confirm('Xác nhận đã nhận tiền và gia hạn?')) return;
     try {
@@ -6055,6 +6163,7 @@ window.approveRenewal = async function(reqId) {
             confirmedBy: currentUser.email
         };
         var message = '';
+        var newExpiryStr = '';
 
         if (isPermanent) {
             updateData.expiresAt = null;
@@ -6071,12 +6180,28 @@ window.approveRenewal = async function(reqId) {
             updateData.isPermanent = false;
             reqUpdateData.newExpiresAt = firebase.firestore.Timestamp.fromDate(newExpiry);
             reqUpdateData.isPermanent = false;
+            newExpiryStr = newExpiry.toLocaleDateString('vi-VN');
             message = '✅ Đã gia hạn ' + req.days + ' ngày cho:\n' + req.email +
-                      '\n\nHạn mới: ' + newExpiry.toLocaleDateString('vi-VN');
+                      '\n\nHạn mới: ' + newExpiryStr;
         }
 
         await db.collection('allowed_users').doc(req.email).update(updateData);
         await db.collection('renewal_requests').doc(reqId).update(reqUpdateData);
+
+        /* 🔔 Gửi Telegram thông báo admin đã xác nhận */
+        if (typeof notifyTelegramAdminConfirmed === 'function') {
+            try {
+                notifyTelegramAdminConfirmed({
+                    email: req.email,
+                    name: req.name,
+                    amount: req.amount,
+                    package: req.package,
+                    packageLabel: req.packageLabel,
+                    days: req.days,
+                    isPermanent: isPermanent
+                }, newExpiryStr);
+            } catch(te) { console.warn('Telegram notify failed:', te); }
+        }
 
         try { localStorage.removeItem('user_cache_' + req.email); } catch(e) {}
         alert(message);
@@ -6313,11 +6438,11 @@ function renderImportPreview() {
         if (r.status === 'ok' && r.isUpdate) { rowCls = 'row-update'; statusHtml = '<span class="status-badge update"><i class="fas fa-sync-alt"></i> Cập nhật</span>'; countUpdate++; }
         else if (r.status === 'ok') { rowCls = 'row-new'; statusHtml = '<span class="status-badge ok"><i class="fas fa-plus"></i> Thêm mới</span>'; countOk++; }
         else if (r.status === 'warn') { rowCls = 'row-warn'; statusHtml = '<span class="status-badge warn">' + escapeHtml(r.reason) + '</span>'; countWarn++; }
-        else { rowCls = 'row-error'; statusHtml = '<span class="status-badge err">' + escapeHtml(r.reason) + '</span>'; countErr++; }
-        var expDisplay = r.expStr
-            ? '<span style="color:#16a34a;font-size:.7rem;font-weight:600;">' + r.expStr + '</span>'
+        else { rowCls = 'row-error'; statusHtml = '<span class="status-badge err">b' + escapeHtml(r.reason) + '</>'span>'; countErr++; }
+        var expDisplay + = r.expStr
+            ? '<span style=" escapecolor:#16a34a;Htmlfont-size:.7rem;font-weight:(r600;">' + r.expStr + '</span>'
             : '<span style="color:#dc2626;font-size:.7rem;font-weight:600;">💎 Vĩnh viễn</span>';
-        html += '<tr class="' + rowCls + '"><td>' + r.rowNum + '</td><td><b>' + escapeHtml(r.email) + '</b></td><td>' + escapeHtml(r.name) + '</td><td><span class="role-badge user">user</span></td><td>' + expDisplay + '</td><td>' + statusHtml + '</td></tr>';
+        html += '<tr class="' + rowCls + '"><td>' + r.rowNum + '</td><td><.email) + '</b></td><td>' + escapeHtml(r.name) + '</td><td><span class="role-badge user">user</span></td><td>' + expDisplay + '</td><td>' + statusHtml + '</td></tr>';
     });
     tbody.innerHTML = html;
 
