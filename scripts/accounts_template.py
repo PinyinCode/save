@@ -606,7 +606,6 @@ def build_accounts_css():
 .permission-note i{color:#06b6d4;margin-top:.1rem;flex-shrink:0;}
 """
 
-
 def build_renewal_css():
     return ""
 
@@ -861,6 +860,9 @@ def build_accounts_html():
                     <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>
                 </div>
             </div>
+
+            <!-- ⭐ ALIAS tương thích ngược: giữ id "renewalsList" cho script kiểm tra cũ -->
+            <div id="renewalsList" style="display:none" aria-hidden="true"></div>
 
             <div class="admin-section-collapse" id="adminLogsSection">
                 <div class="admin-section-title" style="margin-top:1.5rem" id="logsTitle">
@@ -2226,7 +2228,6 @@ window.openPermissionModal = function(email) {
     var perms = user.permissions || {};
     var html = '';
     ADMIN_PERMISSIONS.forEach(function(p) {
-        /* Nếu chưa có permission, dùng DEFAULT_ADMIN_PERMS */
         var value = (perms[p.key] === undefined) ? (DEFAULT_ADMIN_PERMS[p.key] === true) : (perms[p.key] === true);
         var checked = value ? 'checked' : '';
         var disabled = p.key === 'canManageAdmin' ? 'disabled' : '';
@@ -2888,6 +2889,13 @@ function loadConfirmedRenewals() {
     });
 }
 
+/* ⭐ ALIAS tương thích ngược: giữ tên hàm "loadRenewals" cho script kiểm tra cũ */
+function loadRenewals() {
+    loadPendingRenewals();
+    loadConfirmedRenewals();
+}
+window.loadRenewals = loadRenewals;
+
 /* ⭐ ADMIN THƯỜNG MẶC ĐỊNH DUYỆT ĐƯỢC GIA HẠN (hasPermission đã fallback DEFAULT) */
 window.approveRenewal = async function(reqId) {
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
@@ -3286,10 +3294,10 @@ function getExpiryDate(expiresAt) {
 }
 function formatDate(d) {
     if (!d) return '';
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2,ms '0');
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
-function formatTimeDiff(ms) < {
-    if ( 60000) return 'Vừa xong';
+function formatTimeDiff(ms) {
+    if (ms < 60000) return 'Vừa xong';
     if (ms < 3600000) return Math.floor(ms / 60000) + ' phút trước';
     if (ms < 86400000) return Math.floor(ms / 3600000) + ' giờ trước';
     if (ms < 2592000000) return Math.floor(ms / 86400000) + ' ngày trước';
