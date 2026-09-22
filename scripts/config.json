@@ -24,6 +24,7 @@
     "trial_days": 3,
     "trial_limit_per_hsk": 10,
     "trial_hsk_max": 6,
+    "trial_daily_limit": 500,
     "bank_config": {
         "bank_id": "970418",
         "bank_name": "BIDV",
@@ -49,7 +50,7 @@
         {
             "id": "1y",
             "label": "1 năm",
-            "amount":300000,
+            "amount": 300000,
             "days": 365,
             "popular": false,
             "save": "Tiết kiệm 58%"
