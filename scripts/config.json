@@ -8,7 +8,7 @@
     "tiktok_nickname": "Thảo nói 中文",
     "tiktok_avatar": "https://i.postimg.cc/QBD0vj6C/IMG-6296.jpg",
     "tiktok_url": "https://www.tiktok.com/@thaonoizhongwen",
-    "demo_limit": 50,
+    "demo_limit": 25,
     "demo_daily_limit": 50,
     "demo_hsk_max": 3,
     "target_admins": 2,
@@ -22,6 +22,8 @@
         "appId": "1:614326539390:web:57344a021d7cbc7b18b42f"
     },
     "trial_days": 3,
+    "trial_limit_per_hsk": 10,
+    "trial_hsk_max": 6,
     "bank_config": {
         "bank_id": "970418",
         "bank_name": "BIDV",
@@ -47,10 +49,18 @@
         {
             "id": "1y",
             "label": "1 năm",
-            "amount": 250000,
+            "amount":300000,
             "days": 365,
             "popular": false,
             "save": "Tiết kiệm 58%"
+        },
+        {
+            "id": "forever",
+            "label": "Vĩnh viễn",
+            "amount": 1000000,
+            "days": 36500,
+            "popular": false,
+            "save": "Dùng mãi mãi"
         }
     ],
     "renewal_support_zalo": "0922331886",
