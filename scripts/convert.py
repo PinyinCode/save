@@ -3,9 +3,14 @@
 Chuyển file Excel → HTML tự chứa dữ liệu.
 Ghép 4 template: ui + social + accounts (gộp renewal) + data.
 
-✅ FIX: Toàn bộ giao diện (header, search, filter, cards, banner)
-   tự scale vừa chiều ngang màn hình — giống chế độ practice full-screen.
-   Không còn khoảng trắng 2 bên trên PC.
+✅ QUY TẮC MỚI:
+   - Mobile (≤ 768px): 1 cột card.
+   - Máy tính (≥ 769px): 2 cột card.
+   - Tự scale theo độ phân giải (clamp, vh, media queries).
+   - Header KHÔNG dùng position:sticky để tránh đè nội dung.
+   - Chế độ Full không chồng lấn: header/filters/nav flex:0 0 auto,
+     body flex:1 1 auto + overflow-y:auto.
+   - Ô đánh chữ trong chế độ Full là trung tâm lớn nhất.
 """
 import json
 import os
@@ -64,16 +69,24 @@ auth_css, auth_html, auth_js = build_all_auth(CONFIG)
 #  Đặt cuối cùng trong full_css để override mọi CSS từ ui/social/auth.
 #  Bao gồm: header, search, filter, cards, banner — tất cả tự co giãn
 #  vừa chiều ngang màn hình.
+#
+#  ★ QUY TẮC MỚI:
+#    - Mobile (≤ 768px): 1 cột card.
+#    - Máy tính (≥ 769px): 2 cột card.
+#    - Màn hình siêu rộng: mở rộng 3-4 cột (vẫn giữ tinh thần 2 cột).
+#    - Header KHÔNG sticky để tránh đè nội dung.
+#    - Chế độ Full: header/filters/nav không co giãn, body cuộn.
 # ═══════════════════════════════════════════════════════════════════
 FULLWIDTH_CSS = r"""
 
 /* ═══════════════════════════════════════════════════════════════════
-   ★ FULL-WIDTH SCALE ★
-   Toàn bộ giao diện tự co giãn vừa chiều ngang màn hình.
-   Đặt cuối để override mọi CSS từ ui/social/auth phía trên.
+   ★ FULL-WIDTH SCALE (v2) ★
+   Quy tắc mới:
+   - Mobile (≤ 768px): 1 cột
+   - Máy tính (≥ 769px): 2 cột
+   - Chế độ Full không chồng lấn (đã fix trong ui_template)
    ═══════════════════════════════════════════════════════════════════ */
 
-/* Wrapper bao toàn bộ body */
 .page-wrap {
     width: 100%;
     max-width: 100%;
@@ -81,7 +94,6 @@ FULLWIDTH_CSS = r"""
     overflow-x: hidden;
 }
 
-/* Container: dùng hết chiều ngang, chỉ chừa padding co giãn */
 .container {
     width: 100% !important;
     max-width: 100% !important;
@@ -91,19 +103,20 @@ FULLWIDTH_CSS = r"""
     padding-right: 1.25rem !important;
 }
 
-/* Sticky top + main đều full width */
-.sticky-top,
+/* ★ QUAN TRỌNG: Bỏ sticky để không đè nội dung ★ */
+.sticky-top {
+    position: relative !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
 .main,
 #mainContent {
     width: 100% !important;
     max-width: 100% !important;
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   ★★★ HEADER SCALE ★★★
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* Header nội bộ: logo dạt trái, actions dạt phải, gap co giãn */
+/* ═══ HEADER SCALE ═══ */
 .header-inner {
     display: flex !important;
     align-items: center !important;
@@ -111,14 +124,10 @@ FULLWIDTH_CSS = r"""
     gap: 1rem !important;
     width: 100% !important;
 }
-
-/* Logo co giãn nhẹ, không bị bóp chữ */
 .logo {
     flex: 1 1 auto !important;
     min-width: 0 !important;
 }
-
-/* Header actions: đẩy sang phải, không bị bóp */
 .header-actions {
     flex: 0 0 auto !important;
     margin-left: auto !important;
@@ -127,18 +136,10 @@ FULLWIDTH_CSS = r"""
     align-items: center !important;
 }
 
-/* ═══ SEARCH BAR: trải rộng toàn bộ container ═══ */
-.search-bar {
-    width: 100% !important;
-    max-width: 100% !important;
-}
+/* ═══ SEARCH + FILTER ═══ */
+.search-bar { width: 100% !important; max-width: 100% !important; }
+.search-bar input { width: 100% !important; max-width: 100% !important; }
 
-.search-bar input {
-    width: 100% !important;
-    max-width: 100% !important;
-}
-
-/* ═══ FILTERS: chia đều theo chiều ngang ═══ */
 .filters {
     display: grid !important;
     width: 100% !important;
@@ -146,8 +147,6 @@ FULLWIDTH_CSS = r"""
     grid-template-columns: 1fr 1fr !important;
     gap: .75rem !important;
 }
-
-/* Trên PC lớn: filter gọn hơn, không kéo dài lố */
 @media (min-width: 1000px) {
     .filters {
         grid-template-columns: 220px 260px !important;
@@ -155,13 +154,10 @@ FULLWIDTH_CSS = r"""
     }
 }
 
-/* ═══ RESULT COUNT: dạt trái, ngay dưới filters ═══ */
-.result-count {
-    margin-top: .5rem !important;
-}
+.result-count { margin-top: .5rem !important; }
 
 /* ═══════════════════════════════════════════════════════════════════
-   ★ GRID CARDS: TỰ ĐỘNG CHIA CỘT THEO CHIỀU NGANG ★
+   ★ GRID CARDS: 1 CỘT MOBILE — 2 CỘT MÁY TÍNH ★
    ═══════════════════════════════════════════════════════════════════ */
 .mobile-view {
     display: grid !important;
@@ -170,45 +166,33 @@ FULLWIDTH_CSS = r"""
     margin-left: auto !important;
     margin-right: auto !important;
     gap: 1rem !important;
+    /* Mặc định mobile: 1 cột */
     grid-template-columns: 1fr !important;
 }
 
-@media (min-width: 600px) {
+/* Máy tính: 2 cột */
+@media (min-width: 769px) {
     .mobile-view {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-        gap: 1rem !important;
-    }
-}
-
-@media (min-width: 1000px) {
-    .mobile-view {
-        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         gap: 1.1rem !important;
     }
 }
 
-@media (min-width: 1400px) {
+/* Màn hình rất rộng: 3 cột (vẫn giữ tinh thần 2 cột chính) */
+@media (min-width: 1800px) {
     .mobile-view {
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         gap: 1.2rem !important;
     }
 }
-
-@media (min-width: 1900px) {
+@media (min-width: 2400px) {
     .mobile-view {
-        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
         gap: 1.3rem !important;
     }
 }
 
-@media (min-width: 2400px) {
-    .mobile-view {
-        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-        gap: 1.4rem !important;
-    }
-}
-
-/* ═══ Banner Demo / Expiry: full width ═══ */
+/* ═══ Banner full width ═══ */
 .demo-banner,
 .expiry-banner {
     width: 100% !important;
@@ -218,44 +202,54 @@ FULLWIDTH_CSS = r"""
     margin-bottom: 1rem !important;
 }
 
-/* ═══ Container padding co giãn theo màn hình ═══ */
+/* ═══ Container padding co giãn ═══ */
 @media (min-width: 1000px) {
-    .container {
-        padding-left: 1.5rem !important;
-        padding-right: 1.5rem !important;
-    }
+    .container { padding-left: 1.5rem !important; padding-right: 1.5rem !important; }
 }
 @media (min-width: 1400px) {
-    .container {
-        padding-left: 2rem !important;
-        padding-right: 2rem !important;
-    }
+    .container { padding-left: 2rem !important; padding-right: 2rem !important; }
 }
 @media (min-width: 1900px) {
-    .container {
-        padding-left: 2.5rem !important;
-        padding-right: 2.5rem !important;
-    }
-}
-@media (min-width: 2400px) {
-    .container {
-        padding-left: 3rem !important;
-        padding-right: 3rem !important;
-    }
+    .container { padding-left: 2.5rem !important; padding-right: 2.5rem !important; }
 }
 
 /* ═══ MOBILE: thu gọn padding ═══ */
 @media (max-width: 768px) {
-    .container {
-        padding-left: .7rem !important;
-        padding-right: .7rem !important;
-    }
-    .mobile-view {
-        gap: .8rem !important;
-    }
-    .header-inner {
-        gap: .5rem !important;
-    }
+    .container { padding-left: .7rem !important; padding-right: .7rem !important; }
+    .mobile-view { gap: .8rem !important; }
+    .header-inner { gap: .5rem !important; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★ CHẾ ĐỘ FULL: ô đánh chữ là trung tâm, không chồng lấn ★
+   ═══════════════════════════════════════════════════════════════════ */
+.practice-full-modal {
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2500 !important;
+    display: none;
+    flex-direction: column !important;
+    overflow: hidden !important;
+}
+.practice-full-modal.show { display: flex !important; }
+
+.practice-full-header,
+.pf-filters,
+.practice-full-nav {
+    flex: 0 0 auto !important; /* Không co giãn */
+}
+
+.practice-full-body {
+    flex: 1 1 auto !important; /* Chiếm hết phần còn lại */
+    min-height: 0 !important;  /* Cho phép overflow hoạt động */
+    overflow-y: auto !important;
+}
+
+/* Ô đánh chữ lớn nhất, căn giữa */
+.practice-full-input {
+    width: 100% !important;
+    text-align: center !important;
+    font-size: clamp(1.15rem, 2.2vw, 1.6rem) !important;
 }
 """
 
@@ -501,3 +495,4 @@ if telegram_bot_token and telegram_chat_id:
 else:
     print(f"📲 Telegram: CHƯA cấu hình (thiếu token hoặc chat_id)")
 print(f"✅ Đã ghép 4 template + FULLWIDTH SCALE cho header/search/filter/cards")
+print(f"🎨 Quy tắc: Mobile 1 cột | PC 2 cột | Full mode không chồng lấn")
