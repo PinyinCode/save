@@ -120,7 +120,6 @@ body{
 }
 [data-theme="dark"] .demo-badge{color:#fcd34d}
 
-/* Badge TRIAL — màu tím sang trọng */
 .trial-badge{
     display:none;align-items:center;gap:.35rem;
     padding:.4rem .75rem;border-radius:50px;
@@ -1429,7 +1428,6 @@ function getTrialData() {
         var hskData = RAW_DATA.filter(function(r) { return r.hsk === hsk; });
         if (!hskData.length) return;
 
-        // Nhóm theo subject
         var bySubject = {};
         hskData.forEach(function(r) {
             var subj = r.subject || 'Khác';
@@ -1437,7 +1435,6 @@ function getTrialData() {
             bySubject[subj].push(r);
         });
 
-        // Round-robin lấy câu đa dạng chủ đề
         var subjects = Object.keys(bySubject);
         var pointers = {};
         subjects.forEach(function(s) { pointers[s] = 0; });
@@ -1466,23 +1463,14 @@ function getTrialData() {
 
 /* ✅ Lấy data theo trạng thái user hiện tại */
 function getUserData() {
-    // Admin → full
     if (currentUser && currentUser.role === 'admin') return RAW_DATA;
-
-    // Khách chưa login → demo
     if (isDemo) return getDemoData();
-
-    // Đã login → check trạng thái
     if (currentUser) {
         var dl = getDaysRemaining(currentUser);
-        // Hết hạn → demo
         if (dl !== null && dl <= 0) return getDemoData();
-        // Trial (mail mới) → 10 câu/HSK
         if (currentUser.isTrial) return getTrialData();
-        // Full
         return RAW_DATA;
     }
-
     return getDemoData();
 }
 
@@ -1518,14 +1506,11 @@ function incDemoUsage() {
 }
 function getDemoRemaining() { return Math.max(0, DEMO_DAILY_LIMIT - getDemoUsage()); }
 
-/* ✅ Chặn tính năng khi hết hạn */
 function canUseFeature() {
     var st = getUserState();
-    // Guest hoặc Expired → giới hạn demo
     if (st === 'guest' || st === 'expired') {
         return getDemoUsage() < DEMO_DAILY_LIMIT;
     }
-    // Trial + Full → không giới hạn lượt
     return true;
 }
 
@@ -1539,11 +1524,9 @@ function updateDemoRemaining() {
     else el.style.color = '#16a34a';
 }
 
-/* ✅ Phân biệt demo vs hết hạn */
 function showLimitMessage() {
     var st = getUserState();
 
-    // Case: user hết hạn
     if (st === 'expired') {
         if (confirm('🔒 Tài khoản của bạn đã HẾT HẠN.\n\n' +
                     'Vui lòng gia hạn để tiếp tục sử dụng tính năng này.\n\n' +
@@ -1553,7 +1536,6 @@ function showLimitMessage() {
         return;
     }
 
-    // Case: guest hết lượt demo
     if (confirm('🔒 Bạn đã dùng hết ' + DEMO_DAILY_LIMIT +
                 ' lượt miễn phí hôm nay.\n\n' +
                 '(Bao gồm cả NGHE và LUYỆN VIẾT)\n\n' +
@@ -1662,7 +1644,6 @@ function refreshApp() {
     updateUserModeBadges();
 }
 
-/* ✅ Cập nhật badge + banner theo trạng thái */
 function updateUserModeBadges() {
     var st = getUserState();
     var demoBadge = $('demoBadge');
@@ -1670,21 +1651,18 @@ function updateUserModeBadges() {
     var demoBanner = $('demoBanner');
     var trialBanner = $('trialBanner');
 
-    // Badge trên header
     if (demoBadge) demoBadge.style.display = (st === 'guest' || st === 'expired') ? 'flex' : 'none';
     if (trialBadge) {
         if (st === 'trial') trialBadge.classList.add('show');
         else trialBadge.classList.remove('show');
     }
 
-    // Banner chính
     if (demoBanner) demoBanner.style.display = (st === 'guest' || st === 'expired') ? 'flex' : 'none';
     if (trialBanner) {
         if (st === 'trial') trialBanner.classList.add('show');
         else trialBanner.classList.remove('show');
     }
 
-    // Cập nhật text trong trial banner
     if (st === 'trial' && currentUser) {
         var dl = $('trialLimitText');
         var hm = $('trialHskMaxText');
@@ -1699,7 +1677,6 @@ function updateUserModeBadges() {
         }
     }
 
-    // Chip demo-limited
     var hskChip = $('hskChip');
     var subjectChip = $('subjectChip');
     var isLimited = (st === 'guest' || st === 'expired');
@@ -1965,7 +1942,6 @@ function buildFilters() {
     var st = getUserState();
 
     if (st === 'guest' || st === 'expired') {
-        // Demo mode
         var demoHsk = getDemoHskList();
         var hskHtml = '<option value="">Tất cả (HSK1-' + DEMO_HSK_MAX + ')</option>';
         demoHsk.forEach(function(h) { hskHtml += '<option value="' + h + '">' + h + '</option>'; });
@@ -1996,7 +1972,6 @@ function buildFilters() {
         subjectSelect.innerHTML = subjHtml;
 
     } else if (st === 'trial') {
-        // Trial mode — full HSK filter, subject chỉ có trong trial data
         var hskHtmlT = '<option value="">Tất cả (HSK1-' + TRIAL_HSK_MAX + ')</option>';
         for (var i = 1; i <= TRIAL_HSK_MAX; i++) {
             var h = 'HSK' + i;
@@ -2016,7 +1991,6 @@ function buildFilters() {
         subjectSelect.innerHTML = subjHtmlT;
 
     } else {
-        // Full mode
         hskSelect.innerHTML =
             '<option value="">Tất cả</option>' +
             '<option value="HSK1">HSK1</option>' +
@@ -2498,7 +2472,6 @@ function applyFilter() {
     if (state.search) clearBtn.classList.add('show');
     else clearBtn.classList.remove('show');
 
-    // ✅ 3 trạng thái: guest/expired → demo; trial → 10/HSK; full → all
     var baseData = getUserData();
 
     filtered = baseData.filter(function(r) {
@@ -3076,10 +3049,9 @@ function initPracticeFull() {
         pfApplyFilter();
     });
 
-    = $('pfHskFilter').add thisEventListener('change', function() {
-       .value var st = getUserState;
-();
-        if (st ===            'guest' || st var === 'expired') {
+    $('pfHskFilter').addEventListener('change', function() {
+        var st = getUserState();
+        if (st === 'guest' || st === 'expired') {
             var val = this.value;
             var allowed = getDemoHskList();
             if (val && allowed.indexOf(val) === -1) {
@@ -3093,7 +3065,8 @@ function initPracticeFull() {
     $('pfSubjectFilter').addEventListener('change', function() {
         var st = getUserState();
         if (st === 'guest' || st === 'expired') {
-            var val allowed = getDemoSubjectList();
+            var val = this.value;
+            var allowed = getDemoSubjectList();
             if (val && allowed.indexOf(val) === -1) {
                 alert('🔒 Chủ đề này chưa có trong Demo.');
                 this.value = '';
@@ -3135,7 +3108,6 @@ function initPracticeFull() {
         }
     }, { passive: true });
 
-    /* Nút loa nghe câu tiếng Trung */
     var speakBtn = $('pfSpeakBtn');
     if (speakBtn) {
         speakBtn.addEventListener('click', function(e) {
@@ -3295,12 +3267,12 @@ function showWriterChar(char) {
                 width: targetSize, height: targetSize, padding: padSize,
                 strokeColor: '#1e293b', radicalColor: '#7c3aed',
                 highlightColor: '#f59e0b', outlineColor: '#cbd5e1',
-                drawingColor: '#7c3aed', drawingWidth: drawWidth,
+                drawingColor: '#7c3aed', drawing })
+Width: drawWidth,
                 showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 250,
                 charDataLoader: function(ch, onComplete, onError) {
                     fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/' + encodeURIComponent(ch) + '.json')
-                        .then(function(res) { if (!res.ok) throw new Error('Không có dữ liệu'); return res.json(); })
-                        .then(onComplete)
+                        .then(function(res) { if (!res.ok) throw new Error('Không có dữ liệu'); return res.json();                        .then(onComplete)
                         .catch(function(err) {
                             if (onError) onError(err);
                             target.innerHTML = '<div class="writer-loading"><i class="fas fa-exclamation-triangle" style="color:#dc2626"></i>Không tải được dữ liệu.</div>';
