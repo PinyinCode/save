@@ -3,12 +3,6 @@
 Template GIAO DIỆN HỌC: header, search, filter, card, practice full, writer.
 🎨 CHỈ SỬA FILE NÀY KHI ĐỔI CẤU TRÚC GIAO DIỆN HỌC TẬP.
 KHÔNG chứa login/admin/social/renewal (đã tách sang file khác).
-
-🎯 PHÂN BIỆT 3 CHẾ ĐỘ:
-   - DEMO     : chưa đăng nhập → giới hạn DEMO_LIMIT câu, HSK1-3, X lượt/ngày
-   - TRIAL    : đã đăng nhập, đang trong thời gian dùng thử → TRIAL_LIMIT_PER_HSK câu/HSK, HSK1-6
-   - ACTIVE   : đã gia hạn / còn hạn → full quyền
-   - EXPIRED  : hết hạn → quay về giới hạn như demo
 """
 
 
@@ -117,28 +111,14 @@ body{
 }
 .icon-btn:not(.has-badge) .badge{display:none}
 
-/* ============ MODE BADGE (Demo / Trial / Expired) ============ */
 .demo-badge{
     display:flex;align-items:center;gap:.35rem;
     padding:.4rem .75rem;border-radius:50px;
-    font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
-    border:1px solid transparent;
-}
-.demo-badge.mode-demo{
     background:var(--amber-light);color:#92400e;
-    border-color:rgba(245,158,11,.4);
+    font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;
+    border:1px solid rgba(245,158,11,.4);
 }
-.demo-badge.mode-trial{
-    background:#fed7aa;color:#9a3412;
-    border-color:rgba(234,88,12,.4);
-}
-.demo-badge.mode-expired{
-    background:var(--danger-light);color:var(--danger);
-    border-color:rgba(220,38,38,.4);
-}
-[data-theme="dark"] .demo-badge.mode-demo{color:#fcd34d}
-[data-theme="dark"] .demo-badge.mode-trial{background:rgba(234,88,12,.25);color:#fdba74}
-[data-theme="dark"] .demo-badge.mode-expired{color:#fca5a5}
+[data-theme="dark"] .demo-badge{color:#fcd34d}
 
 /* ============ SEARCH + FILTER ============ */
 .search-bar{position:relative;margin-bottom:.55rem}
@@ -303,7 +283,7 @@ body.show-practice .card-body{
 
 .main{padding:.5rem 0 3rem}
 
-/* ============ BANNER (Demo / Trial / Expired) ============ */
+/* ============ DEMO BANNER ============ */
 .demo-banner{
     background:linear-gradient(135deg, #fef3c7, #fde68a);
     border:1.5px solid #f59e0b;border-radius:var(--radius);
@@ -334,51 +314,6 @@ body.show-practice .card-body{
     display:flex;align-items:center;gap:.35rem;white-space:nowrap;
 }
 .demo-banner-btn:hover{background:#d97706;transform:translateY(-1px)}
-
-/* Expiry banner (trial + sắp hết hạn) */
-.expiry-banner{
-    background:linear-gradient(135deg, #ffedd5, #fed7aa);
-    border:1.5px solid #ea580c;border-radius:var(--radius);
-    padding:.9rem 1.1rem;margin-bottom:1rem;
-    display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
-}
-[data-theme="dark"] .expiry-banner{
-    background:linear-gradient(135deg, rgba(234,88,12,.15), rgba(234,88,12,.25));
-    border-color:#ea580c;
-}
-.expiry-banner.mode-expired{
-    background:linear-gradient(135deg, var(--danger-light), #fecaca);
-    border-color:var(--danger);
-}
-[data-theme="dark"] .expiry-banner.mode-expired{
-    background:linear-gradient(135deg, rgba(220,38,38,.15), rgba(220,38,38,.25));
-}
-.expiry-banner-icon{
-    width:36px;height:36px;border-radius:50%;
-    background:#ea580c;color:#fff;
-    display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;
-}
-.expiry-banner.mode-expired .expiry-banner-icon{background:var(--danger)}
-.expiry-banner-text{flex:1;min-width:200px}
-.expiry-banner-text .title{font-weight:700;font-size:.9rem;color:#9a3412;margin-bottom:.15rem}
-[data-theme="dark"] .expiry-banner-text .title{color:#fdba74}
-.expiry-banner.mode-expired .expiry-banner-text .title{color:var(--danger)}
-[data-theme="dark"] .expiry-banner.mode-expired .expiry-banner-text .title{color:#fca5a5}
-.expiry-banner-text .desc{font-size:.78rem;color:#7c2d12;line-height:1.5}
-[data-theme="dark"] .expiry-banner-text .desc{color:#fed7aa}
-.expiry-banner.mode-expired .expiry-banner-text .desc{color:#991b1b}
-[data-theme="dark"] .expiry-banner.mode-expired .expiry-banner-text .desc{color:#fecaca}
-.expiry-banner-text .desc b{color:#dc2626;font-weight:800}
-.expiry-banner-btn{
-    padding:.5rem .9rem;border-radius:50px;border:none;
-    background:#ea580c;color:#fff;
-    font-size:.8rem;font-weight:700;cursor:pointer;
-    transition:.15s;font-family:inherit;text-decoration:none;
-    display:flex;align-items:center;gap:.35rem;white-space:nowrap;
-}
-.expiry-banner-btn:hover{background:#c2410c;transform:translateY(-1px)}
-.expiry-banner.mode-expired .expiry-banner-btn{background:var(--danger)}
-.expiry-banner.mode-expired .expiry-banner-btn:hover{background:#b91c1c}
 
 /* ============ CARDS ============ */
 .mobile-view{display:grid;grid-template-columns:1fr;gap:.8rem;max-width:100%}
@@ -521,8 +456,6 @@ body.show-practice .card-body{
 .load-more:hover,.load-more:active{background:var(--primary-light);border-color:var(--primary)}
 .load-more.locked{border-color:var(--amber);color:#92400e;background:var(--amber-light)}
 [data-theme="dark"] .load-more.locked{color:#fcd34d;background:rgba(245,158,11,.15)}
-.load-more.locked-upgrade{border-color:#ea580c;color:#9a3412;background:#fed7aa}
-[data-theme="dark"] .load-more.locked-upgrade{color:#fdba74;background:rgba(234,88,12,.2)}
 .end-note{
     grid-column:1 / -1;text-align:center;padding:1rem;
     color:var(--text-3);font-size:.82rem;
@@ -1104,7 +1037,9 @@ def build_ui_html():
                     </div>
                 </div>
                 <div class="header-actions">
-                    <div class="demo-badge" id="modeBadge" style="display:none"></div>
+                    <div class="demo-badge" id="demoBadge" style="display:none">
+                        <i class="fas fa-eye"></i> Demo
+                    </div>
                     <button class="btn-login-header" id="headerLoginBtn" style="display:none">
                         <i class="fas fa-sign-in-alt"></i> <span>Đăng nhập</span>
                     </button>
@@ -1229,7 +1164,6 @@ def build_ui_html():
 
 <main class="main" id="mainContent" style="display:none">
     <div class="container">
-        <!-- BANNER: DEMO -->
         <div class="demo-banner" id="demoBanner" style="display:none">
             <div class="demo-banner-icon"><i class="fas fa-gift"></i></div>
             <div class="demo-banner-text">
@@ -1247,18 +1181,16 @@ def build_ui_html():
             </button>
         </div>
 
-        <!-- BANNER: TRIAL / SẮP HẾT HẠN / HẾT HẠN -->
         <div class="expiry-banner" id="expiryBanner" style="display:none">
-            <div class="expiry-banner-icon" id="expiryBannerIcon"><i class="fas fa-hourglass-half"></i></div>
+            <div class="expiry-banner-icon"><i class="fas fa-hourglass-half"></i></div>
             <div class="expiry-banner-text">
-                <div class="title" id="expiryBannerTitle">Tài khoản sắp hết hạn</div>
-                <div class="desc" id="expiryBannerDesc">
-                    Còn <b id="expiryDaysText">7</b> ngày (đến <b id="expiryDateText">-</b>).
-                    Liên hệ Admin để gia hạn!
+                <div class="title">Tài khoản sắp hết hạn</div>
+                <div class="desc">
+                    Còn <b id="expiryDaysText">7</b> ngày (đến <b id="expiryDateText">-</b>). Liên hệ Admin để gia hạn!
                 </div>
             </div>
             <a class="expiry-banner-btn" id="expiryContactBtn" href="#" target="_blank" rel="noopener noreferrer">
-                <i class="fas fa-comment-dots"></i> <span id="expiryBtnText">Liên hệ</span>
+                <i class="fas fa-comment-dots"></i> Liên hệ
             </a>
         </div>
 
@@ -1395,9 +1327,7 @@ def build_ui_html():
 # ═══════════════════════════════════════════════════════════════════
 def build_ui_js():
     return r"""
-/* ============================================================
-   BIẾN TOÀN CỤC
-   ============================================================ */
+/* ============ BIẾN TOÀN CỤC (chỉ phần học) ============ */
 var filtered = [];
 var state = { search:'', hsk:'', subject:'' };
 var PAGE_SIZE = 300;
@@ -1408,99 +1338,7 @@ var currentBtn = null;
 
 var displayState = { vi: true, pinyin: false, practice: false };
 
-/* 3 CHẾ ĐỘ USER: 'demo' | 'trial' | 'active' | 'expired' */
-var USER_MODE = {
-    DEMO: 'demo',
-    TRIAL: 'trial',
-    ACTIVE: 'active',
-    EXPIRED: 'expired'
-};
-
-/* ============================================================
-   🎯 PHÂN LOẠI CHẾ ĐỘ NGƯỜI DÙNG
-   ============================================================ */
-/**
- * Xác định chế độ hiện tại của người dùng:
- *  - 'demo'    : chưa đăng nhập (hoặc login fail)
- *  - 'trial'   : đã login, đang trong thời gian dùng thử
- *  - 'active'  : đã gia hạn hoặc còn nhiều ngày
- *  - 'expired' : đã login nhưng đã hết hạn
- */
-function getUserMode() {
-    if (typeof isDemo === 'undefined' || isDemo) return USER_MODE.DEMO;
-    if (!currentUser) return USER_MODE.DEMO;
-
-    // Admin luôn full
-    if (currentUser.role === 'admin') return USER_MODE.ACTIVE;
-
-    var daysLeft = getDaysRemaining(currentUser);
-
-    // Hết hạn
-    if (daysLeft !== null && daysLeft <= 0) return USER_MODE.EXPIRED;
-
-    // Còn hạn → xét trial hay active
-    var isTrial = (currentUser.isTrial === true) ||
-                  (currentUser.trialStartedAt && !currentUser.renewedAt);
-
-    var trialDays = (typeof TRIAL_DAYS !== 'undefined') ? TRIAL_DAYS : 3;
-
-    if (isTrial && daysLeft !== null && daysLeft <= trialDays) {
-        return USER_MODE.TRIAL;
-    }
-
-    return USER_MODE.ACTIVE;
-}
-
-/** Có bị giới hạn data không (demo hoặc hết hạn) */
-function isLimitedMode() {
-    var m = getUserMode();
-    return m === USER_MODE.DEMO || m === USER_MODE.EXPIRED;
-}
-
-/** Danh sách HSK được phép */
-function getAllowedHskList() {
-    var mode = getUserMode();
-    if (mode === USER_MODE.DEMO || mode === USER_MODE.EXPIRED) {
-        return getDemoHskList();
-    }
-    if (mode === USER_MODE.TRIAL) {
-        var max = (typeof TRIAL_HSK_MAX !== 'undefined') ? TRIAL_HSK_MAX : 6;
-        var list = [];
-        for (var i = 1; i <= max; i++) list.push('HSK' + i);
-        return list;
-    }
-    return ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
-}
-
-/** Lấy data giới hạn cho trial: TRIAL_LIMIT_PER_HSK câu / mỗi HSK */
-function getTrialLimitedData() {
-    var limit = (typeof TRIAL_LIMIT_PER_HSK !== 'undefined') ? TRIAL_LIMIT_PER_HSK : 10;
-    var byHsk = {};
-    var result = [];
-    for (var i = 0; i < RAW_DATA.length; i++) {
-        var r = RAW_DATA[i];
-        var hsk = r.hsk || 'HSK1';
-        if (!byHsk[hsk]) byHsk[hsk] = 0;
-        if (byHsk[hsk] < limit) {
-            result.push(r);
-            byHsk[hsk]++;
-        }
-    }
-    return result;
-}
-
-/** Data gốc theo mode */
-function getBaseDataByMode() {
-    var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) return getDemoData();
-    if (mode === USER_MODE.TRIAL) return getTrialLimitedData();
-    if (mode === USER_MODE.EXPIRED) return getDemoData();
-    return RAW_DATA;
-}
-
-/* ============================================================
-   HELPERS
-   ============================================================ */
+/* ============ HELPERS ============ */
 function getDemoData() { return RAW_DATA.slice(0, DEMO_LIMIT); }
 function getDemoHskList() {
     var list = [];
@@ -1535,42 +1373,18 @@ function incDemoUsage() {
 }
 function getDemoRemaining() { return Math.max(0, DEMO_DAILY_LIMIT - getDemoUsage()); }
 
-/* ============================================================
-   🎯 KIỂM TRA QUYỀN DÙNG TÍNH NĂNG
-   ============================================================ */
+/* ✅ FIX: Chặn tính năng khi hết hạn */
 function canUseFeature() {
-    var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) {
-        return getDemoUsage() < DEMO_DAILY_LIMIT;
-    }
-    if (mode === USER_MODE.EXPIRED) return false;
-    return true;  // trial + active → full
-}
+    if (isDemo) return getDemoUsage() < DEMO_DAILY_LIMIT;
 
-/* ============================================================
-   🎯 THÔNG BÁO GIỚI HẠN THEO MODE
-   ============================================================ */
-function showLimitMessage() {
-    var mode = getUserMode();
-
-    if (mode === USER_MODE.EXPIRED) {
-        if (confirm('🔒 Tài khoản của bạn đã HẾT HẠN.\n\n' +
-                    'Vui lòng gia hạn để tiếp tục sử dụng tính năng này.\n\n' +
-                    'Nhấn OK để mở trang gia hạn.')) {
-            if (typeof openRenewalModal === 'function') openRenewalModal();
+    if (currentUser && currentUser.role !== 'admin') {
+        var daysLeft = getDaysRemaining(currentUser);
+        if (daysLeft !== null && daysLeft <= 0) {
+            return false;
         }
-        return;
     }
 
-    if (mode === USER_MODE.DEMO) {
-        if (confirm('🔒 Bạn đã dùng hết ' + DEMO_DAILY_LIMIT +
-                    ' lượt miễn phí hôm nay.\n\n' +
-                    '(Bao gồm cả NGHE và LUYỆN VIẾT)\n\n' +
-                    'Đăng nhập Google để dùng KHÔNG GIỚI HẠN!')) {
-            showLoginModal();
-        }
-        return;
-    }
+    return true;
 }
 
 function updateDemoRemaining() {
@@ -1581,6 +1395,28 @@ function updateDemoRemaining() {
     if (remaining < 20) el.style.color = '#dc2626';
     else if (remaining < 50) el.style.color = '#f59e0b';
     else el.style.color = '#16a34a';
+}
+
+/* ✅ FIX: showLimitMessage phân biệt demo vs hết hạn */
+function showLimitMessage() {
+    if (!isDemo && currentUser && currentUser.role !== 'admin') {
+        var daysLeft = getDaysRemaining(currentUser);
+        if (daysLeft !== null && daysLeft <= 0) {
+            if (confirm('🔒 Tài khoản của bạn đã HẾT HẠN.\n\n' +
+                        'Vui lòng gia hạn để tiếp tục sử dụng tính năng này.\n\n' +
+                        'Nhấn OK để mở trang gia hạn.')) {
+                if (typeof openRenewalModal === 'function') openRenewalModal();
+            }
+            return;
+        }
+    }
+
+    if (confirm('🔒 Bạn đã dùng hết ' + DEMO_DAILY_LIMIT +
+                ' lượt miễn phí hôm nay.\n\n' +
+                '(Bao gồm cả NGHE và LUYỆN VIẾT)\n\n' +
+                'Đăng nhập Google để dùng KHÔNG GIỚI HẠN!')) {
+        showLoginModal();
+    }
 }
 
 function escapeHtml(str) {
@@ -1608,125 +1444,7 @@ function formatTimeDiff(ms) {
     return mo + ' tháng trước';
 }
 
-/* ============================================================
-   🎯 BADGE + BANNER THEO MODE
-   ============================================================ */
-function updateModeBadge() {
-    var badge = $('modeBadge');
-    if (!badge) return;
-
-    var mode = getUserMode();
-    badge.className = 'demo-badge';
-
-    if (mode === USER_MODE.DEMO) {
-        badge.classList.add('mode-demo');
-        badge.innerHTML = '<i class="fas fa-eye"></i> Demo';
-        badge.style.display = 'flex';
-    } else if (mode === USER_MODE.TRIAL) {
-        var daysLeft = getDaysRemaining(currentUser);
-        badge.classList.add('mode-trial');
-        badge.innerHTML = '<i class="fas fa-hourglass-half"></i> Dùng thử ' +
-                          (daysLeft !== null ? daysLeft : TRIAL_DAYS) + ' ngày';
-        badge.style.display = 'flex';
-    } else if (mode === USER_MODE.EXPIRED) {
-        badge.classList.add('mode-expired');
-        badge.innerHTML = '<i class="fas fa-lock"></i> Hết hạn';
-        badge.style.display = 'flex';
-    } else {
-        badge.style.display = 'none';
-    }
-}
-
-function updateBanners() {
-    var mode = getUserMode();
-    var demoBanner = $('demoBanner');
-    var expiryBanner = $('expiryBanner');
-    var expiryIcon = $('expiryBannerIcon');
-    var expiryTitle = $('expiryBannerTitle');
-    var expiryDesc = $('expiryBannerDesc');
-    var expiryBtnText = $('expiryBtnText');
-    var expiryContactBtn = $('expiryContactBtn');
-
-    /* Demo banner */
-    if (demoBanner) {
-        demoBanner.style.display = (mode === USER_MODE.DEMO) ? 'flex' : 'none';
-    }
-
-    /* Expiry banner: trial / sắp hết hạn / hết hạn */
-    if (!expiryBanner) return;
-    expiryBanner.classList.remove('mode-expired');
-
-    if (mode === USER_MODE.TRIAL) {
-        var daysLeft = getDaysRemaining(currentUser);
-        var expiryDateStr = (currentUser && currentUser.expiryDate)
-            ? new Date(currentUser.expiryDate).toLocaleDateString('vi-VN')
-            : '-';
-        if (expiryIcon) expiryIcon.innerHTML = '<i class="fas fa-hourglass-half"></i>';
-        if (expiryTitle) expiryTitle.textContent = 'Bạn đang dùng thử miễn phí';
-        if (expiryDesc) {
-            expiryDesc.innerHTML = 'Còn <b>' + (daysLeft !== null ? daysLeft : TRIAL_DAYS) +
-                '</b> ngày (đến <b>' + expiryDateStr + '</b>). ' +
-                'Sau khi hết thời gian dùng thử, bạn cần gia hạn để tiếp tục sử dụng đầy đủ!';
-        }
-        if (expiryBtnText) expiryBtnText.textContent = 'Gia hạn ngay';
-        if (expiryContactBtn) {
-            expiryContactBtn.href = 'javascript:void(0)';
-            expiryContactBtn.onclick = function(e) {
-                e.preventDefault();
-                if (typeof openRenewalModal === 'function') openRenewalModal();
-            };
-        }
-        expiryBanner.style.display = 'flex';
-
-    } else if (mode === USER_MODE.EXPIRED) {
-        if (expiryIcon) expiryIcon.innerHTML = '<i class="fas fa-lock"></i>';
-        if (expiryTitle) expiryTitle.textContent = 'Tài khoản đã hết hạn';
-        if (expiryDesc) {
-            expiryDesc.innerHTML = 'Vui lòng gia hạn để mở khóa toàn bộ ' +
-                RAW_DATA.length + ' câu và tất cả tính năng!';
-        }
-        if (expiryBtnText) expiryBtnText.textContent = 'Gia hạn ngay';
-        if (expiryContactBtn) {
-            expiryContactBtn.href = 'javascript:void(0)';
-            expiryContactBtn.onclick = function(e) {
-                e.preventDefault();
-                if (typeof openRenewalModal === 'function') openRenewalModal();
-            };
-        }
-        expiryBanner.classList.add('mode-expired');
-        expiryBanner.style.display = 'flex';
-
-    } else if (mode === USER_MODE.ACTIVE) {
-        var days = getDaysRemaining(currentUser);
-        /* Chỉ hiện khi ≤ 7 ngày */
-        if (days !== null && days <= 7 && days > 0) {
-            var expiryDateStr2 = (currentUser && currentUser.expiryDate)
-                ? new Date(currentUser.expiryDate).toLocaleDateString('vi-VN')
-                : '-';
-            if (expiryIcon) expiryIcon.innerHTML = '<i class="fas fa-hourglass-half"></i>';
-            if (expiryTitle) expiryTitle.textContent = 'Tài khoản sắp hết hạn';
-            if (expiryDesc) {
-                expiryDesc.innerHTML = 'Còn <b>' + days + '</b> ngày (đến <b>' +
-                    expiryDateStr2 + '</b>). Liên hệ Admin để gia hạn!';
-            }
-            if (expiryBtnText) expiryBtnText.textContent = 'Liên hệ';
-            if (expiryContactBtn) {
-                expiryContactBtn.href = 'https://zalo.me/' +
-                    (typeof ZALO_PHONE !== 'undefined' ? ZALO_PHONE : '');
-                expiryContactBtn.onclick = null;
-            }
-            expiryBanner.style.display = 'flex';
-        } else {
-            expiryBanner.style.display = 'none';
-        }
-    } else {
-        expiryBanner.style.display = 'none';
-    }
-}
-
-/* ============================================================
-   INIT APP
-   ============================================================ */
+/* ============ INIT APP ============ */
 function initApp() {
     mobileWrapper = $('mobileWrapper');
 
@@ -1760,18 +1478,11 @@ function initApp() {
     });
 
     $('hskFilter').addEventListener('change', function() {
-        var mode = getUserMode();
-        if (mode === USER_MODE.DEMO || mode === USER_MODE.TRIAL) {
+        if (isDemo) {
             var val = this.value;
-            var allowed = getAllowedHskList();
+            var allowed = getDemoHskList();
             if (val && allowed.indexOf(val) === -1) {
-                if (mode === USER_MODE.DEMO) {
-                    alert('🔒 Bản Demo chỉ cho phép lọc HSK1-' + DEMO_HSK_MAX +
-                          '.\n\nĐăng nhập Google để mở khóa tất cả HSK!');
-                } else {
-                    alert('🔒 Gói dùng thử chỉ hỗ trợ HSK1-' + TRIAL_HSK_MAX +
-                          '.\n\nVui lòng gia hạn để mở khóa tất cả!');
-                }
+                alert('🔒 Bản Demo chỉ cho phép lọc HSK1-' + DEMO_HSK_MAX + '.\n\nĐăng nhập Google để mở khóa tất cả HSK!');
                 this.value = '';
                 applyFilter();
                 return;
@@ -1780,13 +1491,11 @@ function initApp() {
         applyFilter();
     });
     $('subjectFilter').addEventListener('change', function() {
-        var mode = getUserMode();
-        if (mode === USER_MODE.DEMO) {
+        if (isDemo) {
             var val = this.value;
             var allowed = getDemoSubjectList();
             if (val && allowed.indexOf(val) === -1) {
-                alert('🔒 Chủ đề này chưa có trong ' + DEMO_LIMIT +
-                      ' câu Demo.\n\nĐăng nhập Google để mở khóa tất cả chủ đề!');
+                alert('🔒 Chủ đề này chưa có trong ' + DEMO_LIMIT + ' câu Demo.\n\nĐăng nhập Google để mở khóa tất cả chủ đề!');
                 this.value = '';
                 applyFilter();
                 return;
@@ -1795,17 +1504,8 @@ function initApp() {
         applyFilter();
     });
 
-    try { buildFilters(); applyFilter(); refreshModeUI(); }
+    try { buildFilters(); applyFilter(); }
     catch(e) { console.error('Init error:', e); }
-}
-
-/* Refresh UI theo mode (gọi sau khi auth thay đổi) */
-function refreshModeUI() {
-    updateModeBadge();
-    updateBanners();
-    updateDemoRemaining();
-    buildFilters();
-    applyFilter();
 }
 
 function refreshApp() {
@@ -1814,12 +1514,9 @@ function refreshApp() {
     applyDisplayState();
     updateToggleButtons();
     updateResultCount();
-    refreshModeUI();
 }
 
-/* ============================================================
-   SCROLL DETECT
-   ============================================================ */
+/* ============ SCROLL DETECT ============ */
 function initScrollDetection() {
     var sticky = $('stickyTop');
     if (!sticky) return;
@@ -1835,9 +1532,7 @@ function initScrollDetection() {
     update();
 }
 
-/* ============================================================
-   FAB GROUP
-   ============================================================ */
+/* ============ FAB GROUP ============ */
 function initFabGroup() {
     var fabGroup = $('fabGroup');
     var fabMainBtn = $('fabMainBtn');
@@ -1859,9 +1554,7 @@ function initFabGroup() {
     });
 }
 
-/* ============================================================
-   THEME
-   ============================================================ */
+/* ============ THEME ============ */
 function initTheme() {
     try {
         var saved = localStorage.getItem('theme');
@@ -1883,9 +1576,7 @@ function updateThemeIcon() {
     icon.className = isDark ? 'fas fa-sun' : 'fas fa-moon';
 }
 
-/* ============================================================
-   DISPLAY STATE
-   ============================================================ */
+/* ============ DISPLAY STATE ============ */
 function initDisplayState() {
     try {
         var saved = localStorage.getItem('displayState');
@@ -1981,9 +1672,7 @@ function updateToggleButtons() {
     updateFocusBtnIcon();
 }
 
-/* ============================================================
-   FOCUS CARD
-   ============================================================ */
+/* ============ FOCUS CARD ============ */
 window.toggleFocus = function(stt, element) {
     if (focusedStt === stt) { clearFocus(); return; }
     clearFocus();
@@ -2013,9 +1702,7 @@ document.addEventListener('click', function(e) {
     clearFocus();
 }, true);
 
-/* ============================================================
-   SPEECH
-   ============================================================ */
+/* ============ SPEECH ============ */
 function initSpeech() {
     if ('speechSynthesis' in window) {
         speechSynthesis.getVoices();
@@ -2045,12 +1732,10 @@ function getChineseVoice() {
 
 window.speakText = function(text, btn, evt) {
     if (evt) evt.stopPropagation();
-    if (!canUseFeature()) { showLimitMessage(); return; }
+    if (isDemo && !canUseFeature()) { showLimitMessage(); return; }
+    if (!isDemo && !canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-
-    var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) { incDemoUsage(); updateDemoRemaining(); }
-
+    if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
     speechSynthesis.cancel();
     if (currentBtn) currentBtn.classList.remove('speaking');
     if (btn) { btn.classList.add('speaking'); currentBtn = btn; }
@@ -2073,59 +1758,56 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-/* ============================================================
-   🎯 BUILD FILTERS THEO MODE
-   ============================================================ */
+/* ============ BUILD FILTERS ============ */
 function buildFilters() {
     var hskSelect = $('hskFilter');
     var subjectSelect = $('subjectFilter');
-    var mode = getUserMode();
 
     var allSubjectSet = {};
     RAW_DATA.forEach(function(r) { if (r.subject) allSubjectSet[r.subject] = 1; });
     var allSubjects = Object.keys(allSubjectSet).sort();
 
-    var allowedHsk = getAllowedHskList();
-    var allHskList = ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
-
-    /* ---- HSK ---- */
-    var hskHtml = '<option value="">Tất cả</option>';
-    allowedHsk.forEach(function(h) {
-        hskHtml += '<option value="' + h + '">' + h + '</option>';
-    });
-    if (mode === USER_MODE.DEMO || mode === USER_MODE.TRIAL) {
+    if (isDemo) {
+        var demoHsk = getDemoHskList();
+        var hskHtml = '<option value="">Tất cả (HSK1-' + DEMO_HSK_MAX + ')</option>';
+        demoHsk.forEach(function(h) { hskHtml += '<option value="' + h + '">' + h + '</option>'; });
+        var allHskList = ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
         allHskList.forEach(function(h) {
-            if (allowedHsk.indexOf(h) === -1) {
-                hskHtml += '<option value="' + h + '" disabled>🔒 ' + h + ' (nâng cấp)</option>';
-            }
+            if (demoHsk.indexOf(h) === -1) hskHtml += '<option value="' + h + '" disabled>🔒 ' + h + ' (đăng nhập)</option>';
         });
-    }
-    hskSelect.innerHTML = hskHtml;
+        hskSelect.innerHTML = hskHtml;
 
-    /* ---- SUBJECT ---- */
-    if (mode === USER_MODE.DEMO || mode === USER_MODE.EXPIRED) {
         var demoSubjects = getDemoSubjectList();
         var demoSubjectMap = {};
         demoSubjects.forEach(function(s) { demoSubjectMap[s] = 1; });
-        var unlocked = [], locked = [];
+
+        var unlockedSubjects = [];
+        var lockedSubjects = [];
         allSubjects.forEach(function(s) {
-            if (demoSubjectMap[s]) unlocked.push(s);
-            else locked.push(s);
+            if (demoSubjectMap[s]) unlockedSubjects.push(s);
+            else lockedSubjects.push(s);
         });
+
         var subjHtml = '<option value="">Tất cả chủ đề</option>';
-        unlocked.forEach(function(s) {
+        unlockedSubjects.forEach(function(s) {
             subjHtml += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>';
         });
-        locked.forEach(function(s) {
-            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' +
-                        escapeHtml(s) + ' (đăng nhập)</option>';
+        lockedSubjects.forEach(function(s) {
+            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' + escapeHtml(s) + ' (đăng nhập)</option>';
         });
         subjectSelect.innerHTML = subjHtml;
     } else {
+        hskSelect.innerHTML =
+            '<option value="">Tất cả</option>' +
+            '<option value="HSK1">HSK1</option>' +
+            '<option value="HSK2">HSK2</option>' +
+            '<option value="HSK3">HSK3</option>' +
+            '<option value="HSK4">HSK4</option>' +
+            '<option value="HSK5">HSK5</option>' +
+            '<option value="HSK6">HSK6</option>';
+
         subjectSelect.innerHTML = '<option value="">Tất cả chủ đề</option>' +
-            allSubjects.map(function(v){
-                return '<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>';
-            }).join('');
+            allSubjects.map(function(v){ return '<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>'; }).join('');
     }
 }
 
@@ -2167,9 +1849,7 @@ function updateResultCount() {
     }
 }
 
-/* ============================================================
-   🎯 RENDER CARDS
-   ============================================================ */
+/* ============ RENDER CARDS ============ */
 function render(reset) {
     if (reset) { renderedCount = 0; focusedStt = null; }
     if (!filtered.length) {
@@ -2189,28 +1869,17 @@ function render(reset) {
         var sttSafe = escapeHtml(r.stt);
         var sttJs = escapeJs(r.stt);
 
-        var audio = r.zh ? '<button class="audio-btn" onclick="speakText(\'' + zhJs +
-            '\', this, event)" title="Nghe"><i class="fas fa-volume-up"></i></button>' : '';
+        var audio = r.zh ? '<button class="audio-btn" onclick="speakText(\'' + zhJs + '\', this, event)" title="Nghe"><i class="fas fa-volume-up"></i></button>' : '';
         var writeBtn = '';
         if (r.zh) {
-            writeBtn = '<button class="write-btn" onclick="openWriter(\'' + zhJs + '\', \'' +
-                viJs + '\', \'' + pinyinJs + '\', event)" title="Luyện viết">' +
-                '<i class="fas fa-pen-fancy"></i></button>';
+            writeBtn = '<button class="write-btn" onclick="openWriter(\'' + zhJs + '\', \'' + viJs + '\', \'' + pinyinJs + '\', event)" title="Luyện viết"><i class="fas fa-pen-fancy"></i></button>';
         }
         var fullBtn = '';
         if (r.zh) {
-            fullBtn = '<button class="practice-full-btn" onclick="openPracticeFull(\'' +
-                sttJs + '\', event)" title="Luyện tập full màn hình">' +
-                '<i class="fas fa-expand"></i></button>';
+            fullBtn = '<button class="practice-full-btn" onclick="openPracticeFull(\'' + sttJs + '\', event)" title="Luyện tập full màn hình"><i class="fas fa-expand"></i></button>';
         }
-        var practiceInput = '<input type="text" class="practice-input" placeholder="Gõ tiếng Trung..."' +
-            ' data-answer="' + zhHtml + '" data-vi-hint="' + viHtml +
-            '" data-stt="' + sttSafe + '" oninput="checkInput(this)"' +
-            ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
-        var toggleCheckBtn = '<button class="toggle-check-btn"' +
-            ' onclick="toggleInlineCheck(this, event)"' +
-            ' title="Ẩn/hiện kết quả kiểm tra" data-visible="0">' +
-            '<i class="fas fa-eye"></i></button>';
+        var practiceInput = '<input type="text" class="practice-input" placeholder="Gõ tiếng Trung..." data-answer="' + zhHtml + '" data-vi-hint="' + viHtml + '" data-stt="' + sttSafe + '" oninput="checkInput(this)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
+        var toggleCheckBtn = '<button class="toggle-check-btn" onclick="toggleInlineCheck(this, event)" title="Ẩn/hiện kết quả kiểm tra" data-visible="0"><i class="fas fa-eye"></i></button>';
 
         mobHtml += '<div class="card" onclick="toggleFocus(\'' + sttJs + '\', this)" data-stt="' + sttSafe + '">' +
             '<div class="card-header">' +
@@ -2220,9 +1889,7 @@ function render(reset) {
                     (r.topic ? '<span class="card-tag topic">' + escapeHtml(r.topic) + '</span>' : '') +
                     (r.subject ? '<span class="card-tag">' + escapeHtml(r.subject) + '</span>' : '') +
                 '</div>' +
-                '<div onclick="event.stopPropagation()" class="action-group">' +
-                    audio + writeBtn + fullBtn +
-                '</div>' +
+                '<div onclick="event.stopPropagation()" class="action-group">' + audio + writeBtn + fullBtn + '</div>' +
             '</div>' +
             '<div class="card-body">' +
                 (r.vi ? '<div class="card-vi">' + viHtml + '</div>' : '') +
@@ -2245,55 +1912,29 @@ function render(reset) {
     if (oldEndNote) oldEndNote.remove();
 
     if (renderedCount < filtered.length) {
-        var mode = getUserMode();
-        var totalAvailable = getBaseDataByMode().length;
-        var isLocked = (mode === USER_MODE.DEMO && renderedCount >= DEMO_LIMIT) ||
-                       (mode === USER_MODE.TRIAL && renderedCount >= totalAvailable) ||
-                       (mode === USER_MODE.EXPIRED && renderedCount >= DEMO_LIMIT);
-
-        if (!isLocked) {
+        var isDemoLock = isDemo && renderedCount >= DEMO_LIMIT;
+        if (!isDemoLock) {
             var btnMobile = document.createElement('button');
             btnMobile.className = 'load-more';
-            btnMobile.innerHTML = '<i class="fas fa-chevron-down"></i> Xem thêm (' +
-                renderedCount + '/' + filtered.length + ')';
+            btnMobile.innerHTML = '<i class="fas fa-chevron-down"></i> Xem thêm (' + renderedCount + '/' + filtered.length + ')';
             btnMobile.onclick = function() { render(false); };
             mobileWrapper.appendChild(btnMobile);
         } else {
             var lockedBtn = document.createElement('button');
             lockedBtn.className = 'load-more locked';
-            if (mode === USER_MODE.DEMO) {
-                lockedBtn.innerHTML = '<i class="fas fa-lock"></i> Đăng nhập để xem toàn bộ ' +
-                    RAW_DATA.length + ' câu';
-                lockedBtn.onclick = function() { showLoginModal(); };
-            } else if (mode === USER_MODE.TRIAL) {
-                lockedBtn.classList.add('locked-upgrade');
-                lockedBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn để xem toàn bộ ' +
-                    RAW_DATA.length + ' câu';
-                lockedBtn.onclick = function() {
-                    if (typeof openRenewalModal === 'function') openRenewalModal();
-                };
-            } else if (mode === USER_MODE.EXPIRED) {
-                lockedBtn.classList.add('locked-upgrade');
-                lockedBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn để mở khóa toàn bộ ' +
-                    RAW_DATA.length + ' câu';
-                lockedBtn.onclick = function() {
-                    if (typeof openRenewalModal === 'function') openRenewalModal();
-                };
-            }
+            lockedBtn.innerHTML = '<i class="fas fa-lock"></i> Đăng nhập để xem toàn bộ ' + RAW_DATA.length + ' câu';
+            lockedBtn.onclick = function() { showLoginModal(); };
             mobileWrapper.appendChild(lockedBtn);
         }
     } else if (filtered.length > PAGE_SIZE) {
         var endNote = document.createElement('div');
         endNote.className = 'end-note';
-        endNote.innerHTML = '<i class="fas fa-check-circle"></i> Đã hiển thị tất cả ' +
-            filtered.length + ' câu';
+        endNote.innerHTML = '<i class="fas fa-check-circle"></i> Đã hiển thị tất cả ' + filtered.length + ' câu';
         mobileWrapper.appendChild(endNote);
     }
 }
 
-/* ============================================================
-   SMART CHECK
-   ============================================================ */
+/* ============ SMART CHECK ============ */
 function normalizeAnswer(str) {
     if (!str) return '';
     return String(str)
@@ -2315,14 +1956,11 @@ function removeTones(str) {
 function removeFillers(str) {
     if (!str) return '';
     var result = str;
-    if (typeof FILLER_WORDS !== 'undefined') {
-        FILLER_WORDS.forEach(function(w) { result = result.split(w).join(''); });
-    }
+    FILLER_WORDS.forEach(function(w) { result = result.split(w).join(''); });
     return result;
 }
 function expandSynonyms(str) {
     var results = [str];
-    if (typeof SYNONYMS === 'undefined') return results;
     var keys = Object.keys(SYNONYMS);
     for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
@@ -2388,9 +2026,7 @@ function smartCheck(userAnswer, correctAnswer) {
     return { status: 'wrong', reason: 'Không khớp' };
 }
 
-/* ============================================================
-   SPLIT BY PINYIN
-   ============================================================ */
+/* ============ SPLIT BY PINYIN ============ */
 function countSyllables(pinyinWord) {
     if (!pinyinWord) return 0;
     var cleaned = pinyinWord.replace(/[.,!?;:'"()\[\]{}\-~`@#$%^&*+=|\\/<>。，！？、；：]/g, '').toLowerCase();
@@ -2458,9 +2094,7 @@ function splitByPinyin(zh, pinyin) {
     return result;
 }
 
-/* ============================================================
-   INLINE PREVIEW + CHECK
-   ============================================================ */
+/* ============ INLINE PREVIEW + CHECK ============ */
 function updateInlinePreview(input, answer) {
     var wrapper = input.parentElement;
     var preview = wrapper.querySelector('.inline-char-preview');
@@ -2501,8 +2135,7 @@ function updateInlinePreview(input, answer) {
             continue;
         }
         if (clickable) {
-            html += '<span class="' + cls + '" data-idx="' + i +
-                '" onclick="fixInlineChar(this, event)">' + escapeHtml(display) + '</span>';
+            html += '<span class="' + cls + '" data-idx="' + i + '" onclick="fixInlineChar(this, event)">' + escapeHtml(display) + '</span>';
         } else {
             html += '<span class="' + cls + '">' + escapeHtml(display) + '</span>';
         }
@@ -2634,9 +2267,7 @@ window.toggleInlineCheck = function(btn, evt) {
     }
 };
 
-/* ============================================================
-   🎯 APPLY FILTER
-   ============================================================ */
+/* ============ APPLY FILTER ============ */
 function applyFilter() {
     state.search = $('searchInput').value.trim().toLowerCase();
     state.hsk = $('hskFilter').value;
@@ -2646,8 +2277,12 @@ function applyFilter() {
     if (state.search) clearBtn.classList.add('show');
     else clearBtn.classList.remove('show');
 
-    /* 🎯 Dùng data theo mode */
-    var baseData = getBaseDataByMode();
+    var isLimitedUser = isDemo;
+    if (!isDemo && currentUser && currentUser.role !== 'admin') {
+        var dl = getDaysRemaining(currentUser);
+        if (dl !== null && dl <= 0) isLimitedUser = true;
+    }
+    var baseData = isLimitedUser ? getDemoData() : RAW_DATA;
 
     filtered = baseData.filter(function(r) {
         if (state.search) {
@@ -2667,9 +2302,7 @@ function applyFilter() {
     render(true);
 }
 
-/* ============================================================
-   PRACTICE FULL MODE
-   ============================================================ */
+/* ============ PRACTICE FULL MODE ============ */
 var pfCurrentStt = null;
 var pfCurrentAnswer = '';
 var pfCurrentVi = '';
@@ -2694,7 +2327,13 @@ window.addEventListener('resize', function() {
 window.openPracticeFull = function(stt, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
 
-    if (!canUseFeature()) { showLimitMessage(); return; }
+    if (!isDemo && currentUser && currentUser.role !== 'admin') {
+        var dl = getDaysRemaining(currentUser);
+        if (dl !== null && dl <= 0) {
+            showLimitMessage();
+            return;
+        }
+    }
 
     pfBuildFilterOptions();
     pfBuildQuickNav();
@@ -2840,50 +2479,45 @@ function pfQuickNavChange() {
 function pfBuildFilterOptions() {
     var hskSel = $('pfHskFilter');
     var subjSel = $('pfSubjectFilter');
-    var mode = getUserMode();
 
     var allSubjectSet = {};
     RAW_DATA.forEach(function(r) { if (r.subject) allSubjectSet[r.subject] = 1; });
     var allSubjects = Object.keys(allSubjectSet).sort();
 
-    var allowedHsk = getAllowedHskList();
-    var allHskList = ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
-
-    var hskHtml = '<option value="">Tất cả</option>';
-    allowedHsk.forEach(function(h) {
-        hskHtml += '<option value="' + h + '">' + h + '</option>';
-    });
-    if (mode === USER_MODE.DEMO || mode === USER_MODE.TRIAL) {
+    if (isDemo) {
+        var demoHsk = getDemoHskList();
+        var hskHtml = '<option value="">Tất cả</option>';
+        demoHsk.forEach(function(h) { hskHtml += '<option value="' + h + '">' + h + '</option>'; });
+        var allHskList = ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
         allHskList.forEach(function(h) {
-            if (allowedHsk.indexOf(h) === -1) {
-                hskHtml += '<option value="' + h + '" disabled>🔒 ' + h + '</option>';
-            }
+            if (demoHsk.indexOf(h) === -1) hskHtml += '<option value="' + h + '" disabled>🔒 ' + h + '</option>';
         });
-    }
-    hskSel.innerHTML = hskHtml;
+        hskSel.innerHTML = hskHtml;
 
-    if (mode === USER_MODE.DEMO || mode === USER_MODE.EXPIRED) {
         var demoSubjects = getDemoSubjectList();
         var demoSubjectMap = {};
         demoSubjects.forEach(function(s) { demoSubjectMap[s] = 1; });
-        var unlocked = [], locked = [];
+        var unlocked = [];
+        var locked = [];
         allSubjects.forEach(function(s) {
             if (demoSubjectMap[s]) unlocked.push(s);
             else locked.push(s);
         });
         var subjHtml = '<option value="">Tất cả chủ đề</option>';
-        unlocked.forEach(function(s) {
-            subjHtml += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>';
-        });
-        locked.forEach(function(s) {
-            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' + escapeHtml(s) + '</option>';
-        });
+        unlocked.forEach(function(s) { subjHtml += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
+        locked.forEach(function(s) { subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' + escapeHtml(s) + '</option>'; });
         subjSel.innerHTML = subjHtml;
     } else {
+        hskSel.innerHTML =
+            '<option value="">Tất cả</option>' +
+            '<option value="HSK1">HSK1</option>' +
+            '<option value="HSK2">HSK2</option>' +
+            '<option value="HSK3">HSK3</option>' +
+            '<option value="HSK4">HSK4</option>' +
+            '<option value="HSK5">HSK5</option>' +
+            '<option value="HSK6">HSK6</option>';
         subjSel.innerHTML = '<option value="">Tất cả chủ đề</option>' +
-            allSubjects.map(function(v){
-                return '<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>';
-            }).join('');
+            allSubjects.map(function(v){ return '<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>'; }).join('');
     }
 
     hskSel.value = $('hskFilter').value;
@@ -2935,7 +2569,12 @@ function pfApplyFilter() {
     state.hsk = $('pfHskFilter').value;
     state.subject = $('pfSubjectFilter').value;
 
-    var baseData = getBaseDataByMode();
+    var isLimitedUser = isDemo;
+    if (!isDemo && currentUser && currentUser.role !== 'admin') {
+        var dl = getDaysRemaining(currentUser);
+        if (dl !== null && dl <= 0) isLimitedUser = true;
+    }
+    var baseData = isLimitedUser ? getDemoData() : RAW_DATA;
 
     filtered = baseData.filter(function(r) {
         if (state.search) {
@@ -3047,8 +2686,7 @@ function updateCharPreview() {
         }
 
         if (clickable) {
-            html += '<span class="' + cls + '" data-idx="' + i +
-                '" onclick="fixCharAt(' + i + ', this)">' + escapeHtml(display) + '</span>';
+            html += '<span class="' + cls + '" data-idx="' + i + '" onclick="fixCharAt(' + i + ', this)">' + escapeHtml(display) + '</span>';
         } else {
             html += '<span class="' + cls + '">' + escapeHtml(display) + '</span>';
         }
@@ -3153,12 +2791,10 @@ function revealFullAnswer() {
 }
 
 window.speakPhrase = function(phrase, btn) {
-    if (!canUseFeature()) { showLimitMessage(); return; }
+    if (isDemo && !canUseFeature()) { showLimitMessage(); return; }
+    if (!isDemo && !canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-
-    var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) { incDemoUsage(); updateDemoRemaining(); }
-
+    if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
     speechSynthesis.cancel();
     document.querySelectorAll('.answer-phrase-btn.speaking').forEach(function(b) { b.classList.remove('speaking'); });
     btn.classList.add('speaking');
@@ -3172,12 +2808,10 @@ window.speakPhrase = function(phrase, btn) {
 };
 
 window.speakFullSentence = function() {
-    if (!canUseFeature()) { showLimitMessage(); return; }
+    if (isDemo && !canUseFeature()) { showLimitMessage(); return; }
+    if (!isDemo && !canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) return;
-
-    var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) { incDemoUsage(); updateDemoRemaining(); }
-
+    if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
     speechSynthesis.cancel();
     var utterance = new SpeechSynthesisUtterance(pfCurrentAnswer);
     utterance.lang = 'zh-CN';
@@ -3210,16 +2844,11 @@ function initPracticeFull() {
     });
 
     $('pfHskFilter').addEventListener('change', function() {
-        var mode = getUserMode();
-        if (mode === USER_MODE.DEMO || mode === USER_MODE.TRIAL) {
+        if (isDemo) {
             var val = this.value;
-            var allowed = getAllowedHskList();
+            var allowed = getDemoHskList();
             if (val && allowed.indexOf(val) === -1) {
-                if (mode === USER_MODE.DEMO) {
-                    alert('🔒 Bản Demo chỉ cho phép lọc HSK1-' + DEMO_HSK_MAX + '.');
-                } else {
-                    alert('🔒 Gói dùng thử chỉ hỗ trợ HSK1-' + TRIAL_HSK_MAX + '.');
-                }
+                alert('🔒 Bản Demo chỉ cho phép lọc HSK1-' + DEMO_HSK_MAX + '.');
                 this.value = '';
                 return;
             }
@@ -3227,8 +2856,7 @@ function initPracticeFull() {
         pfApplyFilter();
     });
     $('pfSubjectFilter').addEventListener('change', function() {
-        var mode = getUserMode();
-        if (mode === USER_MODE.DEMO) {
+        if (isDemo) {
             var val = this.value;
             var allowed = getDemoSubjectList();
             if (val && allowed.indexOf(val) === -1) {
@@ -3272,6 +2900,7 @@ function initPracticeFull() {
         }
     }, { passive: true });
 
+    /* ✅ Nút loa nghe câu tiếng Trung */
     var speakBtn = $('pfSpeakBtn');
     if (speakBtn) {
         speakBtn.addEventListener('click', function(e) {
@@ -3280,8 +2909,7 @@ function initPracticeFull() {
 
             if (!canUseFeature()) { showLimitMessage(); return; }
 
-            var mode = getUserMode();
-            if (mode === USER_MODE.DEMO) { incDemoUsage(); updateDemoRemaining(); }
+            if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
 
             if (!('speechSynthesis' in window)) {
                 alert('Trình duyệt không hỗ trợ phát âm.');
@@ -3316,9 +2944,7 @@ function initPracticeFull() {
     }
 }
 
-/* ============================================================
-   WRITER
-   ============================================================ */
+/* ============ WRITER ============ */
 var writerInstance = null;
 var currentWriteZh = '';
 var currentWriteVi = '';
@@ -3375,10 +3001,7 @@ window.openWriter = function(zh, vi, pinyin, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (typeof HanziWriter === 'undefined') { alert('Thư viện chưa tải xong.'); return; }
-
-    var mode = getUserMode();
-    if (mode === USER_MODE.DEMO) { incDemoUsage(); updateDemoRemaining(); }
-
+    if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
     currentWriteZh = zh || '';
     currentWriteVi = vi || '';
     currentWritePinyin = pinyin || '';
@@ -3403,8 +3026,7 @@ function renderWriterChars(chars) {
     var container = $('writerChars');
     if (chars.length <= 1) { container.innerHTML = ''; return; }
     container.innerHTML = chars.map(function(c, i) {
-        return '<button class="writer-char-btn' + (i === 0 ? ' active' : '') +
-            '" data-idx="' + i + '" data-char="' + c + '">' + c + '</button>';
+        return '<button class="writer-char-btn' + (i === 0 ? ' active' : '') + '" data-idx="' + i + '" data-char="' + c + '">' + c + '</button>';
     }).join('');
     container.querySelectorAll('.writer-char-btn').forEach(function(btn) {
         btn.addEventListener('click', function() {
@@ -3437,23 +3059,17 @@ function showWriterChar(char) {
                 drawingColor: '#7c3aed', drawingWidth: drawWidth,
                 showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 250,
                 charDataLoader: function(ch, onComplete, onError) {
-                    fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/' +
-                          encodeURIComponent(ch) + '.json')
+                    fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/' + encodeURIComponent(ch) + '.json')
                         .then(function(res) { if (!res.ok) throw new Error('Không có dữ liệu'); return res.json(); })
                         .then(onComplete)
                         .catch(function(err) {
                             if (onError) onError(err);
-                            target.innerHTML = '<div class="writer-loading">' +
-                                '<i class="fas fa-exclamation-triangle" style="color:#dc2626"></i>' +
-                                'ayKhông tải được dữ li đệuổi.</div>';
+                            target.innerHTML = '<div class="writer-loading"><i class="fas fa-exclamation-triangle" style="color:#dc2626"></i>Không tải được dữ liệu.</div>';
                         });
                 }
-           
-
- });
+            });
         } catch(e) {
-           ### target.innerHTML = '<div class=" writer-loading">' +
-                '<i class="fas fa-exclamation-triangle"></i>Lỗi tạo khung vẽ</div>';
+            target.innerHTML = '<div class="writer-loading"><i class="fas fa-exclamation-triangle"></i>Lỗi tạo khung vẽ</div>';
         }
     }, 100);
 }
