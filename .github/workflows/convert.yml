@@ -9,6 +9,7 @@ on:
       - 'scripts/data_reader.py'
       - 'scripts/ui_template.py'
       - 'scripts/social_template.py'
+      - 'scripts/accounts_template.py'
       - 'scripts/renewal_template.py'
       - 'scripts/check.py'
       - 'scripts/config.json'
