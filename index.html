@@ -1548,46 +1548,196 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .admin-filter-btn .count{background:rgba(0,0,0,.08);padding:.05rem .4rem;border-radius:50px;font-size:.68rem;font-weight:700;min-width:18px;text-align:center;}
 .admin-filter-btn.active .count{background:rgba(255,255,255,.35);}
 
-/* Toggle buttons cho section */
-.admin-toggle-btn{padding:.35rem .6rem;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.75rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;}
-.admin-toggle-btn:hover{background:var(--surface-2);color:var(--primary);border-color:var(--primary);}
-.admin-toggle-btn.active{background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary);}
-.admin-toggle-btn .fa-eye{color:var(--primary-dark);}
-.admin-toggle-btn.active .fa-eye-slash{color:var(--text-3);}
-
-/* Collapsible sections — FIX toggle */
-.admin-section-collapse{
+/* ═══════════════════════════════════════════════════════════
+   COLLAPSIBLE SECTIONS — UI THÔNG MINH
+   Dùng grid-template-rows để animate mượt (không giật như max-height)
+   ═══════════════════════════════════════════════════════════ */
+.admin-section{
+    margin-top:1.5rem;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:var(--surface);
     overflow:hidden;
-    transition:max-height .35s ease, opacity .3s ease, margin .3s ease;
-    max-height:50000px;
+    transition:box-shadow .25s ease, border-color .25s ease;
+}
+.admin-section:hover{
+    border-color:rgba(37,99,235,.35);
+    box-shadow:0 4px 16px rgba(15,23,42,.06);
+}
+[data-theme="dark"] .admin-section:hover{
+    border-color:rgba(96,165,250,.35);
+    box-shadow:0 4px 16px rgba(0,0,0,.35);
+}
+
+/* Header — luôn hiển thị, chứa nút mắt */
+.admin-section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+    padding:.85rem 1rem;
+    background:linear-gradient(135deg, rgba(37,99,235,.04), rgba(124,58,237,.03));
+    border-bottom:1px solid var(--border);
+    flex-wrap:wrap;
+    transition:background .25s ease, border-color .25s ease;
+    user-select:none;
+}
+[data-theme="dark"] .admin-section-head{
+    background:linear-gradient(135deg, rgba(37,99,235,.08), rgba(124,58,237,.06));
+}
+.admin-section.collapsed .admin-section-head{
+    border-bottom-color:transparent;
+}
+
+.admin-section-head .ash-left{
+    display:flex;
+    align-items:center;
+    gap:.6rem;
+    min-width:0;
+    flex:1;
+}
+.admin-section-head .ash-icon{
+    width:32px;
+    height:32px;
+    border-radius:9px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.85rem;
+    flex-shrink:0;
+    background:var(--primary-light);
+    color:var(--primary-dark);
+    transition:.2s;
+}
+.admin-section-head .ash-icon.amber{background:var(--amber-light);color:#92400e;}
+.admin-section-head .ash-icon.violet{background:rgba(124,58,237,.12);color:#7c3aed;}
+.admin-section-head .ash-icon.slate{background:var(--surface-2);color:var(--text-2);}
+
+.admin-section-head .ash-text{
+    display:flex;
+    flex-direction:column;
+    gap:.15rem;
+    min-width:0;
+}
+.admin-section-head .ash-title{
+    font-weight:800;
+    font-size:.9rem;
+    color:var(--text);
+    line-height:1.2;
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+    flex-wrap:wrap;
+}
+.admin-section-head .ash-subtitle{
+    font-size:.72rem;
+    color:var(--text-3);
+    line-height:1.3;
+    display:flex;
+    align-items:center;
+    gap:.4rem;
+    flex-wrap:wrap;
+}
+.admin-section-head .ash-subtitle .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:.25rem;
+    padding:.1rem .45rem;
+    border-radius:50px;
+    font-size:.68rem;
+    font-weight:700;
+    background:var(--surface-2);
+    color:var(--text-2);
+}
+.admin-section-head .ash-subtitle .chip.primary{background:var(--primary-light);color:var(--primary-dark);}
+.admin-section-head .ash-subtitle .chip.warn{background:var(--amber-light);color:#92400e;}
+.admin-section-head .ash-subtitle .chip.danger{background:var(--danger-light);color:var(--danger);}
+.admin-section-head .ash-subtitle .chip.ok{background:rgba(22,163,74,.12);color:var(--success);}
+
+.admin-section-head .ash-actions{
+    display:flex;
+    align-items:center;
+    gap:.35rem;
+    flex-shrink:0;
+}
+
+/* Nút mắt — UI thông minh */
+.admin-toggle-btn{
+    width:34px;
+    height:34px;
+    border-radius:9px;
+    border:1.5px solid var(--border);
+    background:var(--surface);
+    color:var(--text-2);
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:.85rem;
+    transition:all .2s ease;
+    font-family:inherit;
+    padding:0;
+    position:relative;
+}
+.admin-toggle-btn:hover{
+    background:var(--primary-light);
+    color:var(--primary-dark);
+    border-color:var(--primary);
+    transform:translateY(-1px);
+}
+.admin-toggle-btn:active{
+    transform:translateY(0) scale(.96);
+}
+.admin-toggle-btn i{
+    transition:transform .25s ease;
+    display:inline-block;
+}
+.admin-toggle-btn.active{
+    background:var(--primary-light);
+    color:var(--primary-dark);
+    border-color:var(--primary);
+}
+.admin-toggle-btn:not(.active){
+    background:var(--surface-2);
+    color:var(--text-3);
+}
+.admin-toggle-btn:not(.active):hover{
+    background:var(--danger-light);
+    color:var(--danger);
+    border-color:var(--danger);
+}
+
+/* Body — dùng grid-rows để animate mượt */
+.admin-section-body{
+    display:grid;
+    grid-template-rows:1fr;
+    transition:grid-template-rows .3s ease, opacity .25s ease;
     opacity:1;
 }
-.admin-section-collapse.collapsed{
-    max-height:0 !important;
+.admin-section.collapsed .admin-section-body{
+    grid-template-rows:0fr;
     opacity:0;
-    pointer-events:none;
-    margin:0 !important;
 }
-.admin-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-3);margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;}
-.admin-section-title i{margin-right:.3rem;}
-.admin-section-title > span{display:inline-flex;align-items:center;flex-wrap:wrap;gap:.3rem;}
+.admin-section-body > .admin-section-inner{
+    overflow:hidden;
+    padding:1rem;
+    min-height:0;
+    transition:padding .3s ease;
+}
+.admin-section.collapsed .admin-section-body > .admin-section-inner{
+    padding-top:0;
+    padding-bottom:0;
+}
 
-/* Highlight khung YC gia hạn khi có pending */
-.admin-section-collapse#adminRenewalsSection.has-pending .admin-section-title{
-    background:linear-gradient(135deg, rgba(245,158,11,.15), rgba(251,191,36,.08));
-    padding:.65rem .85rem;border-radius:10px;
-    border:1px solid rgba(245,158,11,.45);
-    margin-bottom:.7rem;
-    animation:renewalsHighlight 2s infinite;
-    color:#92400e;
+/* Highlight khi có pending */
+.admin-section.has-pending .admin-section-head{
+    background:linear-gradient(135deg, rgba(245,158,11,.14), rgba(251,191,36,.06));
+    border-bottom-color:rgba(245,158,11,.4);
 }
-[data-theme="dark"] .admin-section-collapse#adminRenewalsSection.has-pending .admin-section-title{color:#fcd34d;}
-.admin-section-collapse#adminRenewalsSection.has-pending .admin-section-title i.fa-clock{
-    animation:bellRing 1.5s infinite;color:#dc2626;
-}
-@keyframes renewalsHighlight{
-    0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4);}
-    50%{box-shadow:0 0 0 8px rgba(245,158,11,0);}
+.admin-section.has-pending .ash-icon.amber{
+    animation:bellRing 1.5s infinite;
+    color:#dc2626;
+    background:rgba(220,38,38,.12);
 }
 @keyframes bellRing{
     0%,100%{transform:rotate(0);}
@@ -1595,7 +1745,9 @@ body.hide-floating .tiktok-bar { display: none !important; }
     20%,40%{transform:rotate(12deg);}
     50%{transform:rotate(0);}
 }
-#pendingRenewalsBadge.pulse{
+
+#pendingRenewalsBadge.pulse,
+.chip.pulse{
     display:inline-block;padding:.05rem .5rem;
     background:linear-gradient(135deg,#dc2626,#b91c1c);
     color:#fff;border-radius:50px;
@@ -1609,11 +1761,42 @@ body.hide-floating .tiktok-bar { display: none !important; }
     50%{transform:scale(1.15);box-shadow:0 4px 14px rgba(220,38,38,.8);}
 }
 
-/* Add user form */
+/* No data state */
+.admin-section-body .no-data{
+    padding:2rem 1rem;
+    text-align:center;
+    color:var(--text-3);
+    font-size:.85rem;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:.5rem;
+}
+.admin-section-body .no-data i{
+    font-size:1.75rem;
+    opacity:.4;
+}
+
+/* ============ ADD USER FORM ============ */
+.add-user-form{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;display:none;}
+.add-user-form.show{display:block}
+.add-user-form h3{font-size:.85rem;color:var(--text);margin-bottom:.75rem;font-weight:700}
+.form-group{margin-bottom:.75rem}
+.form-group label{display:block;font-size:.75rem;font-weight:600;color:var(--text-2);margin-bottom:.3rem}
+.form-group input,.form-group select{width:100%;padding:.6rem .85rem;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:.85rem;outline:none;transition:.15s;font-family:inherit;}
+.form-group input:focus,.form-group select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.form-actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem}
+.btn{padding:.55rem 1rem;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:.82rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.35rem;}
+.btn:hover{background:var(--surface-2)}
+.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.btn.primary:hover{background:var(--primary-dark)}
+
+/* Add user button */
 .btn-add{padding:.45rem .85rem;border-radius:8px;border:none;background:var(--primary);color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;transition:.15s;font-family:inherit;}
 .btn-add:hover{background:var(--primary-dark)}
 
-/* User list */
+/* ============ USER LIST ============ */
 .user-list{display:flex;flex-direction:column;gap:.5rem}
 .user-row{display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);transition:.15s;}
 .user-row:hover{border-color:var(--primary)}
@@ -1642,21 +1825,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .admin-close{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:.15s;}
 .admin-close:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger)}
 
-.add-user-form{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;display:none;}
-.add-user-form.show{display:block}
-.add-user-form h3{font-size:.85rem;color:var(--text);margin-bottom:.75rem;font-weight:700}
-.form-group{margin-bottom:.75rem}
-.form-group label{display:block;font-size:.75rem;font-weight:600;color:var(--text-2);margin-bottom:.3rem}
-.form-group input,.form-group select{width:100%;padding:.6rem .85rem;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:.85rem;outline:none;transition:.15s;font-family:inherit;}
-.form-group input:focus,.form-group select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-.form-actions{display:flex;gap:.5rem;justify-content:flex-end;margin-top:.75rem}
-.btn{padding:.55rem 1rem;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:.82rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.35rem;}
-.btn:hover{background:var(--surface-2)}
-.btn:disabled{opacity:.5;cursor:not-allowed;}
-.btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
-.btn.primary:hover{background:var(--primary-dark)}
-
-/* Logs */
+/* ============ LOGS ============ */
 .logs-list{max-height:280px;overflow-y:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem;}
 .log-item{display:flex;gap:.5rem;padding:.4rem .5rem;font-size:.75rem;color:var(--text-2);border-bottom:1px solid var(--border);}
 .log-item:last-child{border-bottom:none}
@@ -1870,7 +2039,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .renewal-history-stats .rhs-value.amount{color:var(--success);}
 
 .admin-renewal-history-list{max-height:480px;overflow-y:auto;padding-right:.25rem;}
-.admin-renewal-history-list .renewal-history-item{margin-bottom:.5rem;}
 
 /* Renewals tabs */
 .admin-renewals-tabs{display:flex;gap:.4rem;margin-bottom:.75rem;flex-wrap:wrap;}
@@ -1896,6 +2064,15 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .permission-item .pi-toggle input:disabled + .pi-slider{opacity:.5;cursor:not-allowed;}
 .permission-note{padding:.65rem .85rem;border-radius:10px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);font-size:.78rem;color:var(--text-2);line-height:1.5;display:flex;align-items:flex-start;gap:.5rem;margin-bottom:1rem;}
 .permission-note i{color:#06b6d4;margin-top:.1rem;flex-shrink:0;}
+
+/* ============ RESPONSIVE ============ */
+@media (max-width:600px){
+    .admin-section-head{padding:.75rem .85rem;}
+    .admin-section-head .ash-title{font-size:.85rem;}
+    .admin-section-head .ash-icon{width:28px;height:28px;font-size:.78rem;}
+    .admin-section-body > .admin-section-inner{padding:.75rem;}
+    .admin-toggle-btn{width:32px;height:32px;}
+}
 
 </style>
 </head>
@@ -2455,97 +2632,141 @@ body.hide-floating .tiktok-bar { display: none !important; }
                 <button class="admin-filter-btn" data-filter="permanent"><i class="fas fa-crown"></i> Vĩnh viễn <span class="count" id="filterCountPermanent">0</span></button>
             </div>
 
-            <!-- ═══ 1. DANH SÁCH YÊU CẦU GIA HẠN ═══ -->
-            <div class="admin-section-collapse" id="adminRenewalsSection">
-                <div class="admin-section-title" style="margin-top:1.5rem" id="adminRenewalsTitle">
-                    <span>
-                        <i class="fas fa-clock" style="color:#f59e0b"></i>
-                        Yêu cầu gia hạn
-                        (<span id="pendingRenewalsBadge">0</span> chờ · <span id="confirmedRenewalsBadge">0</span> đã xác nhận)
-                    </span>
-                    <div style="display:flex;gap:.4rem;align-items:center">
-                        <button class="admin-toggle-btn active" id="toggleRenewalsBtn" title="Ẩn/hiện khung yêu cầu gia hạn"><i class="fas fa-eye"></i></button>
-                        <button class="btn" id="refreshRenewalsBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
+            <!-- ═══ 1. YÊU CẦU GIA HẠN ═══ -->
+            <div class="admin-section" id="adminRenewalsSection">
+                <div class="admin-section-head">
+                    <div class="ash-left">
+                        <div class="ash-icon amber"><i class="fas fa-clock"></i></div>
+                        <div class="ash-text">
+                            <div class="ash-title"><span>Yêu cầu gia hạn</span></div>
+                            <div class="ash-subtitle">
+                                <span class="chip warn"><i class="fas fa-hourglass-half"></i> <span id="pendingRenewalsBadge">0</span> chờ</span>
+                                <span class="chip ok"><i class="fas fa-check-circle"></i> <span id="confirmedRenewalsBadge">0</span> đã xác nhận</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ash-actions">
+                        <button class="btn" id="refreshRenewalsBtn" style="padding:.4rem .7rem;font-size:.75rem" title="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                        <button class="admin-toggle-btn active" id="toggleRenewalsBtn" title="Ẩn khung yêu cầu gia hạn"><i class="fas fa-eye"></i></button>
                     </div>
                 </div>
-                <div class="admin-renewals-tabs">
-                    <button class="admin-filter-btn active" data-renewal-tab="pending" onclick="setRenewalTab('pending')">
-                        <i class="fas fa-hourglass-half"></i> Đang chờ <span class="count" id="pendingCountTab">0</span>
-                    </button>
-                    <button class="admin-filter-btn" data-renewal-tab="confirmed" onclick="setRenewalTab('confirmed')">
-                        <i class="fas fa-check-circle"></i> Đã xác nhận <span class="count" id="confirmedCountTab">0</span>
-                    </button>
-                </div>
-                <div class="renewals-list" id="renewalsList">
-                    <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>
+                <div class="admin-section-body">
+                    <div class="admin-section-inner">
+                        <div class="admin-renewals-tabs">
+                            <button class="admin-filter-btn active" data-renewal-tab="pending" onclick="setRenewalTab('pending')">
+                                <i class="fas fa-hourglass-half"></i> Đang chờ <span class="count" id="pendingCountTab">0</span>
+                            </button>
+                            <button class="admin-filter-btn" data-renewal-tab="confirmed" onclick="setRenewalTab('confirmed')">
+                                <i class="fas fa-check-circle"></i> Đã xác nhận <span class="count" id="confirmedCountTab">0</span>
+                            </button>
+                        </div>
+                        <div class="renewals-list" id="renewalsList">
+                            <div class="no-data"><i class="fas fa-spinner fa-pulse"></i><span>Đang tải...</span></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- ═══ 2. DANH SÁCH TÀI KHOẢN ═══ -->
-            <div class="admin-section-collapse" id="adminUsersSection">
-                <div class="admin-section-title" style="margin-top:1.5rem">
-                    <span>
-                        <i class="fas fa-users"></i>
-                        Danh sách tài khoản (<span id="adminUserCount">0</span>)
-                    </span>
-                    <div style="display:flex;gap:.4rem;align-items:center">
-                        <button class="admin-toggle-btn active" id="toggleUsersBtn" title="Ẩn/hiện danh sách tài khoản"><i class="fas fa-eye"></i></button>
+            <div class="admin-section" id="adminUsersSection">
+                <div class="admin-section-head">
+                    <div class="ash-left">
+                        <div class="ash-icon"><i class="fas fa-users"></i></div>
+                        <div class="ash-text">
+                            <div class="ash-title"><span>Danh sách tài khoản</span></div>
+                            <div class="ash-subtitle">
+                                <span class="chip primary"><i class="fas fa-user"></i> <span id="adminUserCount">0</span> user</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ash-actions">
                         <button class="btn-add" id="showAddUserBtn"><i class="fas fa-plus"></i> Thêm</button>
+                        <button class="admin-toggle-btn active" id="toggleUsersBtn" title="Ẩn danh sách tài khoản"><i class="fas fa-eye"></i></button>
                     </div>
                 </div>
-                <div class="add-user-form" id="addUserForm">
-                    <h3>Thêm tài khoản mới</h3>
-                    <div class="form-group">
-                        <label>Email Google</label>
-                        <input type="email" id="newUserEmail" placeholder="user@gmail.com">
+                <div class="admin-section-body">
+                    <div class="admin-section-inner">
+                        <div class="add-user-form" id="addUserForm">
+                            <h3>Thêm tài khoản mới</h3>
+                            <div class="form-group">
+                                <label>Email Google</label>
+                                <input type="email" id="newUserEmail" placeholder="user@gmail.com">
+                            </div>
+                            <div class="form-group">
+                                <label>Tên hiển thị</label>
+                                <input type="text" id="newUserName" placeholder="Nguyễn Văn A">
+                            </div>
+                            <div class="form-group">
+                                <label>Vai trò</label>
+                                <select id="newUserRole">
+                                    <option value="user">User (chỉ học)</option>
+                                    <option value="admin">Admin (quản trị)</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Hạn sử dụng (để trống = vĩnh viễn)</label>
+                                <input type="date" id="newUserExpires">
+                            </div>
+                            <div class="form-actions">
+                                <button class="btn" id="cancelAddUser">Hủy</button>
+                                <button class="btn primary" id="confirmAddUser"><i class="fas fa-check"></i> Thêm</button>
+                            </div>
+                        </div>
+                        <div class="user-list" id="userList">
+                            <div class="no-data"><i class="fas fa-spinner fa-pulse"></i><span>Đang tải...</span></div>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>Tên hiển thị</label>
-                        <input type="text" id="newUserName" placeholder="Nguyễn Văn A">
-                    </div>
-                    <div class="form-group">
-                        <label>Vai trò</label>
-                        <select id="newUserRole">
-                            <option value="user">User (chỉ học)</option>
-                            <option value="admin">Admin (quản trị)</option>
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label>Hạn sử dụng (để trống = vĩnh viễn)</label>
-                        <input type="date" id="newUserExpires">
-                    </div>
-                    <div class="form-actions">
-                        <button class="btn" id="cancelAddUser">Hủy</button>
-                        <button class="btn primary" id="confirmAddUser"><i class="fas fa-check"></i> Thêm</button>
-                    </div>
-                </div>
-                <div class="user-list" id="userList">
-                    <div class="no-data"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>
                 </div>
             </div>
 
             <!-- ═══ 3. LỊCH SỬ ĐĂNG NHẬP ═══ -->
-            <div class="admin-section-collapse" id="adminLogsSection">
-                <div class="admin-section-title" style="margin-top:1.5rem" id="logsTitle">
-                    <span><i class="fas fa-history"></i> Lịch sử đăng nhập (gần đây)</span>
-                    <button class="admin-toggle-btn active" id="toggleLogsBtn" title="Ẩn/hiện lịch sử đăng nhập"><i class="fas fa-eye"></i></button>
+            <div class="admin-section" id="adminLogsSection">
+                <div class="admin-section-head">
+                    <div class="ash-left">
+                        <div class="ash-icon slate"><i class="fas fa-history"></i></div>
+                        <div class="ash-text">
+                            <div class="ash-title"><span>Lịch sử đăng nhập</span></div>
+                            <div class="ash-subtitle">
+                                <span class="chip"><i class="fas fa-list"></i> 30 gần nhất</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ash-actions">
+                        <button class="admin-toggle-btn active" id="toggleLogsBtn" title="Ẩn lịch sử đăng nhập"><i class="fas fa-eye"></i></button>
+                    </div>
                 </div>
-                <div class="logs-list" id="logsList">
-                    <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>
+                <div class="admin-section-body">
+                    <div class="admin-section-inner">
+                        <div class="logs-list" id="logsList">
+                            <div class="no-data"><i class="fas fa-spinner fa-pulse"></i><span>Đang tải...</span></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- ═══ 4. LỊCH SỬ GIA HẠN (TỔNG HỢP) ═══ -->
-            <div class="admin-section-collapse" id="adminRenewalHistorySection">
-                <div class="admin-section-title" style="margin-top:1.5rem" id="renewalHistoryTitle">
-                    <span><i class="fas fa-receipt"></i> Lịch sử gia hạn (tất cả giao dịch)</span>
-                    <div style="display:flex;gap:.4rem;align-items:center">
-                        <button class="admin-toggle-btn active" id="toggleRenewalHistoryBtn" title="Ẩn/hiện lịch sử gia hạn"><i class="fas fa-eye"></i></button>
-                        <button class="btn" id="refreshRenewalHistoryBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
+            <!-- ═══ 4. LỊCH SỬ GIA HẠN (MẶC ĐỊNH ẨN) ═══ -->
+            <div class="admin-section collapsed" id="adminRenewalHistorySection">
+                <div class="admin-section-head">
+                    <div class="ash-left">
+                        <div class="ash-icon violet"><i class="fas fa-receipt"></i></div>
+                        <div class="ash-text">
+                            <div class="ash-title"><span>Lịch sử gia hạn</span></div>
+                            <div class="ash-subtitle">
+                                <span class="chip"><i class="fas fa-database"></i> Tất cả giao dịch</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="ash-actions">
+                        <button class="btn" id="refreshRenewalHistoryBtn" style="padding:.4rem .7rem;font-size:.75rem" title="Làm mới"><i class="fas fa-sync-alt"></i></button>
+                        <button class="admin-toggle-btn" id="toggleRenewalHistoryBtn" title="Hiện lịch sử gia hạn"><i class="fas fa-eye-slash"></i></button>
                     </div>
                 </div>
-                <div class="admin-renewal-history-list" id="adminRenewalHistoryList">
-                    <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>
+                <div class="admin-section-body">
+                    <div class="admin-section-inner">
+                        <div class="admin-renewal-history-list" id="adminRenewalHistoryList">
+                            <div class="no-data"><i class="fas fa-spinner fa-pulse"></i><span>Đang tải...</span></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -5349,16 +5570,6 @@ function filterUsers(items) {
     });
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   SẮP XẾP DANH SÁCH USER:
-   1. Tôi (current user) — luôn đầu tiên
-   2. Admin khác — theo last login gần nhất
-   3. User — theo last login gần nhất
-      Trong nhóm User:
-        - User còn hạn / vĩnh viễn lên trước
-        - User sắp hết hạn (≤7 ngày) ở giữa
-        - User hết hạn đẩy xuống cuối
-   ═══════════════════════════════════════════════════════════════ */
 function getUserSortStatus(u, now) {
     if (u.role === 'admin') return 0;
     if (u.isPermanent || !u.expiresAt) return 0;
@@ -5378,30 +5589,25 @@ function sortUsersForDisplay(items) {
         var aEmail = (a.email || '').toLowerCase();
         var bEmail = (b.email || '').toLowerCase();
 
-        /* 1. Tôi — luôn đầu */
         var aIsMe = (aEmail === myEmail);
         var bIsMe = (bEmail === myEmail);
         if (aIsMe && !bIsMe) return -1;
         if (!aIsMe && bIsMe) return 1;
 
-        /* 2. Phân nhóm: admin (1) vs user (2) */
         var aGroup = a.role === 'admin' ? 1 : 2;
         var bGroup = b.role === 'admin' ? 1 : 2;
         if (aGroup !== bGroup) return aGroup - bGroup;
 
-        /* 3. Trong nhóm User: check expired/permanent */
         if (aGroup === 2) {
             var aStatus = getUserSortStatus(a, now);
             var bStatus = getUserSortStatus(b, now);
             if (aStatus !== bStatus) return aStatus - bStatus;
         }
 
-        /* 4. Sắp theo last login gần nhất (mới nhất lên đầu) */
         var aLast = lastLoginMap[aEmail] ? lastLoginMap[aEmail].getTime() : 0;
         var bLast = lastLoginMap[bEmail] ? lastLoginMap[bEmail].getTime() : 0;
         if (aLast !== bLast) return bLast - aLast;
 
-        /* 5. Cuối cùng: theo email A-Z */
         return aEmail.localeCompare(bEmail);
     });
 }
@@ -5822,7 +6028,6 @@ window.openUserRenewalHistory = async function(email) {
     }
 };
 
-/* Helper chung render 1 item lịch sử gia hạn */
 function buildHistoryItemHtml(d, showAdminInfo) {
     var created = d.createdAt ? d.createdAt.toDate() : null;
     var createdStr = created ? created.toLocaleString('vi-VN') : 'Không rõ';
@@ -5982,51 +6187,40 @@ function initAdminPanel() {
     if ($('refreshRenewalsBtn')) $('refreshRenewalsBtn').addEventListener('click', function() { loadRenewals(); });
     if ($('refreshRenewalHistoryBtn')) $('refreshRenewalHistoryBtn').addEventListener('click', function() { loadAdminRenewalHistory(); });
 
-    /* ⭐ TOGGLE ẨN/HIỆN CHO TỪNG SECTION — FIX LỖI KHÔNG HIỆN LẠI ⭐ */
-    function bindSectionToggle(btnId, sectionId) {
+    /* ═══════════════════════════════════════════════════════
+       TOGGLE ẨN/HIỆN SECTION THÔNG MINH
+       - Nút mắt nằm ngoài body → luôn bấm được
+       - Grid-template-rows animate mượt (không giật)
+       - Tự đồng bộ icon + tooltip theo trạng thái
+       - Lịch sử gia hạn mặc định ẩn (class "collapsed" trong HTML)
+       ═══════════════════════════════════════════════════════ */
+    function bindSectionToggle(btnId, sectionId, label) {
         var btn = $(btnId);
-        if (!btn) return;
+        var sec = $(sectionId);
+        if (!btn || !sec) return;
+
+        function syncState() {
+            var isVisible = !sec.classList.contains('collapsed');
+            var icon = btn.querySelector('i');
+            if (icon) icon.className = isVisible ? 'fas fa-eye' : 'fas fa-eye-slash';
+            btn.classList.toggle('active', isVisible);
+            btn.title = (isVisible ? 'Ẩn ' : 'Hiện ') + (label || 'khung');
+        }
+
+        syncState();
+
         btn.addEventListener('click', function(e) {
             e.preventDefault();
             e.stopPropagation();
-            var sec = $(sectionId);
-            if (!sec) return;
-
-            var willShow = sec.classList.contains('collapsed');
-
-            // Force reflow để animation chạy đúng
-            sec.style.maxHeight = sec.scrollHeight + 'px';
-            void sec.offsetHeight;
-
             sec.classList.toggle('collapsed');
-
-            // Reset inline maxHeight sau animation
-            if (willShow) {
-                // Đang mở
-                setTimeout(function() {
-                    sec.style.maxHeight = '';
-                }, 400);
-            } else {
-                // Đang đóng
-                sec.style.maxHeight = '0px';
-                setTimeout(function() {
-                    sec.style.maxHeight = '';
-                }, 400);
-            }
-
-            // Đổi icon
-            var icon = btn.querySelector('i');
-            var isVisible = !sec.classList.contains('collapsed');
-            if (icon) {
-                icon.className = isVisible ? 'fas fa-eye' : 'fas fa-eye-slash';
-            }
-            btn.classList.toggle('active', isVisible);
+            syncState();
         });
     }
-    bindSectionToggle('toggleRenewalsBtn', 'adminRenewalsSection');
-    bindSectionToggle('toggleUsersBtn', 'adminUsersSection');
-    bindSectionToggle('toggleLogsBtn', 'adminLogsSection');
-    bindSectionToggle('toggleRenewalHistoryBtn', 'adminRenewalHistorySection');
+
+    bindSectionToggle('toggleRenewalsBtn', 'adminRenewalsSection', 'khung yêu cầu gia hạn');
+    bindSectionToggle('toggleUsersBtn', 'adminUsersSection', 'danh sách tài khoản');
+    bindSectionToggle('toggleLogsBtn', 'adminLogsSection', 'lịch sử đăng nhập');
+    bindSectionToggle('toggleRenewalHistoryBtn', 'adminRenewalHistorySection', 'lịch sử gia hạn');
 
     /* Permission modal */
     if ($('permissionClose')) $('permissionClose').addEventListener('click', closePermissionModal);
@@ -6112,7 +6306,7 @@ function loadUsers(forceRefresh) {
         } catch(e) { try { localStorage.removeItem(cacheKey); } catch(e2) {} }
     }
 
-    $('userList').innerHTML = '<div class="no-data"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>';
+    $('userList').innerHTML = '<div class="no-data"><i class="fas fa-spinner fa-pulse"></i><span>Đang tải...</span></div>';
     db.collection('allowed_users').get().then(function(snapshot) {
         usersCache = [];
         snapshot.forEach(function(doc) {
@@ -6129,7 +6323,6 @@ function loadUsers(forceRefresh) {
                 permissions: data.permissions || null
             });
         });
-        /* Sắp xếp sơ bộ theo email để cache ổn định — việc sort hiển thị do renderUsers lo */
         usersCache.sort(function(a, b) { return (a.email || '').localeCompare(b.email || ''); });
         try {
             localStorage.setItem(cacheKey, JSON.stringify({ data: usersCache, expires: Date.now() + 5 * 60 * 1000 }));
@@ -6138,7 +6331,7 @@ function loadUsers(forceRefresh) {
         renderAdminStats();
         return loadLastLoginMap();
     }).catch(function(err) {
-        $('userList').innerHTML = '<div class="no-data" style="color:#dc2626;padding:1rem"><i class="fas fa-exclamation-triangle"></i>Lỗi: ' + err.message + '</div>';
+        $('userList').innerHTML = '<div class="no-data" style="color:#dc2626"><i class="fas fa-exclamation-triangle"></i><span>Lỗi: ' + err.message + '</span></div>';
     });
 }
 
@@ -6157,7 +6350,6 @@ function loadLastLoginMap() {
     }).catch(function() {});
 }
 
-/* ═══ CẬP NHẬT SUMMARY BAR + FILTER COUNTS ═══ */
 function renderAdminStats() {
     var usersOnly = usersCache.filter(function(u) { return u.role !== 'admin'; });
     var users = usersOnly.length;
@@ -6177,7 +6369,8 @@ function renderAdminStats() {
         }
     }
 
-    $('adminUserCount').textContent = users;
+    var adminUserCountEl = $('adminUserCount');
+    if (adminUserCountEl) adminUserCountEl.textContent = users;
     updateFilterCounts(usersCache);
 }
 
@@ -6196,13 +6389,11 @@ function renderUsers(items) {
         });
     }
     displayItems = filterUsers(displayItems);
-
-    /* ⭐ SẮP XẾP: Tôi → Admin → User (theo last login, hết hạn xuống cuối) */
     displayItems = sortUsersForDisplay(displayItems);
 
     if (!displayItems.length) {
         var msg = adminSearchQuery ? 'Không tìm thấy kết quả cho "' + escapeHtml(adminSearchQuery) + '"' : 'Không có user nào';
-        list.innerHTML = '<div class="no-data" style="padding:1.5rem;font-size:.85rem"><i class="fas fa-search"></i>' + msg + '</div>';
+        list.innerHTML = '<div class="no-data"><i class="fas fa-search"></i><span>' + msg + '</span></div>';
         return;
     }
 
@@ -6365,15 +6556,15 @@ window.deleteUser = async function(email) {
 
 function loadLogs() {
     if (!isSuperAdmin() && !hasPermission('canViewLogs')) {
-        if ($('logsTitle')) $('logsTitle').style.display = 'none';
-        $('logsList').style.display = 'none';
+        var logsSection = $('adminLogsSection');
+        if (logsSection) logsSection.style.display = 'none';
         return;
     }
-    if ($('logsTitle')) $('logsTitle').style.display = 'flex';
-    $('logsList').style.display = 'block';
+    var logsSection = $('adminLogsSection');
+    if (logsSection) logsSection.style.display = '';
     db.collection('login_logs').orderBy('time', 'desc').limit(30).get().then(function(snapshot) {
         if (snapshot.empty) {
-            $('logsList').innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem">Chưa có log</div>';
+            $('logsList').innerHTML = '<div class="no-data"><i class="fas fa-inbox"></i><span>Chưa có log</span></div>';
             return;
         }
         var html = '';
@@ -6384,7 +6575,7 @@ function loadLogs() {
         });
         $('logsList').innerHTML = html;
     }).catch(function(err) {
-        $('logsList').innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem;color:#dc2626">Lỗi: ' + err.message + '</div>';
+        $('logsList').innerHTML = '<div class="no-data" style="color:#dc2626"><i class="fas fa-exclamation-triangle"></i><span>Lỗi: ' + err.message + '</span></div>';
     });
 }
 
@@ -6450,13 +6641,14 @@ function buildRenewalRowHtml(d, isPending) {
 /* ═══ LOAD GỘP: 1 LẦN QUERY LẤY CẢ PENDING + CONFIRMED ═══ */
 function loadRenewals() {
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
-        if ($('adminRenewalsTitle')) $('adminRenewalsTitle').style.display = 'none';
-        if ($('renewalsList')) $('renewalsList').style.display = 'none';
+        var renewalsSection = $('adminRenewalsSection');
+        if (renewalsSection) renewalsSection.style.display = 'none';
         return;
     }
-    if ($('adminRenewalsTitle')) $('adminRenewalsTitle').style.display = 'flex';
+    var renewalsSection = $('adminRenewalsSection');
+    if (renewalsSection) renewalsSection.style.display = '';
+
     var listEl = $('renewalsList');
-    if (listEl) listEl.style.display = 'block';
 
     db.collection('renewal_requests').orderBy('createdAt', 'desc').limit(200).get().then(function(snapshot) {
         pendingRenewalsData = [];
@@ -6493,13 +6685,15 @@ function loadRenewals() {
 
         renderRenewalsList();
 
-        if (pendingRenewalsData.length > 0 && section) {
+        // Chỉ auto-scroll 1 lần duy nhất khi mở panel lần đầu
+        if (pendingRenewalsData.length > 0 && section && !window.__hasScrolledToRenewals) {
+            window.__hasScrolledToRenewals = true;
             setTimeout(function() {
                 section.scrollIntoView({ behavior: 'smooth', block: 'start' });
             }, 500);
         }
     }).catch(function(err) {
-        if (listEl) listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem;color:#dc2626">Lỗi: ' + escapeHtml(err.message) + '</div>';
+        if (listEl) listEl.innerHTML = '<div class="no-data" style="color:#dc2626"><i class="fas fa-exclamation-triangle"></i><span>Lỗi: ' + escapeHtml(err.message) + '</span></div>';
     });
 }
 
@@ -6510,8 +6704,8 @@ function renderRenewalsList() {
     var isPending = (renewalTab === 'pending');
 
     if (items.length === 0) {
-        listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-inbox"></i> ' +
-            (isPending ? 'Không có yêu cầu nào đang chờ' : 'Chưa có giao dịch nào đã xác nhận') + '</div>';
+        listEl.innerHTML = '<div class="no-data"><i class="fas fa-inbox"></i><span>' +
+            (isPending ? 'Không có yêu cầu nào đang chờ' : 'Chưa có giao dịch nào đã xác nhận') + '</span></div>';
         return;
     }
     var html = '';
@@ -6535,18 +6729,19 @@ function loadConfirmedRenewals() { loadRenewals(); }
 /* ═══ LOAD: LỊCH SỬ GIA HẠN TỔNG HỢP ═══ */
 function loadAdminRenewalHistory() {
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
-        if ($('renewalHistoryTitle')) $('renewalHistoryTitle').style.display = 'none';
-        if ($('adminRenewalHistoryList')) $('adminRenewalHistoryList').style.display = 'none';
+        var histSection = $('adminRenewalHistorySection');
+        if (histSection) histSection.style.display = 'none';
         return;
     }
-    if ($('renewalHistoryTitle')) $('renewalHistoryTitle').style.display = 'flex';
+    var histSection = $('adminRenewalHistorySection');
+    if (histSection) histSection.style.display = '';
+
     var listEl = $('adminRenewalHistoryList');
     if (!listEl) return;
-    listEl.style.display = 'block';
 
     db.collection('renewal_requests').orderBy('createdAt', 'desc').limit(100).get().then(function(snapshot) {
         if (snapshot.empty) {
-            listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-inbox"></i> Chưa có giao dịch nào</div>';
+            listEl.innerHTML = '<div class="no-data"><i class="fas fa-inbox"></i><span>Chưa có giao dịch nào</span></div>';
             return;
         }
         var html = '';
@@ -6556,7 +6751,7 @@ function loadAdminRenewalHistory() {
         });
         listEl.innerHTML = html;
     }).catch(function(err) {
-        listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem;color:#dc2626">Lỗi: ' + escapeHtml(err.message) + '</div>';
+        listEl.innerHTML = '<div class="no-data" style="color:#dc2626"><i class="fas fa-exclamation-triangle"></i><span>Lỗi: ' + escapeHtml(err.message) + '</span></div>';
     });
 }
 
