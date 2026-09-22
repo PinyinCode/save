@@ -3,17 +3,20 @@
 Chuyển file Excel → HTML tự chứa dữ liệu.
 Ghép 4 template: ui + social + accounts (gộp renewal) + data.
 
-✅ QUY TẮC MỚI:
+✅ QUY TẮC:
    - Mobile (≤ 768px): 1 cột card.
    - Máy tính (≥ 769px): 2 cột card.
-   - Tự scale theo độ phân giải (clamp, vh, media queries).
-   - Header KHÔNG dùng position:sticky để tránh đè nội dung.
-   - Chế độ Full không chồng lấn: header/filters/nav flex:0 0 auto,
-     body flex:1 1 auto + overflow-y:auto.
+   - Tự scale theo độ phân giải.
+   - Header KHÔNG sticky để tránh đè nội dung.
+   - Chế độ Full không chồng lấn.
    - Ô đánh chữ trong chế độ Full là trung tâm lớn nhất.
 
-✅ FIX HEADER: Trải rộng toàn bộ chiều ngang trên PC,
-   logo dạt trái, actions dạt phải — không còn khoảng trống.
+✅ HEADER DESIGN MỚI (v2):
+   - Logo icon: gradient động + glow + shimmer khi hover.
+   - Tiêu đề: gradient text (tím → xanh).
+   - Subtitle: có chấm sáng phân cách.
+   - Nút: hover nảy + gradient.
+   - Badge Trial: shimmer animation.
 """
 import json
 import os
@@ -68,27 +71,17 @@ auth_css, auth_html, auth_js = build_all_auth(CONFIG)
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  ★ FULLWIDTH SCALE CSS ★
+#  ★ FULLWIDTH SCALE CSS + HEADER DESIGN MỚI ★
 #  Đặt cuối cùng trong full_css để override mọi CSS từ ui/social/auth.
-#  Bao gồm: header, search, filter, cards, banner — tất cả tự co giãn
-#  vừa chiều ngang màn hình.
-#
-#  ★ QUY TẮC MỚI:
-#    - Mobile (≤ 768px): 1 cột card.
-#    - Máy tính (≥ 769px): 2 cột card.
-#    - Màn hình siêu rộng: mở rộng 3-4 cột (vẫn giữ tinh thần 2 cột).
-#    - Header KHÔNG sticky để tránh đè nội dung.
-#    - Chế độ Full: header/filters/nav không co giãn, body cuộn.
-#    - ★ FIX HEADER: trải rộng toàn bộ chiều ngang, logo trái - actions phải.
 # ═══════════════════════════════════════════════════════════════════
 FULLWIDTH_CSS = r"""
 
 /* ═══════════════════════════════════════════════════════════════════
-   ★ FULL-WIDTH SCALE (v2) ★
-   Quy tắc mới:
+   ★ FULL-WIDTH SCALE ★
+   Quy tắc:
    - Mobile (≤ 768px): 1 cột
    - Máy tính (≥ 769px): 2 cột
-   - Chế độ Full không chồng lấn (đã fix trong ui_template)
+   - Chế độ Full không chồng lấn
    ═══════════════════════════════════════════════════════════════════ */
 
 .page-wrap {
@@ -107,7 +100,7 @@ FULLWIDTH_CSS = r"""
     padding-right: 1.25rem !important;
 }
 
-/* ★ QUAN TRỌNG: Bỏ sticky để không đè nội dung ★ */
+/* ★ Bỏ sticky để không đè nội dung ★ */
 .sticky-top {
     position: relative !important;
     width: 100% !important;
@@ -150,11 +143,9 @@ FULLWIDTH_CSS = r"""
     margin-left: auto !important;
     margin-right: auto !important;
     gap: 1rem !important;
-    /* Mặc định mobile: 1 cột */
     grid-template-columns: 1fr !important;
 }
 
-/* Máy tính: 2 cột */
 @media (min-width: 769px) {
     .mobile-view {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
@@ -162,7 +153,6 @@ FULLWIDTH_CSS = r"""
     }
 }
 
-/* Màn hình rất rộng: 3 cột (vẫn giữ tinh thần 2 cột chính) */
 @media (min-width: 1800px) {
     .mobile-view {
         grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
@@ -201,7 +191,6 @@ FULLWIDTH_CSS = r"""
 @media (max-width: 768px) {
     .container { padding-left: .7rem !important; padding-right: .7rem !important; }
     .mobile-view { gap: .8rem !important; }
-    .header-inner { gap: .5rem !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -220,27 +209,37 @@ FULLWIDTH_CSS = r"""
 .practice-full-header,
 .pf-filters,
 .practice-full-nav {
-    flex: 0 0 auto !important; /* Không co giãn */
+    flex: 0 0 auto !important;
 }
 
 .practice-full-body {
-    flex: 1 1 auto !important; /* Chiếm hết phần còn lại */
-    min-height: 0 !important;  /* Cho phép overflow hoạt động */
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
     overflow-y: auto !important;
 }
 
-/* Ô đánh chữ lớn nhất, căn giữa */
 .practice-full-input {
     width: 100% !important;
     text-align: center !important;
     font-size: clamp(1.15rem, 2.2vw, 1.6rem) !important;
 }
 
+
 /* ═══════════════════════════════════════════════════════════════════
-   ★★★ FIX HEADER: TRẢI RỘNG TOÀN BỘ CHIỀU NGANG ★★★
-   - Logo dạt trái, actions dạt phải
-   - Không còn khoảng trống bên phải trên PC
+   ★★★ HEADER DESIGN MỚI — HIỆN ĐẠI & SÁNG TẠO ★★★
+   - Logo icon có glow, xoay nhẹ + shimmer khi hover
+   - Tiêu đề gradient text (tím → xanh)
+   - Subtitle có chấm sáng phân cách
+   - Nút hover nảy + gradient
+   - Badge Trial shimmer animation
    ═══════════════════════════════════════════════════════════════════ */
+
+.header {
+    position: relative;
+    padding: .25rem 0;
+}
+
+/* ─── Layout: logo trái, actions phải ─── */
 .header-inner {
     display: flex !important;
     align-items: center !important;
@@ -249,17 +248,258 @@ FULLWIDTH_CSS = r"""
     gap: 1rem !important;
 }
 
+/* ─── Logo group ─── */
 .logo {
     flex: 1 1 auto !important;
     min-width: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: .9rem !important;
 }
 
+/* ─── Logo icon: gradient + glow + shimmer ─── */
+.logo-icon {
+    width: clamp(46px, 4.5vw, 58px) !important;
+    height: clamp(46px, 4.5vw, 58px) !important;
+    border-radius: clamp(12px, 1.2vw, 16px) !important;
+    background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 40%, #d946ef 100%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #fff !important;
+    font-size: clamp(1.2rem, 1.8vw, 1.6rem) !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+    box-shadow:
+        0 6px 20px rgba(139, 92, 246, 0.45),
+        0 2px 6px rgba(139, 92, 246, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1),
+                box-shadow .35s ease !important;
+}
+
+/* Ánh sáng quét qua logo khi hover */
+.logo-icon::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: linear-gradient(
+        115deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.35) 50%,
+        transparent 70%
+    );
+    transform: translateX(-100%) rotate(25deg);
+    transition: transform .8s ease;
+    pointer-events: none;
+}
+.logo-icon:hover::before {
+    transform: translateX(100%) rotate(25deg);
+}
+
+/* Điểm sáng ở góc logo */
+.logo-icon::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 30% 20%,
+        rgba(255, 255, 255, 0.4), transparent 55%);
+    pointer-events: none;
+}
+
+.logo-icon:hover {
+    transform: translateY(-2px) rotate(-4deg) scale(1.04);
+    box-shadow:
+        0 10px 28px rgba(139, 92, 246, 0.6),
+        0 4px 10px rgba(139, 92, 246, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+}
+
+/* ─── Text group ─── */
+.logo-text {
+    display: flex !important;
+    flex-direction: column !important;
+    line-height: 1.1 !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+}
+
+/* ─── Tiêu đề: gradient text ─── */
+.logo-text .title {
+    font-size: clamp(1.25rem, 1.9vw, 1.7rem) !important;
+    font-weight: 900 !important;
+    letter-spacing: -0.025em !important;
+    line-height: 1.15 !important;
+    background: linear-gradient(135deg, #1e293b 0%, #4f46e5 50%, #7c3aed 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    color: transparent !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    position: relative !important;
+}
+[data-theme="dark"] .logo-text .title {
+    background: linear-gradient(135deg, #f1f5f9 0%, #a5b4fc 50%, #c4b5fd 100%) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+}
+
+/* ─── Subtitle: có chấm sáng phân cách ─── */
+.logo-text .subtitle {
+    font-size: clamp(.68rem, .85vw, .78rem) !important;
+    color: var(--text-3) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.015em !important;
+    margin-top: 3px !important;
+    padding-left: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.4rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+}
+.logo-text .subtitle::before {
+    content: '';
+    display: inline-block;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #d946ef);
+    box-shadow: 0 0 6px rgba(139, 92, 246, 0.6);
+    flex-shrink: 0;
+}
+
+/* ─── Header actions ─── */
 .header-actions {
     flex: 0 0 auto !important;
     margin-left: auto !important;
     display: flex !important;
     gap: .5rem !important;
     align-items: center !important;
+}
+
+/* Icon buttons: hover nảy + gradient */
+.header-actions .icon-btn {
+    width: clamp(34px, 3vw, 40px) !important;
+    height: clamp(34px, 3vw, 40px) !important;
+    border-radius: 11px !important;
+    border: 1.5px solid var(--border) !important;
+    background: var(--surface) !important;
+    color: var(--text-2) !important;
+    font-size: clamp(.82rem, 1vw, .95rem) !important;
+    transition: transform .25s cubic-bezier(.34,1.56,.64,1),
+                background .25s ease,
+                color .25s ease,
+                border-color .25s ease,
+                box-shadow .25s ease !important;
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05) !important;
+}
+.header-actions .icon-btn:hover {
+    background: linear-gradient(135deg, #eff6ff, #ede9fe) !important;
+    color: #4f46e5 !important;
+    border-color: #a5b4fc !important;
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 6px 16px rgba(139, 92, 246, 0.25) !important;
+}
+[data-theme="dark"] .header-actions .icon-btn:hover {
+    background: linear-gradient(135deg, rgba(59,130,246,.2), rgba(139,92,246,.25)) !important;
+    color: #a5b4fc !important;
+    border-color: rgba(165, 180, 252, 0.5) !important;
+}
+
+/* ─── Badge Trial: shimmer animation ─── */
+.header-actions .trial-badge {
+    position: relative !important;
+    overflow: hidden !important;
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #ea580c 100%) !important;
+    color: #fff !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.03em !important;
+    border: none !important;
+    box-shadow:
+        0 3px 10px rgba(245, 158, 11, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.15) !important;
+}
+.header-actions .trial-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.5),
+        transparent
+    );
+    animation: shimmerBadge 2.8s infinite;
+    pointer-events: none;
+}
+@keyframes shimmerBadge {
+    0% { left: -100%; }
+    60%, 100% { left: 200%; }
+}
+
+/* ─── Badge Demo ─── */
+.header-actions .demo-badge {
+    background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
+    color: #78350f !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    border: 1.5px solid #f59e0b !important;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25) !important;
+}
+
+/* ─── Mobile: thu gọn nhưng vẫn đẹp ─── */
+@media (max-width: 768px) {
+    .logo {
+        gap: .65rem !important;
+    }
+    .logo-icon {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 11px !important;
+        font-size: 1.15rem !important;
+    }
+    .logo-text .title {
+        font-size: 1.15rem !important;
+    }
+    .logo-text .subtitle {
+        font-size: .62rem !important;
+        margin-top: 2px !important;
+    }
+    .header-inner { gap: .5rem !important; }
+    .header-actions { gap: .35rem !important; }
+    .header-actions .icon-btn {
+        width: 34px !important;
+        height: 34px !important;
+        font-size: .82rem !important;
+    }
+}
+
+/* ─── Mobile siêu nhỏ ─── */
+@media (max-width: 400px) {
+    .logo-text .subtitle {
+        display: none !important;
+    }
+    .logo-icon {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 1rem !important;
+    }
+    .logo-text .title {
+        font-size: 1.05rem !important;
+    }
 }
 """
 
@@ -271,7 +511,7 @@ full_css = (
     build_ui_css()
     + "\n/* ==== SOCIAL CSS ==== */\n" + build_social_css()
     + "\n/* ==== ACCOUNTS + RENEWAL CSS ==== */\n" + auth_css
-    + "\n/* ==== FULLWIDTH SCALE (override cuối) ==== */\n" + FULLWIDTH_CSS
+    + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
 
 
@@ -288,7 +528,6 @@ ui_html = ui_html.replace(
 )
 
 # Bọc toàn bộ body trong .page-wrap để cô lập layout
-# (modals dùng position:fixed nên KHÔNG bị ảnh hưởng)
 full_body = (
     '<div class="page-wrap">\n'
     + ui_html
@@ -367,7 +606,6 @@ __JS__
 
 <!-- ═══════════════════════════════════════════════════════════════
      TELEGRAM MODULE — SCRIPT RIÊNG BIỆT
-     Không ảnh hưởng đến script chính phía trên
      ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function() {
@@ -504,6 +742,6 @@ if telegram_bot_token and telegram_chat_id:
     print(f"📲 Telegram: ĐÃ bật (chat_id: {telegram_chat_id})")
 else:
     print(f"📲 Telegram: CHƯA cấu hình (thiếu token hoặc chat_id)")
-print(f"✅ Đã ghép 4 template + FULLWIDTH SCALE cho header/search/filter/cards")
+print(f"✅ Đã ghép 4 template + FULLWIDTH SCALE + HEADER DESIGN MỚI")
 print(f"🎨 Quy tắc: Mobile 1 cột | PC 2 cột | Full mode không chồng lấn")
-print(f"🎯 Header: trải rộng toàn bộ chiều ngang, logo trái - actions phải")
+print(f"🎯 Header: gradient text, logo shimmer, badge animation")
