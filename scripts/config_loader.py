@@ -80,10 +80,10 @@ def load_config():
     # Gia hạn — bank + packages
     # ═══════════════════════════════════════════════════
     cfg.setdefault("bank_config", {
-        "bank_id": "970436",
-        "bank_name": "Vietcombank",
-        "account_no": "1234567890",
-        "account_name": "NGUYEN VAN A"
+        "bank_id": "970418",
+        "bank_name": "BIDV",
+        "account_no": "8897014076",
+        "account_name": "NGUYEN THI THAO"
     })
     cfg.setdefault("packages", [
         {"id": "1m", "label": "1 tháng", "amount": 50000, "days": 30, "popular": False},
@@ -91,7 +91,7 @@ def load_config():
          "popular": True, "save": "Tiết kiệm 33%"},
         {"id": "1y", "label": "1 năm", "amount": 250000, "days": 365,
          "popular": False, "save": "Tiết kiệm 58%"},
-        {"id": "forever", "label": "Vĩnh viễn", "amount": 1000000, "days": 36500,
+        {"id": "forever", "label": "Premium", "amount": 1000000, "days": 36500,
          "popular": False, "save": "Dùng mãi mãi", "permanent": True}
     ])
     cfg.setdefault("renewal_support_zalo", cfg["zalo_phone"])
