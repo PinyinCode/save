@@ -1277,6 +1277,10 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .dropdown-item:hover{background:var(--surface-2)}
 .dropdown-item.danger{color:var(--danger)}
 .dropdown-item.danger:hover{background:var(--danger-light)}
+.dropdown-zalo,.dropdown-tiktok{display:flex;align-items:center;gap:.5rem;width:100%;padding:.65rem .75rem;border-radius:var(--radius-sm);background:transparent;color:var(--text);font-size:.85rem;font-weight:600;cursor:pointer;transition:.15s;text-decoration:none;font-family:inherit;}
+.dropdown-zalo:hover{background:rgba(0,104,255,.1);color:#0068ff}
+.dropdown-tiktok:hover{background:rgba(0,0,0,.06);color:#000}
+[data-theme="dark"] .dropdown-tiktok:hover{background:rgba(255,255,255,.1);color:#fff}
 
 /* ============ DROPDOWN: NÚT GIA HẠN ============ */
 .dropdown-renew{
@@ -2136,9 +2140,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
         </div>
     </div>
 </div>
-
-<!-- USER DROPDOWN ĐÃ ĐƯỢC CHÈN VÀO HEADER (trong ui_template) -->
-<!-- Các modal dưới đây được chèn tự động -->
 
 <div class="edit-modal" id="changeNameModal">
     <div class="edit-box">
@@ -5063,6 +5064,79 @@ function logLogin(u) {
     } catch(e) {}
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   TELEGRAM NOTIFICATION (THÊM MỚI — không ảnh hưởng app nếu lỗi)
+   ═══════════════════════════════════════════════════════════════ */
+function sendTelegramMessage(text) {
+    try {
+        var token = (typeof TELEGRAM_BOT_TOKEN !== 'undefined') ? TELEGRAM_BOT_TOKEN : '';
+        var chatId = (typeof TELEGRAM_CHAT_ID !== 'undefined') ? TELEGRAM_CHAT_ID : '';
+        if (!token || !chatId) {
+            console.log('⚠️ Telegram chưa cấu hình — bỏ qua');
+            return;
+        }
+        fetch('https://api.telegram.org/bot' + token + '/sendMessage', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: text,
+                parse_mode: 'HTML',
+                disable_web_page_preview: true
+            })
+        }).then(function(r) { return r.json(); }).then(function(d) {
+            if (d.ok) console.log('✅ Đã gửi Telegram');
+            else console.warn('⚠️ Telegram lỗi:', d.description);
+        }).catch(function(e) { console.error('❌ Telegram fetch lỗi:', e); });
+    } catch(e) { console.error('❌ sendTelegramMessage error:', e); }
+}
+
+function escapeTelegramHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function notifyTelegramUserPaid(reqData) {
+    try {
+        var isPermanent = reqData.isPermanent || false;
+        var timeStr = new Date().toLocaleString('vi-VN', { hour12: false });
+        var moneyStr = (typeof formatMoney === 'function') ? formatMoney(reqData.amount) : String(reqData.amount);
+        var msg = '🔔 <b>CÓ YÊU CẦU GIA HẠN MỚI</b>\n';
+        msg += '━━━━━━━━━━━━━━━━━━━━\n';
+        msg += '👤 <b>User:</b> ' + escapeTelegramHtml(reqData.name || reqData.email) + '\n';
+        msg += '📧 <b>Email:</b> <code>' + escapeTelegramHtml(reqData.email) + '</code>\n';
+        msg += '💰 <b>Số tiền:</b> ' + moneyStr + 'đ\n';
+        msg += '📦 <b>Gói:</b> ' + escapeTelegramHtml(reqData.packageLabel || reqData.package);
+        if (isPermanent) msg += ' 💎 <b>VĨNH VIỄN</b>';
+        msg += '\n';
+        msg += '⏱ <b>Thời hạn:</b> ' + (isPermanent ? 'Mãi mãi' : reqData.days + ' ngày') + '\n';
+        msg += '🔑 <b>Mã CK:</b> <code>' + escapeTelegramHtml(reqData.transferCode) + '</code>\n';
+        msg += '🕐 <b>Lúc:</b> ' + timeStr + '\n';
+        msg += '━━━━━━━━━━━━━━━━━━━━\n';
+        msg += '⚡ <b>Vào Admin Panel để xác nhận!</b>';
+        sendTelegramMessage(msg);
+    } catch(e) { console.error('❌ notifyTelegramUserPaid error:', e); }
+}
+
+function notifyTelegramAdminConfirmed(reqData, newExpiry) {
+    try {
+        var isPermanent = reqData.isPermanent || false;
+        var timeStr = new Date().toLocaleString('vi-VN', { hour12: false });
+        var adminEmail = (currentUser && currentUser.email) ? currentUser.email : 'admin';
+        var moneyStr = (typeof formatMoney === 'function') ? formatMoney(reqData.amount) : String(reqData.amount);
+        var msg = '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n';
+        msg += '━━━━━━━━━━━━━━━━━━━━\n';
+        msg += '👤 <b>User:</b> ' + escapeTelegramHtml(reqData.name || reqData.email) + '\n';
+        msg += '📧 <b>Email:</b> <code>' + escapeTelegramHtml(reqData.email) + '</code>\n';
+        msg += '💰 <b>Số tiền:</b> ' + moneyStr + 'đ\n';
+        if (isPermanent) msg += '💎 <b>Đã kích hoạt VĨNH VIỄN</b>\n';
+        else if (newExpiry) msg += '📅 <b>Hạn mới:</b> ' + escapeTelegramHtml(newExpiry) + '\n';
+        msg += '👮 <b>Xác nhận bởi:</b> ' + escapeTelegramHtml(adminEmail) + '\n';
+        msg += '🕐 <b>Lúc:</b> ' + timeStr;
+        sendTelegramMessage(msg);
+    } catch(e) { console.error('❌ notifyTelegramAdminConfirmed error:', e); }
+}
+
 /* ============ RENEWAL: MỞ MODAL ============ */
 window.openRenewalModal = function() {
     if (!currentUser) { showLoginModal(); return; }
@@ -5253,16 +5327,41 @@ window.copyText = function(text, btn) {
     }
 };
 
+/* ⭐ ĐÃ TÍCH HỢP TELEGRAM */
 window.userConfirmPaid = async function() {
     if (!renewalCurrentReq) return;
     var btn = $('renewalConfirmBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang gửi...';
     try {
+        /* TELEGRAM: lấy data trước khi update */
+        var _reqData = null;
+        try {
+            var _snap = await db.collection('renewal_requests').doc(renewalCurrentReq.id).get();
+            if (_snap.exists) _reqData = _snap.data();
+        } catch(_e) { console.warn('Không lấy được reqData:', _e); }
+
         await db.collection('renewal_requests').doc(renewalCurrentReq.id).update({
             userConfirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'user_paid'
         });
+
+        /* TELEGRAM: gửi thông báo (không await, không block UI) */
+        try {
+            if (_reqData && typeof notifyTelegramUserPaid === 'function') {
+                notifyTelegramUserPaid({
+                    email: _reqData.email || currentUser.email,
+                    name: _reqData.name || currentUser.name,
+                    amount: _reqData.amount,
+                    package: _reqData.package,
+                    packageLabel: _reqData.packageLabel,
+                    days: _reqData.days,
+                    isPermanent: _reqData.isPermanent || false,
+                    transferCode: _reqData.transferCode
+                });
+            }
+        } catch(_te) { console.warn('Telegram notify lỗi:', _te); }
+
         renderPendingConfirm();
     } catch(e) {
         alert('❌ Lỗi: ' + e.message);
@@ -6028,6 +6127,7 @@ function loadRenewals() {
     });
 }
 
+/* ⭐ ĐÃ TÍCH HỢP TELEGRAM */
 window.approveRenewal = async function(reqId) {
     if (!confirm('Xác nhận đã nhận tiền và gia hạn?')) return;
     try {
@@ -6055,6 +6155,7 @@ window.approveRenewal = async function(reqId) {
             confirmedBy: currentUser.email
         };
         var message = '';
+        var _newExpiryDate = null;
 
         if (isPermanent) {
             updateData.expiresAt = null;
@@ -6067,6 +6168,7 @@ window.approveRenewal = async function(reqId) {
             var now = new Date();
             var baseDate = (currentExpiry && currentExpiry > now) ? currentExpiry : now;
             var newExpiry = new Date(baseDate.getTime() + req.days * 24 * 60 * 60 * 1000);
+            _newExpiryDate = newExpiry;
             updateData.expiresAt = firebase.firestore.Timestamp.fromDate(newExpiry);
             updateData.isPermanent = false;
             reqUpdateData.newExpiresAt = firebase.firestore.Timestamp.fromDate(newExpiry);
@@ -6077,6 +6179,22 @@ window.approveRenewal = async function(reqId) {
 
         await db.collection('allowed_users').doc(req.email).update(updateData);
         await db.collection('renewal_requests').doc(reqId).update(reqUpdateData);
+
+        /* TELEGRAM: gửi thông báo admin đã xác nhận */
+        try {
+            if (typeof notifyTelegramAdminConfirmed === 'function') {
+                var _newExpiryStr = _newExpiryDate ? _newExpiryDate.toLocaleDateString('vi-VN') : '';
+                notifyTelegramAdminConfirmed({
+                    email: req.email,
+                    name: req.name,
+                    amount: req.amount,
+                    package: req.package,
+                    packageLabel: req.packageLabel,
+                    days: req.days,
+                    isPermanent: isPermanent
+                }, _newExpiryStr);
+            }
+        } catch(_te) { console.warn('Telegram notify lỗi:', _te); }
 
         try { localStorage.removeItem('user_cache_' + req.email); } catch(e) {}
         alert(message);
@@ -6271,7 +6389,7 @@ function processImport(rows) {
         else if (seenInFile[email]) { status = 'error'; reason = 'Trùng trong file'; }
         else seenInFile[email] = true;
 
-        if (!name && email.indexOf('@') > 0) name = email.split('@')[0];
+        if (!name[ && email.indexOf('@') > 0) name = email.split('@')[0];
 
         var expDate = null, expStr = '';
         if (expRaw) {
@@ -6281,7 +6399,7 @@ function processImport(rows) {
                 if (!isNaN(d.getTime())) { expDate = d; expStr = formatDate(d); }
             } else {
                 var s = String(raw).trim();
-                var m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+                var m = s.match(/^(\d{4})-\/](\d{1,2})[-\/](\d{1,2})$/);
                 if (m) {
                     var d2 = new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]), 23, 59, 59);
                     if (!isNaN(d2.getTime())) { expDate = d2; expStr = formatDate(d2); }
