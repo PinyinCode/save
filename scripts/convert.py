@@ -5,6 +5,9 @@ Ghép 4 template: ui + social + accounts (gộp renewal) + data.
 
 ✅ HEADER: Subtitle "Văn phòng & Công xưởng" được thiết kế lại
    thành PILL nổi bật với icon ✦ lấp lánh — không còn mờ.
+
+✅ FIX: Placeholder TikTok đã đổi từ __TIKTOK_BAR__ -> __TIKTOK_INLINE__
+   để TikTok info nằm cùng hàng header (bên phải chữ).
 """
 import json
 import os
@@ -320,8 +323,6 @@ FULLWIDTH_CSS = r"""
 
 /* ═══════════════════════════════════════════════════════════════════
    ★★ SUBTITLE: PILL NỔI BẬT VỚI ICON ✦ LẤP LÁNH ★★
-   Chữ "Văn phòng & Công xưởng" giờ là một chip nổi bật,
-   không còn bị mờ như trước.
    ═══════════════════════════════════════════════════════════════════ */
 .logo-text .subtitle {
     display: inline-flex !important;
@@ -330,7 +331,6 @@ FULLWIDTH_CSS = r"""
     padding: 0.25rem 0.7rem !important;
     border-radius: 999px !important;
 
-    /* Nền gradient tím nhạt */
     background: linear-gradient(
         135deg,
         rgba(99, 102, 241, 0.13) 0%,
@@ -339,7 +339,6 @@ FULLWIDTH_CSS = r"""
     ) !important;
     border: 1px solid rgba(139, 92, 246, 0.3) !important;
 
-    /* Chữ màu tím đậm, dễ đọc */
     color: #5b21b6 !important;
     font-size: clamp(.68rem, .85vw, .78rem) !important;
     font-weight: 700 !important;
@@ -367,7 +366,6 @@ FULLWIDTH_CSS = r"""
         inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
 }
 
-/* Icon ✦ lấp lánh phía trước */
 .logo-text .subtitle::before {
     content: '✦';
     display: inline-flex !important;
@@ -397,7 +395,6 @@ FULLWIDTH_CSS = r"""
     }
 }
 
-/* Dark mode */
 [data-theme="dark"] .logo-text .subtitle {
     background: linear-gradient(
         135deg,
@@ -455,7 +452,6 @@ FULLWIDTH_CSS = r"""
     border-color: rgba(165, 180, 252, 0.5) !important;
 }
 
-/* ─── Badge Trial: shimmer ─── */
 .header-actions .trial-badge {
     position: relative !important;
     overflow: hidden !important;
@@ -499,7 +495,6 @@ FULLWIDTH_CSS = r"""
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25) !important;
 }
 
-/* ─── Mobile ─── */
 @media (max-width: 768px) {
     .logo { gap: .65rem !important; }
     .logo-icon {
@@ -524,7 +519,6 @@ FULLWIDTH_CSS = r"""
     }
 }
 
-/* ─── Mobile siêu nhỏ ─── */
 @media (max-width: 400px) {
     .logo-text .subtitle {
         display: none !important;
@@ -554,7 +548,14 @@ full_css = (
 #  GHÉP HTML BODY
 # ═══════════════════════════════════════════════════════════════════
 ui_html = build_ui_html()
-ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ -->", build_tiktok_bar_html())
+
+# ★★★ FIX: Đổi placeholder __TIKTOK_BAR__ -> __TIKTOK_INLINE__ ★★★
+# (ui_template.py mới đã đổi vị trí TikTok sang cùng hàng header)
+ui_html = ui_html.replace("<!-- __TIKTOK_INLINE__ -->", build_tiktok_bar_html())
+
+# Fallback: nếu ui_template cũ vẫn dùng __TIKTOK_BAR__ thì vẫn chạy
+if "<!-- __TIKTOK_BAR__ -->" in ui_html:
+    ui_html = ui_html.replace("<!-- __TIKTOK_BAR__ -->", build_tiktok_bar_html())
 
 social_html = build_social_html()
 ui_html = ui_html.replace(
@@ -751,3 +752,4 @@ print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
 print(f"📚 Tổng số câu: {len(data)}")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
+print(f"✅ Đã fix placeholder TikTok: __TIKTOK_INLINE__ (kèm fallback __TIKTOK_BAR__)")
