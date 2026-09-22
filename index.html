@@ -2582,6 +2582,200 @@ body.hide-floating .tiktok-bar { display: none !important; }
     .admin-toggle-btn{width:32px;height:32px;}
 }
 
+/* ==== FULLWIDTH SCALE (override cuối) ==== */
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★ FULL-WIDTH SCALE ★
+   Toàn bộ giao diện tự co giãn vừa chiều ngang màn hình.
+   Đặt cuối để override mọi CSS từ ui/social/auth phía trên.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Wrapper bao toàn bộ body */
+.page-wrap {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    overflow-x: hidden;
+}
+
+/* Container: dùng hết chiều ngang, chỉ chừa padding co giãn */
+.container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
+}
+
+/* Sticky top + main đều full width */
+.sticky-top,
+.main,
+#mainContent {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★★★ HEADER SCALE ★★★
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Header nội bộ: logo dạt trái, actions dạt phải, gap co giãn */
+.header-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 1rem !important;
+    width: 100% !important;
+}
+
+/* Logo co giãn nhẹ, không bị bóp chữ */
+.logo {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+
+/* Header actions: đẩy sang phải, không bị bóp */
+.header-actions {
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+    display: flex !important;
+    gap: .5rem !important;
+    align-items: center !important;
+}
+
+/* ═══ SEARCH BAR: trải rộng toàn bộ container ═══ */
+.search-bar {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.search-bar input {
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+/* ═══ FILTERS: chia đều theo chiều ngang ═══ */
+.filters {
+    display: grid !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: .75rem !important;
+}
+
+/* Trên PC lớn: filter gọn hơn, không kéo dài lố */
+@media (min-width: 1000px) {
+    .filters {
+        grid-template-columns: 220px 260px !important;
+        gap: 1rem !important;
+    }
+}
+
+/* ═══ RESULT COUNT: dạt trái, ngay dưới filters ═══ */
+.result-count {
+    margin-top: .5rem !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★ GRID CARDS: TỰ ĐỘNG CHIA CỘT THEO CHIỀU NGANG ★
+   ═══════════════════════════════════════════════════════════════════ */
+.mobile-view {
+    display: grid !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    gap: 1rem !important;
+    grid-template-columns: 1fr !important;
+}
+
+@media (min-width: 600px) {
+    .mobile-view {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 1rem !important;
+    }
+}
+
+@media (min-width: 1000px) {
+    .mobile-view {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 1.1rem !important;
+    }
+}
+
+@media (min-width: 1400px) {
+    .mobile-view {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        gap: 1.2rem !important;
+    }
+}
+
+@media (min-width: 1900px) {
+    .mobile-view {
+        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+        gap: 1.3rem !important;
+    }
+}
+
+@media (min-width: 2400px) {
+    .mobile-view {
+        grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+        gap: 1.4rem !important;
+    }
+}
+
+/* ═══ Banner Demo / Expiry: full width ═══ */
+.demo-banner,
+.expiry-banner {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    margin-bottom: 1rem !important;
+}
+
+/* ═══ Container padding co giãn theo màn hình ═══ */
+@media (min-width: 1000px) {
+    .container {
+        padding-left: 1.5rem !important;
+        padding-right: 1.5rem !important;
+    }
+}
+@media (min-width: 1400px) {
+    .container {
+        padding-left: 2rem !important;
+        padding-right: 2rem !important;
+    }
+}
+@media (min-width: 1900px) {
+    .container {
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+    }
+}
+@media (min-width: 2400px) {
+    .container {
+        padding-left: 3rem !important;
+        padding-right: 3rem !important;
+    }
+}
+
+/* ═══ MOBILE: thu gọn padding ═══ */
+@media (max-width: 768px) {
+    .container {
+        padding-left: .7rem !important;
+        padding-right: .7rem !important;
+    }
+    .mobile-view {
+        gap: .8rem !important;
+    }
+    .header-inner {
+        gap: .5rem !important;
+    }
+}
+
 </style>
 </head>
 <body>
