@@ -1114,12 +1114,7 @@ def build_ui_html():
                                 <span>Gia hạn tài khoản</span>
                                 <span class="renew-badge">VIP</span>
                             </button>
-                            <a class="dropdown-zalo" id="dropdownZaloBtn" href="#" target="_blank" rel="noopener noreferrer">
-                                <i class="fas fa-comment-dots"></i> Liên hệ Zalo hỗ trợ
-                            </a>
-                            <a class="dropdown-tiktok" id="dropdownTiktokBtn" href="#" target="_blank" rel="noopener noreferrer">
-                                <i class="fab fa-tiktok"></i> Theo dõi TikTok
-                            </a>
+                            
                             <button class="dropdown-item danger" id="logoutBtn">
                                 <i class="fas fa-sign-out-alt"></i> Đăng xuất
                             </button>
