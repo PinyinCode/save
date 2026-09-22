@@ -1555,9 +1555,19 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .admin-toggle-btn .fa-eye{color:var(--primary-dark);}
 .admin-toggle-btn.active .fa-eye-slash{color:var(--text-3);}
 
-/* Collapsible sections */
-.admin-section-collapse{overflow:hidden;transition:max-height .35s ease, opacity .3s ease;max-height:5000px;opacity:1;}
-.admin-section-collapse.collapsed{max-height:0 !important;opacity:0;pointer-events:none;}
+/* Collapsible sections — FIX toggle */
+.admin-section-collapse{
+    overflow:hidden;
+    transition:max-height .35s ease, opacity .3s ease, margin .3s ease;
+    max-height:50000px;
+    opacity:1;
+}
+.admin-section-collapse.collapsed{
+    max-height:0 !important;
+    opacity:0;
+    pointer-events:none;
+    margin:0 !important;
+}
 .admin-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-3);margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;}
 .admin-section-title i{margin-right:.3rem;}
 .admin-section-title > span{display:inline-flex;align-items:center;flex-wrap:wrap;gap:.3rem;}
@@ -5339,6 +5349,63 @@ function filterUsers(items) {
     });
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   SẮP XẾP DANH SÁCH USER:
+   1. Tôi (current user) — luôn đầu tiên
+   2. Admin khác — theo last login gần nhất
+   3. User — theo last login gần nhất
+      Trong nhóm User:
+        - User còn hạn / vĩnh viễn lên trước
+        - User sắp hết hạn (≤7 ngày) ở giữa
+        - User hết hạn đẩy xuống cuối
+   ═══════════════════════════════════════════════════════════════ */
+function getUserSortStatus(u, now) {
+    if (u.role === 'admin') return 0;
+    if (u.isPermanent || !u.expiresAt) return 0;
+    var d = getExpiryDate(u.expiresAt);
+    if (!d || isNaN(d.getTime())) return 0;
+    var daysLeft = Math.ceil((d.getTime() - now) / (24 * 60 * 60 * 1000));
+    if (daysLeft < 0) return 2;
+    if (daysLeft <= 7) return 1;
+    return 0;
+}
+
+function sortUsersForDisplay(items) {
+    var myEmail = (currentUser && currentUser.email ? currentUser.email.toLowerCase() : '');
+    var now = Date.now();
+
+    return items.slice().sort(function(a, b) {
+        var aEmail = (a.email || '').toLowerCase();
+        var bEmail = (b.email || '').toLowerCase();
+
+        /* 1. Tôi — luôn đầu */
+        var aIsMe = (aEmail === myEmail);
+        var bIsMe = (bEmail === myEmail);
+        if (aIsMe && !bIsMe) return -1;
+        if (!aIsMe && bIsMe) return 1;
+
+        /* 2. Phân nhóm: admin (1) vs user (2) */
+        var aGroup = a.role === 'admin' ? 1 : 2;
+        var bGroup = b.role === 'admin' ? 1 : 2;
+        if (aGroup !== bGroup) return aGroup - bGroup;
+
+        /* 3. Trong nhóm User: check expired/permanent */
+        if (aGroup === 2) {
+            var aStatus = getUserSortStatus(a, now);
+            var bStatus = getUserSortStatus(b, now);
+            if (aStatus !== bStatus) return aStatus - bStatus;
+        }
+
+        /* 4. Sắp theo last login gần nhất (mới nhất lên đầu) */
+        var aLast = lastLoginMap[aEmail] ? lastLoginMap[aEmail].getTime() : 0;
+        var bLast = lastLoginMap[bEmail] ? lastLoginMap[bEmail].getTime() : 0;
+        if (aLast !== bLast) return bLast - aLast;
+
+        /* 5. Cuối cùng: theo email A-Z */
+        return aEmail.localeCompare(bEmail);
+    });
+}
+
 function updateFilterCounts(items) {
     var now = Date.now();
     var counts = { all: 0, user: 0, admin: 0, trial: 0, expiring: 0, expired: 0, permanent: 0 };
@@ -5915,17 +5982,41 @@ function initAdminPanel() {
     if ($('refreshRenewalsBtn')) $('refreshRenewalsBtn').addEventListener('click', function() { loadRenewals(); });
     if ($('refreshRenewalHistoryBtn')) $('refreshRenewalHistoryBtn').addEventListener('click', function() { loadAdminRenewalHistory(); });
 
-    /* ⭐ TOGGLE ẨN/HIỆN CHO TỪNG SECTION ⭐ */
+    /* ⭐ TOGGLE ẨN/HIỆN CHO TỪNG SECTION — FIX LỖI KHÔNG HIỆN LẠI ⭐ */
     function bindSectionToggle(btnId, sectionId) {
         var btn = $(btnId);
         if (!btn) return;
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             var sec = $(sectionId);
             if (!sec) return;
+
+            var willShow = sec.classList.contains('collapsed');
+
+            // Force reflow để animation chạy đúng
+            sec.style.maxHeight = sec.scrollHeight + 'px';
+            void sec.offsetHeight;
+
             sec.classList.toggle('collapsed');
-            var isVisible = !sec.classList.contains('collapsed');
+
+            // Reset inline maxHeight sau animation
+            if (willShow) {
+                // Đang mở
+                setTimeout(function() {
+                    sec.style.maxHeight = '';
+                }, 400);
+            } else {
+                // Đang đóng
+                sec.style.maxHeight = '0px';
+                setTimeout(function() {
+                    sec.style.maxHeight = '';
+                }, 400);
+            }
+
             // Đổi icon
             var icon = btn.querySelector('i');
+            var isVisible = !sec.classList.contains('collapsed');
             if (icon) {
                 icon.className = isVisible ? 'fas fa-eye' : 'fas fa-eye-slash';
             }
@@ -6038,6 +6129,7 @@ function loadUsers(forceRefresh) {
                 permissions: data.permissions || null
             });
         });
+        /* Sắp xếp sơ bộ theo email để cache ổn định — việc sort hiển thị do renderUsers lo */
         usersCache.sort(function(a, b) { return (a.email || '').localeCompare(b.email || ''); });
         try {
             localStorage.setItem(cacheKey, JSON.stringify({ data: usersCache, expires: Date.now() + 5 * 60 * 1000 }));
@@ -6071,7 +6163,6 @@ function renderAdminStats() {
     var users = usersOnly.length;
     var admins = usersCache.length - users;
 
-    /* ⭐ SUMMARY BAR: Tổng User (luôn hiện), Tổng Admin (chỉ Super Admin) */
     var summaryUsers = $('summaryTotalUsers');
     if (summaryUsers) summaryUsers.textContent = users;
 
@@ -6105,6 +6196,9 @@ function renderUsers(items) {
         });
     }
     displayItems = filterUsers(displayItems);
+
+    /* ⭐ SẮP XẾP: Tôi → Admin → User (theo last login, hết hạn xuống cuối) */
+    displayItems = sortUsersForDisplay(displayItems);
 
     if (!displayItems.length) {
         var msg = adminSearchQuery ? 'Không tìm thấy kết quả cho "' + escapeHtml(adminSearchQuery) + '"' : 'Không có user nào';
@@ -6386,12 +6480,10 @@ function loadRenewals() {
         var cTab = $('confirmedCountTab');
         if (cTab) cTab.textContent = confirmedRenewalsData.length;
 
-        /* Highlight section nếu có pending */
         var section = $('adminRenewalsSection');
         if (section) {
             section.classList.toggle('has-pending', pendingRenewalsData.length > 0);
         }
-        /* Auto switch sang tab pending nếu có */
         if (pendingRenewalsData.length > 0 && renewalTab === 'confirmed') {
             renewalTab = 'pending';
         }
@@ -6401,7 +6493,6 @@ function loadRenewals() {
 
         renderRenewalsList();
 
-        /* Auto scroll tới section nếu có pending */
         if (pendingRenewalsData.length > 0 && section) {
             setTimeout(function() {
                 section.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -6438,7 +6529,6 @@ window.setRenewalTab = function(tab) {
 
 window.loadRenewals = loadRenewals;
 
-/* Alias tương thích ngược */
 function loadPendingRenewals() { loadRenewals(); }
 function loadConfirmedRenewals() { loadRenewals(); }
 
