@@ -76,10 +76,10 @@ body{
 .header-inner{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
 .logo{display:flex;align-items:center;gap:.85rem;flex:1;min-width:0}
 .logo-icon{
-    width:64px;height:64px;background:linear-gradient(135deg,#2563eb,#7c3aed 60%,#db2777);
+    width:64px;height:64px;background:linear-gradient(135deg,#4f46e5,#7c3aed 60%,#a855f7);
     border-radius:16px;display:flex;align-items:center;justify-content:center;
     color:#fff;font-size:2rem;flex-shrink:0;
-    box-shadow:0 8px 24px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.25);
+    box-shadow:0 8px 24px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.25);
     position:relative;overflow:hidden;
 }
 .logo-icon::after{
@@ -209,11 +209,11 @@ body{
 
 .fab-main{
     width:56px;height:56px;font-size:1.3rem;
-    background:linear-gradient(135deg,#2563eb,#7c3aed);
-    color:#fff;border:none;box-shadow:0 8px 24px rgba(37,99,235,.4);
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;border:none;box-shadow:0 8px 24px rgba(124,58,237,.4);
 }
 .fab-main:hover,.fab-main:active{
-    background:linear-gradient(135deg,#1d4ed8,#6d28d9);
+    background:linear-gradient(135deg,#4338ca,#6d28d9);
     color:#fff;transform:scale(1.08) rotate(15deg);
 }
 .fab-main i{transition:transform .3s}
@@ -606,7 +606,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 
 .practice-full-input-wrap{display:flex;flex-direction:column;gap:.75rem;}
 
-/* ✅ Hàng chứa input + nút loa */
 .practice-input-row{
     position:relative;display:flex;align-items:stretch;gap:.5rem;
 }
@@ -628,7 +627,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 @media(min-width:769px){.practice-full-input{font-size:1.85rem;padding:1.15rem 1.5rem;}}
 
-/* ✅ Nút loa bên phải ô nhập tiếng Trung */
 .practice-speak-btn{
     width:auto;min-width:56px;padding:0 1rem;
     border-radius:14px;border:2px solid var(--primary);
@@ -1002,7 +1000,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .practice-full-content{gap:1.1rem}
     .practice-full-vi{font-size:1.35rem;padding:1rem .75rem}
     .practice-full-input{font-size:1.35rem;padding:.85rem 1rem}
-    /* ✅ Nút loa nhỏ hơn trên mobile */
     .practice-speak-btn{
         min-width:48px;padding:0 .7rem;font-size:1.15rem;border-radius:12px;
     }
@@ -1263,82 +1260,100 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .dropdown-item.danger{color:var(--danger)}
 .dropdown-item.danger:hover{background:var(--danger-light)}
 
-/* ============ DROPDOWN: NÚT GIA HẠN NỔI BẬT ============ */
+/* ============ DROPDOWN: NÚT GIA HẠN — SANG TRỌNG VỚI KIM CƯƠNG ============ */
 .dropdown-renew{
     display:flex;align-items:center;justify-content:center;gap:.5rem;
     width:100%;padding:.75rem 1rem;margin:.4rem 0;
     border:none;border-radius:12px;
-    background:linear-gradient(135deg,#f59e0b,#d97706 60%,#dc2626);
+    background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 50%,#a855f7 100%);
     color:#fff;font-size:.9rem;font-weight:800;cursor:pointer;
-    transition:all .2s ease;font-family:inherit;
+    transition:all .25s ease;font-family:inherit;
     text-transform:uppercase;letter-spacing:.5px;
-    box-shadow:0 4px 14px rgba(245,158,11,.45), 0 0 0 0 rgba(245,158,11,.6);
+    box-shadow:0 4px 14px rgba(124,58,237,.35), 0 0 0 0 rgba(139,92,246,.6);
     position:relative;overflow:hidden;
     animation:renewPulse 2.5s infinite;
 }
 .dropdown-renew::before{
     content:'';position:absolute;top:0;left:-100%;
     width:100%;height:100%;
-    background:linear-gradient(90deg, transparent, rgba(255,255,255,.4), transparent);
+    background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
     animation:renewShine 3s infinite;
+}
+.dropdown-renew::after{
+    content:'';position:absolute;top:0;right:0;bottom:0;left:0;
+    background:radial-gradient(circle at 80% 20%, rgba(255,255,255,.3), transparent 30%),
+               radial-gradient(circle at 20% 80%, rgba(255,255,255,.2), transparent 25%);
+    opacity:.5;pointer-events:none;
+    animation:diamondSparkle 4s infinite;
+}
+@keyframes diamondSparkle{
+    0%,100%{opacity:.3;}
+    50%{opacity:.7;}
 }
 .dropdown-renew:hover,.dropdown-renew:active{
     transform:translateY(-2px) scale(1.02);
-    box-shadow:0 8px 20px rgba(245,158,11,.6), 0 0 0 4px rgba(245,158,11,.25);
-    background:linear-gradient(135deg,#fbbf24,#f59e0b 60%,#ef4444);
+    box-shadow:0 8px 24px rgba(124,58,237,.5), 0 0 0 4px rgba(139,92,246,.25);
+    background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#c084fc 100%);
 }
 .dropdown-renew i{
-    font-size:1rem;filter:drop-shadow(0 1px 2px rgba(0,0,0,.2));
-    position:relative;z-index:1;
+    font-size:1rem;
+    filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));
+    position:relative;z-index:2;
+    color:#e0f2fe;
+}
+.dropdown-renew i.fa-gem{
+    color:#67e8f9;
+    text-shadow:0 0 8px rgba(103,232,249,.7);
 }
 .dropdown-renew span{
-    position:relative;z-index:1;
+    position:relative;z-index:2;
 }
 @keyframes renewPulse{
-    0%,100%{box-shadow:0 4px 14px rgba(245,158,11,.45), 0 0 0 0 rgba(245,158,11,.6);}
-    50%{box-shadow:0 4px 14px rgba(245,158,11,.6), 0 0 0 6px rgba(245,158,11,0);}
+    0%,100%{box-shadow:0 4px 14px rgba(124,58,237,.35), 0 0 0 0 rgba(139,92,246,.6);}
+    50%{box-shadow:0 4px 18px rgba(139,92,246,.55), 0 0 0 6px rgba(139,92,246,0);}
 }
 @keyframes renewShine{
     0%{left:-100%;}
     50%,100%{left:100%;}
 }
 
-/* Badge "HOT" nhấp nháy */
 .dropdown-renew .renew-badge{
     position:absolute;top:-6px;right:-4px;
-    background:linear-gradient(135deg,#dc2626,#ef4444);
-    color:#fff;font-size:.55rem;font-weight:900;
-    padding:.15rem .4rem;border-radius:50px;
+    background:linear-gradient(135deg,#fbbf24,#f59e0b);
+    color:#1e1b4b;font-size:.55rem;font-weight:900;
+    padding:.15rem .45rem;border-radius:50px;
     letter-spacing:.5px;
-    box-shadow:0 2px 6px rgba(220,38,38,.5);
+    box-shadow:0 2px 8px rgba(251,191,36,.6);
     animation:renewBadgeBlink 1.5s infinite;
-    border:1.5px solid #fff;
-    z-index:2;
+    border:1.5px solid #fef3c7;
+    z-index:3;
 }
 @keyframes renewBadgeBlink{
     0%,100%{transform:scale(1);opacity:1;}
     50%{transform:scale(1.15);opacity:.85;}
 }
 
-/* Hiệu ứng "hết hạn" — nhấp nháy đỏ mạnh hơn */
 .dropdown-renew.urgent{
-    background:linear-gradient(135deg,#dc2626,#b91c1c 60%,#7f1d1d);
+    background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 50%,#dc2626 100%);
     animation:renewUrgent 1.2s infinite;
 }
 .dropdown-renew.urgent:hover{
-    background:linear-gradient(135deg,#ef4444,#dc2626 60%,#991b1b);
+    background:linear-gradient(135deg,#991b1b 0%,#dc2626 50%,#ef4444 100%);
+}
+.dropdown-renew.urgent i.fa-gem{
+    color:#fca5a5;
+    text-shadow:0 0 8px rgba(252,165,165,.7);
 }
 @keyframes renewUrgent{
     0%,100%{box-shadow:0 4px 14px rgba(220,38,38,.6), 0 0 0 0 rgba(220,38,38,.7);}
     50%{box-shadow:0 4px 18px rgba(220,38,38,.8), 0 0 0 8px rgba(220,38,38,0);}
 }
 
-/* Dark mode */
 [data-theme="dark"] .dropdown-renew{
-    box-shadow:0 4px 14px rgba(245,158,11,.5), 0 0 0 0 rgba(245,158,11,.6);
+    box-shadow:0 4px 14px rgba(124,58,237,.5), 0 0 0 0 rgba(139,92,246,.6);
 }
 [data-theme="dark"] .dropdown-renew .renew-badge{
-    border-color:#1e293b;
+    border-color:#1e1b4b;
 }
 
 .user-details{padding:.6rem .75rem .75rem;border-bottom:1px solid var(--border);margin-bottom:.5rem;display:flex;flex-direction:column;gap:.6rem;}
@@ -1386,11 +1401,11 @@ body.hide-floating .tiktok-bar { display: none !important; }
 @keyframes slideUp{from{transform:translateY(30px) scale(.95);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
 .login-close{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:none;background:#f1f5f9;color:#475569;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:.15s;}
 .login-close:hover{background:#fee2e2;color:#dc2626}
-.login-logo{width:70px;height:70px;background:linear-gradient(135deg,#2563eb,#7c3aed);border-radius:20px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;margin:0 auto 1.5rem;box-shadow:0 8px 20px rgba(37,99,235,.35);}
+.login-logo{width:70px;height:70px;background:linear-gradient(135deg,#4f46e5,#7c3aed);border-radius:20px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:2rem;margin:0 auto 1.5rem;box-shadow:0 8px 20px rgba(124,58,237,.35);}
 .login-box h2{font-size:1.4rem;color:#0f172a;margin-bottom:.5rem;font-weight:700}
 .login-box p{color:#64748b;font-size:.9rem;margin-bottom:2rem;line-height:1.5}
 .btn-google{display:flex;align-items:center;justify-content:center;gap:.75rem;width:100%;padding:.9rem 1.5rem;border-radius:50px;border:2px solid #e2e8f0;background:#fff;color:#0f172a;font-size:1rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;}
-.btn-google:hover{border-color:#2563eb;background:#f0f7ff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(37,99,235,.15)}
+.btn-google:hover{border-color:#7c3aed;background:#faf5ff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(124,58,237,.15)}
 .btn-google img{width:22px;height:22px}
 .login-error{background:#fee2e2;color:#dc2626;padding:.85rem 1rem;border-radius:10px;font-size:.85rem;margin-top:1rem;display:none;text-align:left;line-height:1.4;}
 .login-error.show{display:block}
@@ -1427,6 +1442,9 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .u-btn{width:32px;height:32px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:.15s;}
 .u-btn:hover{background:var(--surface-2);color:var(--primary);border-color:var(--primary)}
 .u-btn.danger:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger)}
+.u-btn.history{background:rgba(124,58,237,.1);color:#7c3aed;border-color:rgba(124,58,237,.35);}
+.u-btn.history:hover{background:#7c3aed;color:#fff;border-color:#7c3aed;transform:scale(1.08);}
+[data-theme="dark"] .u-btn.history{background:rgba(124,58,237,.25);color:#a78bfa;border-color:rgba(124,58,237,.5);}
 .u-btn.expiry{background:rgba(245,158,11,.1);color:#d97706;border-color:rgba(245,158,11,.4);}
 .u-btn.expiry:hover{background:var(--amber);color:#fff;border-color:var(--amber);transform:scale(1.08);}
 .u-btn.expiry.urgent{background:rgba(220,38,38,.15);color:var(--danger);border-color:rgba(220,38,38,.5);animation:expiryPulse 2s infinite;}
@@ -1535,9 +1553,8 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .expiry-banner-btn:hover{background:#d97706;color:#fff;transform:translateY(-1px);}
 .expiry-banner.urgent .expiry-banner-btn{background:#dc2626;}
 
-/* Nút Gia hạn trong banner hết hạn — nổi bật hơn */
 .expiry-banner.urgent .expiry-banner-btn{
-    background:linear-gradient(135deg,#dc2626,#b91c1c);
+    background:linear-gradient(135deg,#7f1d1d,#b91c1c);
     box-shadow:0 4px 14px rgba(220,38,38,.5), 0 0 0 0 rgba(220,38,38,.6);
     animation:renewUrgent 1.2s infinite;
     font-weight:800;
@@ -1553,35 +1570,36 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .renewal-modal{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(6px);z-index:3500;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s;overflow-y:auto;}
 .renewal-modal.show{display:flex}
 .renewal-box{background:var(--surface);border-radius:20px;width:100%;max-width:560px;max-height:calc(100vh - 2rem);box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column;overflow:hidden;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);}
-.renewal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:1rem;background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;}
+.renewal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:1rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;}
 .renewal-header h2{font-size:1.15rem;font-weight:800;display:flex;align-items:center;gap:.5rem;color:#fff;margin:0;}
+.renewal-header h2 i{color:#67e8f9;text-shadow:0 0 10px rgba(103,232,249,.8);}
 .renewal-header .subtitle{font-size:.78rem;opacity:.9;margin-top:.15rem;}
 .renewal-close{width:34px;height:34px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1rem;transition:.15s;flex-shrink:0;}
 .renewal-close:hover{background:rgba(255,255,255,.35)}
 .renewal-body{padding:1.5rem;overflow-y:auto;flex:1;}
-.renewal-current{padding:.85rem 1rem;border-radius:12px;background:linear-gradient(135deg, rgba(37,99,235,.08), rgba(124,58,237,.08));border:1px solid rgba(37,99,235,.25);margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem;}
-.renewal-current .rc-icon{width:42px;height:42px;border-radius:12px;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;}
+.renewal-current{padding:.85rem 1rem;border-radius:12px;background:linear-gradient(135deg, rgba(79,70,229,.08), rgba(124,58,237,.08));border:1px solid rgba(124,58,237,.25);margin-bottom:1.25rem;display:flex;align-items:center;gap:.75rem;}
+.renewal-current .rc-icon{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-size:1.15rem;flex-shrink:0;}
 .renewal-current.warn .rc-icon{background:var(--amber);}
 .renewal-current.expired .rc-icon{background:var(--danger);}
 .renewal-current .rc-info{flex:1;min-width:0;}
 .renewal-current .rc-title{font-weight:800;font-size:.9rem;color:var(--text);margin-bottom:.15rem;}
 .renewal-current .rc-desc{font-size:.75rem;color:var(--text-2);line-height:1.4;}
-.renewal-current .rc-desc b{color:var(--primary);}
+.renewal-current .rc-desc b{color:#7c3aed;}
 .renewal-section-title{font-size:.72rem;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:.6rem;display:flex;align-items:center;gap:.35rem;}
 .package-grid{display:grid;grid-template-columns:1fr;gap:.6rem;margin-bottom:1.25rem;}
 @media(min-width:480px){.package-grid{grid-template-columns:1fr 1fr 1fr;}}
 .package-card{padding:.9rem .75rem;border-radius:12px;border:2px solid var(--border);background:var(--surface);cursor:pointer;transition:.2s;text-align:center;position:relative;user-select:none;}
-.package-card:hover{border-color:var(--primary);transform:translateY(-2px);}
-.package-card.selected{border-color:var(--primary);background:linear-gradient(135deg, rgba(37,99,235,.08), rgba(124,58,237,.08));box-shadow:0 6px 20px rgba(37,99,235,.25);}
+.package-card:hover{border-color:#7c3aed;transform:translateY(-2px);}
+.package-card.selected{border-color:#7c3aed;background:linear-gradient(135deg, rgba(79,70,229,.08), rgba(124,58,237,.08));box-shadow:0 6px 20px rgba(124,58,237,.25);}
 .package-card .pkg-label{font-weight:800;font-size:.95rem;color:var(--text);margin-bottom:.3rem;}
-.package-card .pkg-price{font-weight:900;font-size:1.25rem;color:var(--primary);line-height:1;margin-bottom:.25rem;}
+.package-card .pkg-price{font-weight:900;font-size:1.25rem;color:#7c3aed;line-height:1;margin-bottom:.25rem;}
 .package-card .pkg-unit{font-size:.68rem;color:var(--text-3);font-weight:600;}
 .package-card .pkg-save{position:absolute;top:-8px;right:-4px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-size:.6rem;font-weight:800;padding:.15rem .45rem;border-radius:50px;text-transform:uppercase;letter-spacing:.3px;box-shadow:0 2px 6px rgba(22,163,74,.4);}
-.package-card .pkg-popular{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-size:.6rem;font-weight:800;padding:.15rem .5rem;border-radius:50px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;box-shadow:0 2px 6px rgba(245,158,11,.4);}
+.package-card .pkg-popular{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e1b4b;font-size:.6rem;font-weight:800;padding:.15rem .5rem;border-radius:50px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;box-shadow:0 2px 6px rgba(245,158,11,.4);}
 .qr-wrap{display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:1rem;background:linear-gradient(135deg,#f0f4f8,#e2e8f0);border-radius:14px;border:1.5px dashed var(--border);}
 .qr-img{width:220px;height:220px;background:#fff;padding:.5rem;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.15);}
 .qr-wrap .qr-hint{font-size:.75rem;color:var(--text-2);text-align:center;line-height:1.5;max-width:300px;}
-.qr-wrap .qr-hint b{color:var(--primary);}
+.qr-wrap .qr-hint b{color:#7c3aed;}
 .bank-info{padding:.9rem 1rem;border-radius:12px;background:var(--surface-2);border:1px solid var(--border);display:flex;flex-direction:column;gap:.55rem;}
 .bank-row{display:flex;justify-content:space-between;align-items:center;gap:.75rem;font-size:.82rem;}
 .bank-row .br-label{color:var(--text-3);font-weight:600;flex-shrink:0;}
@@ -1590,14 +1608,14 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .copy-btn{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:.75rem;transition:.15s;margin-left:.4rem;}
 .copy-btn:hover{background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary);}
 .copy-btn.copied{background:var(--success);color:#fff;border-color:var(--success);}
-.payment-steps{display:flex;flex-direction:column;gap:.5rem;padding:.85rem 1rem;border-radius:12px;background:linear-gradient(135deg, rgba(245,158,11,.1), rgba(245,158,11,.05));border:1px solid rgba(245,158,11,.3);}
+.payment-steps{display:flex;flex-direction:column;gap:.5rem;padding:.85rem 1rem;border-radius:12px;background:linear-gradient(135deg, rgba(124,58,237,.08), rgba(124,58,237,.03));border:1px solid rgba(124,58,237,.25);}
 .payment-steps .step{display:flex;gap:.6rem;font-size:.8rem;color:var(--text-2);line-height:1.5;align-items:flex-start;}
-.payment-steps .step .num{width:20px;height:20px;border-radius:50%;background:var(--amber);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;flex-shrink:0;margin-top:.05rem;}
+.payment-steps .step .num{width:20px;height:20px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:800;flex-shrink:0;margin-top:.05rem;}
 .payment-steps .step b{color:var(--text);}
 .renewal-actions{display:flex;gap:.6rem;justify-content:flex-end;padding-top:1rem;border-top:1px solid var(--border);}
 .renewal-btn{padding:.7rem 1.2rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:.85rem;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.4rem;}
 .renewal-btn:hover{background:var(--surface-2);}
-.renewal-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 4px 12px rgba(37,99,235,.3);}
+.renewal-btn.primary{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:#7c3aed;box-shadow:0 4px 12px rgba(124,58,237,.3);}
 .renewal-btn.success{background:var(--success);color:#fff;border-color:var(--success);box-shadow:0 4px 12px rgba(22,163,74,.3);}
 .renewal-btn:disabled{opacity:.5;cursor:not-allowed;}
 .renewal-success{text-align:center;padding:2rem 1rem;display:flex;flex-direction:column;align-items:center;gap:1rem;}
@@ -1612,7 +1630,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .renewal-admin-row .rar-email{font-weight:800;font-size:.88rem;color:var(--text);word-break:break-all;}
 .renewal-admin-row .rar-sub{font-size:.72rem;color:var(--text-3);margin-top:.15rem;}
 .renewal-admin-row .rar-pkg{text-align:right;}
-.renewal-admin-row .rar-amount{font-weight:900;font-size:1.05rem;color:var(--primary);line-height:1;}
+.renewal-admin-row .rar-amount{font-weight:900;font-size:1.05rem;color:#7c3aed;line-height:1;}
 .renewal-admin-row .rar-pkg-label{font-size:.7rem;color:var(--text-3);margin-top:.15rem;}
 .renewal-admin-row .rar-foot{display:flex;justify-content:space-between;align-items:center;gap:.5rem;padding-top:.5rem;border-top:1px solid var(--border);flex-wrap:wrap;}
 .renewal-admin-row .rar-code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.78rem;color:var(--danger);background:rgba(220,38,38,.08);padding:.15rem .5rem;border-radius:6px;letter-spacing:.5px;font-weight:800;}
@@ -1620,6 +1638,72 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .renewal-admin-row .rar-status.pending{background:rgba(37,99,235,.15);color:#2563eb;}
 .renewal-admin-row .rar-status.user_paid{background:rgba(245,158,11,.18);color:#d97706;}
 .renewal-admin-row .rar-actions{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;}
+
+/* ============ RENEWAL HISTORY (USER + ADMIN) ============ */
+.renewal-history-item{
+    display:flex;flex-direction:column;gap:.4rem;
+    padding:.85rem;margin-bottom:.5rem;
+    background:var(--surface-2);border:1px solid var(--border);
+    border-radius:10px;transition:.15s;
+}
+.renewal-history-item:hover{border-color:#7c3aed}
+.renewal-history-item .rh-head{
+    display:flex;justify-content:space-between;
+    align-items:flex-start;gap:.5rem;flex-wrap:wrap;
+}
+.renewal-history-item .rh-pkg{
+    font-weight:800;font-size:.88rem;color:var(--text);
+}
+.renewal-history-item .rh-amount{
+    font-weight:900;font-size:1rem;color:#7c3aed;
+    white-space:nowrap;
+}
+.renewal-history-item .rh-date{
+    font-size:.72rem;color:var(--text-3);
+    display:flex;align-items:center;gap:.3rem;
+    margin-top:.15rem;
+}
+.renewal-history-item .rh-code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+    font-size:.75rem;color:var(--danger);
+    background:rgba(220,38,38,.08);padding:.15rem .5rem;
+    border-radius:6px;letter-spacing:.5px;font-weight:700;
+    display:inline-block;margin-top:.15rem;
+}
+.renewal-history-item .rh-status{
+    display:inline-flex;align-items:center;gap:.25rem;
+    padding:.2rem .55rem;border-radius:50px;
+    font-size:.65rem;font-weight:800;
+    text-transform:uppercase;letter-spacing:.3px;
+    white-space:nowrap;
+}
+.renewal-history-item .rh-status.confirmed{background:rgba(22,163,74,.15);color:var(--success);}
+.renewal-history-item .rh-status.user_paid{background:rgba(245,158,11,.18);color:#d97706;}
+.renewal-history-item .rh-status.pending{background:rgba(37,99,235,.15);color:#2563eb;}
+.renewal-history-item .rh-status.cancelled{background:rgba(148,163,184,.15);color:var(--text-3);}
+.renewal-history-item .rh-status.rejected{background:rgba(220,38,38,.15);color:var(--danger);}
+.renewal-history-item .rh-foot{
+    display:flex;justify-content:space-between;
+    align-items:center;gap:.5rem;flex-wrap:wrap;
+    padding-top:.4rem;border-top:1px solid var(--border);
+    font-size:.72rem;color:var(--text-3);
+}
+
+.renewal-history-stats{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;
+    padding:.75rem;background:var(--surface-2);border-radius:10px;
+    border:1px solid var(--border);margin-bottom:1rem;
+}
+.renewal-history-stats .rhs-item{text-align:center;}
+.renewal-history-stats .rhs-label{
+    font-size:.7rem;color:var(--text-3);text-transform:uppercase;
+    font-weight:700;letter-spacing:.3px;
+}
+.renewal-history-stats .rhs-value{
+    font-size:1.1rem;font-weight:900;color:var(--primary);
+    line-height:1.2;margin-top:.15rem;
+}
+.renewal-history-stats .rhs-value.amount{color:var(--success);}
 
 </style>
 </head>
@@ -1687,8 +1771,13 @@ body.hide-floating .tiktok-bar { display: none !important; }
                             <button class="dropdown-item" id="openAdminBtn" style="display:none">
                                 <i class="fas fa-shield-alt"></i> Quản lý tài khoản
                             </button>
+                            <button class="dropdown-item" id="renewalHistoryBtn">
+                                <i class="fas fa-history"></i> Lịch sử gia hạn
+                            </button>
                             <button class="dropdown-renew" id="dropdownRenewBtn" style="display:none">
-                                <i class="fas fa-crown"></i> Gia hạn tài khoản
+                                <i class="fas fa-gem"></i>
+                                <span>Gia hạn tài khoản</span>
+                                <span class="renew-badge">VIP</span>
                             </button>
                             <a class="dropdown-zalo" id="dropdownZaloBtn" href="#" target="_blank" rel="noopener noreferrer">
                                 <i class="fas fa-comment-dots"></i> Liên hệ Zalo hỗ trợ
@@ -1931,7 +2020,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
             <div class="practice-full-vi" id="pfVi">-</div>
 
             <div class="practice-full-input-wrap">
-                <!-- ✅ Input + nút loa cùng hàng -->
                 <div class="practice-input-row">
                     <input type="text" class="practice-full-input" id="pfInput"
                         placeholder="Gõ tiếng Trung..." autocomplete="off"
@@ -1982,7 +2070,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 <div class="login-modal" id="loginModal">
     <div class="login-box">
         <button class="login-close" id="loginClose"><i class="fas fa-times"></i></button>
-        <div class="login-logo"><i class="fas fa-language"></i></div>
+        <div class="login-logo"><i class="fas fa-gem"></i></div>
         <h2>Đăng nhập để mở khóa</h2>
         <p>Đăng nhập bằng Google để sử dụng <b>toàn bộ câu</b>, tất cả bộ lọc HSK1-6, chủ đề đầy đủ, luyện viết không giới hạn và nhiều tính năng khác.</p>
         <button class="btn-google" id="googleLoginBtn">
@@ -2046,12 +2134,24 @@ body.hide-floating .tiktok-bar { display: none !important; }
     <div class="renewal-box">
         <div class="renewal-header">
             <div>
-                <h2><i class="fas fa-crown"></i> Gia hạn tài khoản</h2>
+                <h2><i class="fas fa-gem"></i> Gia hạn tài khoản</h2>
                 <div class="subtitle">Chọn gói phù hợp và thanh toán</div>
             </div>
             <button class="renewal-close" id="renewalClose"><i class="fas fa-times"></i></button>
         </div>
         <div class="renewal-body" id="renewalBody"></div>
+    </div>
+</div>
+
+<div class="edit-modal" id="renewalHistoryModal">
+    <div class="edit-box" style="max-width:600px">
+        <button class="edit-close" id="renewalHistoryClose"><i class="fas fa-times"></i></button>
+        <h2><i class="fas fa-history"></i> Lịch sử gia hạn</h2>
+        <div id="renewalHistoryList" style="max-height:65vh;overflow-y:auto;margin-top:1rem;">
+            <div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">
+                <i class="fas fa-spinner fa-pulse"></i> Đang tải...
+            </div>
+        </div>
     </div>
 </div>
 
@@ -2149,7 +2249,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
             </div>
 
             <div class="admin-section-title" style="margin-top:1.5rem" id="renewalsTitle">
-                <span><i class="fas fa-crown"></i> Yêu cầu gia hạn (<span id="pendingRenewalsBadge">0</span>)</span>
+                <span><i class="fas fa-gem"></i> Yêu cầu gia hạn (<span id="pendingRenewalsBadge">0</span>)</span>
                 <button class="btn" id="refreshRenewalsBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
             </div>
             <div class="renewals-list" id="renewalsList">
@@ -2241,14 +2341,12 @@ function getDemoRemaining() { return Math.max(0, DEMO_DAILY_LIMIT - getDemoUsage
 
 /* ✅ FIX: Chặn tính năng khi hết hạn */
 function canUseFeature() {
-    // Demo mode → giới hạn theo ngày
     if (isDemo) return getDemoUsage() < DEMO_DAILY_LIMIT;
 
-    // User đã login → kiểm tra hạn
     if (currentUser && currentUser.role !== 'admin') {
         var daysLeft = getDaysRemaining(currentUser);
         if (daysLeft !== null && daysLeft <= 0) {
-            return false;   // Đã hết hạn → chặn
+            return false;
         }
     }
 
@@ -2267,7 +2365,6 @@ function updateDemoRemaining() {
 
 /* ✅ FIX: showLimitMessage phân biệt demo vs hết hạn */
 function showLimitMessage() {
-    // Case 1: User đã login nhưng hết hạn
     if (!isDemo && currentUser && currentUser.role !== 'admin') {
         var daysLeft = getDaysRemaining(currentUser);
         if (daysLeft !== null && daysLeft <= 0) {
@@ -2280,7 +2377,6 @@ function showLimitMessage() {
         }
     }
 
-    // Case 2: Demo hết lượt
     if (confirm('🔒 Bạn đã dùng hết ' + DEMO_DAILY_LIMIT +
                 ' lượt miễn phí hôm nay.\n\n' +
                 '(Bao gồm cả NGHE và LUYỆN VIẾT)\n\n' +
@@ -3147,7 +3243,6 @@ function applyFilter() {
     if (state.search) clearBtn.classList.add('show');
     else clearBtn.classList.remove('show');
 
-    // ✅ Chặn user hết hạn
     var isLimitedUser = isDemo;
     if (!isDemo && currentUser && currentUser.role !== 'admin') {
         var dl = getDaysRemaining(currentUser);
@@ -3172,6 +3267,7 @@ function applyFilter() {
     updateResultCount();
     render(true);
 }
+
 /* ============ PRACTICE FULL MODE ============ */
 var pfCurrentStt = null;
 var pfCurrentAnswer = '';
@@ -3197,7 +3293,6 @@ window.addEventListener('resize', function() {
 window.openPracticeFull = function(stt, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
 
-    // ✅ Chặn user hết hạn
     if (!isDemo && currentUser && currentUser.role !== 'admin') {
         var dl = getDaysRemaining(currentUser);
         if (dl !== null && dl <= 0) {
@@ -3440,7 +3535,6 @@ function pfApplyFilter() {
     state.hsk = $('pfHskFilter').value;
     state.subject = $('pfSubjectFilter').value;
 
-    // ✅ Chặn user hết hạn
     var isLimitedUser = isDemo;
     if (!isDemo && currentUser && currentUser.role !== 'admin') {
         var dl = getDaysRemaining(currentUser);
@@ -3513,6 +3607,7 @@ function pfApplyFilter() {
         $('pfNextBtn').disabled = true;
     }
 }
+
 function updateCharPreview() {
     var input = $('pfInput');
     var preview = $('pfPreview');
@@ -3778,10 +3873,8 @@ function initPracticeFull() {
             e.stopPropagation();
             if (!pfCurrentAnswer) return;
 
-            // Kiểm tra quyền dùng (demo / hết hạn)
             if (!canUseFeature()) { showLimitMessage(); return; }
 
-            // Tăng usage demo nếu đang ở chế độ demo
             if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
 
             if (!('speechSynthesis' in window)) {
@@ -3927,9 +4020,9 @@ function showWriterChar(char) {
             var drawWidth = Math.round(targetSize * 0.07);
             writerInstance = HanziWriter.create('writerTarget', char, {
                 width: targetSize, height: targetSize, padding: padSize,
-                strokeColor: '#1e293b', radicalColor: '#2563eb',
+                strokeColor: '#1e293b', radicalColor: '#7c3aed',
                 highlightColor: '#f59e0b', outlineColor: '#cbd5e1',
-                drawingColor: '#2563eb', drawingWidth: drawWidth,
+                drawingColor: '#7c3aed', drawingWidth: drawWidth,
                 showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 250,
                 charDataLoader: function(ch, onComplete, onError) {
                     fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/' + encodeURIComponent(ch) + '.json')
@@ -4124,74 +4217,6 @@ var BANK_CONFIG = {"bank_id": "970418", "bank_name": "BIDV", "account_no": "8897
 var PACKAGES = [{"id": "1m", "label": "1 tháng", "amount": 50000, "days": 30, "popular": false}, {"id": "3m", "label": "3 tháng", "amount": 100000, "days": 90, "popular": true, "save": "Tiết kiệm 33%"}, {"id": "1y", "label": "1 năm", "amount": 250000, "days": 365, "popular": false, "save": "Tiết kiệm 58%"}];
 var RENEWAL_SUPPORT_ZALO = "0922331886";
 
-/* ============ TELEGRAM NOTIFICATION ============ */
-/* ✅ Gửi thông báo đến Telegram Bot khi user XÁC NHẬN ĐÃ CHUYỂN KHOẢN */
-function sendTelegramNotification(message) {
-    if (typeof TELEGRAM_BOT_TOKEN === 'undefined' || typeof TELEGRAM_CHAT_ID === 'undefined') {
-        console.warn('Telegram config chưa có');
-        return;
-    }
-    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
-        console.warn('Telegram chưa được cấu hình');
-        return;
-    }
-    var url = 'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage';
-    var payload = {
-        chat_id: TELEGRAM_CHAT_ID,
-        text: message,
-        parse_mode: 'HTML',
-        disable_web_page_preview: true
-    };
-    fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    }).catch(function(err) {
-        console.warn('Không gửi được Telegram:', err);
-    });
-}
-
-/* ✅ Chỉ gửi sau khi user nhấn "Tôi đã thanh toán" */
-function notifyRenewalClick(source, pkg, transferCode) {
-    try {
-        var email = (currentUser && currentUser.email) || 'Không rõ';
-        var name = (currentUser && currentUser.name) || 'Không rõ';
-        var role = (currentUser && currentUser.role) || 'user';
-        var expiresAt = (currentUser && currentUser.expiresAt) ?
-            new Date(currentUser.expiresAt).toLocaleString('vi-VN') : 'Không rõ';
-        var daysLeft = (typeof getDaysRemaining === 'function') ?
-            getDaysRemaining(currentUser) : null;
-        var now = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-
-        // Thông tin gói
-        var pkgInfo = '';
-        if (pkg) {
-            pkgInfo = '📦 <b>Gói:</b> ' + pkg.label + '\n' +
-                      '💵 <b>Số tiền:</b> ' + formatMoney(pkg.amount) + ' VNĐ\n' +
-                      '📆 <b>Số ngày:</b> ' + pkg.days + ' ngày\n';
-        }
-
-        // Mã chuyển khoản
-        var codeInfo = transferCode ? '🔑 <b>Mã CK:</b> <code>' + transferCode + '</code>\n' : '';
-
-        var msg = '💰 <b>USER ĐÃ CHUYỂN KHOẢN</b>\n\n' +
-                  '📧 <b>Email:</b> <code>' + email + '</code>\n' +
-                  '👤 <b>Tên:</b> ' + name + '\n' +
-                  '🎭 <b>Role:</b> ' + role + '\n' +
-                  pkgInfo +
-                  codeInfo +
-                  '⏰ <b>Hết hạn cũ:</b> ' + expiresAt + '\n' +
-                  '⏳ <b>Còn lại:</b> ' + (daysLeft !== null ? daysLeft + ' ngày' : 'Vô hạn') + '\n' +
-                  '🖱️ <b>Nguồn:</b> ' + source + '\n' +
-                  '🕐 <b>Thời gian:</b> ' + now + '\n\n' +
-                  '✅ <i>Vào Admin Panel để xác nhận gia hạn</i>';
-
-        sendTelegramNotification(msg);
-    } catch(e) {
-        console.warn('Lỗi notify:', e);
-    }
-}
-
 /* ============ STATE ============ */
 var currentUser = null;
 var isDemo = true;
@@ -4263,17 +4288,15 @@ async function handleAuthChange(user) {
         var docRef = db.collection('allowed_users').doc(email);
         var doc = await docRef.get({ source: 'server' });
 
-        /* ✅ TỰ ĐỘNG ĐĂNG KÝ: user mới → tặng trial */
         if (!doc.exists) {
             var registered = await grantTrialIfNew(user, null);
             if (registered) {
-                /* Đọc lại từ server để lấy dữ liệu vừa tạo */
                 doc = await docRef.get({ source: 'server' });
                 setTimeout(function() {
                     var trialDays = (typeof TRIAL_DAYS === 'number' && TRIAL_DAYS > 0) ? TRIAL_DAYS : 7;
                     var trialDate = new Date(Date.now() + trialDays * 86400000);
                     alert('🎉 Chào mừng bạn!\n\n' +
-                          '✅ Bạn được tặng MIỄN PHÍ ' + trialDays + ' ngày sử dụng.\n\n' +
+                          '💎 Bạn được tặng MIỄN PHÍ ' + trialDays + ' ngày sử dụng.\n\n' +
                           '📅 Hạn dùng: ' + trialDate.toLocaleDateString('vi-VN') + '\n\n' +
                           'Chúc bạn học tốt! 🎓');
                 }, 600);
@@ -4293,18 +4316,11 @@ async function handleAuthChange(user) {
             photo: user.photoURL || '',
             expiresAt: data.expiresAt || null,
             isTrial: data.isTrial || false,
-            isExpiredOnly: false   // ← flag mới
+            isExpiredOnly: false
         };
 
         currentUser = userData;
 
-        // ═══════════════════════════════════════════════
-        // ✅ LOGIC MỚI: Kiểm tra user hết hạn
-        // - Admin → luôn full quyền
-        // - User còn hạn → full quyền
-        // - User hết hạn → isDemo = true (giới hạn tính năng),
-        //   NHƯNG vẫn giữ currentUser để hiện menu + nút gia hạn
-        // ═══════════════════════════════════════════════
         var isExpiredUser = false;
         if (currentUser.role !== 'admin' && currentUser.expiresAt) {
             var expDate = getExpiryDate(currentUser.expiresAt);
@@ -4316,13 +4332,12 @@ async function handleAuthChange(user) {
         if (isExpiredUser) {
             isDemo = true;
             currentUser.isExpiredOnly = true;
-            console.log('⏰ User hết hạn — chuyển sang chế độ demo (vẫn giữ menu user)');
+            console.log('⏰ User hết hạn — chuyển sang chế độ demo');
         } else {
             isDemo = false;
             currentUser.isExpiredOnly = false;
         }
 
-        // Cache lại (bao gồm flag isExpiredOnly)
         try {
             localStorage.setItem(cacheKey, JSON.stringify({
                 data: currentUser,
@@ -4347,14 +4362,7 @@ function getDaysRemaining(userData) {
     return Math.ceil((expDate.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
 }
 
-/* ============ TRIAL: TẶNG NGÀY DÙNG THỬ (ATOMIC) ============ */
-/* 
- * ⚠️ QUAN TRỌNG: 
- * - Đã THÊM field `email` để khớp với rules mới
- * - Set TRỰC TIẾP (không dùng merge) → Firestore sẽ tính là CREATE rule
- * - Rules mới cho phép: email, name, role, expiresAt, isTrial, trialDays,
- *   registeredAt, trialStartedAt (không chặn các field này)
- */
+/* ============ TRIAL ============ */
 async function grantTrialIfNew(user, userData) {
     if (!user || !user.email) return false;
     var email = user.email.toLowerCase();
@@ -4375,9 +4383,8 @@ async function grantTrialIfNew(user, userData) {
             var expiresAt = new Date(Date.now() + days * 86400000);
             expiresAt.setHours(23, 59, 59, 0);
 
-            /* ⚠️ Set đầy đủ field — rules mới cho phép hết */
             transaction.set(userRef, {
-                email: email,                         // ← BẮT BUỘC cho rules
+                email: email,
                 name: (userData && userData.name) ? userData.name
                      : (user.displayName || email.split('@')[0]),
                 role: 'user',
@@ -4399,16 +4406,6 @@ async function grantTrialIfNew(user, userData) {
 }
 
 function enterDemoMode() {
-    // ═══════════════════════════════════════════════
-    // ✅ KHÔNG reset currentUser nếu user đã login (chỉ hết hạn)
-    // Chỉ reset khi thực sự là khách (chưa login)
-    // ═══════════════════════════════════════════════
-    if (!currentUser || !currentUser.isExpiredOnly) {
-        // Trường hợp 1: Khách chưa login (currentUser = null) → OK, không cần làm gì
-        // Trường hợp 2: User hết hạn (isExpiredOnly = true) → GIỮ NGUYÊN currentUser
-        // Trường hợp 3: Logout → currentUser = null
-    }
-
     isDemo = true;
     applyUserUI();
 
@@ -4427,7 +4424,6 @@ function applyUserUI() {
     var headerLoginBtn = $('headerLoginBtn');
     var userMenu = $('userMenu');
 
-    /* Banner hết hạn */
     var expiryBanner = $('expiryBanner');
     if (expiryBanner) {
         if (!isDemo && currentUser && currentUser.role !== 'admin') {
@@ -4458,7 +4454,7 @@ function applyUserUI() {
 
                 var contactBtn = $('expiryContactBtn');
                 if (contactBtn) {
-                    contactBtn.innerHTML = '<i class="fas fa-crown"></i> Gia hạn ngay';
+                    contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
                     contactBtn.href = '#';
                     contactBtn.onclick = function(e) { e.preventDefault(); openRenewalModal(); };
                 }
@@ -4466,7 +4462,6 @@ function applyUserUI() {
                 expiryBanner.style.display = 'none';
             }
         } else if (currentUser && currentUser.isExpiredOnly) {
-            // ✅ User hết hạn → vẫn hiển thị banner cảnh báo
             expiryBanner.style.display = 'flex';
             expiryBanner.classList.add('urgent');
 
@@ -4485,7 +4480,7 @@ function applyUserUI() {
 
             var contactBtn2 = $('expiryContactBtn');
             if (contactBtn2) {
-                contactBtn2.innerHTML = '<i class="fas fa-crown"></i> Gia hạn ngay';
+                contactBtn2.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
                 contactBtn2.href = '#';
                 contactBtn2.onclick = function(e) { e.preventDefault(); openRenewalModal(); };
             }
@@ -4494,9 +4489,6 @@ function applyUserUI() {
         }
     }
 
-    // ═══════════════════════════════════════════════
-    // ✅ NÚT GIA HẠN TRONG DROPDOWN — có hiệu ứng urgent
-    // ═══════════════════════════════════════════════
     var renewBtn = $('dropdownRenewBtn');
     if (renewBtn) {
         var showRenew = currentUser && currentUser.role !== 'admin';
@@ -4514,27 +4506,21 @@ function applyUserUI() {
                 } else if (rDaysLeft !== null && rDaysLeft <= 3) {
                     rBadge.textContent = 'GẤP';
                 } else {
-                    rBadge.textContent = 'HOT';
+                    rBadge.textContent = 'VIP';
                 }
             }
         }
     }
 
-    // ═══════════════════════════════════════════════
-    // ✅ PHÂN BIỆT 3 TRẠNG THÁI
-    // ═══════════════════════════════════════════════
     var isGuest = isDemo && !currentUser;
-    var isExpiredUser = isDemo && currentUser && currentUser.isExpiredOnly;
 
     if (isGuest) {
-        // Khách chưa login → ẩn menu user, hiện nút đăng nhập
         if (demoBadge) demoBadge.style.display = 'flex';
         if (headerLoginBtn) headerLoginBtn.style.display = 'flex';
         if (userMenu) userMenu.style.display = 'none';
         if ($('demoBanner')) $('demoBanner').style.display = 'flex';
         if ($('userDetails')) $('userDetails').style.display = 'none';
     } else {
-        // ✅ Đã login (dù hết hạn hay còn hạn) → hiện menu user
         if (demoBadge) demoBadge.style.display = 'none';
         if (headerLoginBtn) headerLoginBtn.style.display = 'none';
         if (userMenu) userMenu.style.display = 'block';
@@ -4554,7 +4540,7 @@ function applyUserUI() {
             else {
                 avatar.src = 'data:image/svg+xml;utf8,' + encodeURIComponent(
                     '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">' +
-                    '<rect fill="#2563eb" width="100" height="100"/>' +
+                    '<rect fill="#7c3aed" width="100" height="100"/>' +
                     '<text x="50" y="65" font-size="45" fill="#fff" text-anchor="middle" font-family="sans-serif" font-weight="bold">' +
                     (currentUser.name || '?').charAt(0).toUpperCase() + '</text></svg>'
                 );
@@ -4563,11 +4549,10 @@ function applyUserUI() {
         updateUserDetails();
     }
 
-    // ✅ Chip HSK/Subject bị giới hạn khi demo HOẶC user hết hạn
     var hskChip = $('hskChip');
     var subjectChip = $('subjectChip');
     if (hskChip && subjectChip) {
-        var limited = isDemo;  // ← isDemo = true khi user hết hạn
+        var limited = isDemo;
         if (limited) { hskChip.classList.add('demo-limited'); subjectChip.classList.add('demo-limited'); }
         else { hskChip.classList.remove('demo-limited'); subjectChip.classList.remove('demo-limited'); }
     }
@@ -4585,6 +4570,7 @@ function applyUserUI() {
 
     if (isDemo) document.body.classList.remove('hide-floating');
 }
+
 function updateUserDetails() {
     var detailsEl = $('userDetails');
     if (!detailsEl) return;
@@ -4699,7 +4685,6 @@ function logLogin(u) {
 }
 
 /* ============ RENEWAL: MỞ MODAL ============ */
-/* ✅ KHÔNG gửi Telegram khi mở modal — chỉ hiển thị UI */
 window.openRenewalModal = function() {
     if (!currentUser) { showLoginModal(); return; }
     if (currentUser.role === 'admin') { alert('Admin có hạn vĩnh viễn, không cần gia hạn!'); return; }
@@ -4719,7 +4704,7 @@ function renderRenewalStep1() {
     var isExpired = daysLeft !== null && daysLeft <= 0;
     var isWarn = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
     var currentCls = isExpired ? 'expired' : (isWarn ? 'warn' : '');
-    var currentIcon = isExpired ? 'fa-exclamation-triangle' : (isWarn ? 'fa-hourglass-half' : 'fa-calendar-check');
+    var currentIcon = isExpired ? 'fa-exclamation-triangle' : (isWarn ? 'fa-hourglass-half' : 'fa-gem');
     var currentTitle = isExpired ? 'Tài khoản đã hết hạn' : (isWarn ? 'Sắp hết hạn' : 'Tài khoản đang hoạt động');
     var currentDesc = '';
     if (daysLeft === null) currentDesc = 'Vĩnh viễn, không cần gia hạn';
@@ -4855,7 +4840,6 @@ window.copyText = function(text, btn) {
     }
 };
 
-/* ✅ CHỈ GỬI TELEGRAM KHI USER XÁC NHẬN ĐÃ CHUYỂN KHOẢN */
 window.userConfirmPaid = async function() {
     if (!renewalCurrentReq) return;
     var btn = $('renewalConfirmBtn');
@@ -4866,14 +4850,6 @@ window.userConfirmPaid = async function() {
             userConfirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'user_paid'
         });
-
-        // ✅ GỬI TELEGRAM SAU KHI USER XÁC NHẬN ĐÃ CHUYỂN KHOẢN
-        notifyRenewalClick(
-            'User xác nhận đã chuyển khoản',
-            renewalSelectedPkg,
-            renewalCurrentReq.code
-        );
-
         renderPendingConfirm();
     } catch(e) {
         alert('❌ Lỗi: ' + e.message);
@@ -4886,13 +4862,13 @@ function renderPendingConfirm() {
     var zaloUrl = RENEWAL_SUPPORT_ZALO ? 'https://zalo.me/' + RENEWAL_SUPPORT_ZALO.replace(/\D/g, '') : '#';
     $('renewalBody').innerHTML =
         '<div class="renewal-success">' +
-            '<div class="icon" style="background:linear-gradient(135deg,#f59e0b,#d97706);box-shadow:0 8px 24px rgba(245,158,11,.4)">' +
+            '<div class="icon" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);box-shadow:0 8px 24px rgba(124,58,237,.4)">' +
                 '<i class="fas fa-hourglass-half"></i>' +
             '</div>' +
             '<h3>Đang chờ xác nhận</h3>' +
             '<p>Admin sẽ kiểm tra và xác nhận trong <b>1-5 phút</b>.</p>' +
             '<div class="info-box">' +
-                '<i class="fas fa-info-circle" style="color:var(--primary)"></i>' +
+                '<i class="fas fa-info-circle" style="color:#7c3aed"></i>' +
                 '<div>Nếu sau <b>10 phút</b> chưa được gia hạn, liên hệ Zalo kèm mã: <b>' + escapeHtml(renewalCurrentReq.code) + '</b></div>' +
             '</div>' +
             '<div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem">' +
@@ -4925,7 +4901,7 @@ function showRenewalSuccess(data) {
     }
     $('renewalBody').innerHTML =
         '<div class="renewal-success">' +
-            '<div class="icon"><i class="fas fa-check"></i></div>' +
+            '<div class="icon"><i class="fas fa-gem"></i></div>' +
             '<h3>🎉 Gia hạn thành công!</h3>' +
             '<p>Tài khoản đã được gia hạn thêm <b>' + data.days + ' ngày</b>.</p>' +
             (newExpiry ? '<div class="info-box"><i class="fas fa-calendar-check" style="color:var(--success)"></i><div>Hạn mới: <b>' + newExpiry + '</b></div></div>' : '') +
@@ -4961,14 +4937,12 @@ async function refreshCurrentUser() {
         currentUser.expiresAt = data.expiresAt || null;
         currentUser.name = data.name || currentUser.name;
 
-        // ✅ Cập nhật lại isDemo khi user vừa được gia hạn
         if (currentUser.role !== 'admin' && currentUser.expiresAt) {
             var expDate = getExpiryDate(currentUser.expiresAt);
             if (expDate && !isNaN(expDate.getTime())) {
                 var isExpired = expDate.getTime() < Date.now();
                 currentUser.isExpiredOnly = isExpired;
                 isDemo = isExpired;
-                console.log('🔄 refreshCurrentUser: hết hạn =', isExpired);
             }
         } else if (currentUser.role === 'admin' || !currentUser.expiresAt) {
             currentUser.isExpiredOnly = false;
@@ -4985,6 +4959,227 @@ async function refreshCurrentUser() {
         if (typeof applyUserUI === 'function') applyUserUI();
     } catch(e) { console.error('refreshCurrentUser error:', e); }
 }
+
+/* ============ LỊCH SỬ GIA HẠN (USER) ============ */
+window.openRenewalHistory = async function() {
+    if (!currentUser) { showLoginModal(); return; }
+
+    var titleEl = document.querySelector('#renewalHistoryModal h2');
+    if (titleEl) {
+        titleEl.innerHTML = '<i class="fas fa-history"></i> Lịch sử gia hạn';
+    }
+
+    var listEl = $('renewalHistoryList');
+    listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">' +
+        '<i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>';
+
+    $('renewalHistoryModal').classList.add('show');
+
+    try {
+        var snapshot = await db.collection('renewal_requests')
+            .where('email', '==', currentUser.email)
+            .orderBy('createdAt', 'desc')
+            .limit(50)
+            .get();
+
+        if (snapshot.empty) {
+            listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">' +
+                '<i class="fas fa-inbox" style="font-size:2rem;margin-bottom:.75rem;display:block;opacity:.5"></i>' +
+                'Bạn chưa có giao dịch gia hạn nào</div>';
+            return;
+        }
+
+        var html = '';
+        snapshot.forEach(function(doc) {
+            var d = doc.data();
+            var created = d.createdAt ? d.createdAt.toDate() : null;
+            var createdStr = created ? created.toLocaleString('vi-VN') : 'Không rõ';
+
+            var statusMap = {
+                'pending':   { text: '⏱ Chờ chuyển khoản', cls: 'pending' },
+                'user_paid': { text: '⏳ Chờ xác nhận',     cls: 'user_paid' },
+                'confirmed': { text: '✅ Đã xác nhận',      cls: 'confirmed' },
+                'cancelled': { text: '🚫 Đã hủy',           cls: 'cancelled' },
+                'rejected':  { text: '❌ Bị từ chối',       cls: 'rejected' }
+            };
+            var st = statusMap[d.status] || { text: d.status || 'Không rõ', cls: 'pending' };
+
+            var confirmInfo = '';
+            if (d.confirmedAt) {
+                var cf = d.confirmedAt.toDate ? d.confirmedAt.toDate() : null;
+                if (cf) confirmInfo = '<div class="rh-date"><i class="fas fa-check-circle" style="color:#16a34a"></i> Xác nhận: ' + cf.toLocaleString('vi-VN') + '</div>';
+            } else if (d.userConfirmedAt) {
+                var ucf = d.userConfirmedAt.toDate ? d.userConfirmedAt.toDate() : null;
+                if (ucf) confirmInfo = '<div class="rh-date"><i class="fas fa-clock" style="color:#f59e0b"></i> Bạn xác nhận: ' + ucf.toLocaleString('vi-VN') + '</div>';
+            } else if (d.rejectedAt) {
+                var rj = d.rejectedAt.toDate ? d.rejectedAt.toDate() : null;
+                if (rj) confirmInfo = '<div class="rh-date"><i class="fas fa-times-circle" style="color:#dc2626"></i> Từ chối: ' + rj.toLocaleString('vi-VN') + (d.rejectReason ? ' — ' + escapeHtml(d.rejectReason) : '') + '</div>';
+            }
+
+            var newExpiryInfo = '';
+            if (d.newExpiresAt) {
+                var ne = d.newExpiresAt.toDate ? d.newExpiresAt.toDate() : null;
+                if (ne) newExpiryInfo = '<div class="rh-date"><i class="fas fa-calendar-check" style="color:#16a34a"></i> Hạn mới: <b>' + ne.toLocaleDateString('vi-VN') + '</b></div>';
+            }
+
+            html +=
+                '<div class="renewal-history-item">' +
+                    '<div class="rh-head">' +
+                        '<div>' +
+                            '<div class="rh-pkg">' + escapeHtml(d.packageLabel || d.package || 'Gói') + '</div>' +
+                            '<div class="rh-date"><i class="fas fa-clock"></i> ' + createdStr + '</div>' +
+                        '</div>' +
+                        '<div class="rh-amount">' + formatMoney(d.amount || 0) + 'đ</div>' +
+                    '</div>' +
+                    '<div>' +
+                        '<span class="rh-code">' + escapeHtml(d.transferCode || '—') + '</span>' +
+                    '</div>' +
+                    '<div class="rh-foot">' +
+                        '<span class="rh-status ' + st.cls + '">' + st.text + '</span>' +
+                        '<span>' + (d.days || 0) + ' ngày</span>' +
+                    '</div>' +
+                    confirmInfo +
+                    newExpiryInfo +
+                '</div>';
+        });
+
+        listEl.innerHTML = html;
+    } catch(e) {
+        console.error('Lỗi load lịch sử:', e);
+        listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:#dc2626">' +
+            '<i class="fas fa-exclamation-triangle"></i> Lỗi tải dữ liệu: ' + escapeHtml(e.message) + '</div>';
+    }
+};
+
+/* ============ LỊCH SỬ GIA HẠN (ADMIN XEM CHO USER) ============ */
+window.openUserRenewalHistory = async function(email) {
+    if (!currentUser || currentUser.role !== 'admin') {
+        alert('Chỉ admin mới có quyền xem lịch sử gia hạn!');
+        return;
+    }
+
+    var user = usersCache.find(function(u) { return u.email === email; });
+    var userName = user ? (user.name || email.split('@')[0]) : email.split('@')[0];
+
+    var titleEl = document.querySelector('#renewalHistoryModal h2');
+    if (titleEl) {
+        titleEl.innerHTML = '<i class="fas fa-history"></i> Lịch sử gia hạn — ' + escapeHtml(userName);
+    }
+
+    var listEl = $('renewalHistoryList');
+    listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">' +
+        '<i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>';
+
+    $('renewalHistoryModal').classList.add('show');
+
+    try {
+        var snapshot = await db.collection('renewal_requests')
+            .where('email', '==', email.toLowerCase())
+            .orderBy('createdAt', 'desc')
+            .limit(100)
+            .get();
+
+        if (snapshot.empty) {
+            listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">' +
+                '<i class="fas fa-inbox" style="font-size:2rem;margin-bottom:.75rem;display:block;opacity:.5"></i>' +
+                'User này chưa có giao dịch gia hạn nào</div>';
+            return;
+        }
+
+        var totalAmount = 0, totalConfirmed = 0, totalPending = 0, totalRejected = 0;
+        snapshot.forEach(function(doc) {
+            var d = doc.data();
+            if (d.status === 'confirmed') {
+                totalAmount += (d.amount || 0);
+                totalConfirmed++;
+            } else if (d.status === 'pending' || d.status === 'user_paid') {
+                totalPending++;
+            } else if (d.status === 'rejected') {
+                totalRejected++;
+            }
+        });
+
+        var statsHtml =
+            '<div class="renewal-history-stats">' +
+                '<div class="rhs-item">' +
+                    '<div class="rhs-label">Tổng chi tiêu</div>' +
+                    '<div class="rhs-value amount">' + formatMoney(totalAmount) + 'đ</div>' +
+                '</div>' +
+                '<div class="rhs-item">' +
+                    '<div class="rhs-label">Số giao dịch</div>' +
+                    '<div class="rhs-value">' + snapshot.size + '</div>' +
+                '</div>' +
+                '<div class="rhs-item">' +
+                    '<div class="rhs-label">Đã xác nhận</div>' +
+                    '<div class="rhs-value" style="color:var(--success)">' + totalConfirmed + '</div>' +
+                '</div>' +
+                '<div class="rhs-item">' +
+                    '<div class="rhs-label">Chờ / Từ chối</div>' +
+                    '<div class="rhs-value" style="color:#f59e0b">' + totalPending + ' / ' + totalRejected + '</div>' +
+                '</div>' +
+            '</div>';
+
+        var html = statsHtml;
+        snapshot.forEach(function(doc) {
+            var d = doc.data();
+            var created = d.createdAt ? d.createdAt.toDate() : null;
+            var createdStr = created ? created.toLocaleString('vi-VN') : 'Không rõ';
+
+            var statusMap = {
+                'pending':   { text: '⏱ Chờ chuyển khoản', cls: 'pending' },
+                'user_paid': { text: '⏳ Chờ xác nhận',     cls: 'user_paid' },
+                'confirmed': { text: '✅ Đã xác nhận',      cls: 'confirmed' },
+                'cancelled': { text: '🚫 Đã hủy',           cls: 'cancelled' },
+                'rejected':  { text: '❌ Bị từ chối',       cls: 'rejected' }
+            };
+            var st = statusMap[d.status] || { text: d.status || 'Không rõ', cls: 'pending' };
+
+            var confirmInfo = '';
+            if (d.confirmedAt) {
+                var cf = d.confirmedAt.toDate ? d.confirmedAt.toDate() : null;
+                if (cf) confirmInfo = '<div class="rh-date"><i class="fas fa-check-circle" style="color:#16a34a"></i> Xác nhận: ' + cf.toLocaleString('vi-VN') + ' — bởi <b>' + escapeHtml(d.confirmedBy || 'admin') + '</b></div>';
+            } else if (d.userConfirmedAt) {
+                var ucf = d.userConfirmedAt.toDate ? d.userConfirmedAt.toDate() : null;
+                if (ucf) confirmInfo = '<div class="rh-date"><i class="fas fa-clock" style="color:#f59e0b"></i> User xác nhận: ' + ucf.toLocaleString('vi-VN') + '</div>';
+            } else if (d.rejectedAt) {
+                var rj = d.rejectedAt.toDate ? d.rejectedAt.toDate() : null;
+                if (rj) confirmInfo = '<div class="rh-date"><i class="fas fa-times-circle" style="color:#dc2626"></i> Từ chối: ' + rj.toLocaleString('vi-VN') + (d.rejectReason ? ' — ' + escapeHtml(d.rejectReason) : '') + '</div>';
+            }
+
+            var newExpiryInfo = '';
+            if (d.newExpiresAt) {
+                var ne = d.newExpiresAt.toDate ? d.newExpiresAt.toDate() : null;
+                if (ne) newExpiryInfo = '<div class="rh-date"><i class="fas fa-calendar-check" style="color:#16a34a"></i> Hạn mới: <b>' + ne.toLocaleDateString('vi-VN') + '</b></div>';
+            }
+
+            html +=
+                '<div class="renewal-history-item">' +
+                    '<div class="rh-head">' +
+                        '<div>' +
+                            '<div class="rh-pkg">' + escapeHtml(d.packageLabel || d.package || 'Gói') + '</div>' +
+                            '<div class="rh-date"><i class="fas fa-clock"></i> ' + createdStr + '</div>' +
+                        '</div>' +
+                        '<div class="rh-amount">' + formatMoney(d.amount || 0) + 'đ</div>' +
+                    '</div>' +
+                    '<div>' +
+                        '<span class="rh-code">' + escapeHtml(d.transferCode || '—') + '</span>' +
+                    '</div>' +
+                    '<div class="rh-foot">' +
+                        '<span class="rh-status ' + st.cls + '">' + st.text + '</span>' +
+                        '<span>' + (d.days || 0) + ' ngày</span>' +
+                    '</div>' +
+                    confirmInfo +
+                    newExpiryInfo +
+                '</div>';
+        });
+
+        listEl.innerHTML = html;
+    } catch(e) {
+        console.error('Lỗi load lịch sử:', e);
+        listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:#dc2626">' +
+            '<i class="fas fa-exclamation-triangle"></i> Lỗi tải dữ liệu: ' + escapeHtml(e.message) + '</div>';
+    }
+};
 
 /* ============ ADMIN PANEL ============ */
 function initAdminPanel() {
@@ -5034,7 +5229,7 @@ async function doAddUser() {
         if (doc.exists) { alert('Email này đã tồn tại!'); return; }
 
         var setData = {
-            email: email,                              // ← thêm cho nhất quán
+            email: email,
             name: name, role: role,
             addedAt: firebase.firestore.FieldValue.serverTimestamp(),
             addedBy: currentUser.email
@@ -5222,6 +5417,11 @@ function renderUsers(items) {
             expiryBtn = '<button class="' + btnCls + '" onclick="openEditExpiry(\'' + escapeJs(u.email) + '\')" title="' + escapeHtml(tooltip) + '"><i class="fas fa-calendar-alt"></i></button>';
         }
 
+        var historyBtn = '';
+        if (!targetIsSuper || isMe) {
+            historyBtn = '<button class="u-btn history" onclick="openUserRenewalHistory(\'' + escapeJs(u.email) + '\')" title="Xem lịch sử gia hạn"><i class="fas fa-history"></i></button>';
+        }
+
         var last = lastLoginMap[(u.email || '').toLowerCase()];
         var lastLoginHtml = last
             ? '<div class="u-last-login ' + ((now - last.getTime()) <= day7 ? 'active' : ((now - last.getTime()) <= day30 ? 'recent' : '')) + '"><i class="fas fa-clock"></i> ' + formatTimeDiff(now - last.getTime()) + '</div>'
@@ -5253,7 +5453,7 @@ function renderUsers(items) {
                 '<div class="u-email">' + escapeHtml(u.email) + '</div>' +
                 lastLoginHtml + expiryHtml +
             '</div>' + roleBadge +
-            '<div class="u-actions">' + expiryBtn + roleBtn + deleteBtn + '</div>' +
+            '<div class="u-actions">' + historyBtn + expiryBtn + roleBtn + deleteBtn + '</div>' +
         '</div>';
     }).join('');
 }
@@ -5323,7 +5523,6 @@ function loadLogs() {
     });
 }
 
-/* ============ ADMIN: DUYỆT YÊU CẦU GIA HẠN ============ */
 function loadRenewals() {
     if (isHiddenAdmin()) {
         if ($('renewalsTitle')) $('renewalsTitle').style.display = 'none';
@@ -5432,7 +5631,6 @@ window.rejectRenewal = async function(reqId) {
     } catch(e) { alert('❌ Lỗi: ' + e.message); }
 };
 
-/* ============ EXPIRY EDIT ============ */
 window.openEditExpiry = function(email) {
     var user = usersCache.find(function(u) { return u.email === email; });
     if (!user) return alert('Không tìm thấy user!');
@@ -5503,7 +5701,6 @@ async function doChangeName() {
     finally { btn.disabled = false; btn.innerHTML = originalHtml; }
 }
 
-/* ============ EXPORT EXCEL ============ */
 function doExportExcel() {
     var usersOnly = usersCache.filter(function(u) { return u.role !== 'admin'; });
     if (!usersOnly.length) return alert('Không có user nào để export!');
@@ -5542,7 +5739,6 @@ function doExportExcel() {
     } catch(err) { alert('❌ Lỗi export: ' + err.message); }
 }
 
-/* ============ IMPORT EXCEL ============ */
 function handleImportFileSelect(e) {
     var file = e.target.files[0];
     if (!file) return;
@@ -5795,6 +5991,18 @@ function initAuthUI() {
     if ($('renewalModal')) $('renewalModal').addEventListener('click', function(e) { if (e.target === this) closeRenewalModal(); });
     if ($('dropdownRenewBtn')) $('dropdownRenewBtn').addEventListener('click', function(e) { e.preventDefault(); openRenewalModal(); });
     if ($('expiryRenewBtn')) $('expiryRenewBtn').addEventListener('click', function(e) { e.preventDefault(); openRenewalModal(); });
+
+    // Modal lịch sử gia hạn
+    if ($('renewalHistoryClose')) $('renewalHistoryClose').addEventListener('click', function() { $('renewalHistoryModal').classList.remove('show'); });
+    if ($('renewalHistoryModal')) $('renewalHistoryModal').addEventListener('click', function(e) { if (e.target === this) $('renewalHistoryModal').classList.remove('show'); });
+
+    // ✅ Nút "Lịch sử gia hạn" trong user dropdown
+    if ($('renewalHistoryBtn')) {
+        $('renewalHistoryBtn').addEventListener('click', function() {
+            $('userDropdown').classList.remove('show');
+            openRenewalHistory();
+        });
+    }
 
     initAdminPanel();
 }
