@@ -180,7 +180,6 @@ def build_accounts_css():
 .progress-bar.urgent{background:linear-gradient(90deg, #dc2626, #ef4444);}
 .progress-bar.permanent{background:linear-gradient(90deg, #2563eb, #3b82f6);}
 
-/* Tier badge nhỏ */
 .tier-badge{
     display:inline-flex;align-items:center;gap:.25rem;
     padding:.15rem .5rem;margin-top:.35rem;
@@ -241,14 +240,49 @@ def build_accounts_css():
 .admin-filter-btn .count{background:rgba(255,255,255,.25);padding:.05rem .4rem;border-radius:50px;font-size:.68rem;font-weight:700;min-width:18px;text-align:center;}
 .admin-filter-btn.active .count{background:rgba(255,255,255,.35);}
 
-/* Toggle show/hide admin panel */
+/* Toggle show/hide admin panel sections */
 .admin-toggle-btn{padding:.35rem .7rem;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.75rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;}
 .admin-toggle-btn:hover{background:var(--surface-2);color:var(--primary);border-color:var(--primary);}
 .admin-toggle-btn.active{background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary);}
 
 /* Admin panel collapsible sections */
-.admin-section-collapse{overflow:hidden;transition:max-height .3s ease, opacity .3s ease, margin .3s ease;max-height:2000px;opacity:1;margin-bottom:0;}
-.admin-section-collapse.collapsed{max-height:0;opacity:0;margin-bottom:0;}
+.admin-section-collapse{overflow:hidden;transition:max-height .35s ease, opacity .3s ease, margin .3s ease;max-height:3000px;opacity:1;margin-bottom:0;}
+.admin-section-collapse.collapsed{max-height:0;opacity:0;margin-bottom:0;pointer-events:none;}
+
+/* Highlight khung Pending khi có yêu cầu chờ */
+.admin-section-collapse#adminPendingRenewalsSection.has-pending .admin-section-title{
+    background:linear-gradient(135deg, rgba(245,158,11,.1), rgba(251,191,36,.05));
+    padding:.6rem .85rem;
+    border-radius:10px;
+    border:1px solid rgba(245,158,11,.35);
+    margin-bottom:.6rem;
+}
+.admin-section-collapse#adminPendingRenewalsSection.has-pending .admin-section-title span i{
+    animation:bellRing 1.5s infinite;
+}
+@keyframes bellRing{
+    0%, 100% { transform: rotate(0); }
+    10%, 30% { transform: rotate(-12deg); }
+    20%, 40% { transform: rotate(12deg); }
+    50% { transform: rotate(0); }
+}
+#pendingRenewalsBadge.pulse{
+    display:inline-block;
+    padding:.05rem .45rem;
+    background:linear-gradient(135deg,#dc2626,#b91c1c);
+    color:#fff;
+    border-radius:50px;
+    font-weight:900;
+    font-size:.72rem;
+    animation:pendingPulse 1.5s infinite;
+    box-shadow:0 2px 8px rgba(220,38,38,.5);
+    min-width:20px;
+    text-align:center;
+}
+@keyframes pendingPulse{
+    0%, 100% { transform: scale(1); box-shadow: 0 2px 8px rgba(220,38,38,.5); }
+    50% { transform: scale(1.15); box-shadow: 0 4px 14px rgba(220,38,38,.8); }
+}
 
 .admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1.25rem;}
 .stat-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;text-align:center;}
@@ -430,7 +464,6 @@ def build_accounts_css():
 .package-card .pkg-save{position:absolute;top:-8px;right:-4px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-size:.6rem;font-weight:800;padding:.15rem .45rem;border-radius:50px;text-transform:uppercase;letter-spacing:.3px;box-shadow:0 2px 6px rgba(22,163,74,.4);}
 .package-card .pkg-popular{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e1b4b;font-size:.6rem;font-weight:800;padding:.15rem .5rem;border-radius:50px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;box-shadow:0 2px 6px rgba(245,158,11,.4);}
 
-/* Gói VĨNH VIỄN */
 .package-card[data-pkg="forever"]{
     background:linear-gradient(135deg, #fef3c7, #fde68a);
     border-color:#f59e0b;
@@ -516,6 +549,7 @@ def build_accounts_css():
 .renewal-admin-row .rar-status{display:inline-flex;align-items:center;gap:.25rem;padding:.2rem .5rem;border-radius:50px;font-size:.65rem;font-weight:800;text-transform:uppercase;letter-spacing:.3px;}
 .renewal-admin-row .rar-status.pending{background:rgba(37,99,235,.15);color:#2563eb;}
 .renewal-admin-row .rar-status.user_paid{background:rgba(245,158,11,.18);color:#d97706;}
+.renewal-admin-row .rar-status.confirmed{background:rgba(22,163,74,.15);color:#16a34a;}
 .renewal-admin-row .rar-actions{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;}
 
 /* ============ RENEWAL HISTORY ============ */
@@ -552,7 +586,7 @@ def build_accounts_css():
 /* ============ ADMIN PERMISSIONS ============ */
 .permission-modal{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(4px);z-index:4000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s;}
 .permission-modal.show{display:flex}
-.permission-box{background:var(--surface);border-radius:20px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:1.5rem;position:relative;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);}
+.permission-box{background:var(--surface);border-radius:20px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:1.5rem;position:relative;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);max-height:calc(100vh - 2rem);overflow-y:auto;}
 .permission-box h2{font-size:1.1rem;color:var(--text);font-weight:700;display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;}
 .permission-box h2 i{color:#06b6d4;}
 .permission-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.25rem;}
@@ -725,7 +759,7 @@ def build_accounts_html():
         </div>
         <div class="permission-note">
             <i class="fas fa-info-circle"></i>
-            <div>Admin thường chỉ có các quyền được bật. Quyền <b>Quản lý Admin</b> chỉ dành cho Super Admin.</div>
+            <div>Admin thường <b>mặc định có quyền duyệt gia hạn</b>. Super Admin có thể bật/tắt từng quyền chi tiết bên dưới. Quyền <b>Quản lý Admin</b> chỉ dành riêng cho Super Admin.</div>
         </div>
         <div class="permission-list" id="permissionList"></div>
         <div class="form-actions">
@@ -741,7 +775,8 @@ def build_accounts_html():
             <h2><i class="fas fa-shield-alt"></i> Quản lý tài khoản</h2>
             <div class="admin-header-actions">
                 <button class="admin-toggle-btn" id="toggleAdminStatsBtn" title="Ẩn/hiện thống kê"><i class="fas fa-chart-bar"></i></button>
-                <button class="admin-toggle-btn" id="toggleAdminRenewalsBtn" title="Ẩn/hiện yêu cầu gia hạn"><i class="fas fa-gem"></i></button>
+                <button class="admin-toggle-btn" id="togglePendingRenewalsBtn" title="Ẩn/hiện TK đang gửi yêu cầu"><i class="fas fa-clock"></i></button>
+                <button class="admin-toggle-btn" id="toggleConfirmedRenewalsBtn" title="Ẩn/hiện TK đã gia hạn"><i class="fas fa-check-circle"></i></button>
                 <button class="admin-toggle-btn" id="toggleAdminLogsBtn" title="Ẩn/hiện lịch sử"><i class="fas fa-history"></i></button>
                 <button class="btn" id="exportExcelBtn" title="Xuất danh sách USER ra Excel"><i class="fas fa-file-export"></i> Export</button>
                 <button class="btn" id="importExcelBtn" title="Import từ Excel (chỉ import user)"><i class="fas fa-file-import"></i> Import</button>
@@ -805,12 +840,24 @@ def build_accounts_html():
                 <div class="no-data"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>
             </div>
 
-            <div class="admin-section-collapse" id="adminRenewalsSection">
-                <div class="admin-section-title" style="margin-top:1.5rem" id="renewalsTitle">
-                    <span><i class="fas fa-gem"></i> Yêu cầu gia hạn (<span id="pendingRenewalsBadge">0</span>)</span>
-                    <button class="btn" id="refreshRenewalsBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
+            <!-- ═══ KHUNG TK ĐANG GỬI YÊU CẦU GIA HẠN (ĐẶT LÊN TRÊN) ═══ -->
+            <div class="admin-section-collapse" id="adminPendingRenewalsSection">
+                <div class="admin-section-title" style="margin-top:1.5rem" id="pendingRenewalsTitle">
+                    <span><i class="fas fa-clock" style="color:#f59e0b"></i> TK đang gửi yêu cầu gia hạn (<span id="pendingRenewalsBadge">0</span>)</span>
+                    <button class="btn" id="refreshPendingRenewalsBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
                 </div>
-                <div class="renewals-list" id="renewalsList">
+                <div class="renewals-list" id="pendingRenewalsList">
+                    <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>
+                </div>
+            </div>
+
+            <!-- ═══ KHUNG TK ĐÃ GIA HẠN (ĐẶT XUỐNG DƯỚI) ═══ -->
+            <div class="admin-section-collapse" id="adminConfirmedRenewalsSection">
+                <div class="admin-section-title" style="margin-top:1.5rem" id="confirmedRenewalsTitle">
+                    <span><i class="fas fa-check-circle" style="color:#16a34a"></i> TK đã gia hạn (<span id="confirmedRenewalsBadge">0</span>)</span>
+                    <button class="btn" id="refreshConfirmedRenewalsBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
+                </div>
+                <div class="renewals-list" id="confirmedRenewalsList">
                     <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>
                 </div>
             </div>
@@ -921,13 +968,25 @@ var editingPermissionEmail = null;
 var ADMIN_PERMISSIONS = [
     { key: 'canViewUsers',      name: 'Xem danh sách user',   desc: 'Xem thông tin tất cả tài khoản user' },
     { key: 'canEditExpiry',     name: 'Chỉnh hạn sử dụng',    desc: 'Thay đổi ngày hết hạn của user' },
-    { key: 'canRenew',          name: 'Duyệt gia hạn',        desc: 'Xác nhận/từ chối yêu cầu gia hạn của user' },
+    { key: 'canRenew',          name: 'Duyệt gia hạn',        desc: 'Xác nhận/từ chối yêu cầu gia hạn của user (mặc định BẬT)' },
     { key: 'canAddUser',        name: 'Thêm user mới',        desc: 'Tạo tài khoản user mới' },
     { key: 'canDeleteUser',     name: 'Xóa user',             desc: 'Xóa tài khoản user khỏi hệ thống' },
     { key: 'canImportExport',   name: 'Import/Export Excel',  desc: 'Nhập/xuất danh sách user' },
     { key: 'canViewLogs',       name: 'Xem lịch sử đăng nhập', desc: 'Xem log đăng nhập của user' },
     { key: 'canManageAdmin',    name: 'Quản lý Admin',        desc: 'Thêm/xóa/phân quyền admin khác (chỉ Super Admin)' }
 ];
+
+/* Quyền mặc định cho admin thường */
+var DEFAULT_ADMIN_PERMS = {
+    canViewUsers: true,
+    canEditExpiry: true,
+    canRenew: true,
+    canAddUser: false,
+    canDeleteUser: false,
+    canImportExport: false,
+    canViewLogs: false,
+    canManageAdmin: false
+};
 
 /* ============ HELPERS ============ */
 function escapeHtml(s) {
@@ -952,10 +1011,15 @@ function isSubAdmin() {
     if (isSuperAdmin()) return false;
     return currentUser.isSubAdmin === true || currentUser.permissions !== undefined;
 }
+/* ⭐ Admin thường: mặc định dùng DEFAULT_ADMIN_PERMS nếu chưa phân quyền chi tiết */
 function hasPermission(permKey) {
     if (!currentUser || currentUser.role !== 'admin') return false;
     if (isSuperAdmin()) return true;
+
     var perms = currentUser.permissions || {};
+    if (perms[permKey] === undefined) {
+        return DEFAULT_ADMIN_PERMS[permKey] === true;
+    }
     return perms[permKey] === true;
 }
 
@@ -1507,13 +1571,11 @@ function filterUsers(items) {
     var now = Date.now();
 
     return items.filter(function(u) {
-        // Search filter
         if (query) {
             var email = (u.email || '').toLowerCase();
             var name = (u.name || '').toLowerCase();
             if (email.indexOf(query) === -1 && name.indexOf(query) === -1) return false;
         }
-        // Type filter
         if (filter === 'all') return true;
         if (filter === 'user') return u.role !== 'admin';
         if (filter === 'admin') return u.role === 'admin';
@@ -1769,14 +1831,12 @@ window.copyText = function(text, btn) {
     }
 };
 
-/* ⭐ ĐÃ TÍCH HỢP TELEGRAM — gọi window.notifyTelegramUserPaid nếu có */
 window.userConfirmPaid = async function() {
     if (!renewalCurrentReq) return;
     var btn = $('renewalConfirmBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang gửi...';
     try {
-        /* Lấy data trước để gửi Telegram */
         var _reqData = null;
         try {
             var _snap = await db.collection('renewal_requests').doc(renewalCurrentReq.id).get();
@@ -1788,7 +1848,6 @@ window.userConfirmPaid = async function() {
             status: 'user_paid'
         });
 
-        /* Gọi Telegram (chỉ khi module load OK) */
         if (_reqData && typeof window.notifyTelegramUserPaid === 'function') {
             try {
                 window.notifyTelegramUserPaid({
@@ -2159,7 +2218,7 @@ window.openPermissionModal = function(email) {
     var user = usersCache.find(function(u) { return u.email === email; });
     if (!user) return alert('Không tìm thấy user!');
     if (user.role !== 'admin') return alert('Chỉ phân quyền cho admin!');
-    
+
     editingPermissionEmail = email;
     $('permissionName').textContent = user.name || email.split('@')[0];
     $('permissionEmail').textContent = email;
@@ -2167,7 +2226,9 @@ window.openPermissionModal = function(email) {
     var perms = user.permissions || {};
     var html = '';
     ADMIN_PERMISSIONS.forEach(function(p) {
-        var checked = perms[p.key] === true ? 'checked' : '';
+        /* Nếu chưa có permission, dùng DEFAULT_ADMIN_PERMS */
+        var value = (perms[p.key] === undefined) ? (DEFAULT_ADMIN_PERMS[p.key] === true) : (perms[p.key] === true);
+        var checked = value ? 'checked' : '';
         var disabled = p.key === 'canManageAdmin' ? 'disabled' : '';
         html += '<div class="permission-item">' +
             '<div class="pi-info">' +
@@ -2237,7 +2298,6 @@ function initAdminPanel() {
         $('newUserRole').value = 'user'; $('newUserExpires').value = '';
     });
     if ($('confirmAddUser')) $('confirmAddUser').addEventListener('click', doAddUser);
-    if ($('refreshRenewalsBtn')) $('refreshRenewalsBtn').addEventListener('click', function() { loadRenewals(); });
 
     /* Search */
     if ($('adminSearchInput')) {
@@ -2264,6 +2324,10 @@ function initAdminPanel() {
         });
     });
 
+    /* Refresh buttons */
+    if ($('refreshPendingRenewalsBtn')) $('refreshPendingRenewalsBtn').addEventListener('click', function() { loadPendingRenewals(); });
+    if ($('refreshConfirmedRenewalsBtn')) $('refreshConfirmedRenewalsBtn').addEventListener('click', function() { loadConfirmedRenewals(); });
+
     /* Section toggles */
     if ($('toggleAdminStatsBtn')) {
         $('toggleAdminStatsBtn').addEventListener('click', function() {
@@ -2273,13 +2337,21 @@ function initAdminPanel() {
         });
         $('toggleAdminStatsBtn').classList.add('active');
     }
-    if ($('toggleAdminRenewalsBtn')) {
-        $('toggleAdminRenewalsBtn').addEventListener('click', function() {
-            var sec = $('adminRenewalsSection');
+    if ($('togglePendingRenewalsBtn')) {
+        $('togglePendingRenewalsBtn').addEventListener('click', function() {
+            var sec = $('adminPendingRenewalsSection');
             sec.classList.toggle('collapsed');
             this.classList.toggle('active', !sec.classList.contains('collapsed'));
         });
-        $('toggleAdminRenewalsBtn').classList.add('active');
+        $('togglePendingRenewalsBtn').classList.add('active');
+    }
+    if ($('toggleConfirmedRenewalsBtn')) {
+        $('toggleConfirmedRenewalsBtn').addEventListener('click', function() {
+            var sec = $('adminConfirmedRenewalsSection');
+            sec.classList.toggle('collapsed');
+            this.classList.toggle('active', !sec.classList.contains('collapsed'));
+        });
+        $('toggleConfirmedRenewalsBtn').classList.add('active');
     }
     if ($('toggleAdminLogsBtn')) {
         $('toggleAdminLogsBtn').addEventListener('click', function() {
@@ -2321,16 +2393,7 @@ async function doAddUser() {
         };
         if (role === 'admin') {
             setData.isSubAdmin = true;
-            setData.permissions = {
-                canViewUsers: true,
-                canEditExpiry: true,
-                canRenew: true,
-                canAddUser: false,
-                canDeleteUser: false,
-                canImportExport: false,
-                canViewLogs: false,
-                canManageAdmin: false
-            };
+            setData.permissions = Object.assign({}, DEFAULT_ADMIN_PERMS);
         }
         if (expiresVal && role !== 'admin') {
             var d = new Date(expiresVal + 'T23:59:59');
@@ -2352,7 +2415,16 @@ function openAdminPanel() {
     $('adminModal').classList.add('show');
     loadUsers(false);
     loadLogs();
-    loadRenewals();
+    loadPendingRenewals();
+    loadConfirmedRenewals();
+
+    /* ⭐ Tự động cuộn tới khung Pending nếu có yêu cầu chờ */
+    setTimeout(function() {
+        var section = $('adminPendingRenewalsSection');
+        if (section && section.classList.contains('has-pending')) {
+            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    }, 800);
 }
 
 function loadUsers(forceRefresh) {
@@ -2482,7 +2554,6 @@ function renderUsers(items) {
         });
     }
 
-    // Apply search + filter
     displayItems = filterUsers(displayItems);
 
     if (!displayItems.length) {
@@ -2608,16 +2679,7 @@ window.changeRole = async function(email, newRole) {
         var updateData = { role: newRole };
         if (newRole === 'admin') {
             updateData.isSubAdmin = true;
-            updateData.permissions = {
-                canViewUsers: true,
-                canEditExpiry: true,
-                canRenew: true,
-                canAddUser: false,
-                canDeleteUser: false,
-                canImportExport: false,
-                canViewLogs: false,
-                canManageAdmin: false
-            };
+            updateData.permissions = Object.assign({}, DEFAULT_ADMIN_PERMS);
         } else {
             updateData.isSubAdmin = false;
             updateData.permissions = null;
@@ -2649,7 +2711,8 @@ window.deleteUser = async function(email) {
 };
 
 function loadLogs() {
-    if (isHiddenAdmin() || !hasPermission('canViewLogs')) {
+    /* ⭐ Chỉ ẩn nếu không có quyền xem log */
+    if (!isSuperAdmin() && !hasPermission('canViewLogs')) {
         if ($('logsTitle')) $('logsTitle').style.display = 'none';
         $('logsList').style.display = 'none';
         return;
@@ -2673,14 +2736,79 @@ function loadLogs() {
     });
 }
 
-function loadRenewals() {
-    if (isHiddenAdmin() && !hasPermission('canRenew')) {
-        if ($('renewalsTitle')) $('renewalsTitle').style.display = 'none';
-        if ($('renewalsList')) $('renewalsList').style.display = 'none';
+/* ═══ HELPER: render 1 row renewal ═══ */
+function buildRenewalRowHtml(d, isPending) {
+    var created = d.createdAt ? d.createdAt.toDate() : new Date();
+    var timeStr = formatTimeDiff(Date.now() - created.getTime());
+    var isPermanent = d.isPermanent || d.package === 'forever' || d.days >= 36500;
+    var canApprove = isSuperAdmin() || hasPermission('canRenew');
+
+    var statusCls, statusText;
+    if (d.status === 'user_paid') {
+        statusCls = 'user_paid'; statusText = '⏳ Chờ xác nhận';
+    } else if (d.status === 'pending') {
+        statusCls = 'pending'; statusText = '⏱ Chờ CK';
+    } else {
+        statusCls = 'confirmed'; statusText = '✅ Đã xác nhận';
+    }
+
+    var actionBtns = '';
+    if (isPending) {
+        actionBtns = canApprove
+            ? '<button class="btn primary" style="padding:.4rem .75rem;font-size:.75rem" onclick="approveRenewal(\'' + escapeJs(d._id) + '\')"><i class="fas fa-check"></i> Xác nhận</button>' +
+              '<button class="btn" style="padding:.4rem .65rem;font-size:.75rem" onclick="rejectRenewal(\'' + escapeJs(d._id) + '\')"><i class="fas fa-times"></i></button>'
+            : '<span style="font-size:.72rem;color:var(--text-3)">Không có quyền duyệt</span>';
+    } else {
+        var confirmedBy = d.confirmedBy ? 'bởi <b>' + escapeHtml(d.confirmedBy) + '</b>' : '';
+        var confirmedTime = d.confirmedAt ? (d.confirmedAt.toDate ? d.confirmedAt.toDate().toLocaleString('vi-VN') : '') : '';
+        actionBtns = '<span style="font-size:.7rem;color:var(--text-3)">' + confirmedTime + ' ' + confirmedBy + '</span>' +
+                     '<button class="btn" style="padding:.35rem .65rem;font-size:.72rem" onclick="openUserRenewalHistory(\'' + escapeJs(d.email) + '\')"><i class="fas fa-history"></i></button>';
+    }
+
+    var newExpiryInfo = '';
+    if (d.newExpiresAt) {
+        var ne = d.newExpiresAt.toDate ? d.newExpiresAt.toDate() : null;
+        if (ne) newExpiryInfo = '<div class="rar-sub" style="color:#16a34a"><i class="fas fa-calendar-check"></i> Hạn mới: <b>' + ne.toLocaleDateString('vi-VN') + '</b></div>';
+    }
+    if (isPermanent) {
+        newExpiryInfo = '<div class="rar-sub" style="color:#dc2626"><i class="fas fa-crown"></i> <b>💎 VĨNH VIỄN</b></div>';
+    }
+
+    return '<div class="renewal-admin-row">' +
+        '<div class="rar-head">' +
+            '<div>' +
+                '<div class="rar-email">' + escapeHtml(d.name || d.email) + '</div>' +
+                '<div class="u-email">' + escapeHtml(d.email) + '</div>' +
+                '<div class="rar-sub"><i class="fas fa-clock"></i> ' + timeStr + '</div>' +
+                newExpiryInfo +
+            '</div>' +
+            '<div class="rar-pkg">' +
+                '<div class="rar-amount">' + formatMoney(d.amount) + 'đ</div>' +
+                '<div class="rar-pkg-label">' + escapeHtml(d.packageLabel || d.package) +
+                    (isPermanent ? ' · <b style="color:#dc2626">💎 VĨNH VIỄN</b>' : ' · ' + d.days + ' ngày') +
+                '</div>' +
+            '</div>' +
+        '</div>' +
+        '<div class="rar-foot">' +
+            '<div>Mã: <span class="rar-code">' + escapeHtml(d.transferCode) + '</span></div>' +
+            '<div class="rar-actions">' +
+                '<span class="rar-status ' + statusCls + '">' + statusText + '</span>' +
+                actionBtns +
+            '</div>' +
+        '</div>' +
+    '</div>';
+}
+
+/* ═══ LOAD: TK ĐANG GỬI YÊU CẦU GIA HẠN (pending + user_paid) ═══ */
+function loadPendingRenewals() {
+    /* ⭐ Admin thường vẫn thấy nếu có quyền canRenew (mặc định BẬT) */
+    if (!isSuperAdmin() && !hasPermission('canRenew')) {
+        if ($('pendingRenewalsTitle')) $('pendingRenewalsTitle').style.display = 'none';
+        if ($('pendingRenewalsList')) $('pendingRenewalsList').style.display = 'none';
         return;
     }
-    if ($('renewalsTitle')) $('renewalsTitle').style.display = 'flex';
-    var listEl = $('renewalsList');
+    if ($('pendingRenewalsTitle')) $('pendingRenewalsTitle').style.display = 'flex';
+    var listEl = $('pendingRenewalsList');
     if (!listEl) return;
     listEl.style.display = 'block';
 
@@ -2688,60 +2816,79 @@ function loadRenewals() {
         var items = [];
         snapshot.forEach(function(doc) {
             var d = doc.data();
-            if (d.status === 'pending' || d.status === 'user_paid') items.push(Object.assign({ _id: doc.id }, d));
+            if (d.status === 'pending' || d.status === 'user_paid') {
+                items.push(Object.assign({ _id: doc.id }, d));
+            }
         });
+
         var badge = $('pendingRenewalsBadge');
         if (badge) badge.textContent = items.length;
 
+        /* ⭐ Highlight khung khi có yêu cầu chờ */
+        var section = $('adminPendingRenewalsSection');
+        if (section) {
+            section.classList.toggle('has-pending', items.length > 0);
+        }
+        if (badge) {
+            badge.classList.toggle('pulse', items.length > 0);
+        }
+
         if (items.length === 0) {
-            listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem">Không có yêu cầu nào</div>';
+            listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-inbox"></i> Không có yêu cầu nào đang chờ</div>';
             return;
         }
+
         var html = '';
         items.forEach(function(d) {
-            var created = d.createdAt ? d.createdAt.toDate() : new Date();
-            var timeStr = formatTimeDiff(Date.now() - created.getTime());
-            var statusCls = d.status === 'user_paid' ? 'user_paid' : 'pending';
-            var statusText = d.status === 'user_paid' ? '⏳ Chờ xác nhận' : '⏱ Chờ CK';
-            var isPermanent = d.isPermanent || d.package === 'forever' || d.days >= 36500;
-
-            var canApprove = isSuperAdmin() || hasPermission('canRenew');
-            var actionBtns = canApprove
-                ? '<button class="btn primary" style="padding:.4rem .75rem;font-size:.75rem" onclick="approveRenewal(\'' + escapeJs(d._id) + '\')"><i class="fas fa-check"></i> Xác nhận</button>' +
-                  '<button class="btn" style="padding:.4rem .65rem;font-size:.75rem" onclick="rejectRenewal(\'' + escapeJs(d._id) + '\')"><i class="fas fa-times"></i></button>'
-                : '<span style="font-size:.72rem;color:var(--text-3)">Không có quyền duyệt</span>';
-
-            html +=
-                '<div class="renewal-admin-row">' +
-                    '<div class="rar-head">' +
-                        '<div>' +
-                            '<div class="rar-email">' + escapeHtml(d.name || d.email) + '</div>' +
-                            '<div class="u-email">' + escapeHtml(d.email) + '</div>' +
-                            '<div class="rar-sub"><i class="fas fa-clock"></i> ' + timeStr + '</div>' +
-                        '</div>' +
-                        '<div class="rar-pkg">' +
-                            '<div class="rar-amount">' + formatMoney(d.amount) + 'đ</div>' +
-                            '<div class="rar-pkg-label">' + escapeHtml(d.packageLabel || d.package) +
-                                (isPermanent ? ' · <b style="color:#dc2626">💎 VĨNH VIỄN</b>' : ' · ' + d.days + ' ngày') +
-                            '</div>' +
-                        '</div>' +
-                    '</div>' +
-                    '<div class="rar-foot">' +
-                        '<div>Mã: <span class="rar-code">' + escapeHtml(d.transferCode) + '</span></div>' +
-                        '<div class="rar-actions">' +
-                            '<span class="rar-status ' + statusCls + '">' + statusText + '</span>' +
-                            actionBtns +
-                        '</div>' +
-                    '</div>' +
-                '</div>';
+            html += buildRenewalRowHtml(d, true);
         });
         listEl.innerHTML = html;
     }).catch(function(err) {
-        listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem;color:#dc2626">Lỗi: ' + err.message + '</div>';
+        listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem;color:#dc2626">Lỗi: ' + escapeHtml(err.message) + '</div>';
     });
 }
 
-/* ⭐ ĐÃ TÍCH HỢP TELEGRAM — gọi window.notifyTelegramAdminConfirmed nếu có */
+/* ═══ LOAD: TK ĐÃ GIA HẠN (confirmed) ═══ */
+function loadConfirmedRenewals() {
+    /* ⭐ Admin thường vẫn thấy nếu có quyền canRenew (mặc định BẬT) */
+    if (!isSuperAdmin() && !hasPermission('canRenew')) {
+        if ($('confirmedRenewalsTitle')) $('confirmedRenewalsTitle').style.display = 'none';
+        if ($('confirmedRenewalsList')) $('confirmedRenewalsList').style.display = 'none';
+        return;
+    }
+    if ($('confirmedRenewalsTitle')) $('confirmedRenewalsTitle').style.display = 'flex';
+    var listEl = $('confirmedRenewalsList');
+    if (!listEl) return;
+    listEl.style.display = 'block';
+
+    db.collection('renewal_requests').orderBy('createdAt', 'desc').limit(200).get().then(function(snapshot) {
+        var items = [];
+        snapshot.forEach(function(doc) {
+            var d = doc.data();
+            if (d.status === 'confirmed') {
+                items.push(Object.assign({ _id: doc.id }, d));
+            }
+        });
+
+        var badge = $('confirmedRenewalsBadge');
+        if (badge) badge.textContent = items.length;
+
+        if (items.length === 0) {
+            listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-inbox"></i> Chưa có giao dịch nào đã xác nhận</div>';
+            return;
+        }
+
+        var html = '';
+        items.forEach(function(d) {
+            html += buildRenewalRowHtml(d, false);
+        });
+        listEl.innerHTML = html;
+    }).catch(function(err) {
+        listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem;color:#dc2626">Lỗi: ' + escapeHtml(err.message) + '</div>';
+    });
+}
+
+/* ⭐ ADMIN THƯỜNG MẶC ĐỊNH DUYỆT ĐƯỢC GIA HẠN (hasPermission đã fallback DEFAULT) */
 window.approveRenewal = async function(reqId) {
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
         alert('Bạn không có quyền duyệt gia hạn!');
@@ -2798,7 +2945,6 @@ window.approveRenewal = async function(reqId) {
         await db.collection('allowed_users').doc(req.email).update(updateData);
         await db.collection('renewal_requests').doc(reqId).update(reqUpdateData);
 
-        /* Gọi Telegram (chỉ khi module load OK) */
         if (typeof window.notifyTelegramAdminConfirmed === 'function') {
             try {
                 window.notifyTelegramAdminConfirmed({
@@ -2815,7 +2961,8 @@ window.approveRenewal = async function(reqId) {
 
         try { localStorage.removeItem('user_cache_' + req.email); } catch(e) {}
         alert(message);
-        loadRenewals();
+        loadPendingRenewals();
+        loadConfirmedRenewals();
         loadUsers(true);
     } catch(e) { alert('❌ Lỗi: ' + e.message); }
 };
@@ -2834,7 +2981,7 @@ window.rejectRenewal = async function(reqId) {
             rejectedBy: currentUser.email,
             rejectReason: reason || ''
         });
-        loadRenewals();
+        loadPendingRenewals();
     } catch(e) { alert('❌ Lỗi: ' + e.message); }
 };
 
@@ -3139,10 +3286,10 @@ function getExpiryDate(expiresAt) {
 }
 function formatDate(d) {
     if (!d) return '';
-    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2,ms '0');
 }
-function formatTimeDiff(ms) {
-    if (ms < 60000) return 'Vừa xong';
+function formatTimeDiff(ms) < {
+    if ( 60000) return 'Vừa xong';
     if (ms < 3600000) return Math.floor(ms / 60000) + ' phút trước';
     if (ms < 86400000) return Math.floor(ms / 3600000) + ' giờ trước';
     if (ms < 2592000000) return Math.floor(ms / 86400000) + ' ngày trước';
