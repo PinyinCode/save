@@ -31,15 +31,37 @@ def load_config():
         print(f"❌ Firebase config chưa được cấu hình trong {CONFIG_FILE}")
         sys.exit(1)
 
+    # ═══════════════════════════════════════════════════
     # Defaults cơ bản
+    # ═══════════════════════════════════════════════════
     cfg.setdefault("excel_file", "data/input.xlsx")
     cfg.setdefault("output_html", "index.html")
     cfg.setdefault("sheet_index", 0)
-    cfg.setdefault("demo_limit", 50)
-    cfg.setdefault("demo_daily_limit", 100)
+
+    # ═══════════════════════════════════════════════════
+    # DEMO tier — chưa đăng nhập
+    # ═══════════════════════════════════════════════════
+    cfg.setdefault("demo_limit", 25)
+    cfg.setdefault("demo_daily_limit", 50)
     cfg.setdefault("demo_hsk_max", 3)
+
+    # ═══════════════════════════════════════════════════
+    # TRIAL tier — user mới đăng ký
+    # ═══════════════════════════════════════════════════
+    cfg.setdefault("trial_days", 3)
+    cfg.setdefault("trial_max_questions", 50)
+    cfg.setdefault("trial_max_hsk", 5)
+    cfg.setdefault("trial_unlimited_writing", True)
+
+    # ═══════════════════════════════════════════════════
+    # Admin
+    # ═══════════════════════════════════════════════════
     cfg.setdefault("target_admins", 2)
     cfg.setdefault("super_admin", "hoanginvest@gmail.com")
+
+    # ═══════════════════════════════════════════════════
+    # Social
+    # ═══════════════════════════════════════════════════
     cfg.setdefault("zalo_phone", "")
     cfg.setdefault("zalo_name", "Hỗ trợ")
     cfg.setdefault("tiktok_username", "thaonoizhongwen")
@@ -47,11 +69,16 @@ def load_config():
     cfg.setdefault("tiktok_avatar", "")
     cfg.setdefault("tiktok_url",
                    f"https://www.tiktok.com/@{cfg['tiktok_username']}")
+
+    # ═══════════════════════════════════════════════════
+    # Smart check
+    # ═══════════════════════════════════════════════════
     cfg.setdefault("synonyms", DEFAULT_SYNONYMS)
     cfg.setdefault("filler_words", DEFAULT_FILLERS)
 
-    # ✅ Defaults cho TÍNH NĂNG GIA HẠN
-    cfg.setdefault("trial_days", 7)
+    # ═══════════════════════════════════════════════════
+    # Gia hạn — bank + packages
+    # ═══════════════════════════════════════════════════
     cfg.setdefault("bank_config", {
         "bank_id": "970436",
         "bank_name": "Vietcombank",
@@ -63,9 +90,17 @@ def load_config():
         {"id": "3m", "label": "3 tháng", "amount": 100000, "days": 90,
          "popular": True, "save": "Tiết kiệm 33%"},
         {"id": "1y", "label": "1 năm", "amount": 250000, "days": 365,
-         "popular": False, "save": "Tiết kiệm 58%"}
+         "popular": False, "save": "Tiết kiệm 58%"},
+        {"id": "forever", "label": "Vĩnh viễn", "amount": 1000000, "days": 36500,
+         "popular": False, "save": "Dùng mãi mãi", "permanent": True}
     ])
     cfg.setdefault("renewal_support_zalo", cfg["zalo_phone"])
+
+    # ═══════════════════════════════════════════════════
+    # Telegram
+    # ═══════════════════════════════════════════════════
+    cfg.setdefault("telegram_bot_token", "")
+    cfg.setdefault("telegram_chat_id", "")
 
     return cfg
 
@@ -75,8 +110,14 @@ def print_banner(CONFIG):
     print(f"   📞 Zalo: {CONFIG['zalo_phone']} ({CONFIG['zalo_name']})")
     print(f"   🎵 TikTok: @{CONFIG['tiktok_username']} ({CONFIG['tiktok_nickname']})")
     print(f"   🖼️  TikTok Avatar: {'Có' if CONFIG['tiktok_avatar'] else 'Không (dùng fallback)'}")
-    print(f"   🎁 Demo: {CONFIG['demo_limit']} câu + HSK1-{CONFIG['demo_hsk_max']} + {CONFIG['demo_daily_limit']} lượt")
+    print(f"   🎁 Demo: {CONFIG['demo:_limit']} câu + HSK1-{CONFIG['demo_hsk_max']} + {CONFIG['demo_daily_limit']} lượt/ngày")
     print(f"   👑 Super admin: {CONFIG['super_admin']}")
-    print(f"   🎉 Trial: {CONFIG['trial_days']} ngày cho user mới đăng ký")
+    print(f"   🎉 Trial {CONFIG['trial_days']} ngày cho user mới đăng ký")
+    print(f"   📚 Trial limits: {CONFIG['trial_max_questions']} câu, HSK1-{CONFIG['trial_max_hsk']}, "
+          f"nghe viết {'KHÔNG' if CONFIG['trial_unlimited_writing'] else 'CÓ'} giới hạn")
     print(f"   🏦 Bank: {CONFIG['bank_config']['bank_name']} - {CONFIG['bank_config']['account_no']}")
     print(f"   💰 Packages: {len(CONFIG['packages'])} gói")
+    # Đếm gói vĩnh viễn
+    permanent_count = sum(1 for p in CONFIG['packages'] if p.get("permanent"))
+    if permanent_count:
+        print(f"   💎 Có {permanent_count} gói VĨNH VIỄN")
