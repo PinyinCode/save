@@ -1,4 +1,4 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Module GỘP: Auth + Firebase + Admin panel + Trial + Renewal (QR ngân hàng).
 Hỗ trợ 3 tier: demo / trial / active (bao gồm gói vĩnh viễn).
