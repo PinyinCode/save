@@ -2,6 +2,9 @@
 """
 Chuyển file Excel → HTML tự chứa dữ liệu.
 Ghép 4 template: ui + social + accounts (gộp renewal) + data.
+
+✅ Đã fix căn giữa trên PC: bọc toàn bộ body trong .page-wrap
+   và thêm CSS override ở cuối để chống mọi CSS từ social/auth ghi đè.
 """
 import json
 import os
@@ -56,12 +59,106 @@ auth_css, auth_html, auth_js = build_all_auth(CONFIG)
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  GHÉP CSS (3 khối: ui + social + auth)
+#  CSS OVERRIDE — FIX CĂN GIỮA PC (đặt cuối cùng để thắng mọi rule)
+# ═══════════════════════════════════════════════════════════════════
+CENTER_FIX_CSS = r"""
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★ FIX CĂN GIỮA TRÊN PC ★
+   Đặt ở cuối để override mọi CSS từ ui/social/auth phía trên.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Bọc toàn bộ nội dung trong .page-wrap để cô lập layout */
+.page-wrap {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    overflow-x: hidden;
+}
+
+/* Mặc định: container căn giữa */
+.container {
+    width: 100%;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+/* Sticky top + main + các section đều kế thừa container bên trong */
+.sticky-top,
+.main,
+#mainContent {
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Banner Demo / Expiry căn giữa theo container */
+.demo-banner,
+.expiry-banner {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1rem;
+}
+
+/* Grid cards căn giữa */
+.mobile-view {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ═══ BREAKPOINTS ═══ */
+@media (min-width: 1400px) {
+    .container,
+    .demo-banner,
+    .expiry-banner,
+    .mobile-view {
+        max-width: 1300px;
+    }
+    .mobile-view {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+@media (min-width: 1900px) {
+    .container,
+    .demo-banner,
+    .expiry-banner,
+    .mobile-view {
+        max-width: 1600px;
+    }
+    .mobile-view {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+}
+
+/* ═══ MOBILE: giữ nguyên full-width có padding ═══ */
+@media (max-width: 768px) {
+    .container {
+        max-width: 100%;
+        padding-left: .7rem;
+        padding-right: .7rem;
+    }
+    .demo-banner,
+    .expiry-banner,
+    .mobile-view {
+        max-width: 100%;
+    }
+}
+"""
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  GHÉP CSS (3 khối + override cuối)
 # ═══════════════════════════════════════════════════════════════════
 full_css = (
     build_ui_css()
     + "\n/* ==== SOCIAL CSS ==== */\n" + build_social_css()
     + "\n/* ==== ACCOUNTS + RENEWAL CSS ==== */\n" + auth_css
+    + "\n/* ==== CENTER FIX (override cuối cùng) ==== */\n" + CENTER_FIX_CSS
 )
 
 
@@ -77,7 +174,14 @@ ui_html = ui_html.replace(
     social_html + '\n<div class="writer-modal" id="writerModal">'
 )
 
-full_body = ui_html + "\n" + auth_html
+# ─── Bọc toàn bộ body trong .page-wrap để cô lập layout ───
+# Lưu ý: các modal dùng position:fixed nên KHÔNG bị ảnh hưởng bởi wrapper.
+full_body = (
+    '<div class="page-wrap">\n'
+    + ui_html
+    + "\n" + auth_html
+    + '\n</div>'
+)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -287,4 +391,4 @@ if telegram_bot_token and telegram_chat_id:
     print(f"📲 Telegram: ĐÃ bật (chat_id: {telegram_chat_id})")
 else:
     print(f"📲 Telegram: CHƯA cấu hình (thiếu token hoặc chat_id)")
-print(f"✅ Đã ghép 4 template: UI + Social + Auth (gộp Renewal) + Data")
+print(f"✅ Đã ghép 4 template + Center Fix CSS")
