@@ -106,18 +106,29 @@ def load_config():
 
 
 def print_banner(CONFIG):
+    """In thông tin config khi build. Dùng .get() để tránh KeyError."""
     print(f"⚙️  Đã đọc cấu hình từ: {CONFIG_FILE}")
-    print(f"   📞 Zalo: {CONFIG['zalo_phone']} ({CONFIG['zalo_name']})")
-    print(f"   🎵 TikTok: @{CONFIG['tiktok_username']} ({CONFIG['tiktok_nickname']})")
-    print(f"   🖼️  TikTok Avatar: {'Có' if CONFIG['tiktok_avatar'] else 'Không (dùng fallback)'}")
-    print(f"   🎁 Demo: {CONFIG['demo:_limit']} câu + HSK1-{CONFIG['demo_hsk_max']} + {CONFIG['demo_daily_limit']} lượt/ngày")
-    print(f"   👑 Super admin: {CONFIG['super_admin']}")
-    print(f"   🎉 Trial {CONFIG['trial_days']} ngày cho user mới đăng ký")
-    print(f"   📚 Trial limits: {CONFIG['trial_max_questions']} câu, HSK1-{CONFIG['trial_max_hsk']}, "
-          f"nghe viết {'KHÔNG' if CONFIG['trial_unlimited_writing'] else 'CÓ'} giới hạn")
-    print(f"   🏦 Bank: {CONFIG['bank_config']['bank_name']} - {CONFIG['bank_config']['account_no']}")
-    print(f"   💰 Packages: {len(CONFIG['packages'])} gói")
-    # Đếm gói vĩnh viễn
-    permanent_count = sum(1 for p in CONFIG['packages'] if p.get("permanent"))
+    print(f"   📄 Excel: {CONFIG.get('excel_file', 'N/A')}")
+    print(f"   📤 Output: {CONFIG.get('output_html', 'N/A')}")
+    print(f"   📞 Zalo: {CONFIG.get('zalo_phone', 'N/A')} ({CONFIG.get('zalo_name', '')})")
+    print(f"   🎵 TikTok: @{CONFIG.get('tiktok_username', 'N/A')} ({CONFIG.get('tiktok_nickname', '')})")
+    print(f"   🖼️  TikTok Avatar: {'Có' if CONFIG.get('tiktok_avatar') else 'Không (dùng fallback)'}")
+    print(f"   🎁 Demo: {CONFIG.get('demo_limit', 25)} câu + HSK1-{CONFIG.get('demo_hsk_max', 3)} "
+          f"+ {CONFIG.get('demo_daily_limit', 50)} lượt/ngày")
+    print(f"   👑 Super admin: {CONFIG.get('super_admin', 'N/A')}")
+    print(f"   🎉 Trial {CONFIG.get('trial_days', 3)} ngày cho user mới đăng ký")
+    print(f"   📚 Trial limits: {CONFIG.get('trial_max_questions', 50)} câu, "
+          f"HSK1-{CONFIG.get('trial_max_hsk', 5)}, "
+          f"nghe viết {'KHÔNG' if CONFIG.get('trial_unlimited_writing', True) else 'CÓ'} giới hạn")
+    bank = CONFIG.get('bank_config', {})
+    print(f"   🏦 Bank: {bank.get('bank_name', 'N/A')} - {bank.get('account_no', 'N/A')}")
+    packages = CONFIG.get('packages', [])
+    print(f"   💰 Packages: {len(packages)} gói")
+    permanent_count = sum(1 for p in packages if p.get("permanent"))
     if permanent_count:
         print(f"   💎 Có {permanent_count} gói VĨNH VIỄN")
+    # Telegram
+    if CONFIG.get('telegram_bot_token') and CONFIG.get('telegram_chat_id'):
+        print(f"   📲 Telegram: ĐÃ bật (chat_id: {CONFIG['telegram_chat_id']})")
+    else:
+        print(f"   📲 Telegram: CHƯA cấu hình (thiếu token hoặc chat_id)")
