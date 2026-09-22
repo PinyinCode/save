@@ -73,10 +73,10 @@ body{
 .header-inner{display:flex;align-items:center;gap:.75rem;margin-bottom:.5rem}
 .logo{display:flex;align-items:center;gap:.85rem;flex:1;min-width:0}
 .logo-icon{
-    width:64px;height:64px;background:linear-gradient(135deg,#2563eb,#7c3aed 60%,#db2777);
+    width:64px;height:64px;background:linear-gradient(135deg,#4f46e5,#7c3aed 60%,#a855f7);
     border-radius:16px;display:flex;align-items:center;justify-content:center;
     color:#fff;font-size:2rem;flex-shrink:0;
-    box-shadow:0 8px 24px rgba(37,99,235,.4), inset 0 1px 0 rgba(255,255,255,.25);
+    box-shadow:0 8px 24px rgba(124,58,237,.4), inset 0 1px 0 rgba(255,255,255,.25);
     position:relative;overflow:hidden;
 }
 .logo-icon::after{
@@ -206,11 +206,11 @@ body{
 
 .fab-main{
     width:56px;height:56px;font-size:1.3rem;
-    background:linear-gradient(135deg,#2563eb,#7c3aed);
-    color:#fff;border:none;box-shadow:0 8px 24px rgba(37,99,235,.4);
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;border:none;box-shadow:0 8px 24px rgba(124,58,237,.4);
 }
 .fab-main:hover,.fab-main:active{
-    background:linear-gradient(135deg,#1d4ed8,#6d28d9);
+    background:linear-gradient(135deg,#4338ca,#6d28d9);
     color:#fff;transform:scale(1.08) rotate(15deg);
 }
 .fab-main i{transition:transform .3s}
@@ -603,7 +603,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 
 .practice-full-input-wrap{display:flex;flex-direction:column;gap:.75rem;}
 
-/* ✅ Hàng chứa input + nút loa */
 .practice-input-row{
     position:relative;display:flex;align-items:stretch;gap:.5rem;
 }
@@ -625,7 +624,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 @media(min-width:769px){.practice-full-input{font-size:1.85rem;padding:1.15rem 1.5rem;}}
 
-/* ✅ Nút loa bên phải ô nhập tiếng Trung */
 .practice-speak-btn{
     width:auto;min-width:56px;padding:0 1rem;
     border-radius:14px;border:2px solid var(--primary);
@@ -999,7 +997,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .practice-full-content{gap:1.1rem}
     .practice-full-vi{font-size:1.35rem;padding:1rem .75rem}
     .practice-full-input{font-size:1.35rem;padding:.85rem 1rem}
-    /* ✅ Nút loa nhỏ hơn trên mobile */
     .practice-speak-btn{
         min-width:48px;padding:0 .7rem;font-size:1.15rem;border-radius:12px;
     }
@@ -1084,8 +1081,13 @@ def build_ui_html():
                             <button class="dropdown-item" id="openAdminBtn" style="display:none">
                                 <i class="fas fa-shield-alt"></i> Quản lý tài khoản
                             </button>
+                            <button class="dropdown-item" id="renewalHistoryBtn">
+                                <i class="fas fa-history"></i> Lịch sử gia hạn
+                            </button>
                             <button class="dropdown-renew" id="dropdownRenewBtn" style="display:none">
-                                <i class="fas fa-crown"></i> Gia hạn tài khoản
+                                <i class="fas fa-gem"></i>
+                                <span>Gia hạn tài khoản</span>
+                                <span class="renew-badge">VIP</span>
                             </button>
                             <a class="dropdown-zalo" id="dropdownZaloBtn" href="#" target="_blank" rel="noopener noreferrer">
                                 <i class="fas fa-comment-dots"></i> Liên hệ Zalo hỗ trợ
@@ -1272,7 +1274,6 @@ def build_ui_html():
             <div class="practice-full-vi" id="pfVi">-</div>
 
             <div class="practice-full-input-wrap">
-                <!-- ✅ Input + nút loa cùng hàng -->
                 <div class="practice-input-row">
                     <input type="text" class="practice-full-input" id="pfInput"
                         placeholder="Gõ tiếng Trung..." autocomplete="off"
@@ -1374,14 +1375,12 @@ function getDemoRemaining() { return Math.max(0, DEMO_DAILY_LIMIT - getDemoUsage
 
 /* ✅ FIX: Chặn tính năng khi hết hạn */
 function canUseFeature() {
-    // Demo mode → giới hạn theo ngày
     if (isDemo) return getDemoUsage() < DEMO_DAILY_LIMIT;
 
-    // User đã login → kiểm tra hạn
     if (currentUser && currentUser.role !== 'admin') {
         var daysLeft = getDaysRemaining(currentUser);
         if (daysLeft !== null && daysLeft <= 0) {
-            return false;   // Đã hết hạn → chặn
+            return false;
         }
     }
 
@@ -1400,7 +1399,6 @@ function updateDemoRemaining() {
 
 /* ✅ FIX: showLimitMessage phân biệt demo vs hết hạn */
 function showLimitMessage() {
-    // Case 1: User đã login nhưng hết hạn
     if (!isDemo && currentUser && currentUser.role !== 'admin') {
         var daysLeft = getDaysRemaining(currentUser);
         if (daysLeft !== null && daysLeft <= 0) {
@@ -1413,7 +1411,6 @@ function showLimitMessage() {
         }
     }
 
-    // Case 2: Demo hết lượt
     if (confirm('🔒 Bạn đã dùng hết ' + DEMO_DAILY_LIMIT +
                 ' lượt miễn phí hôm nay.\n\n' +
                 '(Bao gồm cả NGHE và LUYỆN VIẾT)\n\n' +
@@ -2280,7 +2277,6 @@ function applyFilter() {
     if (state.search) clearBtn.classList.add('show');
     else clearBtn.classList.remove('show');
 
-    // ✅ Chặn user hết hạn
     var isLimitedUser = isDemo;
     if (!isDemo && currentUser && currentUser.role !== 'admin') {
         var dl = getDaysRemaining(currentUser);
@@ -2305,6 +2301,7 @@ function applyFilter() {
     updateResultCount();
     render(true);
 }
+
 /* ============ PRACTICE FULL MODE ============ */
 var pfCurrentStt = null;
 var pfCurrentAnswer = '';
@@ -2330,7 +2327,6 @@ window.addEventListener('resize', function() {
 window.openPracticeFull = function(stt, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
 
-    // ✅ Chặn user hết hạn
     if (!isDemo && currentUser && currentUser.role !== 'admin') {
         var dl = getDaysRemaining(currentUser);
         if (dl !== null && dl <= 0) {
@@ -2573,7 +2569,6 @@ function pfApplyFilter() {
     state.hsk = $('pfHskFilter').value;
     state.subject = $('pfSubjectFilter').value;
 
-    // ✅ Chặn user hết hạn
     var isLimitedUser = isDemo;
     if (!isDemo && currentUser && currentUser.role !== 'admin') {
         var dl = getDaysRemaining(currentUser);
@@ -2646,6 +2641,7 @@ function pfApplyFilter() {
         $('pfNextBtn').disabled = true;
     }
 }
+
 function updateCharPreview() {
     var input = $('pfInput');
     var preview = $('pfPreview');
@@ -2911,10 +2907,8 @@ function initPracticeFull() {
             e.stopPropagation();
             if (!pfCurrentAnswer) return;
 
-            // Kiểm tra quyền dùng (demo / hết hạn)
             if (!canUseFeature()) { showLimitMessage(); return; }
 
-            // Tăng usage demo nếu đang ở chế độ demo
             if (isDemo) { incDemoUsage(); updateDemoRemaining(); }
 
             if (!('speechSynthesis' in window)) {
@@ -3060,9 +3054,9 @@ function showWriterChar(char) {
             var drawWidth = Math.round(targetSize * 0.07);
             writerInstance = HanziWriter.create('writerTarget', char, {
                 width: targetSize, height: targetSize, padding: padSize,
-                strokeColor: '#1e293b', radicalColor: '#2563eb',
+                strokeColor: '#1e293b', radicalColor: '#7c3aed',
                 highlightColor: '#f59e0b', outlineColor: '#cbd5e1',
-                drawingColor: '#2563eb', drawingWidth: drawWidth,
+                drawingColor: '#7c3aed', drawingWidth: drawWidth,
                 showOutline: true, strokeAnimationSpeed: 1, delayBetweenStrokes: 250,
                 charDataLoader: function(ch, onComplete, onError) {
                     fetch('https://cdn.jsdelivr.net/npm/hanzi-writer-data@2.0/' + encodeURIComponent(ch) + '.json')
