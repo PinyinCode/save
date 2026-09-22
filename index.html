@@ -2074,10 +2074,100 @@ body.hide-floating .tiktok-bar { display: none !important; }
     .admin-toggle-btn{width:32px;height:32px;}
 }
 
+/* ==== CENTER FIX (override cuối cùng) ==== */
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★ FIX CĂN GIỮA TRÊN PC ★
+   Đặt ở cuối để override mọi CSS từ ui/social/auth phía trên.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Bọc toàn bộ nội dung trong .page-wrap để cô lập layout */
+.page-wrap {
+    width: 100%;
+    max-width: 100%;
+    margin: 0 auto;
+    overflow-x: hidden;
+}
+
+/* Mặc định: container căn giữa */
+.container {
+    width: 100%;
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+}
+
+/* Sticky top + main + các section đều kế thừa container bên trong */
+.sticky-top,
+.main,
+#mainContent {
+    width: 100%;
+    max-width: 100%;
+}
+
+/* Banner Demo / Expiry căn giữa theo container */
+.demo-banner,
+.expiry-banner {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+    margin-bottom: 1rem;
+}
+
+/* Grid cards căn giữa */
+.mobile-view {
+    max-width: 1100px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* ═══ BREAKPOINTS ═══ */
+@media (min-width: 1400px) {
+    .container,
+    .demo-banner,
+    .expiry-banner,
+    .mobile-view {
+        max-width: 1300px;
+    }
+    .mobile-view {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+@media (min-width: 1900px) {
+    .container,
+    .demo-banner,
+    .expiry-banner,
+    .mobile-view {
+        max-width: 1600px;
+    }
+    .mobile-view {
+        grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+}
+
+/* ═══ MOBILE: giữ nguyên full-width có padding ═══ */
+@media (max-width: 768px) {
+    .container {
+        max-width: 100%;
+        padding-left: .7rem;
+        padding-right: .7rem;
+    }
+    .demo-banner,
+    .expiry-banner,
+    .mobile-view {
+        max-width: 100%;
+    }
+}
+
 </style>
 </head>
 <body>
 
+<div class="page-wrap">
 
 <div class="loading-screen" id="loadingScreen">
     <i class="fas fa-spinner"></i>
@@ -2774,6 +2864,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
     </div>
 </div>
 
+</div>
 
 <script>
 /* ============ DỮ LIỆU + CONFIG ============ */
