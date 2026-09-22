@@ -3,25 +3,6 @@
 Module GỘP: Auth + Firebase + Admin panel + Trial + Renewal (QR ngân hàng).
 Hỗ trợ 3 tier: demo / trial / active (bao gồm gói vĩnh viễn).
 Đọc config từ file JSON bên ngoài (config.json).
-
-Cách dùng:
-    import json
-    from accounts_template import build_all_auth
-    cfg = json.load(open("config.json", encoding="utf-8"))
-    css, html, js = build_all_auth(cfg)
-
-LƯU Ý: KHÔNG chứa định nghĩa hàm Telegram (chúng ở build_html.py).
-       Chỉ gọi window.notifyTelegramX nếu có (có guard typeof).
-
-═══════════════════════════════════════════════════════════════
-PHÂN QUYỀN:
-  • Super Admin   — Toàn quyền, thấy tất cả, quản lý admin khác
-  • Admin thường  — TOÀN QUYỀN (xem/thêm/xóa user, chỉnh hạn, duyệt
-                    gia hạn, import/export, xem log) TRỪ:
-                    - Không thấy admin khác trong danh sách
-                    - Không nâng/hạ/xóa/phân quyền admin khác
-  • User          — Chỉ học, không vào Admin Panel
-═══════════════════════════════════════════════════════════════
 """
 
 import json
@@ -48,10 +29,6 @@ def build_accounts_css():
 .dropdown-item:hover{background:var(--surface-2)}
 .dropdown-item.danger{color:var(--danger)}
 .dropdown-item.danger:hover{background:var(--danger-light)}
-.dropdown-zalo,.dropdown-tiktok{display:flex;align-items:center;gap:.5rem;width:100%;padding:.65rem .75rem;border-radius:var(--radius-sm);background:transparent;color:var(--text);font-size:.85rem;font-weight:600;cursor:pointer;transition:.15s;text-decoration:none;font-family:inherit;}
-.dropdown-zalo:hover{background:rgba(0,104,255,.1);color:#0068ff}
-.dropdown-tiktok:hover{background:rgba(0,0,0,.06);color:#000}
-[data-theme="dark"] .dropdown-tiktok:hover{background:rgba(255,255,255,.1);color:#fff}
 
 /* ============ DROPDOWN: NÚT GIA HẠN ============ */
 .dropdown-renew{
@@ -72,25 +49,11 @@ def build_accounts_css():
     background:linear-gradient(90deg, transparent, rgba(255,255,255,.35), transparent);
     animation:renewShine 3s infinite;
 }
-.dropdown-renew::after{
-    content:'';position:absolute;top:0;right:0;bottom:0;left:0;
-    background:radial-gradient(circle at 80% 20%, rgba(255,255,255,.3), transparent 30%),
-               radial-gradient(circle at 20% 80%, rgba(255,255,255,.2), transparent 25%);
-    opacity:.5;pointer-events:none;
-    animation:diamondSparkle 4s infinite;
-}
-@keyframes diamondSparkle{0%,100%{opacity:.3;}50%{opacity:.7;}}
 .dropdown-renew:hover,.dropdown-renew:active{
     transform:translateY(-2px) scale(1.02);
     box-shadow:0 8px 24px rgba(124,58,237,.5), 0 0 0 4px rgba(139,92,246,.25);
-    background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 50%,#c084fc 100%);
 }
-.dropdown-renew i{
-    font-size:1rem;
-    filter:drop-shadow(0 1px 3px rgba(0,0,0,.3));
-    position:relative;z-index:2;
-    color:#e0f2fe;
-}
+.dropdown-renew i{font-size:1rem;position:relative;z-index:2;color:#e0f2fe;}
 .dropdown-renew i.fa-gem{color:#67e8f9;text-shadow:0 0 8px rgba(103,232,249,.7);}
 .dropdown-renew span{position:relative;z-index:2;}
 @keyframes renewPulse{
@@ -114,42 +77,24 @@ def build_accounts_css():
     0%,100%{transform:scale(1);opacity:1;}
     50%{transform:scale(1.15);opacity:.85;}
 }
-
 .dropdown-renew.urgent{
     background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 50%,#dc2626 100%);
     animation:renewUrgent 1.2s infinite;
 }
-.dropdown-renew.urgent:hover{
-    background:linear-gradient(135deg,#991b1b 0%,#dc2626 50%,#ef4444 100%);
-}
-.dropdown-renew.urgent i.fa-gem{color:#fca5a5;text-shadow:0 0 8px rgba(252,165,165,.7);}
 @keyframes renewUrgent{
     0%,100%{box-shadow:0 4px 14px rgba(220,38,38,.6), 0 0 0 0 rgba(220,38,38,.7);}
     50%{box-shadow:0 4px 18px rgba(220,38,38,.8), 0 0 0 8px rgba(220,38,38,0);}
 }
-
-/* ============ NÚT VĨNH VIỄN (ĐẶC BIỆT) ============ */
 .dropdown-forever{
     background:linear-gradient(135deg,#7c2d12 0%,#b91c1c 50%,#dc2626 100%) !important;
     box-shadow:0 4px 14px rgba(220,38,38,.45) !important;
     animation:foreverPulse2 2s infinite !important;
 }
-.dropdown-forever:hover{
-    background:linear-gradient(135deg,#991b1b 0%,#dc2626 50%,#ef4444 100%) !important;
-}
-.dropdown-forever i.fa-crown{
-    color:#fde68a !important;
-    text-shadow:0 0 8px rgba(253,230,138,.8) !important;
-}
+.dropdown-forever i.fa-crown{color:#fde68a !important;text-shadow:0 0 8px rgba(253,230,138,.8) !important;}
 @keyframes foreverPulse2{
     0%,100%{box-shadow:0 4px 14px rgba(220,38,38,.45), 0 0 0 0 rgba(220,38,38,.6);}
     50%{box-shadow:0 4px 18px rgba(220,38,38,.7), 0 0 0 6px rgba(220,38,38,0);}
 }
-
-[data-theme="dark"] .dropdown-renew{
-    box-shadow:0 4px 14px rgba(124,58,237,.5), 0 0 0 0 rgba(139,92,246,.6);
-}
-[data-theme="dark"] .dropdown-renew .renew-badge{border-color:#1e1b4b;}
 
 /* ============ USER DETAILS ============ */
 .user-details{padding:.6rem .75rem .75rem;border-bottom:1px solid var(--border);margin-bottom:.5rem;display:flex;flex-direction:column;gap:.6rem;}
@@ -161,52 +106,28 @@ def build_accounts_css():
 .detail-icon.permanent{background:var(--primary-light);color:var(--primary-dark);}
 .detail-icon.trial{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(251,191,36,.2));color:#d97706;}
 .detail-icon.expired{background:rgba(220,38,38,.25);color:var(--danger);}
-[data-theme="dark"] .detail-icon.ok{background:rgba(22,163,74,.25);color:#4ade80;}
-[data-theme="dark"] .detail-icon.warn{background:rgba(245,158,11,.25);color:#fcd34d;}
-[data-theme="dark"] .detail-icon.urgent{background:rgba(220,38,38,.3);color:#fca5a5;}
-[data-theme="dark"] .detail-icon.permanent{background:rgba(59,130,246,.25);color:#93c5fd;}
-[data-theme="dark"] .detail-icon.trial{background:rgba(245,158,11,.25);color:#fcd34d;}
-[data-theme="dark"] .detail-icon.expired{background:rgba(220,38,38,.35);color:#fca5a5;}
-
 .detail-content{flex:1;min-width:0;}
 .detail-label{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:var(--text-3);margin-bottom:.15rem;}
 .detail-value{font-size:.85rem;font-weight:700;color:var(--text);line-height:1.3;word-break:break-word;}
 .detail-value.ok{color:var(--success);}
 .detail-value.warn{color:#d97706;}
-[data-theme="dark"] .detail-value.warn{color:#fcd34d;}
 .detail-value.urgent{color:var(--danger);}
 .detail-value.permanent{color:var(--primary-dark);}
-[data-theme="dark"] .detail-value.permanent{color:#93c5fd;}
 .detail-value.trial{color:#d97706;}
-[data-theme="dark"] .detail-value.trial{color:#fcd34d;}
 .detail-value.expired{color:var(--danger);text-decoration:line-through;}
 .detail-sub{font-size:.7rem;color:var(--text-3);margin-top:.15rem;line-height:1.35;}
 .detail-sub b{color:var(--text-2);font-weight:700;}
-.detail-progress{margin-top:.15rem;}
 .progress-track{width:100%;height:6px;background:var(--surface-2);border-radius:50px;overflow:hidden;border:1px solid var(--border);}
 .progress-bar{height:100%;border-radius:50px;transition:width .4s ease, background .3s ease;background:linear-gradient(90deg, #16a34a, #22c55e);}
 .progress-bar.ok{background:linear-gradient(90deg, #16a34a, #22c55e);}
 .progress-bar.warn{background:linear-gradient(90deg, #f59e0b, #fbbf24);}
 .progress-bar.urgent{background:linear-gradient(90deg, #dc2626, #ef4444);}
-.progress-bar.permanent{background:linear-gradient(90deg, #2563eb, #3b82f6);}
-
-.tier-badge{
-    display:inline-flex;align-items:center;gap:.25rem;
-    padding:.15rem .5rem;margin-top:.35rem;
-    border-radius:50px;font-size:.62rem;font-weight:900;
-    text-transform:uppercase;letter-spacing:.3px;
-    white-space:nowrap;
-}
-.tier-badge.trial{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e1b4b;box-shadow:0 2px 6px rgba(245,158,11,.4);}
-.tier-badge.active{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;box-shadow:0 2px 6px rgba(124,58,237,.4);}
-.tier-badge.permanent{background:linear-gradient(135deg,#dc2626,#7c2d12);color:#fde68a;box-shadow:0 2px 6px rgba(220,38,38,.5);}
-.tier-badge.expired{background:linear-gradient(135deg,#64748b,#475569);color:#fff;box-shadow:0 2px 6px rgba(71,85,105,.4);}
 
 .btn-login-header{display:flex;align-items:center;gap:.4rem;padding:.55rem 1rem;border-radius:50px;background:var(--primary);color:#fff;border:none;font-size:.85rem;font-weight:700;cursor:pointer;transition:.15s;font-family:inherit;box-shadow:0 4px 12px rgba(37,99,235,.3);white-space:nowrap;}
 .btn-login-header:hover,.btn-login-header:active{background:var(--primary-dark);transform:translateY(-1px)}
 
 /* ============ LOGIN MODAL ============ */
-.login-modal{position:fixed;inset:0;background:rgba(15,23,42,.8);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);z-index:3000;display:none;align-items:center;justify-content:center;padding:1.5rem;animation:fadeIn .2s;}
+.login-modal{position:fixed;inset:0;background:rgba(15,23,42,.8);backdrop-filter:blur(6px);z-index:3000;display:none;align-items:center;justify-content:center;padding:1.5rem;animation:fadeIn .2s;}
 .login-modal.show{display:flex}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 .login-box{background:#fff;border-radius:20px;padding:2.5rem 2rem;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.3);text-align:center;position:relative;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);}
@@ -224,14 +145,36 @@ def build_accounts_css():
 .login-footer{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid #e2e8f0;font-size:.78rem;color:#94a3b8;line-height:1.5}
 
 /* ============ ADMIN MODAL ============ */
-.admin-modal{position:fixed;inset:0;background:rgba(15,23,42,.75);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:3000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s;}
+.admin-modal{position:fixed;inset:0;background:rgba(15,23,42,.75);backdrop-filter:blur(4px);z-index:3000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s;}
 .admin-modal.show{display:flex}
-.admin-box{background:var(--surface);border-radius:20px;width:100%;max-width:900px;max-height:calc(100vh - 2rem);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;}
+.admin-box{background:var(--surface);border-radius:20px;width:100%;max-width:960px;max-height:calc(100vh - 2rem);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.3);display:flex;flex-direction:column;}
 .admin-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap;}
 .admin-header h2{font-size:1.15rem;color:var(--text);display:flex;align-items:center;gap:.5rem;font-weight:700}
 .admin-header h2 i{color:var(--amber)}
 .admin-header-actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
 .admin-body{padding:1.25rem 1.5rem;overflow-y:auto;flex:1}
+
+/* ============ SUMMARY BAR (TỔNG USER/ADMIN) ============ */
+.admin-summary-bar{
+    display:flex;align-items:center;gap:1.25rem;
+    padding:.75rem 1rem;margin-bottom:1rem;
+    background:linear-gradient(135deg, rgba(59,130,246,.08), rgba(245,158,11,.06));
+    border:1px solid var(--border);border-radius:12px;flex-wrap:wrap;
+}
+.admin-summary-bar .summary-item{display:flex;align-items:center;gap:.5rem;font-size:.88rem;}
+.admin-summary-bar .summary-item i{font-size:1.1rem;}
+.admin-summary-bar .summary-label{color:var(--text-2);font-weight:700;text-transform:uppercase;font-size:.72rem;letter-spacing:.4px;}
+.admin-summary-bar .summary-value{
+    font-weight:900;font-size:1.15rem;
+    background:var(--surface);
+    padding:.15rem .65rem;border-radius:8px;
+    border:1px solid var(--border);
+    min-width:38px;text-align:center;line-height:1.2;
+}
+.admin-summary-bar #summaryTotalUsers{color:#2563eb;}
+[data-theme="dark"] .admin-summary-bar #summaryTotalUsers{color:#93c5fd;}
+.admin-summary-bar #summaryTotalAdmins{color:#d97706;}
+[data-theme="dark"] .admin-summary-bar #summaryTotalAdmins{color:#fcd34d;}
 
 /* Search box */
 .admin-search-wrap{position:relative;margin-bottom:1rem;}
@@ -247,61 +190,65 @@ def build_accounts_css():
 .admin-filter-btn{padding:.35rem .75rem;border-radius:50px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.75rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;}
 .admin-filter-btn:hover{border-color:var(--primary);color:var(--primary);}
 .admin-filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px rgba(37,99,235,.3);}
-.admin-filter-btn .count{background:rgba(255,255,255,.25);padding:.05rem .4rem;border-radius:50px;font-size:.68rem;font-weight:700;min-width:18px;text-align:center;}
+.admin-filter-btn .count{background:rgba(0,0,0,.08);padding:.05rem .4rem;border-radius:50px;font-size:.68rem;font-weight:700;min-width:18px;text-align:center;}
 .admin-filter-btn.active .count{background:rgba(255,255,255,.35);}
 
-/* Toggle show/hide admin panel sections */
-.admin-toggle-btn{padding:.35rem .7rem;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.75rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;}
+/* Toggle buttons cho section */
+.admin-toggle-btn{padding:.35rem .6rem;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.75rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;}
 .admin-toggle-btn:hover{background:var(--surface-2);color:var(--primary);border-color:var(--primary);}
 .admin-toggle-btn.active{background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary);}
+.admin-toggle-btn .fa-eye{color:var(--primary-dark);}
+.admin-toggle-btn.active .fa-eye-slash{color:var(--text-3);}
 
-/* Admin panel collapsible sections */
-.admin-section-collapse{overflow:hidden;transition:max-height .35s ease, opacity .3s ease, margin .3s ease;max-height:3000px;opacity:1;margin-bottom:0;}
-.admin-section-collapse.collapsed{max-height:0;opacity:0;margin-bottom:0;pointer-events:none;}
+/* Collapsible sections */
+.admin-section-collapse{overflow:hidden;transition:max-height .35s ease, opacity .3s ease;max-height:5000px;opacity:1;}
+.admin-section-collapse.collapsed{max-height:0 !important;opacity:0;pointer-events:none;}
+.admin-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-3);margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;gap:.5rem;flex-wrap:wrap;}
+.admin-section-title i{margin-right:.3rem;}
+.admin-section-title > span{display:inline-flex;align-items:center;flex-wrap:wrap;gap:.3rem;}
 
-/* Highlight khung Pending khi có yêu cầu chờ */
-.admin-section-collapse#adminPendingRenewalsSection.has-pending .admin-section-title{
-    background:linear-gradient(135deg, rgba(245,158,11,.1), rgba(251,191,36,.05));
-    padding:.6rem .85rem;
-    border-radius:10px;
-    border:1px solid rgba(245,158,11,.35);
-    margin-bottom:.6rem;
+/* Highlight khung YC gia hạn khi có pending */
+.admin-section-collapse#adminRenewalsSection.has-pending .admin-section-title{
+    background:linear-gradient(135deg, rgba(245,158,11,.15), rgba(251,191,36,.08));
+    padding:.65rem .85rem;border-radius:10px;
+    border:1px solid rgba(245,158,11,.45);
+    margin-bottom:.7rem;
+    animation:renewalsHighlight 2s infinite;
+    color:#92400e;
 }
-.admin-section-collapse#adminPendingRenewalsSection.has-pending .admin-section-title span i{
-    animation:bellRing 1.5s infinite;
+[data-theme="dark"] .admin-section-collapse#adminRenewalsSection.has-pending .admin-section-title{color:#fcd34d;}
+.admin-section-collapse#adminRenewalsSection.has-pending .admin-section-title i.fa-clock{
+    animation:bellRing 1.5s infinite;color:#dc2626;
+}
+@keyframes renewalsHighlight{
+    0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.4);}
+    50%{box-shadow:0 0 0 8px rgba(245,158,11,0);}
 }
 @keyframes bellRing{
-    0%, 100% { transform: rotate(0); }
-    10%, 30% { transform: rotate(-12deg); }
-    20%, 40% { transform: rotate(12deg); }
-    50% { transform: rotate(0); }
+    0%,100%{transform:rotate(0);}
+    10%,30%{transform:rotate(-12deg);}
+    20%,40%{transform:rotate(12deg);}
+    50%{transform:rotate(0);}
 }
 #pendingRenewalsBadge.pulse{
-    display:inline-block;
-    padding:.05rem .45rem;
+    display:inline-block;padding:.05rem .5rem;
     background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;
-    border-radius:50px;
-    font-weight:900;
-    font-size:.72rem;
+    color:#fff;border-radius:50px;
+    font-weight:900;font-size:.72rem;
     animation:pendingPulse 1.5s infinite;
     box-shadow:0 2px 8px rgba(220,38,38,.5);
-    min-width:20px;
-    text-align:center;
+    min-width:22px;text-align:center;
 }
 @keyframes pendingPulse{
-    0%, 100% { transform: scale(1); box-shadow: 0 2px 8px rgba(220,38,38,.5); }
-    50% { transform: scale(1.15); box-shadow: 0 4px 14px rgba(220,38,38,.8); }
+    0%,100%{transform:scale(1);box-shadow:0 2px 8px rgba(220,38,38,.5);}
+    50%{transform:scale(1.15);box-shadow:0 4px 14px rgba(220,38,38,.8);}
 }
 
-.admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1.25rem;}
-.stat-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;text-align:center;}
-.stat-card .num{font-size:1.8rem;font-weight:800;color:var(--primary);line-height:1;margin-bottom:.3rem}
-.stat-card .label{font-size:.75rem;color:var(--text-3);text-transform:uppercase;letter-spacing:.3px;font-weight:600}
-.admin-section-title{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-3);margin-bottom:.6rem;display:flex;align-items:center;justify-content:space-between;}
-.admin-section-title i{margin-right:.3rem;}
+/* Add user form */
 .btn-add{padding:.45rem .85rem;border-radius:8px;border:none;background:var(--primary);color:#fff;font-size:.78rem;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;transition:.15s;font-family:inherit;}
 .btn-add:hover{background:var(--primary-dark)}
+
+/* User list */
 .user-list{display:flex;flex-direction:column;gap:.5rem}
 .user-row{display:flex;align-items:center;gap:.75rem;padding:.75rem;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);transition:.15s;}
 .user-row:hover{border-color:var(--primary)}
@@ -321,7 +268,6 @@ def build_accounts_css():
 .u-btn.danger:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger)}
 .u-btn.history{background:rgba(124,58,237,.1);color:#7c3aed;border-color:rgba(124,58,237,.35);}
 .u-btn.history:hover{background:#7c3aed;color:#fff;border-color:#7c3aed;transform:scale(1.08);}
-[data-theme="dark"] .u-btn.history{background:rgba(124,58,237,.25);color:#a78bfa;border-color:rgba(124,58,237,.5);}
 .u-btn.expiry{background:rgba(245,158,11,.1);color:#d97706;border-color:rgba(245,158,11,.4);}
 .u-btn.expiry:hover{background:var(--amber);color:#fff;border-color:var(--amber);transform:scale(1.08);}
 .u-btn.expiry.urgent{background:rgba(220,38,38,.15);color:var(--danger);border-color:rgba(220,38,38,.5);animation:expiryPulse 2s infinite;}
@@ -330,6 +276,7 @@ def build_accounts_css():
 
 .admin-close{width:34px;height:34px;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;transition:.15s;}
 .admin-close:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger)}
+
 .add-user-form{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:1rem;margin-bottom:1rem;display:none;}
 .add-user-form.show{display:block}
 .add-user-form h3{font-size:.85rem;color:var(--text);margin-bottom:.75rem;font-weight:700}
@@ -343,7 +290,9 @@ def build_accounts_css():
 .btn:disabled{opacity:.5;cursor:not-allowed;}
 .btn.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 .btn.primary:hover{background:var(--primary-dark)}
-.logs-list{max-height:200px;overflow-y:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem;}
+
+/* Logs */
+.logs-list{max-height:280px;overflow-y:auto;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:.5rem;}
 .log-item{display:flex;gap:.5rem;padding:.4rem .5rem;font-size:.75rem;color:var(--text-2);border-bottom:1px solid var(--border);}
 .log-item:last-child{border-bottom:none}
 .log-item .log-time{color:var(--text-3);flex-shrink:0;font-family:monospace;font-size:.7rem}
@@ -361,7 +310,7 @@ def build_accounts_css():
 .u-expiry.expired{background:rgba(220,38,38,.25);color:#fff;text-decoration:line-through;}
 
 /* ============ EDIT MODALS ============ */
-.edit-modal{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:4000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s;}
+.edit-modal{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(4px);z-index:4000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s;}
 .edit-modal.show{display:flex}
 .edit-box{background:var(--surface);border-radius:20px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:1.5rem;position:relative;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);}
 .edit-box h2{font-size:1.1rem;color:var(--text);font-weight:700;display:flex;align-items:center;gap:.5rem;margin-bottom:1.25rem;}
@@ -414,7 +363,6 @@ def build_accounts_css():
 .import-options input[type="checkbox"]{width:16px;height:16px;accent-color:var(--primary);cursor:pointer;}
 .import-info{margin-top:1rem;padding:.65rem .85rem;border-radius:10px;background:var(--primary-light);color:var(--primary-dark);font-size:.78rem;line-height:1.6;display:flex;align-items:flex-start;gap:.5rem;}
 .import-info i{margin-top:.15rem;flex-shrink:0;}
-.import-info b{font-weight:800;}
 .import-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.5rem;justify-content:flex-end;align-items:center;background:var(--surface);}
 
 /* ============ EXPIRY BANNER ============ */
@@ -429,18 +377,11 @@ def build_accounts_css():
 .expiry-banner-text b{color:#dc2626;}
 .expiry-banner-btn{padding:.5rem .9rem;border-radius:50px;border:none;background:#f59e0b;color:#fff;text-decoration:none;font-size:.8rem;font-weight:700;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap;}
 .expiry-banner-btn:hover{background:#d97706;color:#fff;transform:translateY(-1px);}
-.expiry-banner.urgent .expiry-banner-btn{background:#dc2626;}
 .expiry-banner.urgent .expiry-banner-btn{
     background:linear-gradient(135deg,#7f1d1d,#b91c1c);
-    box-shadow:0 4px 14px rgba(220,38,38,.5), 0 0 0 0 rgba(220,38,38,.6);
+    box-shadow:0 4px 14px rgba(220,38,38,.5);
     animation:renewUrgent 1.2s infinite;
-    font-weight:800;
-    text-transform:uppercase;
-    letter-spacing:.5px;
-}
-.expiry-banner.urgent .expiry-banner-btn:hover{
-    transform:translateY(-2px) scale(1.03);
-    box-shadow:0 8px 20px rgba(220,38,38,.7);
+    font-weight:800;text-transform:uppercase;letter-spacing:.5px;
 }
 
 /* ============ RENEWAL MODAL ============ */
@@ -473,35 +414,15 @@ def build_accounts_css():
 .package-card .pkg-unit{font-size:.68rem;color:var(--text-3);font-weight:600;}
 .package-card .pkg-save{position:absolute;top:-8px;right:-4px;background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;font-size:.6rem;font-weight:800;padding:.15rem .45rem;border-radius:50px;text-transform:uppercase;letter-spacing:.3px;box-shadow:0 2px 6px rgba(22,163,74,.4);}
 .package-card .pkg-popular{position:absolute;top:-8px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e1b4b;font-size:.6rem;font-weight:800;padding:.15rem .5rem;border-radius:50px;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;box-shadow:0 2px 6px rgba(245,158,11,.4);}
-
-.package-card[data-pkg="forever"]{
-    background:linear-gradient(135deg, #fef3c7, #fde68a);
-    border-color:#f59e0b;
-    position:relative;
-}
-.package-card[data-pkg="forever"]:hover{
-    border-color:#d97706;
-    transform:translateY(-3px) scale(1.02);
-    box-shadow:0 12px 28px rgba(245,158,11,.4);
-}
-.package-card[data-pkg="forever"].selected{
-    background:linear-gradient(135deg, #fbbf24, #f59e0b);
-    border-color:#b45309;
-    box-shadow:0 8px 24px rgba(245,158,11,.5);
-}
+.package-card[data-pkg="forever"]{background:linear-gradient(135deg, #fef3c7, #fde68a);border-color:#f59e0b;position:relative;}
+.package-card[data-pkg="forever"]:hover{border-color:#d97706;transform:translateY(-3px) scale(1.02);box-shadow:0 12px 28px rgba(245,158,11,.4);}
+.package-card[data-pkg="forever"].selected{background:linear-gradient(135deg, #fbbf24, #f59e0b);border-color:#b45309;box-shadow:0 8px 24px rgba(245,158,11,.5);}
 .package-card[data-pkg="forever"] .pkg-label{color:#78350f;font-weight:900;}
-.package-card[data-pkg="forever"] .pkg-price{
-    background:linear-gradient(135deg,#dc2626,#b91c1c);
-    -webkit-background-clip:text;background-clip:text;
-    -webkit-text-fill-color:transparent;
-    font-size:1.4rem;font-weight:900;
-}
+.package-card[data-pkg="forever"] .pkg-price{background:linear-gradient(135deg,#dc2626,#b91c1c);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-size:1.4rem;font-weight:900;}
 .package-card[data-pkg="forever"] .pkg-unit{color:#92400e;font-weight:700;}
 .package-card[data-pkg="forever"].selected .pkg-label,
 .package-card[data-pkg="forever"].selected .pkg-unit{color:#fff;}
-.package-card[data-pkg="forever"].selected .pkg-price{
-    -webkit-text-fill-color:#fff;background:none;color:#fff;
-}
+.package-card[data-pkg="forever"].selected .pkg-price{-webkit-text-fill-color:#fff;background:none;color:#fff;}
 .package-card[data-pkg="forever"]::before{
     content:'💎 VĨNH VIỄN';
     position:absolute;top:-10px;left:50%;transform:translateX(-50%);
@@ -510,8 +431,7 @@ def build_accounts_css():
     padding:.2rem .6rem;border-radius:50px;
     letter-spacing:.5px;white-space:nowrap;
     box-shadow:0 4px 12px rgba(124,58,237,.5);
-    animation:foreverPulse 1.8s infinite;
-    z-index:3;
+    animation:foreverPulse 1.8s infinite;z-index:3;
 }
 @keyframes foreverPulse{
     0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 4px 12px rgba(124,58,237,.5);}
@@ -563,12 +483,7 @@ def build_accounts_css():
 .renewal-admin-row .rar-actions{display:flex;gap:.35rem;align-items:center;flex-wrap:wrap;}
 
 /* ============ RENEWAL HISTORY ============ */
-.renewal-history-item{
-    display:flex;flex-direction:column;gap:.4rem;
-    padding:.85rem;margin-bottom:.5rem;
-    background:var(--surface-2);border:1px solid var(--border);
-    border-radius:10px;transition:.15s;
-}
+.renewal-history-item{display:flex;flex-direction:column;gap:.4rem;padding:.85rem;margin-bottom:.5rem;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;transition:.15s;}
 .renewal-history-item:hover{border-color:#7c3aed}
 .renewal-history-item .rh-head{display:flex;justify-content:space-between;align-items:flex-start;gap:.5rem;flex-wrap:wrap;}
 .renewal-history-item .rh-pkg{font-weight:800;font-size:.88rem;color:var(--text);}
@@ -583,15 +498,17 @@ def build_accounts_css():
 .renewal-history-item .rh-status.rejected{background:rgba(220,38,38,.15);color:var(--danger);}
 .renewal-history-item .rh-foot{display:flex;justify-content:space-between;align-items:center;gap:.5rem;flex-wrap:wrap;padding-top:.4rem;border-top:1px solid var(--border);font-size:.72rem;color:var(--text-3);}
 
-.renewal-history-stats{
-    display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;
-    padding:.75rem;background:var(--surface-2);border-radius:10px;
-    border:1px solid var(--border);margin-bottom:1rem;
-}
+.renewal-history-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;padding:.75rem;background:var(--surface-2);border-radius:10px;border:1px solid var(--border);margin-bottom:1rem;}
 .renewal-history-stats .rhs-item{text-align:center;}
 .renewal-history-stats .rhs-label{font-size:.7rem;color:var(--text-3);text-transform:uppercase;font-weight:700;letter-spacing:.3px;}
 .renewal-history-stats .rhs-value{font-size:1.1rem;font-weight:900;color:var(--primary);line-height:1.2;margin-top:.15rem;}
 .renewal-history-stats .rhs-value.amount{color:var(--success);}
+
+.admin-renewal-history-list{max-height:480px;overflow-y:auto;padding-right:.25rem;}
+.admin-renewal-history-list .renewal-history-item{margin-bottom:.5rem;}
+
+/* Renewals tabs */
+.admin-renewals-tabs{display:flex;gap:.4rem;margin-bottom:.75rem;flex-wrap:wrap;}
 
 /* ============ ADMIN PERMISSIONS ============ */
 .permission-modal{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(4px);z-index:4000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s;}
@@ -615,9 +532,6 @@ def build_accounts_css():
 .permission-note{padding:.65rem .85rem;border-radius:10px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);font-size:.78rem;color:var(--text-2);line-height:1.5;display:flex;align-items:flex-start;gap:.5rem;margin-bottom:1rem;}
 .permission-note i{color:#06b6d4;margin-top:.1rem;flex-shrink:0;}
 """
-
-def build_renewal_css():
-    return ""
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -783,10 +697,6 @@ def build_accounts_html():
         <div class="admin-header">
             <h2><i class="fas fa-shield-alt"></i> Quản lý tài khoản</h2>
             <div class="admin-header-actions">
-                <button class="admin-toggle-btn" id="toggleAdminStatsBtn" title="Ẩn/hiện thống kê"><i class="fas fa-chart-bar"></i></button>
-                <button class="admin-toggle-btn" id="togglePendingRenewalsBtn" title="Ẩn/hiện TK đang gửi yêu cầu"><i class="fas fa-clock"></i></button>
-                <button class="admin-toggle-btn" id="toggleConfirmedRenewalsBtn" title="Ẩn/hiện TK đã gia hạn"><i class="fas fa-check-circle"></i></button>
-                <button class="admin-toggle-btn" id="toggleAdminLogsBtn" title="Ẩn/hiện lịch sử"><i class="fas fa-history"></i></button>
                 <button class="btn" id="exportExcelBtn" title="Xuất danh sách USER ra Excel"><i class="fas fa-file-export"></i> Export</button>
                 <button class="btn" id="importExcelBtn" title="Import từ Excel (chỉ import user)"><i class="fas fa-file-import"></i> Import</button>
                 <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display:none">
@@ -795,16 +705,29 @@ def build_accounts_html():
             </div>
         </div>
         <div class="admin-body">
-            <div class="admin-section-collapse" id="adminStatsSection">
-                <div class="admin-stats" id="adminStats"></div>
+
+            <!-- ═══ DÒNG THỐNG KÊ TỔNG USER/ADMIN ═══ -->
+            <div class="admin-summary-bar" id="adminSummaryBar">
+                <div class="summary-item">
+                    <i class="fas fa-users" style="color:#3b82f6"></i>
+                    <span class="summary-label">Tổng User:</span>
+                    <span class="summary-value" id="summaryTotalUsers">0</span>
+                </div>
+                <div class="summary-item" id="summaryAdminItem" style="display:none">
+                    <i class="fas fa-shield-alt" style="color:#f59e0b"></i>
+                    <span class="summary-label">Tổng Admin:</span>
+                    <span class="summary-value" id="summaryTotalAdmins">0</span>
+                </div>
             </div>
 
+            <!-- ═══ Ô TÌM KIẾM ═══ -->
             <div class="admin-search-wrap">
                 <i class="fas fa-search"></i>
                 <input type="text" class="admin-search" id="adminSearchInput" placeholder="Tìm kiếm theo email hoặc tên...">
                 <button class="admin-search-clear" id="adminSearchClear"><i class="fas fa-times"></i></button>
             </div>
 
+            <!-- ═══ BỘ LỌC ═══ -->
             <div class="admin-filter-row" id="adminFilterRow">
                 <button class="admin-filter-btn active" data-filter="all"><i class="fas fa-users"></i> Tất cả <span class="count" id="filterCountAll">0</span></button>
                 <button class="admin-filter-btn" data-filter="user"><i class="fas fa-user"></i> User <span class="count" id="filterCountUser">0</span></button>
@@ -815,73 +738,100 @@ def build_accounts_html():
                 <button class="admin-filter-btn" data-filter="permanent"><i class="fas fa-crown"></i> Vĩnh viễn <span class="count" id="filterCountPermanent">0</span></button>
             </div>
 
-            <div class="admin-section-title">
-                <span><i class="fas fa-users"></i> Danh sách tài khoản (<span id="adminUserCount">0</span>)</span>
-                <button class="btn-add" id="showAddUserBtn"><i class="fas fa-plus"></i> Thêm</button>
-            </div>
-            <div class="add-user-form" id="addUserForm">
-                <h3>Thêm tài khoản mới</h3>
-                <div class="form-group">
-                    <label>Email Google</label>
-                    <input type="email" id="newUserEmail" placeholder="user@gmail.com">
+            <!-- ═══ 1. DANH SÁCH YÊU CẦU GIA HẠN ═══ -->
+            <div class="admin-section-collapse" id="adminRenewalsSection">
+                <div class="admin-section-title" style="margin-top:1.5rem" id="adminRenewalsTitle">
+                    <span>
+                        <i class="fas fa-clock" style="color:#f59e0b"></i>
+                        Yêu cầu gia hạn
+                        (<span id="pendingRenewalsBadge">0</span> chờ · <span id="confirmedRenewalsBadge">0</span> đã xác nhận)
+                    </span>
+                    <div style="display:flex;gap:.4rem;align-items:center">
+                        <button class="admin-toggle-btn active" id="toggleRenewalsBtn" title="Ẩn/hiện khung yêu cầu gia hạn"><i class="fas fa-eye"></i></button>
+                        <button class="btn" id="refreshRenewalsBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Tên hiển thị</label>
-                    <input type="text" id="newUserName" placeholder="Nguyễn Văn A">
+                <div class="admin-renewals-tabs">
+                    <button class="admin-filter-btn active" data-renewal-tab="pending" onclick="setRenewalTab('pending')">
+                        <i class="fas fa-hourglass-half"></i> Đang chờ <span class="count" id="pendingCountTab">0</span>
+                    </button>
+                    <button class="admin-filter-btn" data-renewal-tab="confirmed" onclick="setRenewalTab('confirmed')">
+                        <i class="fas fa-check-circle"></i> Đã xác nhận <span class="count" id="confirmedCountTab">0</span>
+                    </button>
                 </div>
-                <div class="form-group">
-                    <label>Vai trò</label>
-                    <select id="newUserRole">
-                        <option value="user">User (chỉ học)</option>
-                        <option value="admin">Admin (quản trị)</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Hạn sử dụng (để trống = vĩnh viễn)</label>
-                    <input type="date" id="newUserExpires">
-                </div>
-                <div class="form-actions">
-                    <button class="btn" id="cancelAddUser">Hủy</button>
-                    <button class="btn primary" id="confirmAddUser"><i class="fas fa-check"></i> Thêm</button>
-                </div>
-            </div>
-            <div class="user-list" id="userList">
-                <div class="no-data"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>
-            </div>
-
-            <!-- ═══ KHUNG TK ĐANG GỬI YÊU CẦU GIA HẠN (ĐẶT LÊN TRÊN) ═══ -->
-            <div class="admin-section-collapse" id="adminPendingRenewalsSection">
-                <div class="admin-section-title" style="margin-top:1.5rem" id="pendingRenewalsTitle">
-                    <span><i class="fas fa-clock" style="color:#f59e0b"></i> TK đang gửi yêu cầu gia hạn (<span id="pendingRenewalsBadge">0</span>)</span>
-                    <button class="btn" id="refreshPendingRenewalsBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
-                </div>
-                <div class="renewals-list" id="pendingRenewalsList">
+                <div class="renewals-list" id="renewalsList">
                     <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>
                 </div>
             </div>
 
-            <!-- ═══ KHUNG TK ĐÃ GIA HẠN (ĐẶT XUỐNG DƯỚI) ═══ -->
-            <div class="admin-section-collapse" id="adminConfirmedRenewalsSection">
-                <div class="admin-section-title" style="margin-top:1.5rem" id="confirmedRenewalsTitle">
-                    <span><i class="fas fa-check-circle" style="color:#16a34a"></i> TK đã gia hạn (<span id="confirmedRenewalsBadge">0</span>)</span>
-                    <button class="btn" id="refreshConfirmedRenewalsBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
+            <!-- ═══ 2. DANH SÁCH TÀI KHOẢN ═══ -->
+            <div class="admin-section-collapse" id="adminUsersSection">
+                <div class="admin-section-title" style="margin-top:1.5rem">
+                    <span>
+                        <i class="fas fa-users"></i>
+                        Danh sách tài khoản (<span id="adminUserCount">0</span>)
+                    </span>
+                    <div style="display:flex;gap:.4rem;align-items:center">
+                        <button class="admin-toggle-btn active" id="toggleUsersBtn" title="Ẩn/hiện danh sách tài khoản"><i class="fas fa-eye"></i></button>
+                        <button class="btn-add" id="showAddUserBtn"><i class="fas fa-plus"></i> Thêm</button>
+                    </div>
                 </div>
-                <div class="renewals-list" id="confirmedRenewalsList">
-                    <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>
+                <div class="add-user-form" id="addUserForm">
+                    <h3>Thêm tài khoản mới</h3>
+                    <div class="form-group">
+                        <label>Email Google</label>
+                        <input type="email" id="newUserEmail" placeholder="user@gmail.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Tên hiển thị</label>
+                        <input type="text" id="newUserName" placeholder="Nguyễn Văn A">
+                    </div>
+                    <div class="form-group">
+                        <label>Vai trò</label>
+                        <select id="newUserRole">
+                            <option value="user">User (chỉ học)</option>
+                            <option value="admin">Admin (quản trị)</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Hạn sử dụng (để trống = vĩnh viễn)</label>
+                        <input type="date" id="newUserExpires">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn" id="cancelAddUser">Hủy</button>
+                        <button class="btn primary" id="confirmAddUser"><i class="fas fa-check"></i> Thêm</button>
+                    </div>
+                </div>
+                <div class="user-list" id="userList">
+                    <div class="no-data"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>
                 </div>
             </div>
 
-            <!-- ⭐ ALIAS tương thích ngược: giữ id "renewalsList" cho script kiểm tra cũ -->
-            <div id="renewalsList" style="display:none" aria-hidden="true"></div>
-
+            <!-- ═══ 3. LỊCH SỬ ĐĂNG NHẬP ═══ -->
             <div class="admin-section-collapse" id="adminLogsSection">
                 <div class="admin-section-title" style="margin-top:1.5rem" id="logsTitle">
                     <span><i class="fas fa-history"></i> Lịch sử đăng nhập (gần đây)</span>
+                    <button class="admin-toggle-btn active" id="toggleLogsBtn" title="Ẩn/hiện lịch sử đăng nhập"><i class="fas fa-eye"></i></button>
                 </div>
                 <div class="logs-list" id="logsList">
                     <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>
                 </div>
             </div>
+
+            <!-- ═══ 4. LỊCH SỬ GIA HẠN (TỔNG HỢP) ═══ -->
+            <div class="admin-section-collapse" id="adminRenewalHistorySection">
+                <div class="admin-section-title" style="margin-top:1.5rem" id="renewalHistoryTitle">
+                    <span><i class="fas fa-receipt"></i> Lịch sử gia hạn (tất cả giao dịch)</span>
+                    <div style="display:flex;gap:.4rem;align-items:center">
+                        <button class="admin-toggle-btn active" id="toggleRenewalHistoryBtn" title="Ẩn/hiện lịch sử gia hạn"><i class="fas fa-eye"></i></button>
+                        <button class="btn" id="refreshRenewalHistoryBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
+                    </div>
+                </div>
+                <div class="admin-renewal-history-list" id="adminRenewalHistoryList">
+                    <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
@@ -976,6 +926,11 @@ var adminSearchQuery = '';
 var adminCurrentFilter = 'all';
 var editingPermissionEmail = null;
 
+/* Renewals tab state */
+var renewalTab = 'pending';
+var pendingRenewalsData = [];
+var confirmedRenewalsData = [];
+
 /* Admin permissions definition */
 var ADMIN_PERMISSIONS = [
     { key: 'canViewUsers',      name: 'Xem danh sách user',   desc: 'Xem thông tin tất cả tài khoản user' },
@@ -988,16 +943,15 @@ var ADMIN_PERMISSIONS = [
     { key: 'canManageAdmin',    name: 'Quản lý Admin',        desc: 'Thêm/xóa/phân quyền admin khác (chỉ Super Admin)' }
 ];
 
-/* ⭐ Quyền mặc định cho admin thường: TOÀN QUYỀN trừ quản lý admin khác */
 var DEFAULT_ADMIN_PERMS = {
     canViewUsers: true,
     canEditExpiry: true,
     canRenew: true,
-    canAddUser: true,          // ⭐ BẬT
-    canDeleteUser: true,       // ⭐ BẬT
-    canImportExport: true,     // ⭐ BẬT
-    canViewLogs: true,         // ⭐ BẬT
-    canManageAdmin: false      // 🔒 Luôn khóa cho admin thường
+    canAddUser: true,
+    canDeleteUser: true,
+    canImportExport: true,
+    canViewLogs: true,
+    canManageAdmin: false
 };
 
 /* ============ HELPERS ============ */
@@ -1023,11 +977,9 @@ function isSubAdmin() {
     if (isSuperAdmin()) return false;
     return currentUser.isSubAdmin === true || currentUser.permissions !== undefined;
 }
-/* ⭐ Admin thường: mặc định dùng DEFAULT_ADMIN_PERMS nếu chưa phân quyền chi tiết */
 function hasPermission(permKey) {
     if (!currentUser || currentUser.role !== 'admin') return false;
     if (isSuperAdmin()) return true;
-
     var perms = currentUser.permissions || {};
     if (perms[permKey] === undefined) {
         return DEFAULT_ADMIN_PERMS[permKey] === true;
@@ -1035,25 +987,20 @@ function hasPermission(permKey) {
     return perms[permKey] === true;
 }
 
-/* ============ TIER STATE — API cho ui_template đọc ============ */
+/* ============ TIER STATE ============ */
 function publishTierState() {
     if (!currentUser) {
         window.APP_TIER = 'demo';
         window.APP_LIMITS = {
             maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
             maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
-            unlimitedWriting: false,
-            isTrial: false,
-            email: null
+            unlimitedWriting: false, isTrial: false, email: null
         };
         return;
     }
     if (currentUser.role === 'admin') {
         window.APP_TIER = 'active';
-        window.APP_LIMITS = {
-            maxQuestions: Infinity, maxHSK: 6,
-            unlimitedWriting: true, isTrial: false, email: currentUser.email
-        };
+        window.APP_LIMITS = { maxQuestions: Infinity, maxHSK: 6, unlimitedWriting: true, isTrial: false, email: currentUser.email };
         return;
     }
     var tier = currentUser.tier || 'active';
@@ -1062,9 +1009,7 @@ function publishTierState() {
         window.APP_LIMITS = {
             maxQuestions: currentUser.trialMaxQuestions || TRIAL_MAX_QUESTIONS || 50,
             maxHSK: currentUser.trialMaxHSK || TRIAL_MAX_HSK || 5,
-            unlimitedWriting: true,
-            isTrial: true,
-            email: currentUser.email
+            unlimitedWriting: true, isTrial: true, email: currentUser.email
         };
     } else if (tier === 'expired') {
         window.APP_TIER = 'expired';
@@ -1075,10 +1020,7 @@ function publishTierState() {
         };
     } else {
         window.APP_TIER = 'active';
-        window.APP_LIMITS = {
-            maxQuestions: Infinity, maxHSK: 6,
-            unlimitedWriting: true, isTrial: false, email: currentUser.email
-        };
+        window.APP_LIMITS = { maxQuestions: Infinity, maxHSK: 6, unlimitedWriting: true, isTrial: false, email: currentUser.email };
     }
 }
 
@@ -1154,11 +1096,8 @@ async function handleAuthChange(user) {
         var data = doc.data() || {};
 
         var userTier = 'active';
-        if (data.role === 'admin') {
-            userTier = 'active';
-        } else if (data.tier === 'trial' || data.isTrial === true) {
-            userTier = 'trial';
-        }
+        if (data.role === 'admin') userTier = 'active';
+        else if (data.tier === 'trial' || data.isTrial === true) userTier = 'trial';
 
         var userData = {
             email: email,
@@ -1190,7 +1129,6 @@ async function handleAuthChange(user) {
             isDemo = true;
             currentUser.isExpiredOnly = true;
             currentUser.tier = 'expired';
-            console.log('⏰ User hết hạn — chuyển sang chế độ demo');
         } else {
             isDemo = false;
             currentUser.isExpiredOnly = false;
@@ -1198,8 +1136,7 @@ async function handleAuthChange(user) {
 
         try {
             localStorage.setItem(cacheKey, JSON.stringify({
-                data: currentUser,
-                expires: Date.now() + 12 * 60 * 60 * 1000
+                data: currentUser, expires: Date.now() + 12 * 60 * 60 * 1000
             }));
         } catch(e) {}
 
@@ -1232,36 +1169,29 @@ async function grantTrialIfNew(user, userData) {
     try {
         var result = await db.runTransaction(async function(transaction) {
             var doc = await transaction.get(userRef);
-
             if (doc.exists) {
                 var data = doc.data() || {};
                 if (data.registeredAt || data.expiresAt || data.role === 'admin') {
                     return { granted: false, reason: 'already_exists' };
                 }
             }
-
             var days = (typeof TRIAL_DAYS === 'number' && TRIAL_DAYS > 0) ? TRIAL_DAYS : 3;
             var expiresAt = new Date(Date.now() + days * 86400000);
             expiresAt.setHours(23, 59, 59, 0);
-
             transaction.set(userRef, {
                 email: email,
-                name: (userData && userData.name) ? userData.name
-                     : (user.displayName || email.split('@')[0]),
+                name: (userData && userData.name) ? userData.name : (user.displayName || email.split('@')[0]),
                 role: 'user',
                 expiresAt: firebase.firestore.Timestamp.fromDate(expiresAt),
                 registeredAt: firebase.firestore.FieldValue.serverTimestamp(),
-                isTrial: true,
-                trialDays: days,
+                isTrial: true, trialDays: days,
                 trialStartedAt: firebase.firestore.FieldValue.serverTimestamp(),
                 tier: 'trial',
                 trialMaxQuestions: (typeof TRIAL_MAX_QUESTIONS === 'number') ? TRIAL_MAX_QUESTIONS : 50,
                 trialMaxHSK: (typeof TRIAL_MAX_HSK === 'number') ? TRIAL_MAX_HSK : 5
             });
-
             return { granted: true, expiresAt: expiresAt };
         });
-
         return result.granted;
     } catch (e) {
         console.error('❌ Grant trial error:', e);
@@ -1274,10 +1204,8 @@ function enterDemoMode() {
     currentUser = null;
     publishTierState();
     applyUserUI();
-
     if (!appInitialized) { initApp(); appInitialized = true; }
     else { if (typeof refreshApp === 'function') refreshApp(); }
-
     if ($('loadingScreen')) $('loadingScreen').classList.add('hidden');
     if ($('stickyTop')) $('stickyTop').style.display = 'block';
     if ($('fabGroup')) $('fabGroup').style.display = 'flex';
@@ -1293,95 +1221,70 @@ function applyUserUI() {
     var expiryBanner = $('expiryBanner');
     if (expiryBanner) {
         var tier = (typeof getUserTier === 'function') ? getUserTier() : (isDemo ? 'demo' : 'active');
-
         if (currentUser && currentUser.role !== 'admin' && !currentUser.isPermanent) {
             var daysLeft = getDaysRemaining(currentUser);
             if (daysLeft !== null && daysLeft <= 7) {
                 expiryBanner.style.display = 'flex';
                 var isExpired = daysLeft <= 0;
                 expiryBanner.classList.toggle('urgent', isExpired || daysLeft <= 3);
-
                 var iconWrap = expiryBanner.querySelector('.expiry-banner-icon');
-                if (iconWrap) iconWrap.innerHTML = isExpired
-                    ? '<i class="fas fa-exclamation-triangle"></i>'
-                    : '<i class="fas fa-hourglass-half"></i>';
-
+                if (iconWrap) iconWrap.innerHTML = isExpired ? '<i class="fas fa-exclamation-triangle"></i>' : '<i class="fas fa-hourglass-half"></i>';
                 var titleEl = expiryBanner.querySelector('.expiry-banner-text .title');
                 if (titleEl) {
                     if (isExpired) titleEl.innerHTML = '❌ Tài khoản đã hết hạn!';
                     else if (tier === 'trial') titleEl.innerHTML = '🎁 Trial còn ' + daysLeft + ' ngày';
                     else titleEl.innerHTML = '⏳ Sắp hết hạn — còn ' + daysLeft + ' ngày';
                 }
-
                 var descEl = expiryBanner.querySelector('.expiry-banner-text .desc');
                 if (descEl) {
                     var expDate = getExpiryDate(currentUser.expiresAt);
                     var expDateStr = expDate ? expDate.toLocaleDateString('vi-VN') : '';
-                    if (isExpired) {
-                        descEl.innerHTML = 'Đã hết hạn vào <b>' + expDateStr + '</b>. Gia hạn ngay!';
-                    } else if (tier === 'trial') {
-                        descEl.innerHTML = 'Còn <b>' + daysLeft + ' ngày</b> dùng thử (đến <b>' + expDateStr + '</b>). Gia hạn để mở khóa toàn bộ!';
-                    } else {
-                        descEl.innerHTML = 'Còn <b>' + daysLeft + ' ngày</b> (đến <b>' + expDateStr + '</b>).';
-                    }
+                    if (isExpired) descEl.innerHTML = 'Đã hết hạn vào <b>' + expDateStr + '</b>. Gia hạn ngay!';
+                    else if (tier === 'trial') descEl.innerHTML = 'Còn <b>' + daysLeft + ' ngày</b> dùng thử (đến <b>' + expDateStr + '</b>). Gia hạn để mở khóa toàn bộ!';
+                    else descEl.innerHTML = 'Còn <b>' + daysLeft + ' ngày</b> (đến <b>' + expDateStr + '</b>).';
                 }
-
                 var contactBtn = $('expiryContactBtn');
                 if (contactBtn) {
                     contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
                     contactBtn.href = '#';
                     contactBtn.onclick = function(e) { e.preventDefault(); openRenewalModal(); };
                 }
-            } else {
-                expiryBanner.style.display = 'none';
-            }
+            } else expiryBanner.style.display = 'none';
         } else if (currentUser && currentUser.isExpiredOnly) {
             expiryBanner.style.display = 'flex';
             expiryBanner.classList.add('urgent');
-
             var iconWrap2 = expiryBanner.querySelector('.expiry-banner-icon');
             if (iconWrap2) iconWrap2.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-
             var titleEl2 = expiryBanner.querySelector('.expiry-banner-text .title');
             if (titleEl2) titleEl2.innerHTML = '❌ Tài khoản đã hết hạn!';
-
             var descEl2 = expiryBanner.querySelector('.expiry-banner-text .desc');
             if (descEl2) {
                 var expDate2 = getExpiryDate(currentUser.expiresAt);
                 var expDateStr2 = expDate2 ? expDate2.toLocaleDateString('vi-VN') : '';
                 descEl2.innerHTML = 'Đã hết hạn vào <b>' + expDateStr2 + '</b>. Chỉ dùng được tính năng demo. Gia hạn ngay!';
             }
-
             var contactBtn2 = $('expiryContactBtn');
             if (contactBtn2) {
                 contactBtn2.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
                 contactBtn2.href = '#';
                 contactBtn2.onclick = function(e) { e.preventDefault(); openRenewalModal(); };
             }
-        } else {
-            expiryBanner.style.display = 'none';
-        }
+        } else expiryBanner.style.display = 'none';
     }
 
     var renewBtn = $('dropdownRenewBtn');
     if (renewBtn) {
         var showRenew = currentUser && currentUser.role !== 'admin' && !currentUser.isPermanent;
         renewBtn.style.display = showRenew ? 'flex' : 'none';
-
         if (showRenew) {
             var rDaysLeft = getDaysRemaining(currentUser);
             var isUrgent = (rDaysLeft !== null && rDaysLeft <= 3);
             renewBtn.classList.toggle('urgent', isUrgent);
-
             var rBadge = renewBtn.querySelector('.renew-badge');
             if (rBadge) {
-                if (rDaysLeft !== null && rDaysLeft <= 0) {
-                    rBadge.textContent = 'HẾT HẠN';
-                } else if (rDaysLeft !== null && rDaysLeft <= 3) {
-                    rBadge.textContent = 'GẤP';
-                } else {
-                    rBadge.textContent = 'VIP';
-                }
+                if (rDaysLeft !== null && rDaysLeft <= 0) rBadge.textContent = 'HẾT HẠN';
+                else if (rDaysLeft !== null && rDaysLeft <= 3) rBadge.textContent = 'GẤP';
+                else rBadge.textContent = 'VIP';
             }
         }
     }
@@ -1393,7 +1296,6 @@ function applyUserUI() {
     }
 
     var isGuest = isDemo && !currentUser;
-
     if (isGuest) {
         if (demoBadge) demoBadge.style.display = 'flex';
         if (headerLoginBtn) headerLoginBtn.style.display = 'flex';
@@ -1405,7 +1307,6 @@ function applyUserUI() {
         if (headerLoginBtn) headerLoginBtn.style.display = 'none';
         if (userMenu) userMenu.style.display = 'block';
         if ($('demoBanner')) $('demoBanner').style.display = 'none';
-
         if ($('userName')) $('userName').textContent = currentUser.name;
         if ($('userEmail')) $('userEmail').textContent = currentUser.email;
         if ($('userRole')) {
@@ -1420,7 +1321,6 @@ function applyUserUI() {
             $('userRole').className = roleCls;
         }
         if ($('openAdminBtn')) $('openAdminBtn').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
-
         var avatar = $('userAvatar');
         if (avatar) {
             if (currentUser.photo) avatar.src = currentUser.photo;
@@ -1443,12 +1343,9 @@ function applyUserUI() {
         if (limited) { hskChip.classList.add('demo-limited'); subjectChip.classList.add('demo-limited'); }
         else { hskChip.classList.remove('demo-limited'); subjectChip.classList.remove('demo-limited'); }
     }
-
     if (typeof updateDemoRemaining === 'function') updateDemoRemaining();
-
     var toggleFocusBtn = $('toggleFocusBtn');
     if (toggleFocusBtn) toggleFocusBtn.style.display = isDemo ? 'none' : 'flex';
-
     if (isDemo) document.body.classList.remove('hide-floating');
 }
 
@@ -1457,7 +1354,6 @@ function updateUserDetails() {
     if (!detailsEl) return;
     if (isDemo || !currentUser) { detailsEl.style.display = 'none'; return; }
     detailsEl.style.display = 'flex';
-
     var expiryValue = $('expiryValue');
     var expirySub = $('expirySub');
     var expiryIcon = $('expiryIcon');
@@ -1465,7 +1361,6 @@ function updateUserDetails() {
     var progressWrap = $('expiryProgressWrap');
     var progressBar = $('expiryProgressBar');
     if (!expiryValue || !expirySub) return;
-
     if (currentUser.role === 'admin') {
         expiryValue.textContent = 'Vĩnh viễn';
         expiryValue.className = 'detail-value permanent';
@@ -1475,7 +1370,6 @@ function updateUserDetails() {
         if (progressWrap) progressWrap.style.display = 'none';
         return;
     }
-
     if (currentUser.isPermanent) {
         expiryValue.textContent = '💎 Vĩnh viễn';
         expiryValue.className = 'detail-value permanent';
@@ -1485,7 +1379,6 @@ function updateUserDetails() {
         if (progressWrap) progressWrap.style.display = 'none';
         return;
     }
-
     if (!currentUser.expiresAt) {
         expiryValue.textContent = 'Vĩnh viễn';
         expiryValue.className = 'detail-value permanent';
@@ -1495,19 +1388,14 @@ function updateUserDetails() {
         if (progressWrap) progressWrap.style.display = 'none';
         return;
     }
-
     var expDate = getExpiryDate(currentUser.expiresAt);
     if (!expDate || isNaN(expDate.getTime())) { expiryValue.textContent = '-'; expirySub.textContent = ''; return; }
-
     var now = Date.now();
-    var expTime = expDate.getTime();
-    var daysLeft = Math.ceil((expTime - now) / (24 * 60 * 60 * 1000));
+    var daysLeft = Math.ceil((expDate.getTime() - now) / (24 * 60 * 60 * 1000));
     var dateStr = expDate.toLocaleDateString('vi-VN');
     var tier = currentUser.tier || 'active';
-
     expiryValue.className = 'detail-value';
     if (expiryIconWrap) expiryIconWrap.className = 'detail-icon';
-
     if (daysLeft < 0) {
         expiryValue.textContent = 'Đã hết hạn';
         expiryValue.classList.add('expired');
@@ -1521,33 +1409,21 @@ function updateUserDetails() {
         expirySub.innerHTML = (tier === 'trial' ? '🎁 Trial: ' : '') + 'Hạn: <b>' + dateStr + '</b>';
         if (expiryIcon) expiryIcon.className = 'fas fa-exclamation-circle';
         if (expiryIconWrap) expiryIconWrap.classList.add('urgent');
-        if (progressWrap) {
-            progressWrap.style.display = 'block';
-            progressBar.className = 'progress-bar urgent';
-            progressBar.style.width = '90%';
-        }
+        if (progressWrap) { progressWrap.style.display = 'block'; progressBar.className = 'progress-bar urgent'; progressBar.style.width = '90%'; }
     } else if (daysLeft <= 7) {
         expiryValue.textContent = 'Còn ' + daysLeft + ' ngày';
         expiryValue.classList.add('warn');
         expirySub.innerHTML = (tier === 'trial' ? '🎁 Trial: ' : '') + 'Hạn: <b>' + dateStr + '</b>';
         if (expiryIcon) expiryIcon.className = 'fas fa-clock';
         if (expiryIconWrap) expiryIconWrap.classList.add('warn');
-        if (progressWrap) {
-            progressWrap.style.display = 'block';
-            progressBar.className = 'progress-bar warn';
-            progressBar.style.width = '70%';
-        }
+        if (progressWrap) { progressWrap.style.display = 'block'; progressBar.className = 'progress-bar warn'; progressBar.style.width = '70%'; }
     } else {
         expiryValue.textContent = 'Còn ' + daysLeft + ' ngày';
         expiryValue.className = 'detail-value ' + (tier === 'trial' ? 'trial' : 'ok');
         expirySub.innerHTML = (tier === 'trial' ? '🎁 Trial: ' : '') + 'Hạn: <b>' + dateStr + '</b>';
         if (expiryIcon) expiryIcon.className = 'fas fa-calendar-check';
         if (expiryIconWrap) expiryIconWrap.classList.add(tier === 'trial' ? 'trial' : 'ok');
-        if (progressWrap) {
-            progressWrap.style.display = 'block';
-            progressBar.className = 'progress-bar ok';
-            progressBar.style.width = '30%';
-        }
+        if (progressWrap) { progressWrap.style.display = 'block'; progressBar.className = 'progress-bar ok'; progressBar.style.width = '30%'; }
     }
 }
 
@@ -1581,7 +1457,6 @@ function filterUsers(items) {
     var query = adminSearchQuery.toLowerCase().trim();
     var filter = adminCurrentFilter;
     var now = Date.now();
-
     return items.filter(function(u) {
         if (query) {
             var email = (u.email || '').toLowerCase();
@@ -1615,12 +1490,11 @@ function updateFilterCounts(items) {
     var counts = { all: 0, user: 0, admin: 0, trial: 0, expiring: 0, expired: 0, permanent: 0 };
     var hidden = isHiddenAdmin();
     var myEmail = (currentUser && currentUser.email ? currentUser.email.toLowerCase() : '');
-
     items.forEach(function(u) {
         var uEmail = (u.email || '').toLowerCase();
         if (hidden && u.role === 'admin' && uEmail !== myEmail) return;
         counts.all++;
-        if (u.role === 'admin') { counts.admin++; }
+        if (u.role === 'admin') counts.admin++;
         else {
             counts.user++;
             if (u.tier === 'trial' || u.isTrial) counts.trial++;
@@ -1635,7 +1509,6 @@ function updateFilterCounts(items) {
             }
         }
     });
-
     var map = { all: 'filterCountAll', user: 'filterCountUser', admin: 'filterCountAdmin',
                 trial: 'filterCountTrial', expiring: 'filterCountExpiring',
                 expired: 'filterCountExpired', permanent: 'filterCountPermanent' };
@@ -1648,12 +1521,12 @@ function updateFilterCounts(items) {
 window.setAdminFilter = function(filter) {
     adminCurrentFilter = filter;
     document.querySelectorAll('.admin-filter-btn').forEach(function(btn) {
-        btn.classList.toggle('active', btn.dataset.filter === filter);
+        if (btn.dataset.filter) btn.classList.toggle('active', btn.dataset.filter === filter);
     });
     renderUsers(usersCache);
 };
 
-/* ============ RENEWAL: MỞ MODAL ============ */
+/* ============ RENEWAL MODAL ============ */
 window.openRenewalModal = function() {
     if (!currentUser) { showLoginModal(); return; }
     if (currentUser.role === 'admin') { alert('Admin có hạn vĩnh viễn, không cần gia hạn!'); return; }
@@ -1676,9 +1549,7 @@ function renderRenewalStep1() {
     var tier = currentUser.tier || 'active';
     var currentCls = isExpired ? 'expired' : (isWarn ? 'warn' : '');
     var currentIcon = isExpired ? 'fa-exclamation-triangle' : (isWarn ? 'fa-hourglass-half' : 'fa-gem');
-    var currentTitle = isExpired ? 'Tài khoản đã hết hạn'
-                       : (tier === 'trial' ? '🎁 Đang dùng bản Trial'
-                       : (isWarn ? 'Sắp hết hạn' : 'Tài khoản đang hoạt động'));
+    var currentTitle = isExpired ? 'Tài khoản đã hết hạn' : (tier === 'trial' ? '🎁 Đang dùng bản Trial' : (isWarn ? 'Sắp hết hạn' : 'Tài khoản đang hoạt động'));
     var currentDesc = '';
     if (daysLeft === null) currentDesc = 'Vĩnh viễn, không cần gia hạn';
     else if (isExpired) currentDesc = 'Đã hết hạn <b>' + Math.abs(daysLeft) + ' ngày</b> trước.';
@@ -1688,51 +1559,38 @@ function renderRenewalStep1() {
     var packagesHtml = '';
     var permanentPkg = null;
     var normalPackages = [];
-
     PACKAGES.forEach(function(p) {
         if (p.permanent) permanentPkg = p;
         else normalPackages.push(p);
     });
-
     normalPackages.forEach(function(p) {
         var saveHtml = p.save ? '<div class="pkg-save">' + escapeHtml(p.save) + '</div>' : '';
         var popularHtml = p.popular ? '<div class="pkg-popular">⭐ Phổ biến</div>' : '';
-        packagesHtml +=
-            '<div class="package-card" data-pkg="' + p.id + '" onclick="selectPackage(\'' + p.id + '\')">' +
-                popularHtml + saveHtml +
-                '<div class="pkg-label">' + escapeHtml(p.label) + '</div>' +
-                '<div class="pkg-price">' + formatMoney(p.amount) + '</div>' +
-                '<div class="pkg-unit">VNĐ</div>' +
-            '</div>';
+        packagesHtml += '<div class="package-card" data-pkg="' + p.id + '" onclick="selectPackage(\'' + p.id + '\')">' +
+            popularHtml + saveHtml +
+            '<div class="pkg-label">' + escapeHtml(p.label) + '</div>' +
+            '<div class="pkg-price">' + formatMoney(p.amount) + '</div>' +
+            '<div class="pkg-unit">VNĐ</div></div>';
     });
-
     if (permanentPkg) {
         packagesHtml += '<div style="grid-column:1/-1;margin-top:.5rem;padding-top:.75rem;border-top:2px dashed var(--border);">' +
             '<div class="renewal-section-title" style="justify-content:center;color:#dc2626;font-size:.78rem;margin-bottom:.6rem">' +
-                '<i class="fas fa-crown"></i> Gói đặc biệt — sở hữu mãi mãi' +
-            '</div>' +
+                '<i class="fas fa-crown"></i> Gói đặc biệt — sở hữu mãi mãi</div>' +
             '<div class="package-card" data-pkg="' + permanentPkg.id + '" onclick="selectPackage(\'' + permanentPkg.id + '\')" style="padding:1.2rem 1rem;">' +
                 '<div class="pkg-label" style="font-size:1.15rem;">💎 ' + escapeHtml(permanentPkg.label) + '</div>' +
                 '<div class="pkg-price" style="font-size:1.6rem;margin:.5rem 0;">' + formatMoney(permanentPkg.amount) + 'đ</div>' +
-                '<div class="pkg-unit" style="font-size:.75rem;">' + escapeHtml(permanentPkg.save || 'Dùng mãi mãi — Không lo hết hạn') + '</div>' +
-            '</div>' +
-        '</div>';
+                '<div class="pkg-unit" style="font-size:.75rem;">' + escapeHtml(permanentPkg.save || 'Dùng mãi mãi — Không lo hết hạn') + '</div></div></div>';
     }
-
     $('renewalBody').innerHTML =
         '<div class="renewal-current ' + currentCls + '">' +
             '<div class="rc-icon"><i class="fas ' + currentIcon + '"></i></div>' +
-            '<div class="rc-info">' +
-                '<div class="rc-title">' + currentTitle + '</div>' +
-                '<div class="rc-desc">' + currentDesc + '</div>' +
-            '</div>' +
-        '</div>' +
+            '<div class="rc-info"><div class="rc-title">' + currentTitle + '</div>' +
+            '<div class="rc-desc">' + currentDesc + '</div></div></div>' +
         '<div class="renewal-section-title"><i class="fas fa-box"></i> Chọn gói gia hạn</div>' +
         '<div class="package-grid">' + packagesHtml + '</div>' +
         '<div class="renewal-actions">' +
             '<button class="renewal-btn" onclick="closeRenewalModal()">Hủy</button>' +
-            '<button class="renewal-btn primary" id="renewalNextBtn" disabled onclick="goToPayment()">' +
-                '<i class="fas fa-arrow-right"></i> Tiếp tục</button>' +
+            '<button class="renewal-btn primary" id="renewalNextBtn" disabled onclick="goToPayment()"><i class="fas fa-arrow-right"></i> Tiếp tục</button>' +
         '</div>';
 }
 
@@ -1749,26 +1607,17 @@ async function goToPayment() {
     if (!renewalSelectedPkg) return;
     var transferCode = generateTransferCode();
     var amount = renewalSelectedPkg.amount;
-
     var btn = $('renewalNextBtn');
     if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang tạo...'; }
-
     try {
         var reqData = {
-            email: currentUser.email,
-            name: currentUser.name,
-            package: renewalSelectedPkg.id,
-            packageLabel: renewalSelectedPkg.label,
-            amount: amount,
-            days: renewalSelectedPkg.days,
-            transferCode: transferCode,
-            status: 'pending',
-            method: 'manual',
+            email: currentUser.email, name: currentUser.name,
+            package: renewalSelectedPkg.id, packageLabel: renewalSelectedPkg.label,
+            amount: amount, days: renewalSelectedPkg.days,
+            transferCode: transferCode, status: 'pending', method: 'manual',
             createdAt: firebase.firestore.FieldValue.serverTimestamp()
         };
-        if (renewalSelectedPkg.permanent) {
-            reqData.isPermanent = true;
-        }
+        if (renewalSelectedPkg.permanent) reqData.isPermanent = true;
         var reqRef = await db.collection('renewal_requests').add(reqData);
         renewalCurrentReq = { id: reqRef.id, code: transferCode };
     } catch(e) {
@@ -1784,30 +1633,18 @@ function renderPaymentScreen() {
     var pkg = renewalSelectedPkg;
     var code = renewalCurrentReq.code;
     var amount = pkg.amount;
-
-    var qrUrl = 'https://img.vietqr.io/image/' + BANK_CONFIG.bank_id +
-                '-' + BANK_CONFIG.account_no + '-compact2.png' +
-                '?amount=' + amount +
-                '&addInfo=' + encodeURIComponent(code) +
-                '&accountName=' + encodeURIComponent(BANK_CONFIG.account_name);
-
-    var durationText = pkg.permanent
-        ? '<b style="color:#dc2626">💎 VĨNH VIỄN</b>'
-        : pkg.days + ' ngày';
-
+    var qrUrl = 'https://img.vietqr.io/image/' + BANK_CONFIG.bank_id + '-' + BANK_CONFIG.account_no + '-compact2.png' +
+                '?amount=' + amount + '&addInfo=' + encodeURIComponent(code) + '&accountName=' + encodeURIComponent(BANK_CONFIG.account_name);
+    var durationText = pkg.permanent ? '<b style="color:#dc2626">💎 VĨNH VIỄN</b>' : pkg.days + ' ngày';
     $('renewalBody').innerHTML =
         '<div class="renewal-current">' +
             '<div class="rc-icon"><i class="fas fa-shopping-cart"></i></div>' +
-            '<div class="rc-info">' +
-                '<div class="rc-title">Gói ' + escapeHtml(pkg.label) + '</div>' +
-                '<div class="rc-desc">Số tiền: <b>' + formatMoney(amount) + ' VNĐ</b> · ' + durationText + '</div>' +
-            '</div>' +
-        '</div>' +
+            '<div class="rc-info"><div class="rc-title">Gói ' + escapeHtml(pkg.label) + '</div>' +
+            '<div class="rc-desc">Số tiền: <b>' + formatMoney(amount) + ' VNĐ</b> · ' + durationText + '</div></div></div>' +
         '<div class="renewal-section-title"><i class="fas fa-qrcode"></i> Quét mã để thanh toán</div>' +
         '<div class="qr-wrap">' +
             '<img class="qr-img" src="' + qrUrl + '" alt="QR" onerror="this.style.display=\'none\'">' +
-            '<div class="qr-hint">Mở app ngân hàng, quét QR để chuyển khoản. Hoặc chuyển thủ công theo thông tin bên dưới.</div>' +
-        '</div>' +
+            '<div class="qr-hint">Mở app ngân hàng, quét QR để chuyển khoản. Hoặc chuyển thủ công theo thông tin bên dưới.</div></div>' +
         '<div class="bank-info">' +
             '<div class="bank-row"><span class="br-label">Ngân hàng</span><span class="br-value">' + escapeHtml(BANK_CONFIG.bank_name) + '</span></div>' +
             '<div class="bank-row"><span class="br-label">Số TK</span><span class="br-value">' + escapeHtml(BANK_CONFIG.account_no) +
@@ -1815,18 +1652,15 @@ function renderPaymentScreen() {
             '<div class="bank-row"><span class="br-label">Chủ TK</span><span class="br-value">' + escapeHtml(BANK_CONFIG.account_name) + '</span></div>' +
             '<div class="bank-row"><span class="br-label">Số tiền</span><span class="br-value code">' + formatMoney(amount) + 'đ</span></div>' +
             '<div class="bank-row"><span class="br-label">Nội dung</span><span class="br-value code">' + escapeHtml(code) +
-                '<button class="copy-btn" onclick="copyText(\'' + escapeJs(code) + '\', this)"><i class="fas fa-copy"></i></button></span></div>' +
-        '</div>' +
+                '<button class="copy-btn" onclick="copyText(\'' + escapeJs(code) + '\', this)"><i class="fas fa-copy"></i></button></span></div></div>' +
         '<div class="payment-steps">' +
             '<div class="step"><span class="num">1</span><div>Chuyển <b>' + formatMoney(amount) + ' VNĐ</b> đến STK trên</div></div>' +
             '<div class="step"><span class="num">2</span><div>Ghi đúng nội dung: <b>' + escapeHtml(code) + '</b></div></div>' +
             '<div class="step"><span class="num">3</span><div>Nhấn nút <b>"Tôi đã thanh toán"</b></div></div>' +
-            '<div class="step"><span class="num">4</span><div>Chờ admin xác nhận trong <b>1-5 phút</b></div></div>' +
-        '</div>' +
+            '<div class="step"><span class="num">4</span><div>Chờ admin xác nhận trong <b>1-5 phút</b></div></div></div>' +
         '<div class="renewal-actions">' +
             '<button class="renewal-btn" onclick="cancelRenewal()"><i class="fas fa-times"></i> Hủy</button>' +
-            '<button class="renewal-btn success" id="renewalConfirmBtn" onclick="userConfirmPaid()"><i class="fas fa-check"></i> Tôi đã thanh toán</button>' +
-        '</div>';
+            '<button class="renewal-btn success" id="renewalConfirmBtn" onclick="userConfirmPaid()"><i class="fas fa-check"></i> Tôi đã thanh toán</button></div>';
 }
 
 window.copyText = function(text, btn) {
@@ -1853,28 +1687,23 @@ window.userConfirmPaid = async function() {
         try {
             var _snap = await db.collection('renewal_requests').doc(renewalCurrentReq.id).get();
             if (_snap.exists) _reqData = _snap.data();
-        } catch(_e) { console.warn('Không lấy được reqData:', _e); }
-
+        } catch(_e) {}
         await db.collection('renewal_requests').doc(renewalCurrentReq.id).update({
             userConfirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'user_paid'
         });
-
         if (_reqData && typeof window.notifyTelegramUserPaid === 'function') {
             try {
                 window.notifyTelegramUserPaid({
                     email: _reqData.email || currentUser.email,
                     name: _reqData.name || currentUser.name,
-                    amount: _reqData.amount,
-                    package: _reqData.package,
-                    packageLabel: _reqData.packageLabel,
-                    days: _reqData.days,
+                    amount: _reqData.amount, package: _reqData.package,
+                    packageLabel: _reqData.packageLabel, days: _reqData.days,
                     isPermanent: _reqData.isPermanent || false,
                     transferCode: _reqData.transferCode
                 });
-            } catch(_te) { console.warn('Telegram notify lỗi:', _te); }
+            } catch(_te) {}
         }
-
         renderPendingConfirm();
     } catch(e) {
         alert('❌ Lỗi: ' + e.message);
@@ -1888,19 +1717,14 @@ function renderPendingConfirm() {
     $('renewalBody').innerHTML =
         '<div class="renewal-success">' +
             '<div class="icon" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);box-shadow:0 8px 24px rgba(124,58,237,.4)">' +
-                '<i class="fas fa-hourglass-half"></i>' +
-            '</div>' +
+                '<i class="fas fa-hourglass-half"></i></div>' +
             '<h3>Đang chờ xác nhận</h3>' +
             '<p>Admin sẽ kiểm tra và xác nhận trong <b>1-5 phút</b>.</p>' +
-            '<div class="info-box">' +
-                '<i class="fas fa-info-circle" style="color:#7c3aed"></i>' +
-                '<div>Nếu sau <b>10 phút</b> chưa được gia hạn, liên hệ Zalo kèm mã: <b>' + escapeHtml(renewalCurrentReq.code) + '</b></div>' +
-            '</div>' +
+            '<div class="info-box"><i class="fas fa-info-circle" style="color:#7c3aed"></i>' +
+                '<div>Nếu sau <b>10 phút</b> chưa được gia hạn, liên hệ Zalo kèm mã: <b>' + escapeHtml(renewalCurrentReq.code) + '</b></div></div>' +
             '<div style="display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center;margin-top:.5rem">' +
                 '<a class="renewal-btn" href="' + zaloUrl + '" target="_blank" rel="noopener"><i class="fas fa-comment-dots"></i> Liên hệ Zalo</a>' +
-                '<button class="renewal-btn primary" onclick="closeRenewalModal()"><i class="fas fa-check"></i> Đóng</button>' +
-            '</div>' +
-        '</div>';
+                '<button class="renewal-btn primary" onclick="closeRenewalModal()"><i class="fas fa-check"></i> Đóng</button></div></div>';
 }
 
 function listenRenewalRequest(reqId) {
@@ -1929,12 +1753,10 @@ function showRenewalSuccess(data) {
         '<div class="renewal-success">' +
             '<div class="icon"><i class="fas fa-' + (isPermanent ? 'crown' : 'gem') + '"></i></div>' +
             '<h3>🎉 ' + (isPermanent ? 'Kích hoạt VĨNH VIỄN thành công!' : 'Gia hạn thành công!') + '</h3>' +
-            '<p>' + (isPermanent
-                ? 'Bạn đã sở hữu <b>gói VĨNH VIỄN</b>. Tài khoản không bao giờ hết hạn! 💎'
-                : 'Tài khoản đã được gia hạn thêm <b>' + data.days + ' ngày</b>.') + '</p>' +
+            '<p>' + (isPermanent ? 'Bạn đã sở hữu <b>gói VĨNH VIỄN</b>. Tài khoản không bao giờ hết hạn! 💎'
+                                 : 'Tài khoản đã được gia hạn thêm <b>' + data.days + ' ngày</b>.') + '</p>' +
             (newExpiry ? '<div class="info-box"><i class="fas fa-calendar-check" style="color:var(--success)"></i><div>Hạn mới: <b>' + newExpiry + '</b></div></div>' : '') +
-            '<button class="renewal-btn primary" onclick="closeRenewalModal();location.reload()" style="margin-top:.5rem"><i class="fas fa-check"></i> Hoàn tất</button>' +
-        '</div>';
+            '<button class="renewal-btn primary" onclick="closeRenewalModal();location.reload()" style="margin-top:.5rem"><i class="fas fa-check"></i> Hoàn tất</button></div>';
 }
 
 window.cancelRenewal = async function() {
@@ -1981,14 +1803,12 @@ async function refreshCurrentUser() {
             currentUser.isExpiredOnly = false;
             isDemo = false;
         }
-
         try { localStorage.removeItem('user_cache_' + currentUser.email); } catch(e) {}
         try {
             localStorage.setItem('user_cache_' + currentUser.email, JSON.stringify({
                 data: currentUser, expires: Date.now() + 12 * 60 * 60 * 1000
             }));
         } catch(e) {}
-
         publishTierState();
         if (typeof applyUserUI === 'function') applyUserUI();
     } catch(e) { console.error('refreshCurrentUser error:', e); }
@@ -1997,24 +1817,16 @@ async function refreshCurrentUser() {
 /* ============ LỊCH SỬ GIA HẠN (USER) ============ */
 window.openRenewalHistory = async function() {
     if (!currentUser) { showLoginModal(); return; }
-
     var titleEl = document.querySelector('#renewalHistoryModal h2');
-    if (titleEl) {
-        titleEl.innerHTML = '<i class="fas fa-history"></i> Lịch sử gia hạn';
-    }
-
+    if (titleEl) titleEl.innerHTML = '<i class="fas fa-history"></i> Lịch sử gia hạn';
     var listEl = $('renewalHistoryList');
-    listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">' +
-        '<i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>';
-
+    listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>';
     $('renewalHistoryModal').classList.add('show');
 
     try {
         var snapshot = await db.collection('renewal_requests')
             .where('email', '==', currentUser.email)
-            .orderBy('createdAt', 'desc')
-            .limit(50)
-            .get();
+            .orderBy('createdAt', 'desc').limit(50).get();
 
         if (snapshot.empty) {
             listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">' +
@@ -2026,60 +1838,8 @@ window.openRenewalHistory = async function() {
         var html = '';
         snapshot.forEach(function(doc) {
             var d = doc.data();
-            var created = d.createdAt ? d.createdAt.toDate() : null;
-            var createdStr = created ? created.toLocaleString('vi-VN') : 'Không rõ';
-
-            var statusMap = {
-                'pending':   { text: '⏱ Chờ chuyển khoản', cls: 'pending' },
-                'user_paid': { text: '⏳ Chờ xác nhận',     cls: 'user_paid' },
-                'confirmed': { text: '✅ Đã xác nhận',      cls: 'confirmed' },
-                'cancelled': { text: '🚫 Đã hủy',           cls: 'cancelled' },
-                'rejected':  { text: '❌ Bị từ chối',       cls: 'rejected' }
-            };
-            var st = statusMap[d.status] || { text: d.status || 'Không rõ', cls: 'pending' };
-
-            var confirmInfo = '';
-            if (d.confirmedAt) {
-                var cf = d.confirmedAt.toDate ? d.confirmedAt.toDate() : null;
-                if (cf) confirmInfo = '<div class="rh-date"><i class="fas fa-check-circle" style="color:#16a34a"></i> Xác nhận: ' + cf.toLocaleString('vi-VN') + '</div>';
-            } else if (d.userConfirmedAt) {
-                var ucf = d.userConfirmedAt.toDate ? d.userConfirmedAt.toDate() : null;
-                if (ucf) confirmInfo = '<div class="rh-date"><i class="fas fa-clock" style="color:#f59e0b"></i> Bạn xác nhận: ' + ucf.toLocaleString('vi-VN') + '</div>';
-            } else if (d.rejectedAt) {
-                var rj = d.rejectedAt.toDate ? d.rejectedAt.toDate() : null;
-                if (rj) confirmInfo = '<div class="rh-date"><i class="fas fa-times-circle" style="color:#dc2626"></i> Từ chối: ' + rj.toLocaleString('vi-VN') + (d.rejectReason ? ' — ' + escapeHtml(d.rejectReason) : '') + '</div>';
-            }
-
-            var newExpiryInfo = '';
-            if (d.newExpiresAt) {
-                var ne = d.newExpiresAt.toDate ? d.newExpiresAt.toDate() : null;
-                if (ne) newExpiryInfo = '<div class="rh-date"><i class="fas fa-calendar-check" style="color:#16a34a"></i> Hạn mới: <b>' + ne.toLocaleDateString('vi-VN') + '</b></div>';
-            }
-            if (d.isPermanent) {
-                newExpiryInfo += '<div class="rh-date"><i class="fas fa-crown" style="color:#dc2626"></i> <b>VĨNH VIỄN</b></div>';
-            }
-
-            html +=
-                '<div class="renewal-history-item">' +
-                    '<div class="rh-head">' +
-                        '<div>' +
-                            '<div class="rh-pkg">' + escapeHtml(d.packageLabel || d.package || 'Gói') + '</div>' +
-                            '<div class="rh-date"><i class="fas fa-clock"></i> ' + createdStr + '</div>' +
-                        '</div>' +
-                        '<div class="rh-amount">' + formatMoney(d.amount || 0) + 'đ</div>' +
-                    '</div>' +
-                    '<div>' +
-                        '<span class="rh-code">' + escapeHtml(d.transferCode || '—') + '</span>' +
-                    '</div>' +
-                    '<div class="rh-foot">' +
-                        '<span class="rh-status ' + st.cls + '">' + st.text + '</span>' +
-                        '<span>' + (d.isPermanent ? 'Vĩnh viễn' : (d.days || 0) + ' ngày') + '</span>' +
-                    '</div>' +
-                    confirmInfo +
-                    newExpiryInfo +
-                '</div>';
+            html += buildHistoryItemHtml(d, false);
         });
-
         listEl.innerHTML = html;
     } catch(e) {
         console.error('Lỗi load lịch sử:', e);
@@ -2094,27 +1854,18 @@ window.openUserRenewalHistory = async function(email) {
         alert('Chỉ admin mới có quyền xem lịch sử gia hạn!');
         return;
     }
-
     var user = usersCache.find(function(u) { return u.email === email; });
     var userName = user ? (user.name || email.split('@')[0]) : email.split('@')[0];
-
     var titleEl = document.querySelector('#renewalHistoryModal h2');
-    if (titleEl) {
-        titleEl.innerHTML = '<i class="fas fa-history"></i> Lịch sử gia hạn — ' + escapeHtml(userName);
-    }
-
+    if (titleEl) titleEl.innerHTML = '<i class="fas fa-history"></i> Lịch sử gia hạn — ' + escapeHtml(userName);
     var listEl = $('renewalHistoryList');
-    listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">' +
-        '<i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>';
-
+    listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>';
     $('renewalHistoryModal').classList.add('show');
 
     try {
         var snapshot = await db.collection('renewal_requests')
             .where('email', '==', email.toLowerCase())
-            .orderBy('createdAt', 'desc')
-            .limit(100)
-            .get();
+            .orderBy('createdAt', 'desc').limit(100).get();
 
         if (snapshot.empty) {
             listEl.innerHTML = '<div class="no-data" style="padding:2rem 1rem;text-align:center;color:var(--text-3)">' +
@@ -2126,93 +1877,22 @@ window.openUserRenewalHistory = async function(email) {
         var totalAmount = 0, totalConfirmed = 0, totalPending = 0, totalRejected = 0;
         snapshot.forEach(function(doc) {
             var d = doc.data();
-            if (d.status === 'confirmed') {
-                totalAmount += (d.amount || 0);
-                totalConfirmed++;
-            } else if (d.status === 'pending' || d.status === 'user_paid') {
-                totalPending++;
-            } else if (d.status === 'rejected') {
-                totalRejected++;
-            }
+            if (d.status === 'confirmed') { totalAmount += (d.amount || 0); totalConfirmed++; }
+            else if (d.status === 'pending' || d.status === 'user_paid') totalPending++;
+            else if (d.status === 'rejected') totalRejected++;
         });
 
-        var statsHtml =
-            '<div class="renewal-history-stats">' +
-                '<div class="rhs-item">' +
-                    '<div class="rhs-label">Tổng chi tiêu</div>' +
-                    '<div class="rhs-value amount">' + formatMoney(totalAmount) + 'đ</div>' +
-                '</div>' +
-                '<div class="rhs-item">' +
-                    '<div class="rhs-label">Số giao dịch</div>' +
-                    '<div class="rhs-value">' + snapshot.size + '</div>' +
-                '</div>' +
-                '<div class="rhs-item">' +
-                    '<div class="rhs-label">Đã xác nhận</div>' +
-                    '<div class="rhs-value" style="color:var(--success)">' + totalConfirmed + '</div>' +
-                '</div>' +
-                '<div class="rhs-item">' +
-                    '<div class="rhs-label">Chờ / Từ chối</div>' +
-                    '<div class="rhs-value" style="color:#f59e0b">' + totalPending + ' / ' + totalRejected + '</div>' +
-                '</div>' +
-            '</div>';
+        var statsHtml = '<div class="renewal-history-stats">' +
+            '<div class="rhs-item"><div class="rhs-label">Tổng chi tiêu</div><div class="rhs-value amount">' + formatMoney(totalAmount) + 'đ</div></div>' +
+            '<div class="rhs-item"><div class="rhs-label">Số giao dịch</div><div class="rhs-value">' + snapshot.size + '</div></div>' +
+            '<div class="rhs-item"><div class="rhs-label">Đã xác nhận</div><div class="rhs-value" style="color:var(--success)">' + totalConfirmed + '</div></div>' +
+            '<div class="rhs-item"><div class="rhs-label">Chờ / Từ chối</div><div class="rhs-value" style="color:#f59e0b">' + totalPending + ' / ' + totalRejected + '</div></div></div>';
 
         var html = statsHtml;
         snapshot.forEach(function(doc) {
             var d = doc.data();
-            var created = d.createdAt ? d.createdAt.toDate() : null;
-            var createdStr = created ? created.toLocaleString('vi-VN') : 'Không rõ';
-
-            var statusMap = {
-                'pending':   { text: '⏱ Chờ chuyển khoản', cls: 'pending' },
-                'user_paid': { text: '⏳ Chờ xác nhận',     cls: 'user_paid' },
-                'confirmed': { text: '✅ Đã xác nhận',      cls: 'confirmed' },
-                'cancelled': { text: '🚫 Đã hủy',           cls: 'cancelled' },
-                'rejected':  { text: '❌ Bị từ chối',       cls: 'rejected' }
-            };
-            var st = statusMap[d.status] || { text: d.status || 'Không rõ', cls: 'pending' };
-
-            var confirmInfo = '';
-            if (d.confirmedAt) {
-                var cf = d.confirmedAt.toDate ? d.confirmedAt.toDate() : null;
-                if (cf) confirmInfo = '<div class="rh-date"><i class="fas fa-check-circle" style="color:#16a34a"></i> Xác nhận: ' + cf.toLocaleString('vi-VN') + ' — bởi <b>' + escapeHtml(d.confirmedBy || 'admin') + '</b></div>';
-            } else if (d.userConfirmedAt) {
-                var ucf = d.userConfirmedAt.toDate ? d.userConfirmedAt.toDate() : null;
-                if (ucf) confirmInfo = '<div class="rh-date"><i class="fas fa-clock" style="color:#f59e0b"></i> User xác nhận: ' + ucf.toLocaleString('vi-VN') + '</div>';
-            } else if (d.rejectedAt) {
-                var rj = d.rejectedAt.toDate ? d.rejectedAt.toDate() : null;
-                if (rj) confirmInfo = '<div class="rh-date"><i class="fas fa-times-circle" style="color:#dc2626"></i> Từ chối: ' + rj.toLocaleString('vi-VN') + (d.rejectReason ? ' — ' + escapeHtml(d.rejectReason) : '') + '</div>';
-            }
-
-            var newExpiryInfo = '';
-            if (d.newExpiresAt) {
-                var ne = d.newExpiresAt.toDate ? d.newExpiresAt.toDate() : null;
-                if (ne) newExpiryInfo = '<div class="rh-date"><i class="fas fa-calendar-check" style="color:#16a34a"></i> Hạn mới: <b>' + ne.toLocaleDateString('vi-VN') + '</b></div>';
-            }
-            if (d.isPermanent) {
-                newExpiryInfo += '<div class="rh-date"><i class="fas fa-crown" style="color:#dc2626"></i> <b>VĨNH VIỄN</b></div>';
-            }
-
-            html +=
-                '<div class="renewal-history-item">' +
-                    '<div class="rh-head">' +
-                        '<div>' +
-                            '<div class="rh-pkg">' + escapeHtml(d.packageLabel || d.package || 'Gói') + '</div>' +
-                            '<div class="rh-date"><i class="fas fa-clock"></i> ' + createdStr + '</div>' +
-                        '</div>' +
-                        '<div class="rh-amount">' + formatMoney(d.amount || 0) + 'đ</div>' +
-                    '</div>' +
-                    '<div>' +
-                        '<span class="rh-code">' + escapeHtml(d.transferCode || '—') + '</span>' +
-                    '</div>' +
-                    '<div class="rh-foot">' +
-                        '<span class="rh-status ' + st.cls + '">' + st.text + '</span>' +
-                        '<span>' + (d.isPermanent ? 'Vĩnh viễn' : (d.days || 0) + ' ngày') + '</span>' +
-                    '</div>' +
-                    confirmInfo +
-                    newExpiryInfo +
-                '</div>';
+            html += buildHistoryItemHtml(d, true);
         });
-
         listEl.innerHTML = html;
     } catch(e) {
         console.error('Lỗi load lịch sử:', e);
@@ -2221,20 +1901,67 @@ window.openUserRenewalHistory = async function(email) {
     }
 };
 
+/* Helper chung render 1 item lịch sử gia hạn */
+function buildHistoryItemHtml(d, showAdminInfo) {
+    var created = d.createdAt ? d.createdAt.toDate() : null;
+    var createdStr = created ? created.toLocaleString('vi-VN') : 'Không rõ';
+
+    var statusMap = {
+        'pending':   { text: '⏱ Chờ chuyển khoản', cls: 'pending' },
+        'user_paid': { text: '⏳ Chờ xác nhận',     cls: 'user_paid' },
+        'confirmed': { text: '✅ Đã xác nhận',      cls: 'confirmed' },
+        'cancelled': { text: '🚫 Đã hủy',           cls: 'cancelled' },
+        'rejected':  { text: '❌ Bị từ chối',       cls: 'rejected' }
+    };
+    var st = statusMap[d.status] || { text: d.status || 'Không rõ', cls: 'pending' };
+    var isPermanent = d.isPermanent || d.package === 'forever' || d.days >= 36500;
+
+    var confirmInfo = '';
+    if (d.confirmedAt) {
+        var cf = d.confirmedAt.toDate ? d.confirmedAt.toDate() : null;
+        if (cf) confirmInfo = '<div class="rh-date"><i class="fas fa-check-circle" style="color:#16a34a"></i> Xác nhận: ' + cf.toLocaleString('vi-VN') + (showAdminInfo && d.confirmedBy ? ' — bởi <b>' + escapeHtml(d.confirmedBy) + '</b>' : '') + '</div>';
+    } else if (d.userConfirmedAt) {
+        var ucf = d.userConfirmedAt.toDate ? d.userConfirmedAt.toDate() : null;
+        if (ucf) confirmInfo = '<div class="rh-date"><i class="fas fa-clock" style="color:#f59e0b"></i> User xác nhận: ' + ucf.toLocaleString('vi-VN') + '</div>';
+    } else if (d.rejectedAt) {
+        var rj = d.rejectedAt.toDate ? d.rejectedAt.toDate() : null;
+        if (rj) confirmInfo = '<div class="rh-date"><i class="fas fa-times-circle" style="color:#dc2626"></i> Từ chối: ' + rj.toLocaleString('vi-VN') + (d.rejectReason ? ' — ' + escapeHtml(d.rejectReason) : '') + '</div>';
+    }
+
+    var newExpiryInfo = '';
+    if (d.newExpiresAt) {
+        var ne = d.newExpiresAt.toDate ? d.newExpiresAt.toDate() : null;
+        if (ne) newExpiryInfo = '<div class="rh-date"><i class="fas fa-calendar-check" style="color:#16a34a"></i> Hạn mới: <b>' + ne.toLocaleDateString('vi-VN') + '</b></div>';
+    }
+    if (isPermanent) {
+        newExpiryInfo += '<div class="rh-date"><i class="fas fa-crown" style="color:#dc2626"></i> <b>VĨNH VIỄN</b></div>';
+    }
+
+    return '<div class="renewal-history-item">' +
+        '<div class="rh-head">' +
+            '<div>' +
+                '<div class="rh-pkg">' + escapeHtml(d.packageLabel || d.package || 'Gói') + (showAdminInfo && d.email ? ' — ' + escapeHtml(d.email) : '') + '</div>' +
+                '<div class="rh-date"><i class="fas fa-clock"></i> ' + createdStr + '</div>' +
+            '</div>' +
+            '<div class="rh-amount">' + formatMoney(d.amount || 0) + 'đ</div>' +
+        '</div>' +
+        '<div><span class="rh-code">' + escapeHtml(d.transferCode || '—') + '</span></div>' +
+        '<div class="rh-foot">' +
+            '<span class="rh-status ' + st.cls + '">' + st.text + '</span>' +
+            '<span>' + (isPermanent ? 'Vĩnh viễn' : (d.days || 0) + ' ngày') + '</span>' +
+        '</div>' + confirmInfo + newExpiryInfo +
+    '</div>';
+}
+
 /* ============ ADMIN PERMISSIONS UI ============ */
 window.openPermissionModal = function(email) {
-    if (!isSuperAdmin()) {
-        alert('Chỉ Super Admin mới có quyền phân quyền!');
-        return;
-    }
+    if (!isSuperAdmin()) { alert('Chỉ Super Admin mới có quyền phân quyền!'); return; }
     var user = usersCache.find(function(u) { return u.email === email; });
     if (!user) return alert('Không tìm thấy user!');
     if (user.role !== 'admin') return alert('Chỉ phân quyền cho admin!');
-
     editingPermissionEmail = email;
     $('permissionName').textContent = user.name || email.split('@')[0];
     $('permissionEmail').textContent = email;
-
     var perms = user.permissions || {};
     var html = '';
     ADMIN_PERMISSIONS.forEach(function(p) {
@@ -2242,15 +1969,10 @@ window.openPermissionModal = function(email) {
         var checked = value ? 'checked' : '';
         var disabled = p.key === 'canManageAdmin' ? 'disabled' : '';
         html += '<div class="permission-item">' +
-            '<div class="pi-info">' +
-                '<div class="pi-name">' + escapeHtml(p.name) + '</div>' +
-                '<div class="pi-desc">' + escapeHtml(p.desc) + '</div>' +
-            '</div>' +
-            '<label class="pi-toggle">' +
-                '<input type="checkbox" data-perm="' + p.key + '" ' + checked + ' ' + disabled + '>' +
-                '<span class="pi-slider"></span>' +
-            '</label>' +
-        '</div>';
+            '<div class="pi-info"><div class="pi-name">' + escapeHtml(p.name) + '</div>' +
+            '<div class="pi-desc">' + escapeHtml(p.desc) + '</div></div>' +
+            '<label class="pi-toggle"><input type="checkbox" data-perm="' + p.key + '" ' + checked + ' ' + disabled + '>' +
+            '<span class="pi-slider"></span></label></div>';
     });
     $('permissionList').innerHTML = html;
     $('permissionModal').classList.add('show');
@@ -2269,8 +1991,7 @@ window.savePermissions = async function() {
     });
     try {
         await db.collection('allowed_users').doc(editingPermissionEmail).update({
-            permissions: perms,
-            isSubAdmin: true
+            permissions: perms, isSubAdmin: true
         });
         try { localStorage.removeItem('user_cache_' + editingPermissionEmail); } catch(e) {}
         try { localStorage.removeItem('admin_users_cache'); } catch(e) {}
@@ -2280,7 +2001,7 @@ window.savePermissions = async function() {
     } catch(e) { alert('❌ Lỗi: ' + e.message); }
 };
 
-/* ============ ADMIN PANEL ============ */
+/* ============ ADMIN PANEL INIT ============ */
 function initAdminPanel() {
     if ($('openAdminBtn')) $('openAdminBtn').addEventListener('click', function() {
         $('userDropdown').classList.remove('show');
@@ -2299,6 +2020,7 @@ function initAdminPanel() {
     if ($('importCancelBtn')) $('importCancelBtn').addEventListener('click', function() { $('importModal').classList.remove('show'); importRows = []; });
     if ($('importModal')) $('importModal').addEventListener('click', function(e) { if (e.target === this) { $('importModal').classList.remove('show'); importRows = []; } });
     if ($('importConfirmBtn')) $('importConfirmBtn').addEventListener('click', doImport);
+
     if ($('showAddUserBtn')) $('showAddUserBtn').addEventListener('click', function() {
         $('addUserForm').classList.toggle('show');
         if ($('addUserForm').classList.contains('show')) $('newUserEmail').focus();
@@ -2328,50 +2050,38 @@ function initAdminPanel() {
         });
     }
 
-    /* Filter buttons */
-    document.querySelectorAll('.admin-filter-btn').forEach(function(btn) {
+    /* Filter buttons (chỉ data-filter, không data-renewal-tab) */
+    document.querySelectorAll('.admin-filter-btn[data-filter]').forEach(function(btn) {
         btn.addEventListener('click', function() {
             setAdminFilter(this.dataset.filter);
         });
     });
 
-    /* Refresh buttons */
-    if ($('refreshPendingRenewalsBtn')) $('refreshPendingRenewalsBtn').addEventListener('click', function() { loadPendingRenewals(); });
-    if ($('refreshConfirmedRenewalsBtn')) $('refreshConfirmedRenewalsBtn').addEventListener('click', function() { loadConfirmedRenewals(); });
+    /* Refresh renewals + renewal history */
+    if ($('refreshRenewalsBtn')) $('refreshRenewalsBtn').addEventListener('click', function() { loadRenewals(); });
+    if ($('refreshRenewalHistoryBtn')) $('refreshRenewalHistoryBtn').addEventListener('click', function() { loadAdminRenewalHistory(); });
 
-    /* Section toggles */
-    if ($('toggleAdminStatsBtn')) {
-        $('toggleAdminStatsBtn').addEventListener('click', function() {
-            var sec = $('adminStatsSection');
+    /* ⭐ TOGGLE ẨN/HIỆN CHO TỪNG SECTION ⭐ */
+    function bindSectionToggle(btnId, sectionId) {
+        var btn = $(btnId);
+        if (!btn) return;
+        btn.addEventListener('click', function() {
+            var sec = $(sectionId);
+            if (!sec) return;
             sec.classList.toggle('collapsed');
-            this.classList.toggle('active', !sec.classList.contains('collapsed'));
+            var isVisible = !sec.classList.contains('collapsed');
+            // Đổi icon
+            var icon = btn.querySelector('i');
+            if (icon) {
+                icon.className = isVisible ? 'fas fa-eye' : 'fas fa-eye-slash';
+            }
+            btn.classList.toggle('active', isVisible);
         });
-        $('toggleAdminStatsBtn').classList.add('active');
     }
-    if ($('togglePendingRenewalsBtn')) {
-        $('togglePendingRenewalsBtn').addEventListener('click', function() {
-            var sec = $('adminPendingRenewalsSection');
-            sec.classList.toggle('collapsed');
-            this.classList.toggle('active', !sec.classList.contains('collapsed'));
-        });
-        $('togglePendingRenewalsBtn').classList.add('active');
-    }
-    if ($('toggleConfirmedRenewalsBtn')) {
-        $('toggleConfirmedRenewalsBtn').addEventListener('click', function() {
-            var sec = $('adminConfirmedRenewalsSection');
-            sec.classList.toggle('collapsed');
-            this.classList.toggle('active', !sec.classList.contains('collapsed'));
-        });
-        $('toggleConfirmedRenewalsBtn').classList.add('active');
-    }
-    if ($('toggleAdminLogsBtn')) {
-        $('toggleAdminLogsBtn').addEventListener('click', function() {
-            var sec = $('adminLogsSection');
-            sec.classList.toggle('collapsed');
-            this.classList.toggle('active', !sec.classList.contains('collapsed'));
-        });
-        $('toggleAdminLogsBtn').classList.add('active');
-    }
+    bindSectionToggle('toggleRenewalsBtn', 'adminRenewalsSection');
+    bindSectionToggle('toggleUsersBtn', 'adminUsersSection');
+    bindSectionToggle('toggleLogsBtn', 'adminLogsSection');
+    bindSectionToggle('toggleRenewalHistoryBtn', 'adminRenewalHistorySection');
 
     /* Permission modal */
     if ($('permissionClose')) $('permissionClose').addEventListener('click', closePermissionModal);
@@ -2381,7 +2091,6 @@ function initAdminPanel() {
 }
 
 async function doAddUser() {
-    /* ⭐ Check quyền */
     if (!isSuperAdmin() && !hasPermission('canAddUser')) {
         alert('Bạn không có quyền thêm user!');
         return;
@@ -2401,9 +2110,7 @@ async function doAddUser() {
         if (doc.exists) { alert('Email này đã tồn tại!'); return; }
 
         var setData = {
-            email: email,
-            name: name, role: role,
-            tier: 'active',
+            email: email, name: name, role: role, tier: 'active',
             addedAt: firebase.firestore.FieldValue.serverTimestamp(),
             addedBy: currentUser.email
         };
@@ -2430,27 +2137,17 @@ function openAdminPanel() {
     if (!currentUser || currentUser.role !== 'admin') return;
     $('adminModal').classList.add('show');
 
-    /* ⭐ Ẩn/hiện nút Export/Import theo quyền */
     var canIE = isSuperAdmin() || hasPermission('canImportExport');
     if ($('exportExcelBtn')) $('exportExcelBtn').style.display = canIE ? 'inline-flex' : 'none';
     if ($('importExcelBtn')) $('importExcelBtn').style.display = canIE ? 'inline-flex' : 'none';
 
-    /* ⭐ Ẩn/hiện nút "Thêm" theo quyền */
     var canAdd = isSuperAdmin() || hasPermission('canAddUser');
     if ($('showAddUserBtn')) $('showAddUserBtn').style.display = canAdd ? 'inline-flex' : 'none';
 
     loadUsers(false);
     loadLogs();
-    loadPendingRenewals();
-    loadConfirmedRenewals();
-
-    /* ⭐ Tự động cuộn tới khung Pending nếu có yêu cầu chờ */
-    setTimeout(function() {
-        var section = $('adminPendingRenewalsSection');
-        if (section && section.classList.contains('has-pending')) {
-            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-    }, 800);
+    loadRenewals();
+    loadAdminRenewalHistory();
 }
 
 function loadUsers(forceRefresh) {
@@ -2514,53 +2211,27 @@ function loadLastLoginMap() {
     }).catch(function() {});
 }
 
+/* ═══ CẬP NHẬT SUMMARY BAR + FILTER COUNTS ═══ */
 function renderAdminStats() {
-    var hidden = isHiddenAdmin();
     var usersOnly = usersCache.filter(function(u) { return u.role !== 'admin'; });
     var users = usersOnly.length;
     var admins = usersCache.length - users;
-    var now = Date.now();
-    var day1 = 24 * 60 * 60 * 1000;
-    var day7 = 7 * 24 * 60 * 60 * 1000;
-    var active = 0, online = 0, never = 0, expired = 0, expiring = 0, trialCount = 0, permanentCount = 0;
 
-    usersOnly.forEach(function(u) {
-        var last = lastLoginMap[(u.email || '').toLowerCase()];
-        if (last) {
-            var diff = now - last.getTime();
-            if (diff <= day7) active++;
-            if (diff <= day1) online++;
-        } else never++;
-        if (u.isPermanent) permanentCount++;
-        if (u.tier === 'trial' || u.isTrial) trialCount++;
-        if (u.expiresAt && !u.isPermanent) {
-            var d = getExpiryDate(u.expiresAt);
-            if (d && !isNaN(d.getTime())) {
-                var daysLeft = Math.ceil((d.getTime() - now) / (24 * 60 * 60 * 1000));
-                if (daysLeft < 0) expired++;
-                else if (daysLeft <= 7) expiring++;
-            }
+    /* ⭐ SUMMARY BAR: Tổng User (luôn hiện), Tổng Admin (chỉ Super Admin) */
+    var summaryUsers = $('summaryTotalUsers');
+    if (summaryUsers) summaryUsers.textContent = users;
+
+    var summaryAdminItem = $('summaryAdminItem');
+    var summaryAdmins = $('summaryTotalAdmins');
+    if (summaryAdminItem && summaryAdmins) {
+        if (isSuperAdmin()) {
+            summaryAdminItem.style.display = 'flex';
+            summaryAdmins.textContent = admins;
+        } else {
+            summaryAdminItem.style.display = 'none';
         }
-    });
-
-    if (hidden) {
-        $('adminStats').innerHTML =
-            '<div class="stat-card"><div class="num">' + users + '</div><div class="label">Tổng User</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#16a34a">' + online + '</div><div class="label">Đang hoạt động</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#f59e0b">' + expiring + '</div><div class="label">Sắp hết hạn</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#dc2626">' + expired + '</div><div class="label">Hết hạn</div></div>';
-    } else {
-        $('adminStats').innerHTML =
-            '<div class="stat-card"><div class="num">' + users + '</div><div class="label">Tổng User</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#16a34a">' + online + '</div><div class="label">Đang hoạt động</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#3b82f6">' + active + '</div><div class="label">Active 7d</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#f59e0b">' + admins + '</div><div class="label">Admin</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#94a3b8">' + never + '</div><div class="label">Chưa login</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#f59e0b">' + expiring + '</div><div class="label">Sắp hết hạn</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#dc2626">' + expired + '</div><div class="label">Hết hạn</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#fbbf24">' + trialCount + '</div><div class="label">Trial</div></div>' +
-            '<div class="stat-card"><div class="num" style="color:#dc2626">' + permanentCount + '</div><div class="label">💎 Vĩnh viễn</div></div>';
     }
+
     $('adminUserCount').textContent = users;
     updateFilterCounts(usersCache);
 }
@@ -2579,7 +2250,6 @@ function renderUsers(items) {
             return true;
         });
     }
-
     displayItems = filterUsers(displayItems);
 
     if (!displayItems.length) {
@@ -2612,7 +2282,6 @@ function renderUsers(items) {
             permBtn = '<button class="u-btn" style="background:rgba(6,182,212,.1);color:#06b6d4;border-color:rgba(6,182,212,.4);" onclick="openPermissionModal(\'' + escapeJs(u.email) + '\')" title="Phân quyền"><i class="fas fa-user-shield"></i></button>';
         }
 
-        /* ⭐ Nút Xóa: check quyền canDeleteUser */
         var canDelete = superAdmin || hasPermission('canDeleteUser');
         var deleteBtn = isMe
             ? '<button class="u-btn danger" disabled title="Không thể tự xóa"><i class="fas fa-trash"></i></button>'
@@ -2724,7 +2393,6 @@ window.changeRole = async function(email, newRole) {
 };
 
 window.deleteUser = async function(email) {
-    /* ⭐ Check quyền */
     if (!isSuperAdmin() && !hasPermission('canDeleteUser')) {
         alert('Bạn không có quyền xóa user!');
         return;
@@ -2748,7 +2416,6 @@ window.deleteUser = async function(email) {
 };
 
 function loadLogs() {
-    /* ⭐ Admin thường vẫn thấy nếu có canViewLogs (mặc định BẬT) */
     if (!isSuperAdmin() && !hasPermission('canViewLogs')) {
         if ($('logsTitle')) $('logsTitle').style.display = 'none';
         $('logsList').style.display = 'none';
@@ -2781,13 +2448,9 @@ function buildRenewalRowHtml(d, isPending) {
     var canApprove = isSuperAdmin() || hasPermission('canRenew');
 
     var statusCls, statusText;
-    if (d.status === 'user_paid') {
-        statusCls = 'user_paid'; statusText = '⏳ Chờ xác nhận';
-    } else if (d.status === 'pending') {
-        statusCls = 'pending'; statusText = '⏱ Chờ CK';
-    } else {
-        statusCls = 'confirmed'; statusText = '✅ Đã xác nhận';
-    }
+    if (d.status === 'user_paid') { statusCls = 'user_paid'; statusText = '⏳ Chờ xác nhận'; }
+    else if (d.status === 'pending') { statusCls = 'pending'; statusText = '⏱ Chờ CK'; }
+    else { statusCls = 'confirmed'; statusText = '✅ Đã xác nhận'; }
 
     var actionBtns = '';
     if (isPending) {
@@ -2836,46 +2499,116 @@ function buildRenewalRowHtml(d, isPending) {
     '</div>';
 }
 
-/* ═══ LOAD: TK ĐANG GỬI YÊU CẦU GIA HẠN (pending + user_paid) ═══ */
-function loadPendingRenewals() {
+/* ═══ LOAD GỘP: 1 LẦN QUERY LẤY CẢ PENDING + CONFIRMED ═══ */
+function loadRenewals() {
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
-        if ($('pendingRenewalsTitle')) $('pendingRenewalsTitle').style.display = 'none';
-        if ($('pendingRenewalsList')) $('pendingRenewalsList').style.display = 'none';
+        if ($('adminRenewalsTitle')) $('adminRenewalsTitle').style.display = 'none';
+        if ($('renewalsList')) $('renewalsList').style.display = 'none';
         return;
     }
-    if ($('pendingRenewalsTitle')) $('pendingRenewalsTitle').style.display = 'flex';
-    var listEl = $('pendingRenewalsList');
+    if ($('adminRenewalsTitle')) $('adminRenewalsTitle').style.display = 'flex';
+    var listEl = $('renewalsList');
+    if (listEl) listEl.style.display = 'block';
+
+    db.collection('renewal_requests').orderBy('createdAt', 'desc').limit(200).get().then(function(snapshot) {
+        pendingRenewalsData = [];
+        confirmedRenewalsData = [];
+        snapshot.forEach(function(doc) {
+            var d = doc.data();
+            var item = Object.assign({ _id: doc.id }, d);
+            if (d.status === 'pending' || d.status === 'user_paid') pendingRenewalsData.push(item);
+            else if (d.status === 'confirmed') confirmedRenewalsData.push(item);
+        });
+
+        var pBadge = $('pendingRenewalsBadge');
+        if (pBadge) {
+            pBadge.textContent = pendingRenewalsData.length;
+            pBadge.classList.toggle('pulse', pendingRenewalsData.length > 0);
+        }
+        var cBadge = $('confirmedRenewalsBadge');
+        if (cBadge) cBadge.textContent = confirmedRenewalsData.length;
+        var pTab = $('pendingCountTab');
+        if (pTab) pTab.textContent = pendingRenewalsData.length;
+        var cTab = $('confirmedCountTab');
+        if (cTab) cTab.textContent = confirmedRenewalsData.length;
+
+        /* Highlight section nếu có pending */
+        var section = $('adminRenewalsSection');
+        if (section) {
+            section.classList.toggle('has-pending', pendingRenewalsData.length > 0);
+        }
+        /* Auto switch sang tab pending nếu có */
+        if (pendingRenewalsData.length > 0 && renewalTab === 'confirmed') {
+            renewalTab = 'pending';
+        }
+        document.querySelectorAll('[data-renewal-tab]').forEach(function(btn) {
+            btn.classList.toggle('active', btn.dataset.renewalTab === renewalTab);
+        });
+
+        renderRenewalsList();
+
+        /* Auto scroll tới section nếu có pending */
+        if (pendingRenewalsData.length > 0 && section) {
+            setTimeout(function() {
+                section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 500);
+        }
+    }).catch(function(err) {
+        if (listEl) listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem;color:#dc2626">Lỗi: ' + escapeHtml(err.message) + '</div>';
+    });
+}
+
+function renderRenewalsList() {
+    var listEl = $('renewalsList');
+    if (!listEl) return;
+    var items = (renewalTab === 'pending') ? pendingRenewalsData : confirmedRenewalsData;
+    var isPending = (renewalTab === 'pending');
+
+    if (items.length === 0) {
+        listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-inbox"></i> ' +
+            (isPending ? 'Không có yêu cầu nào đang chờ' : 'Chưa có giao dịch nào đã xác nhận') + '</div>';
+        return;
+    }
+    var html = '';
+    items.forEach(function(d) { html += buildRenewalRowHtml(d, isPending); });
+    listEl.innerHTML = html;
+}
+
+window.setRenewalTab = function(tab) {
+    renewalTab = tab;
+    document.querySelectorAll('[data-renewal-tab]').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.renewalTab === tab);
+    });
+    renderRenewalsList();
+};
+
+window.loadRenewals = loadRenewals;
+
+/* Alias tương thích ngược */
+function loadPendingRenewals() { loadRenewals(); }
+function loadConfirmedRenewals() { loadRenewals(); }
+
+/* ═══ LOAD: LỊCH SỬ GIA HẠN TỔNG HỢP ═══ */
+function loadAdminRenewalHistory() {
+    if (!isSuperAdmin() && !hasPermission('canRenew')) {
+        if ($('renewalHistoryTitle')) $('renewalHistoryTitle').style.display = 'none';
+        if ($('adminRenewalHistoryList')) $('adminRenewalHistoryList').style.display = 'none';
+        return;
+    }
+    if ($('renewalHistoryTitle')) $('renewalHistoryTitle').style.display = 'flex';
+    var listEl = $('adminRenewalHistoryList');
     if (!listEl) return;
     listEl.style.display = 'block';
 
     db.collection('renewal_requests').orderBy('createdAt', 'desc').limit(100).get().then(function(snapshot) {
-        var items = [];
-        snapshot.forEach(function(doc) {
-            var d = doc.data();
-            if (d.status === 'pending' || d.status === 'user_paid') {
-                items.push(Object.assign({ _id: doc.id }, d));
-            }
-        });
-
-        var badge = $('pendingRenewalsBadge');
-        if (badge) badge.textContent = items.length;
-
-        var section = $('adminPendingRenewalsSection');
-        if (section) {
-            section.classList.toggle('has-pending', items.length > 0);
-        }
-        if (badge) {
-            badge.classList.toggle('pulse', items.length > 0);
-        }
-
-        if (items.length === 0) {
-            listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-inbox"></i> Không có yêu cầu nào đang chờ</div>';
+        if (snapshot.empty) {
+            listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-inbox"></i> Chưa có giao dịch nào</div>';
             return;
         }
-
         var html = '';
-        items.forEach(function(d) {
-            html += buildRenewalRowHtml(d, true);
+        snapshot.forEach(function(doc) {
+            var d = doc.data();
+            html += buildHistoryItemHtml(d, true);
         });
         listEl.innerHTML = html;
     }).catch(function(err) {
@@ -2883,53 +2616,6 @@ function loadPendingRenewals() {
     });
 }
 
-/* ═══ LOAD: TK ĐÃ GIA HẠN (confirmed) ═══ */
-function loadConfirmedRenewals() {
-    if (!isSuperAdmin() && !hasPermission('canRenew')) {
-        if ($('confirmedRenewalsTitle')) $('confirmedRenewalsTitle').style.display = 'none';
-        if ($('confirmedRenewalsList')) $('confirmedRenewalsList').style.display = 'none';
-        return;
-    }
-    if ($('confirmedRenewalsTitle')) $('confirmedRenewalsTitle').style.display = 'flex';
-    var listEl = $('confirmedRenewalsList');
-    if (!listEl) return;
-    listEl.style.display = 'block';
-
-    db.collection('renewal_requests').orderBy('createdAt', 'desc').limit(200).get().then(function(snapshot) {
-        var items = [];
-        snapshot.forEach(function(doc) {
-            var d = doc.data();
-            if (d.status === 'confirmed') {
-                items.push(Object.assign({ _id: doc.id }, d));
-            }
-        });
-
-        var badge = $('confirmedRenewalsBadge');
-        if (badge) badge.textContent = items.length;
-
-        if (items.length === 0) {
-            listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-inbox"></i> Chưa có giao dịch nào đã xác nhận</div>';
-            return;
-        }
-
-        var html = '';
-        items.forEach(function(d) {
-            html += buildRenewalRowHtml(d, false);
-        });
-        listEl.innerHTML = html;
-    }).catch(function(err) {
-        listEl.innerHTML = '<div class="no-data" style="padding:1rem;font-size:.8rem;color:#dc2626">Lỗi: ' + escapeHtml(err.message) + '</div>';
-    });
-}
-
-/* ⭐ ALIAS tương thích ngược: giữ tên hàm "loadRenewals" cho script kiểm tra cũ */
-function loadRenewals() {
-    loadPendingRenewals();
-    loadConfirmedRenewals();
-}
-window.loadRenewals = loadRenewals;
-
-/* ⭐ ADMIN THƯỜNG MẶC ĐỊNH DUYỆT ĐƯỢC GIA HẠN (hasPermission đã fallback DEFAULT) */
 window.approveRenewal = async function(reqId) {
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
         alert('Bạn không có quyền duyệt gia hạn!');
@@ -2940,26 +2626,15 @@ window.approveRenewal = async function(reqId) {
         var reqDoc = await db.collection('renewal_requests').doc(reqId).get();
         if (!reqDoc.exists) return alert('Không tìm thấy yêu cầu!');
         var req = reqDoc.data();
-
         var isPermanent = (req.package === 'forever') || (req.days >= 36500) || req.isPermanent;
-
         var userDoc = await db.collection('allowed_users').doc(req.email).get();
         var currentExpiry = null;
         if (userDoc.exists) {
             var ud = userDoc.data();
             if (ud.expiresAt) currentExpiry = getExpiryDate(ud.expiresAt);
         }
-
-        var updateData = {
-            isTrial: false,
-            tier: 'active',
-            lastRenewalAt: firebase.firestore.FieldValue.serverTimestamp()
-        };
-        var reqUpdateData = {
-            status: 'confirmed',
-            confirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
-            confirmedBy: currentUser.email
-        };
+        var updateData = { isTrial: false, tier: 'active', lastRenewalAt: firebase.firestore.FieldValue.serverTimestamp() };
+        var reqUpdateData = { status: 'confirmed', confirmedAt: firebase.firestore.FieldValue.serverTimestamp(), confirmedBy: currentUser.email };
         var message = '';
         var _newExpiryStr = '';
 
@@ -2979,31 +2654,24 @@ window.approveRenewal = async function(reqId) {
             reqUpdateData.newExpiresAt = firebase.firestore.Timestamp.fromDate(newExpiry);
             reqUpdateData.isPermanent = false;
             _newExpiryStr = newExpiry.toLocaleDateString('vi-VN');
-            message = '✅ Đã gia hạn ' + req.days + ' ngày cho:\n' + req.email +
-                      '\n\nHạn mới: ' + _newExpiryStr;
+            message = '✅ Đã gia hạn ' + req.days + ' ngày cho:\n' + req.email + '\n\nHạn mới: ' + _newExpiryStr;
         }
-
         await db.collection('allowed_users').doc(req.email).update(updateData);
         await db.collection('renewal_requests').doc(reqId).update(reqUpdateData);
 
         if (typeof window.notifyTelegramAdminConfirmed === 'function') {
             try {
                 window.notifyTelegramAdminConfirmed({
-                    email: req.email,
-                    name: req.name,
-                    amount: req.amount,
-                    package: req.package,
-                    packageLabel: req.packageLabel,
-                    days: req.days,
-                    isPermanent: isPermanent
+                    email: req.email, name: req.name, amount: req.amount,
+                    package: req.package, packageLabel: req.packageLabel,
+                    days: req.days, isPermanent: isPermanent
                 }, _newExpiryStr);
-            } catch(_te) { console.warn('Telegram notify lỗi:', _te); }
+            } catch(_te) {}
         }
-
         try { localStorage.removeItem('user_cache_' + req.email); } catch(e) {}
         alert(message);
-        loadPendingRenewals();
-        loadConfirmedRenewals();
+        loadRenewals();
+        loadAdminRenewalHistory();
         loadUsers(true);
     } catch(e) { alert('❌ Lỗi: ' + e.message); }
 };
@@ -3022,7 +2690,7 @@ window.rejectRenewal = async function(reqId) {
             rejectedBy: currentUser.email,
             rejectReason: reason || ''
         });
-        loadPendingRenewals();
+        loadRenewals();
     } catch(e) { alert('❌ Lỗi: ' + e.message); }
 };
 
@@ -3033,9 +2701,8 @@ window.openEditExpiry = function(email) {
     editingExpiryEmail = email;
     $('editExpiryName').textContent = user.name || email.split('@')[0];
     $('editExpiryEmail').textContent = email;
-    if (user.isPermanent) {
-        $('editExpiryInput').value = '';
-    } else if (user.expiresAt) {
+    if (user.isPermanent) $('editExpiryInput').value = '';
+    else if (user.expiresAt) {
         var d = getExpiryDate(user.expiresAt);
         $('editExpiryInput').value = (d && !isNaN(d.getTime())) ? formatDate(d) : '';
     } else $('editExpiryInput').value = '';
@@ -3062,7 +2729,6 @@ async function doUpdateExpiry() {
         updateData.expiresAt = null;
         updateData.isPermanent = true;
     }
-
     var btn = $('editExpiryConfirm');
     btn.disabled = true;
     var originalHtml = btn.innerHTML;
@@ -3103,14 +2769,12 @@ async function doChangeName() {
 }
 
 function doExportExcel() {
-    /* ⭐ Check quyền */
     if (!isSuperAdmin() && !hasPermission('canImportExport')) {
         alert('Bạn không có quyền Export!');
         return;
     }
     var usersOnly = usersCache.filter(function(u) { return u.role !== 'admin'; });
     if (!usersOnly.length) return alert('Không có user nào để export!');
-
     try {
         var wb = XLSX.utils.book_new();
         var now = Date.now();
@@ -3120,11 +2784,10 @@ function doExportExcel() {
             { header: 'Trạng thái', width: 22 }
         ];
         var aoa = [COLUMNS.map(function(c) { return c.header; })];
-
         usersOnly.forEach(function(u) {
             var expDate = getExpiryDate(u.expiresAt);
             var expStr = '', statusStr = '';
-            if (u.isPermanent || !expDate) { statusStr = '💎 Vĩnh viễn'; }
+            if (u.isPermanent || !expDate) statusStr = '💎 Vĩnh viễn';
             else {
                 expStr = formatDate(expDate);
                 var daysLeft = Math.ceil((expDate.getTime() - now) / (24 * 60 * 60 * 1000));
@@ -3139,7 +2802,6 @@ function doExportExcel() {
         var ws = XLSX.utils.aoa_to_sheet(aoa);
         ws['!cols'] = COLUMNS.map(function(c) { return { wch: c.width }; });
         XLSX.utils.book_append_sheet(wb, ws, 'Users');
-
         var today = new Date();
         var dateStr = today.getFullYear() + String(today.getMonth() + 1).padStart(2, '0') + String(today.getDate()).padStart(2, '0');
         XLSX.writeFile(wb, 'users_export_' + dateStr + '.xlsx');
@@ -3224,7 +2886,6 @@ function processImport(rows) {
                 }
             }
         }
-
         importRows.push({
             rowNum: i + 1, email: email, name: name, role: 'user',
             expDate: expDate, expStr: expStr, status: status, reason: reason, isUpdate: isUpdate
@@ -3252,21 +2913,18 @@ function renderImportPreview() {
         html += '<tr class="' + rowCls + '"><td>' + r.rowNum + '</td><td><b>' + escapeHtml(r.email) + '</b></td><td>' + escapeHtml(r.name) + '</td><td><span class="role-badge user">user</span></td><td>' + expDisplay + '</td><td>' + statusHtml + '</td></tr>';
     });
     tbody.innerHTML = html;
-
     $('importSummary').innerHTML =
         '<div class="import-stat"><div class="num">' + importRows.length + '</div><div class="label">Tổng</div></div>' +
         '<div class="import-stat ok"><div class="num">' + countOk + '</div><div class="label">Thêm mới</div></div>' +
         '<div class="import-stat update"><div class="num">' + countUpdate + '</div><div class="label">Cập nhật</div></div>' +
         '<div class="import-stat warn"><div class="num">' + countWarn + '</div><div class="label">Cảnh báo</div></div>' +
         '<div class="import-stat err"><div class="num">' + countErr + '</div><div class="label">Lỗi</div></div>';
-
     var totalImportable = countOk + countUpdate + countWarn;
     if ($('importCount')) $('importCount').textContent = totalImportable;
     if ($('importConfirmBtn')) $('importConfirmBtn').disabled = totalImportable === 0;
 }
 
 async function doImport() {
-    /* ⭐ Check quyền */
     if (!isSuperAdmin() && !hasPermission('canImportExport')) {
         alert('Bạn không có quyền Import!');
         return;
@@ -3420,17 +3078,14 @@ function initAuthUI() {
             }, 150);
         });
     }
-
     if ($('renewalHistoryClose')) $('renewalHistoryClose').addEventListener('click', function() { $('renewalHistoryModal').classList.remove('show'); });
     if ($('renewalHistoryModal')) $('renewalHistoryModal').addEventListener('click', function(e) { if (e.target === this) $('renewalHistoryModal').classList.remove('show'); });
-
     if ($('renewalHistoryBtn')) {
         $('renewalHistoryBtn').addEventListener('click', function() {
             $('userDropdown').classList.remove('show');
             openRenewalHistory();
         });
     }
-
     initAdminPanel();
 }
 
@@ -3443,7 +3098,7 @@ setTimeout(function() {
 }, 5000);
 """
 
-    # ═══ Inject config ═══
+    # Inject config
     js = js.replace("__TRIAL_DAYS__", str(config.get("trial_days", 3)))
     js = js.replace("__TRIAL_MAX_QUESTIONS__", str(config.get("trial_max_questions", 50)))
     js = js.replace("__TRIAL_MAX_HSK__", str(config.get("trial_max_hsk", 5)))
@@ -3460,8 +3115,12 @@ def build_renewal_js(config=None):
     return ""
 
 
+def build_renewal_css():
+    return ""
+
+
 # ═══════════════════════════════════════════════════════════════
-# HELPER: gọi 1 lần lấy hết CSS + HTML + JS
+# HELPER: build_all_auth
 # ═══════════════════════════════════════════════════════════════
 def build_all_auth(config):
     """
