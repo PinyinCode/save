@@ -61,12 +61,10 @@ body{
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ HEADER: KHÔNG DÙNG position:sticky ĐỂ TRÁNH ĐÈ NỘI DUNG ★
-   - Chỉ dùng position:relative, chiều cao tự nhiên.
-   - Tự scale theo độ phân giải bằng clamp().
+   ★ HEADER: KHÔNG DÙNG position:sticky ĐỂ TRÁNH ĐÈ NỘI DUNG
    ═══════════════════════════════════════════════════════════════ */
 .sticky-top{
-    position:relative; /* KHÔNG sticky -> không đè nội dung */
+    position:relative;
     z-index:150;background:var(--bg);
     padding:clamp(.35rem,.8vh,.7rem) 0 clamp(.4rem,1vh,.8rem) 0;
     transition:background .2s, box-shadow .2s, border-color .2s;
@@ -79,7 +77,6 @@ body{
 }
 [data-theme="dark"] .sticky-top.scrolled{box-shadow:0 4px 16px -8px rgba(0,0,0,.5)}
 
-/* ============ HEADER ============ */
 .header{background:transparent;border:none}
 .header-inner{display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem}
 .logo{display:flex;align-items:center;gap:.85rem;flex:1;min-width:0}
@@ -345,23 +342,23 @@ body.show-practice .card-body{
 .demo-banner-btn:hover{background:#d97706;transform:translateY(-1px)}
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ CARDS: MOBILE 1 CỘT — MÁY TÍNH 2 CỘT ★
+   ★ CARDS: MOBILE 1 CỘT — MÁY TÍNH 2 CỘT
    ═══════════════════════════════════════════════════════════════ */
 .mobile-view{
     display:grid;
-    grid-template-columns:1fr; /* Mobile: 1 cột */
+    grid-template-columns:1fr;
     gap:clamp(.6rem,1.5vw,.9rem);
     max-width:100%;
 }
 @media(min-width:769px){
     .mobile-view{
-        grid-template-columns:1fr 1fr; /* Máy tính: 2 cột */
+        grid-template-columns:1fr 1fr;
         gap:clamp(.9rem,1.8vw,1.2rem);
     }
 }
 @media(min-width:1800px){
     .mobile-view{
-        grid-template-columns:1fr 1fr 1fr; /* Màn hình siêu rộng: 3 cột */
+        grid-template-columns:1fr 1fr 1fr;
         gap:1.2rem;
     }
 }
@@ -526,9 +523,6 @@ body.show-practice .card-body{
 
 /* ═══════════════════════════════════════════════════════════════
    ★★★ PRACTICE FULL MODAL — KHÔNG CHỒNG LẤN ★★★
-   - Dùng flex column, header/filters/nav flex: 0 0 auto.
-   - Body flex: 1 1 auto + overflow-y: auto -> không đè nội dung.
-   - Ô input là trung tâm lớn nhất.
    ═══════════════════════════════════════════════════════════════ */
 .practice-full-modal{
     position:fixed;
@@ -556,14 +550,14 @@ body.practice-full-open .expiry-banner { display: none !important; }
     padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);
     background:var(--surface);
     border-bottom:1px solid var(--border);
-    flex:0 0 auto; /* Không co giãn */
+    flex:0 0 auto;
     min-height:clamp(42px,6vh,56px);
     box-shadow:0 2px 8px rgba(15,23,42,.04);
 }
 .practice-full-header .pf-counter{
     font-size:clamp(.7rem,.9vw,.82rem);font-weight:700;color:var(--text-2);
     background:var(--surface-2);padding:.3rem .7rem;border-radius:50px;
-    white-space:nowrap;
+    white-space:nowrap;flex-shrink:0;
 }
 .practice-full-header .pf-tags{
     display:flex;gap:.35rem;flex:1;min-width:0;flex-wrap:wrap;
@@ -578,12 +572,122 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 .practice-full-header .pf-close:hover{background:var(--danger-light);color:var(--danger)}
 
-/* ─── FILTERS: cố định, mỏng ─── */
+/* ─── Mini brand trong Practice Full ─── */
+.pf-brand{
+    display:flex;align-items:center;gap:clamp(.4rem,.8vw,.65rem);
+    flex-shrink:0;min-width:0;
+}
+.pf-brand-icon{
+    width:clamp(30px,2.8vw,38px);height:clamp(30px,2.8vw,38px);
+    border-radius:clamp(8px,.9vw,11px);
+    background:linear-gradient(135deg,#6366f1 0%,#8b5cf6 40%,#d946ef 100%);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:clamp(.78rem,1vw,.95rem);
+    flex-shrink:0;
+    box-shadow:0 3px 10px rgba(139,92,246,.35), inset 0 1px 0 rgba(255,255,255,.25);
+}
+.pf-brand-text{
+    display:flex;flex-direction:column;line-height:1.15;
+    min-width:0;overflow:hidden;gap:2px;
+}
+.pf-brand-title{
+    font-size:clamp(.8rem,1vw,.95rem);font-weight:900;letter-spacing:-.015em;
+    background:linear-gradient(135deg,#1e293b 0%,#4f46e5 50%,#7c3aed 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;color:transparent;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+[data-theme="dark"] .pf-brand-title{
+    background:linear-gradient(135deg,#f1f5f9 0%,#a5b4fc 50%,#c4b5fd 100%);
+    -webkit-background-clip:text;background-clip:text;
+    -webkit-text-fill-color:transparent;
+}
+.pf-brand-sub{
+    display:inline-flex;align-items:center;gap:.25rem;
+    font-size:clamp(.58rem,.72vw,.68rem);font-weight:700;
+    color:#5b21b6;letter-spacing:.01em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.pf-brand-sub::before{
+    content:'✦';color:#d946ef;font-size:.95em;
+    text-shadow:0 0 5px rgba(217,70,239,.7),0 0 10px rgba(139,92,246,.5);
+    animation:sparklePF 2.5s ease-in-out infinite;
+}
+@keyframes sparklePF{
+    0%,100%{opacity:.65;transform:scale(1) rotate(0deg);}
+    50%{opacity:1;transform:scale(1.2) rotate(18deg);}
+}
+[data-theme="dark"] .pf-brand-sub{color:#ddd6fe;}
+[data-theme="dark"] .pf-brand-sub::before{color:#f0abfc;}
+
+@media (max-width: 768px) {
+    .pf-brand-sub { display: none; }
+    .pf-brand-title { font-size: .78rem; }
+}
+@media (max-width: 500px) {
+    .pf-brand-text { display: none; }
+}
+
+/* ─── TIKTOK FLOATING BUTTON ─── */
+.pf-tiktok-float{
+    position:fixed;
+    right:clamp(14px,2vw,22px);
+    bottom:calc(clamp(72px,10vh,96px) + env(safe-area-inset-bottom));
+    width:clamp(46px,5vw,56px);height:clamp(46px,5vw,56px);
+    border-radius:50%;
+    background:linear-gradient(135deg,#25f4ee 0%,#000 45%,#fe2c55 100%);
+    color:#fff;
+    display:flex;align-items:center;justify-content:center;
+    font-size:clamp(1.15rem,1.5vw,1.4rem);
+    text-decoration:none;
+    box-shadow:
+        0 8px 24px rgba(254,44,85,.4),
+        0 4px 12px rgba(0,0,0,.3),
+        inset 0 1px 0 rgba(255,255,255,.25);
+    z-index:2600;
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
+    overflow:visible;
+}
+.pf-tiktok-float::before{
+    content:'';
+    position:absolute;
+    inset:-3px;
+    border-radius:50%;
+    background:conic-gradient(from 0deg,#25f4ee,#fe2c55,#25f4ee,#fe2c55,#25f4ee);
+    z-index:-1;
+    animation:spinTikTok 4s linear infinite;
+    opacity:0;
+    transition:opacity .25s;
+}
+.pf-tiktok-float:hover::before{opacity:1;}
+@keyframes spinTikTok{to{transform:rotate(360deg);}}
+.pf-tiktok-float:hover{
+    transform:scale(1.12) rotate(-6deg);
+    box-shadow:
+        0 12px 32px rgba(254,44,85,.6),
+        0 6px 16px rgba(0,0,0,.4),
+        0 0 0 3px rgba(37,244,238,.5);
+}
+.pf-tiktok-float:active{transform:scale(.95);}
+.pf-tiktok-float i{filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));}
+
+@media (max-width:500px){
+    .pf-tiktok-float{
+        width:44px;height:44px;font-size:1.1rem;
+        right:12px;bottom:calc(68px + env(safe-area-inset-bottom));
+    }
+}
+
+.practice-full-modal:not(.show) .pf-tiktok-float{
+    display:none !important;
+}
+
+/* ─── FILTERS ─── */
 .pf-filters{
     padding:clamp(.4rem,1vh,.55rem) clamp(.85rem,2vw,1.25rem) clamp(.35rem,.8vh,.45rem) clamp(.85rem,2vw,1.25rem);
     background:var(--surface);
     border-bottom:1px solid var(--border);
-    flex:0 0 auto; /* Không co giãn */
+    flex:0 0 auto;
     overflow-y:auto;
 }
 .pf-search-wrap{position:relative;margin-bottom:.45rem;}
@@ -662,10 +766,10 @@ body.practice-full-open .expiry-banner { display: none !important; }
     border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15);
 }
 
-/* ─── BODY: chiếm hết phần còn lại, KHÔNG chồng lấn ─── */
+/* ─── BODY ─── */
 .practice-full-body{
-    flex:1 1 auto;     /* Co giãn chiếm hết khoảng trống còn lại */
-    min-height:0;      /* QUAN TRỌNG: cho phép overflow-y hoạt động đúng */
+    flex:1 1 auto;
+    min-height:0;
     overflow-y:auto;
     padding:clamp(.85rem,2vh,1.5rem) clamp(.75rem,2vw,1.25rem);
     display:flex;
@@ -677,7 +781,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 .practice-full-content{
     width:100%;
-    max-width:clamp(320px,60vw,700px); /* Tự scale theo độ phân giải */
+    max-width:clamp(320px,60vw,700px);
     display:flex;flex-direction:column;
     gap:clamp(.65rem,1.5vh,1.25rem);
     margin-top:auto;
@@ -974,7 +1078,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     display:flex;gap:clamp(.4rem,1vw,.65rem);
     padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);
     background:var(--surface);border-top:1px solid var(--border);
-    flex:0 0 auto; /* Không co giãn */
+    flex:0 0 auto;
     justify-content:center;
     min-height:clamp(44px,6vh,58px);
 }
@@ -1135,7 +1239,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ FIX MÀN HÌNH THẤP (PC ngang, laptop nhỏ) ★
+   ★ FIX MÀN HÌNH THẤP ★
    ═══════════════════════════════════════════════════════════════ */
 @media (min-width: 769px) and (max-height: 700px) {
     .practice-full-body{ padding: .75rem .85rem; }
@@ -1168,7 +1272,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ MOBILE: giữ nguyên cấu trúc nhưng 1 cột ★
+   ★ MOBILE ★
    ═══════════════════════════════════════════════════════════════ */
 @media(max-width:768px){
     .container{padding:0 .7rem}
@@ -2981,6 +3085,13 @@ body.hide-floating .tiktok-bar { display: none !important; }
 
 <div class="practice-full-modal" id="practiceFullModal">
     <div class="practice-full-header">
+        <div class="pf-brand">
+            <div class="pf-brand-icon"><i class="fas fa-language"></i></div>
+            <div class="pf-brand-text">
+                <div class="pf-brand-title">Học tiếng Trung</div>
+                <div class="pf-brand-sub">Văn phòng &amp; Công xưởng</div>
+            </div>
+        </div>
         <div class="pf-counter" id="pfCounter">Câu 1 / 1</div>
         <div class="pf-tags" id="pfTags"></div>
         <button class="pf-close" id="pfClose" aria-label="Đóng">
@@ -3079,6 +3190,11 @@ body.hide-floating .tiktok-bar { display: none !important; }
             Câu sau <i class="fas fa-chevron-right"></i>
         </button>
     </div>
+
+    <!-- ★ TikTok floating button ở góc dưới phải -->
+    <a class="pf-tiktok-float" id="pfTiktokFloat" href="#" target="_blank" rel="noopener noreferrer" title="Theo dõi TikTok">
+        <i class="fab fa-tiktok"></i>
+    </a>
 </div>
 
 
@@ -3464,7 +3580,7 @@ var currentBtn = null;
 var displayState = { vi: true, pinyin: false, practice: false };
 
 /* ═══════════════════════════════════════════════════════════════
-   TIER SYSTEM — Đọc từ window.APP_TIER / window.APP_LIMITS
+   TIER SYSTEM
    ═══════════════════════════════════════════════════════════════ */
 function getTierInfo() {
     if (typeof window.APP_TIER !== 'undefined' && window.APP_LIMITS) {
@@ -3745,7 +3861,10 @@ function updateTierBadge() {
     if (info.tier === 'trial') {
         badge.classList.add('show');
         var daysLeft = null;
-        if (typeof getDaysRemaining === 'function' && currentUser) {
+        /* ★ FIX: guard currentUser undefined */
+        if (typeof getDaysRemaining === 'function'
+            && typeof currentUser !== 'undefined'
+            && currentUser) {
             daysLeft = getDaysRemaining(currentUser);
         }
         var badgeText = $('trialBadgeText');
@@ -5112,6 +5231,23 @@ window.speakFullSentence = function() {
 };
 
 function initPracticeFull() {
+    /* ★ POPULATE TIKTOK FLOATING BUTTON */
+    try {
+        var pfTiktok = $('pfTiktokFloat');
+        if (pfTiktok) {
+            var tiktokUrl = (typeof TIKTOK_URL !== 'undefined' && TIKTOK_URL) ? TIKTOK_URL : '';
+            if (tiktokUrl) {
+                pfTiktok.href = tiktokUrl;
+                var name = (typeof TIKTOK_NICKNAME !== 'undefined' && TIKTOK_NICKNAME)
+                    ? TIKTOK_NICKNAME
+                    : ((typeof TIKTOK_USERNAME !== 'undefined' && TIKTOK_USERNAME) ? TIKTOK_USERNAME : '');
+                if (name) pfTiktok.title = 'TikTok: ' + name;
+            } else {
+                pfTiktok.style.display = 'none';
+            }
+        }
+    } catch(e) { console.warn('TikTok float init:', e); }
+
     $('pfClose').addEventListener('click', closePracticeFull);
     $('pfPrevBtn').addEventListener('click', pfPrev);
     $('pfNextBtn').addEventListener('click', pfNext);
