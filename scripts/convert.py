@@ -50,6 +50,11 @@ fillers_json = json.dumps(CONFIG["filler_words"], ensure_ascii=True, separators=
 telegram_bot_token = CONFIG.get("telegram_bot_token", "")
 telegram_chat_id = CONFIG.get("telegram_chat_id", "")
 
+# ✅ TRIAL CONFIG (3 trạng thái: guest / trial / full)
+trial_days = CONFIG.get("trial_days", 3)
+trial_limit_per_hsk = CONFIG.get("trial_limit_per_hsk", 10)
+trial_hsk_max = CONFIG.get("trial_hsk_max", 6)
+
 
 # ═══════════════════════════════════════════════════════════════════
 #  BUILD AUTH (CSS + HTML + JS) — 1 LẦN DUY NHẤT
@@ -140,6 +145,11 @@ var FILLER_WORDS = __FILLER_WORDS__;
 var TELEGRAM_BOT_TOKEN = "__TELEGRAM_BOT_TOKEN__";
 var TELEGRAM_CHAT_ID = "__TELEGRAM_CHAT_ID__";
 
+/* ✅ Trial config — 3 trạng thái: guest / trial / full */
+var TRIAL_DAYS = __TRIAL_DAYS__;
+var TRIAL_LIMIT_PER_HSK = __TRIAL_LIMIT_PER_HSK__;
+var TRIAL_HSK_MAX = __TRIAL_HSK_MAX__;
+
 /* Helper $ toàn cục */
 var $ = function(id) { return document.getElementById(id); };
 
@@ -174,6 +184,10 @@ html_output = (HTML_SHELL
     # ✅ Telegram
     .replace("__TELEGRAM_BOT_TOKEN__", telegram_bot_token)
     .replace("__TELEGRAM_CHAT_ID__", telegram_chat_id)
+    # ✅ Trial config
+    .replace("__TRIAL_DAYS__", str(trial_days))
+    .replace("__TRIAL_LIMIT_PER_HSK__", str(trial_limit_per_hsk))
+    .replace("__TRIAL_HSK_MAX__", str(trial_hsk_max))
 )
 
 with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
@@ -186,7 +200,7 @@ print(f"📚 Tổng số câu: {len(data)}")
 print(f"🎁 Demo: {CONFIG['demo_limit']} câu + HSK1-{CONFIG['demo_hsk_max']} + {CONFIG['demo_daily_limit']} lượt")
 print(f"🔥 Firebase: {CONFIG['firebase_config'].get('projectId', 'N/A')}")
 print(f"👑 Super admin: {CONFIG['super_admin']}")
-print(f"🎉 Trial: {CONFIG['trial_days']} ngày cho user mới")
+print(f"🎉 Trial: {trial_days} ngày — {trial_limit_per_hsk} câu × HSK1-{trial_hsk_max} cho user mới")
 print(f"🏦 Bank: {CONFIG['bank_config']['bank_name']} - {CONFIG['bank_config']['account_no']}")
 print(f"💰 Packages: {len(CONFIG['packages'])} gói")
 # ✅ Thông báo Telegram
