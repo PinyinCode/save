@@ -61,7 +61,7 @@ body{
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ HEADER: KHÔNG DÙNG position:sticky ĐỂ TRÁNH ĐÈ NỘI DUNG
+   ★ HEADER
    ═══════════════════════════════════════════════════════════════ */
 .sticky-top{
     position:relative;
@@ -342,7 +342,7 @@ body.show-practice .card-body{
 .demo-banner-btn:hover{background:#d97706;transform:translateY(-1px)}
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ CARDS: MOBILE 1 CỘT — MÁY TÍNH 2 CỘT
+   ★ CARDS
    ═══════════════════════════════════════════════════════════════ */
 .mobile-view{
     display:grid;
@@ -544,7 +544,7 @@ body.practice-full-open .result-count { display: none !important; }
 body.practice-full-open .demo-banner,
 body.practice-full-open .expiry-banner { display: none !important; }
 
-/* ─── HEADER: cố định, mỏng ─── */
+/* ─── HEADER: cố định, layout ngang ─── */
 .practice-full-header{
     display:flex;align-items:center;gap:.75rem;
     padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);
@@ -620,64 +620,180 @@ body.practice-full-open .expiry-banner { display: none !important; }
 [data-theme="dark"] .pf-brand-sub{color:#ddd6fe;}
 [data-theme="dark"] .pf-brand-sub::before{color:#f0abfc;}
 
+/* ─── Responsive: thu nhỏ nhưng KHÔNG ẩn ─── */
 @media (max-width: 768px) {
-    .pf-brand-sub { display: none; }
-    .pf-brand-title { font-size: .78rem; }
+    .pf-brand-title { font-size: .75rem; }
+    .pf-brand-sub { font-size: .55rem; gap: .2rem; }
+    .pf-brand-icon {
+        width: 28px; height: 28px;
+        font-size: .72rem;
+        border-radius: 8px;
+    }
+    .pf-brand { gap: .4rem; }
 }
-@media (max-width: 500px) {
-    .pf-brand-text { display: none; }
+@media (max-width: 400px) {
+    .pf-brand-title { font-size: .7rem; }
+    .pf-brand-sub { font-size: .5rem; }
+    .pf-brand-icon {
+        width: 24px; height: 24px;
+        font-size: .65rem;
+    }
 }
 
-/* ─── TIKTOK FLOATING BUTTON ─── */
+/* ─── TIKTOK FLOATING PILL (avatar + tên) — GÓC DƯỚI BÊN TRÁI ─── */
 .pf-tiktok-float{
     position:fixed;
-    right:clamp(14px,2vw,22px);
+    left:clamp(14px,2vw,22px);              /* ★ GÓC DƯỚI BÊN TRÁI */
     bottom:calc(clamp(72px,10vh,96px) + env(safe-area-inset-bottom));
-    width:clamp(46px,5vw,56px);height:clamp(46px,5vw,56px);
-    border-radius:50%;
-    background:linear-gradient(135deg,#25f4ee 0%,#000 45%,#fe2c55 100%);
+    display:inline-flex;
+    align-items:center;
+    gap:clamp(.4rem,.6vw,.55rem);
+    padding:clamp(.35rem,.55vw,.5rem) clamp(.7rem,1vw,.9rem) clamp(.35rem,.55vw,.5rem) clamp(.35rem,.55vw,.5rem);
+    border-radius:999px;
+    background:linear-gradient(135deg,#25f4ee 0%,#000 50%,#fe2c55 100%);
     color:#fff;
-    display:flex;align-items:center;justify-content:center;
-    font-size:clamp(1.15rem,1.5vw,1.4rem);
     text-decoration:none;
+    font-family:inherit;
+    min-width:clamp(120px,15vw,180px);
+    max-width:clamp(160px,22vw,240px);
     box-shadow:
-        0 8px 24px rgba(254,44,85,.4),
-        0 4px 12px rgba(0,0,0,.3),
+        0 10px 28px rgba(254,44,85,.4),
+        0 4px 14px rgba(0,0,0,.35),
         inset 0 1px 0 rgba(255,255,255,.25);
     z-index:2600;
     transition:transform .25s cubic-bezier(.34,1.56,.64,1), box-shadow .25s ease;
-    overflow:visible;
+    overflow:hidden;
+    cursor:pointer;
 }
 .pf-tiktok-float::before{
     content:'';
     position:absolute;
-    inset:-3px;
-    border-radius:50%;
-    background:conic-gradient(from 0deg,#25f4ee,#fe2c55,#25f4ee,#fe2c55,#25f4ee);
-    z-index:-1;
-    animation:spinTikTok 4s linear infinite;
-    opacity:0;
-    transition:opacity .25s;
+    inset:0;
+    background:linear-gradient(115deg, transparent 30%, rgba(255,255,255,.35) 50%, transparent 70%);
+    transform:translateX(-100%);
+    animation:shimmerTikTok 3s infinite;
+    pointer-events:none;
 }
-.pf-tiktok-float:hover::before{opacity:1;}
-@keyframes spinTikTok{to{transform:rotate(360deg);}}
+@keyframes shimmerTikTok{
+    0%{transform:translateX(-100%);}
+    60%,100%{transform:translateX(100%);}
+}
 .pf-tiktok-float:hover{
-    transform:scale(1.12) rotate(-6deg);
+    transform:translateY(-3px) scale(1.04);
     box-shadow:
-        0 12px 32px rgba(254,44,85,.6),
-        0 6px 16px rgba(0,0,0,.4),
-        0 0 0 3px rgba(37,244,238,.5);
+        0 14px 36px rgba(254,44,85,.6),
+        0 6px 20px rgba(0,0,0,.45),
+        0 0 0 3px rgba(37,244,238,.5),
+        inset 0 1px 0 rgba(255,255,255,.3);
 }
-.pf-tiktok-float:active{transform:scale(.95);}
-.pf-tiktok-float i{filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));}
+.pf-tiktok-float:active{
+    transform:scale(.97);
+}
 
+/* ─── Avatar ─── */
+.pf-tiktok-avatar-wrap{
+    position:relative;
+    width:clamp(28px,3vw,36px);
+    height:clamp(28px,3vw,36px);
+    border-radius:50%;
+    flex-shrink:0;
+    background:linear-gradient(135deg,#25f4ee,#fe2c55);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:2px;
+    box-shadow:0 0 0 2px rgba(255,255,255,.9);
+}
+.pf-tiktok-avatar{
+    width:100%;
+    height:100%;
+    border-radius:50%;
+    object-fit:cover;
+    display:block;
+    background:#fff;
+}
+.pf-tiktok-fallback-icon{
+    position:absolute;
+    inset:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:#fff;
+    font-size:clamp(.9rem,1.1vw,1.1rem);
+    background:linear-gradient(135deg,#25f4ee,#000,#fe2c55);
+    border-radius:50%;
+    pointer-events:none;
+    z-index:-1;
+}
+.pf-tiktok-avatar[src]:not([src=""]) + .pf-tiktok-fallback-icon{
+    display:none;
+}
+
+/* ─── Content ─── */
+.pf-tiktok-content{
+    display:flex;
+    flex-direction:column;
+    line-height:1.1;
+    min-width:0;
+    flex:1;
+    text-align:left;
+}
+.pf-tiktok-label{
+    font-size:clamp(.5rem,.62vw,.6rem);
+    font-weight:600;
+    opacity:.8;
+    letter-spacing:.4px;
+    text-transform:uppercase;
+    white-space:nowrap;
+}
+.pf-tiktok-name{
+    font-size:clamp(.7rem,.88vw,.82rem);
+    font-weight:800;
+    letter-spacing:-.01em;
+    color:#fff;
+    text-shadow:0 1px 2px rgba(0,0,0,.4);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:100%;
+}
+
+/* ─── Badge TikTok nhỏ ─── */
+.pf-tiktok-badge{
+    font-size:clamp(.85rem,1.1vw,1rem);
+    flex-shrink:0;
+    filter:drop-shadow(0 0 4px rgba(37,244,238,.6));
+    animation:tiktokPulse 2s ease-in-out infinite;
+}
+@keyframes tiktokPulse{
+    0%,100%{transform:scale(1);}
+    50%{transform:scale(1.15);}
+}
+
+/* ─── Responsive ─── */
 @media (max-width:500px){
     .pf-tiktok-float{
-        width:44px;height:44px;font-size:1.1rem;
-        right:12px;bottom:calc(68px + env(safe-area-inset-bottom));
+        min-width:110px;
+        max-width:min(65vw,180px);
+        padding:.3rem .6rem .3rem .3rem;
+        left:12px;
+        bottom:calc(68px + env(safe-area-inset-bottom));
+    }
+    .pf-tiktok-avatar-wrap{
+        width:26px;height:26px;
+    }
+    .pf-tiktok-label{
+        font-size:.5rem;
+    }
+    .pf-tiktok-name{
+        font-size:.68rem;
+    }
+    .pf-tiktok-badge{
+        font-size:.8rem;
     }
 }
 
+/* ─── Ẩn khi modal đóng ─── */
 .practice-full-modal:not(.show) .pf-tiktok-float{
     display:none !important;
 }
@@ -3191,9 +3307,17 @@ body.hide-floating .tiktok-bar { display: none !important; }
         </button>
     </div>
 
-    <!-- ★ TikTok floating button ở góc dưới phải -->
+    <!-- ★ TikTok floating pill (avatar + tên) — GÓC DƯỚI BÊN TRÁI -->
     <a class="pf-tiktok-float" id="pfTiktokFloat" href="#" target="_blank" rel="noopener noreferrer" title="Theo dõi TikTok">
-        <i class="fab fa-tiktok"></i>
+        <span class="pf-tiktok-avatar-wrap">
+            <img class="pf-tiktok-avatar" id="pfTiktokAvatar" src="" alt="TikTok" onerror="this.style.display='none'">
+            <i class="fab fa-tiktok pf-tiktok-fallback-icon"></i>
+        </span>
+        <span class="pf-tiktok-content">
+            <span class="pf-tiktok-label">Theo dõi</span>
+            <span class="pf-tiktok-name" id="pfTiktokName">TikTok</span>
+        </span>
+        <i class="fab fa-tiktok pf-tiktok-badge"></i>
     </a>
 </div>
 
@@ -5231,17 +5355,40 @@ window.speakFullSentence = function() {
 };
 
 function initPracticeFull() {
-    /* ★ POPULATE TIKTOK FLOATING BUTTON */
+    /* ★ POPULATE TIKTOK FLOATING PILL */
     try {
         var pfTiktok = $('pfTiktokFloat');
         if (pfTiktok) {
             var tiktokUrl = (typeof TIKTOK_URL !== 'undefined' && TIKTOK_URL) ? TIKTOK_URL : '';
             if (tiktokUrl) {
                 pfTiktok.href = tiktokUrl;
-                var name = (typeof TIKTOK_NICKNAME !== 'undefined' && TIKTOK_NICKNAME)
-                    ? TIKTOK_NICKNAME
-                    : ((typeof TIKTOK_USERNAME !== 'undefined' && TIKTOK_USERNAME) ? TIKTOK_USERNAME : '');
-                if (name) pfTiktok.title = 'TikTok: ' + name;
+
+                /* Avatar */
+                var avatarUrl = (typeof TIKTOK_AVATAR !== 'undefined' && TIKTOK_AVATAR) ? TIKTOK_AVATAR : '';
+                var avatarEl = $('pfTiktokAvatar');
+                if (avatarEl) {
+                    if (avatarUrl) {
+                        avatarEl.src = avatarUrl;
+                        avatarEl.style.display = '';
+                    } else {
+                        avatarEl.style.display = 'none';
+                    }
+                }
+
+                /* Tên: ưu tiên NICKNAME (VD: "Thảo Nói") */
+                var displayName = '';
+                if (typeof TIKTOK_NICKNAME !== 'undefined' && TIKTOK_NICKNAME) {
+                    displayName = TIKTOK_NICKNAME;
+                } else if (typeof TIKTOK_USERNAME !== 'undefined' && TIKTOK_USERNAME) {
+                    displayName = TIKTOK_USERNAME;
+                } else {
+                    displayName = 'TikTok';
+                }
+
+                var nameEl = $('pfTiktokName');
+                if (nameEl) nameEl.textContent = displayName;
+
+                pfTiktok.title = 'Theo dõi TikTok: ' + displayName;
             } else {
                 pfTiktok.style.display = 'none';
             }
