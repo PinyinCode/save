@@ -2333,7 +2333,7 @@ var DEMO_LIMIT = 20;
 var DEMO_DAILY_LIMIT = 50;
 var DEMO_HSK_MAX = 3;
 
-/* ═══ TRIAL TIER (MỚI) ═══ */
+/* ═══ TRIAL TIER ═══ */
 var TRIAL_MAX_QUESTIONS = 50;
 var TRIAL_MAX_HSK = 4;
 var TRIAL_UNLIMITED_WRITING = true;
@@ -2349,10 +2349,6 @@ var TIKTOK_AVATAR = "https://i.postimg.cc/QBD0vj6C/IMG-6296.jpg";
 var TIKTOK_URL = "https://www.tiktok.com/@thaonoizhongwen";
 var SYNONYMS = {"\u6211":["\u4ffa","\u672c\u4eba","\u54b1"],"\u4f60":["\u60a8","\u9601\u4e0b"],"\u4ed6":["\u5979","\u5b83"],"\u662f":["\u7cfb","\u4e3a"],"\u7684":["\u4e4b"],"\u4e0d":["\u6ca1","\u672a"],"\u5f88":["\u975e\u5e38","\u5341\u5206","\u7279\u522b"],"\u597d":["\u68d2","\u4f18\u79c0","\u4e0d\u9519"],"\u8bf4":["\u8bb2","\u8c08"],"\u770b":["\u77a7","\u671b"],"\u5403":["\u98df","\u7528"],"\u7ed9":["\u9001","\u8d60"],"\u60f3\u8981":["\u60f3","\u8981"],"\u8d8a\u5357":["\u8d8a\u5357"],"\u4e2d\u56fd":["\u4e2d\u534e"],"\u8c22\u8c22":["\u611f\u8c22","\u591a\u8c22"],"\u5bf9\u4e0d\u8d77":["\u62b1\u6b49","\u4e0d\u597d\u610f\u601d"],"\u518d\u89c1":["\u62dc\u62dc","\u518d\u4f1a"],"\u8bf7":["\u9ebb\u70e6","\u62dc\u6258"]};
 var FILLER_WORDS = ["\u4e86","\u7684","\u5417","\u5462","\u5427","\u554a","\u5440","\u54e6","\u561b","\u54c8","\u54ea","\u7740","\u8fc7"];
-
-/* ═══ Telegram ═══ */
-var TELEGRAM_BOT_TOKEN = "8936673606:AAGQtSbDPpIH7kCB3zHEPrzWYETDgTuBOqU";
-var TELEGRAM_CHAT_ID = "-5459456615";
 
 /* Helper $ toàn cục */
 var $ = function(id) { return document.getElementById(id); };
@@ -6505,6 +6501,86 @@ setTimeout(function() {
     }
 }, 5000);
 
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     TELEGRAM MODULE — SCRIPT RIÊNG BIỆT
+     Không ảnh hưởng đến script chính phía trên
+     ═══════════════════════════════════════════════════════════════ -->
+<script>
+(function() {
+    'use strict';
+    try {
+        var _TG_TOKEN = "8936673606:AAGQtSbDPpIH7kCB3zHEPrzWYETDgTuBOqU";
+        var _TG_CHAT = "-5459456615";
+
+        console.log('📲 Telegram module init:', {
+            hasToken: _TG_TOKEN && _TG_TOKEN.indexOf('__') !== 0 && _TG_TOKEN.length > 20,
+            tokenPreview: _TG_TOKEN ? _TG_TOKEN.substring(0, 15) + '...' : '(empty)',
+            chatId: _TG_CHAT || '(empty)'
+        });
+
+        window.sendTelegramMessage = function(text) {
+            try {
+                if (!_TG_TOKEN || !_TG_CHAT || _TG_TOKEN.indexOf('__') === 0 || _TG_TOKEN.length < 20) {
+                    console.log('⚠️ Telegram chưa cấu hình — bỏ qua');
+                    return;
+                }
+                fetch('https://api.telegram.org/bot' + _TG_TOKEN + '/sendMessage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        chat_id: _TG_CHAT,
+                        text: text,
+                        parse_mode: 'HTML',
+                        disable_web_page_preview: true
+                    })
+                })
+                .then(function(r) { return r.json(); })
+                .then(function(d) {
+                    if (d.ok) console.log('✅ Telegram sent OK');
+                    else console.warn('⚠️ Telegram error:', d.description);
+                })
+                .catch(function(e) { console.warn('❌ Telegram fetch:', e); });
+            } catch(e) { console.warn('sendTelegramMessage:', e); }
+        };
+
+        window.notifyTelegramUserPaid = function(reqData) {
+            try {
+                var msg = '🔔 <b>CÓ YÊU CẦU GIA HẠN MỚI</b>\n';
+                msg += '━━━━━━━━━━━━━━━━━━━━\n';
+                msg += '👤 <b>' + (reqData.name || reqData.email) + '</b>\n';
+                msg += '📧 <code>' + reqData.email + '</code>\n';
+                msg += '💰 <b>' + (reqData.amount || 0).toLocaleString('vi-VN') + 'đ</b>\n';
+                msg += '📦 ' + (reqData.packageLabel || reqData.package || '');
+                if (reqData.isPermanent) msg += ' 💎 <b>VĨNH VIỄN</b>';
+                msg += '\n';
+                msg += '⏱ ' + (reqData.isPermanent ? 'Mãi mãi' : (reqData.days || 0) + ' ngày') + '\n';
+                msg += '🔑 <code>' + (reqData.transferCode || '') + '</code>\n';
+                msg += '⚡ <b>Vào Admin Panel xác nhận!</b>';
+                window.sendTelegramMessage(msg);
+            } catch(e) { console.warn('notifyTelegramUserPaid:', e); }
+        };
+
+        window.notifyTelegramAdminConfirmed = function(reqData, newExpiry) {
+            try {
+                var msg = '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n';
+                msg += '━━━━━━━━━━━━━━━━━━━━\n';
+                msg += '👤 <b>' + (reqData.name || reqData.email) + '</b>\n';
+                msg += '📧 <code>' + reqData.email + '</code>\n';
+                msg += '💰 <b>' + (reqData.amount || 0).toLocaleString('vi-VN') + 'đ</b>\n';
+                if (reqData.isPermanent) msg += '💎 <b>Đã kích hoạt VĨNH VIỄN</b>\n';
+                else if (newExpiry) msg += '📅 Hạn mới: <b>' + newExpiry + '</b>\n';
+                msg += '🕐 ' + new Date().toLocaleString('vi-VN');
+                window.sendTelegramMessage(msg);
+            } catch(e) { console.warn('notifyTelegramAdminConfirmed:', e); }
+        };
+
+        console.log('✅ Telegram module loaded');
+    } catch(e) {
+        console.error('❌ Telegram module failed (KHÔNG ảnh hưởng app):', e);
+    }
+})();
 </script>
 </body>
 </html>
