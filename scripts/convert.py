@@ -3,28 +3,13 @@
 Chuyển file Excel → HTML tự chứa dữ liệu.
 Ghép 4 template: ui + social + accounts (gộp renewal) + data.
 
-✅ QUY TẮC:
-   - Mobile (≤ 768px): 1 cột card.
-   - Máy tính (≥ 769px): 2 cột card.
-   - Tự scale theo độ phân giải.
-   - Header KHÔNG sticky để tránh đè nội dung.
-   - Chế độ Full không chồng lấn.
-   - Ô đánh chữ trong chế độ Full là trung tâm lớn nhất.
-
-✅ HEADER DESIGN MỚI (v2):
-   - Logo icon: gradient động + glow + shimmer khi hover.
-   - Tiêu đề: gradient text (tím → xanh).
-   - Subtitle: có chấm sáng phân cách.
-   - Nút: hover nảy + gradient.
-   - Badge Trial: shimmer animation.
+✅ HEADER: Subtitle "Văn phòng & Công xưởng" được thiết kế lại
+   thành PILL nổi bật với icon ✦ lấp lánh — không còn mờ.
 """
 import json
 import os
 import sys
 
-# ═══════════════════════════════════════════════════════════════════
-#  IMPORT MODULES
-# ═══════════════════════════════════════════════════════════════════
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config_loader import load_config, print_banner, CONFIG_FILE
@@ -65,23 +50,18 @@ telegram_chat_id = CONFIG.get("telegram_chat_id", "")
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  BUILD AUTH (CSS + HTML + JS) — 1 LẦN DUY NHẤT
+#  BUILD AUTH
 # ═══════════════════════════════════════════════════════════════════
 auth_css, auth_html, auth_js = build_all_auth(CONFIG)
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  ★ FULLWIDTH SCALE CSS + HEADER DESIGN MỚI ★
-#  Đặt cuối cùng trong full_css để override mọi CSS từ ui/social/auth.
+#  ★ FULLWIDTH SCALE CSS + HEADER DESIGN ★
 # ═══════════════════════════════════════════════════════════════════
 FULLWIDTH_CSS = r"""
 
 /* ═══════════════════════════════════════════════════════════════════
    ★ FULL-WIDTH SCALE ★
-   Quy tắc:
-   - Mobile (≤ 768px): 1 cột
-   - Máy tính (≥ 769px): 2 cột
-   - Chế độ Full không chồng lấn
    ═══════════════════════════════════════════════════════════════════ */
 
 .page-wrap {
@@ -100,7 +80,6 @@ FULLWIDTH_CSS = r"""
     padding-right: 1.25rem !important;
 }
 
-/* ★ Bỏ sticky để không đè nội dung ★ */
 .sticky-top {
     position: relative !important;
     width: 100% !important;
@@ -133,9 +112,7 @@ FULLWIDTH_CSS = r"""
 
 .result-count { margin-top: .5rem !important; }
 
-/* ═══════════════════════════════════════════════════════════════════
-   ★ GRID CARDS: 1 CỘT MOBILE — 2 CỘT MÁY TÍNH ★
-   ═══════════════════════════════════════════════════════════════════ */
+/* ═══ GRID CARDS: 1 CỘT MOBILE — 2 CỘT MÁY TÍNH ═══ */
 .mobile-view {
     display: grid !important;
     width: 100% !important;
@@ -193,9 +170,7 @@ FULLWIDTH_CSS = r"""
     .mobile-view { gap: .8rem !important; }
 }
 
-/* ═══════════════════════════════════════════════════════════════════
-   ★ CHẾ ĐỘ FULL: ô đánh chữ là trung tâm, không chồng lấn ★
-   ═══════════════════════════════════════════════════════════════════ */
+/* ═══ CHẾ ĐỘ FULL ═══ */
 .practice-full-modal {
     position: fixed !important;
     inset: 0 !important;
@@ -226,12 +201,7 @@ FULLWIDTH_CSS = r"""
 
 
 /* ═══════════════════════════════════════════════════════════════════
-   ★★★ HEADER DESIGN MỚI — HIỆN ĐẠI & SÁNG TẠO ★★★
-   - Logo icon có glow, xoay nhẹ + shimmer khi hover
-   - Tiêu đề gradient text (tím → xanh)
-   - Subtitle có chấm sáng phân cách
-   - Nút hover nảy + gradient
-   - Badge Trial shimmer animation
+   ★★★ HEADER DESIGN ★★★
    ═══════════════════════════════════════════════════════════════════ */
 
 .header {
@@ -239,7 +209,6 @@ FULLWIDTH_CSS = r"""
     padding: .25rem 0;
 }
 
-/* ─── Layout: logo trái, actions phải ─── */
 .header-inner {
     display: flex !important;
     align-items: center !important;
@@ -248,7 +217,6 @@ FULLWIDTH_CSS = r"""
     gap: 1rem !important;
 }
 
-/* ─── Logo group ─── */
 .logo {
     flex: 1 1 auto !important;
     min-width: 0 !important;
@@ -257,7 +225,7 @@ FULLWIDTH_CSS = r"""
     gap: .9rem !important;
 }
 
-/* ─── Logo icon: gradient + glow + shimmer ─── */
+/* ─── Logo icon ─── */
 .logo-icon {
     width: clamp(46px, 4.5vw, 58px) !important;
     height: clamp(46px, 4.5vw, 58px) !important;
@@ -279,7 +247,6 @@ FULLWIDTH_CSS = r"""
                 box-shadow .35s ease !important;
 }
 
-/* Ánh sáng quét qua logo khi hover */
 .logo-icon::before {
     content: '';
     position: absolute;
@@ -301,7 +268,6 @@ FULLWIDTH_CSS = r"""
     transform: translateX(100%) rotate(25deg);
 }
 
-/* Điểm sáng ở góc logo */
 .logo-icon::after {
     content: '';
     position: absolute;
@@ -326,6 +292,7 @@ FULLWIDTH_CSS = r"""
     line-height: 1.1 !important;
     min-width: 0 !important;
     overflow: hidden !important;
+    gap: 4px !important;
 }
 
 /* ─── Tiêu đề: gradient text ─── */
@@ -351,30 +318,104 @@ FULLWIDTH_CSS = r"""
     -webkit-text-fill-color: transparent !important;
 }
 
-/* ─── Subtitle: có chấm sáng phân cách ─── */
+/* ═══════════════════════════════════════════════════════════════════
+   ★★ SUBTITLE: PILL NỔI BẬT VỚI ICON ✦ LẤP LÁNH ★★
+   Chữ "Văn phòng & Công xưởng" giờ là một chip nổi bật,
+   không còn bị mờ như trước.
+   ═══════════════════════════════════════════════════════════════════ */
 .logo-text .subtitle {
-    font-size: clamp(.68rem, .85vw, .78rem) !important;
-    color: var(--text-3) !important;
-    font-weight: 600 !important;
-    letter-spacing: 0.015em !important;
-    margin-top: 3px !important;
-    padding-left: 0 !important;
-    display: flex !important;
+    display: inline-flex !important;
     align-items: center !important;
     gap: 0.4rem !important;
+    padding: 0.25rem 0.7rem !important;
+    border-radius: 999px !important;
+
+    /* Nền gradient tím nhạt */
+    background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.13) 0%,
+        rgba(139, 92, 246, 0.13) 50%,
+        rgba(217, 70, 239, 0.13) 100%
+    ) !important;
+    border: 1px solid rgba(139, 92, 246, 0.3) !important;
+
+    /* Chữ màu tím đậm, dễ đọc */
+    color: #5b21b6 !important;
+    font-size: clamp(.68rem, .85vw, .78rem) !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.02em !important;
+
+    margin-top: 3px !important;
+    padding-left: 0.6rem !important;
+
+    width: fit-content !important;
+    max-width: 100% !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
+
+    box-shadow:
+        0 1px 3px rgba(139, 92, 246, 0.12),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5) !important;
+
+    transition: transform .3s ease, box-shadow .3s ease !important;
 }
+.logo-text .subtitle:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 4px 12px rgba(139, 92, 246, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Icon ✦ lấp lánh phía trước */
 .logo-text .subtitle::before {
-    content: '';
-    display: inline-block;
-    width: 5px;
-    height: 5px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #d946ef);
-    box-shadow: 0 0 6px rgba(139, 92, 246, 0.6);
-    flex-shrink: 0;
+    content: '✦';
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: #d946ef !important;
+    font-size: 0.9em !important;
+    font-weight: 900 !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
+    text-shadow:
+        0 0 6px rgba(217, 70, 239, 0.7),
+        0 0 12px rgba(139, 92, 246, 0.5) !important;
+    animation: sparkleSubtitle 2.5s ease-in-out infinite !important;
+}
+@keyframes sparkleSubtitle {
+    0%, 100% {
+        opacity: 0.65;
+        transform: scale(1) rotate(0deg);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.2) rotate(18deg);
+        text-shadow:
+            0 0 10px rgba(217, 70, 239, 0.9),
+            0 0 18px rgba(139, 92, 246, 0.7);
+    }
+}
+
+/* Dark mode */
+[data-theme="dark"] .logo-text .subtitle {
+    background: linear-gradient(
+        135deg,
+        rgba(99, 102, 241, 0.28) 0%,
+        rgba(139, 92, 246, 0.28) 50%,
+        rgba(217, 70, 239, 0.28) 100%
+    ) !important;
+    border-color: rgba(165, 180, 252, 0.45) !important;
+    color: #ddd6fe !important;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+[data-theme="dark"] .logo-text .subtitle::before {
+    color: #f0abfc !important;
+    text-shadow:
+        0 0 8px rgba(240, 171, 252, 0.9),
+        0 0 16px rgba(165, 180, 252, 0.6) !important;
 }
 
 /* ─── Header actions ─── */
@@ -386,7 +427,6 @@ FULLWIDTH_CSS = r"""
     align-items: center !important;
 }
 
-/* Icon buttons: hover nảy + gradient */
 .header-actions .icon-btn {
     width: clamp(34px, 3vw, 40px) !important;
     height: clamp(34px, 3vw, 40px) !important;
@@ -415,7 +455,7 @@ FULLWIDTH_CSS = r"""
     border-color: rgba(165, 180, 252, 0.5) !important;
 }
 
-/* ─── Badge Trial: shimmer animation ─── */
+/* ─── Badge Trial: shimmer ─── */
 .header-actions .trial-badge {
     position: relative !important;
     overflow: hidden !important;
@@ -450,7 +490,6 @@ FULLWIDTH_CSS = r"""
     60%, 100% { left: 200%; }
 }
 
-/* ─── Badge Demo ─── */
 .header-actions .demo-badge {
     background: linear-gradient(135deg, #fef3c7, #fde68a) !important;
     color: #78350f !important;
@@ -460,23 +499,21 @@ FULLWIDTH_CSS = r"""
     box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25) !important;
 }
 
-/* ─── Mobile: thu gọn nhưng vẫn đẹp ─── */
+/* ─── Mobile ─── */
 @media (max-width: 768px) {
-    .logo {
-        gap: .65rem !important;
-    }
+    .logo { gap: .65rem !important; }
     .logo-icon {
         width: 44px !important;
         height: 44px !important;
         border-radius: 11px !important;
         font-size: 1.15rem !important;
     }
-    .logo-text .title {
-        font-size: 1.15rem !important;
-    }
+    .logo-text { gap: 3px !important; }
+    .logo-text .title { font-size: 1.15rem !important; }
     .logo-text .subtitle {
-        font-size: .62rem !important;
-        margin-top: 2px !important;
+        font-size: .6rem !important;
+        padding: 0.2rem 0.55rem !important;
+        gap: 0.35rem !important;
     }
     .header-inner { gap: .5rem !important; }
     .header-actions { gap: .35rem !important; }
@@ -497,15 +534,13 @@ FULLWIDTH_CSS = r"""
         height: 40px !important;
         font-size: 1rem !important;
     }
-    .logo-text .title {
-        font-size: 1.05rem !important;
-    }
+    .logo-text .title { font-size: 1.05rem !important; }
 }
 """
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  GHÉP CSS (3 khối + Fullwidth override cuối)
+#  GHÉP CSS
 # ═══════════════════════════════════════════════════════════════════
 full_css = (
     build_ui_css()
@@ -527,7 +562,6 @@ ui_html = ui_html.replace(
     social_html + '\n<div class="writer-modal" id="writerModal">'
 )
 
-# Bọc toàn bộ body trong .page-wrap để cô lập layout
 full_body = (
     '<div class="page-wrap">\n'
     + ui_html
@@ -576,17 +610,14 @@ __BODY__
 var RAW_DATA = __DATA__;
 var FIREBASE_CONFIG = __FIREBASE_CONFIG__;
 
-/* ═══ DEMO TIER ═══ */
 var DEMO_LIMIT = __DEMO_LIMIT__;
 var DEMO_DAILY_LIMIT = __DEMO_DAILY_LIMIT__;
 var DEMO_HSK_MAX = __DEMO_HSK_MAX__;
 
-/* ═══ TRIAL TIER ═══ */
 var TRIAL_MAX_QUESTIONS = __TRIAL_MAX_QUESTIONS__;
 var TRIAL_MAX_HSK = __TRIAL_MAX_HSK__;
 var TRIAL_UNLIMITED_WRITING = __TRIAL_UNLIMITED_WRITING__;
 
-/* ═══ KHÁC ═══ */
 var TARGET_ADMINS = __TARGET_ADMINS__;
 var SUPER_ADMIN = "__SUPER_ADMIN__";
 var ZALO_PHONE = "__ZALO_PHONE__";
@@ -598,15 +629,11 @@ var TIKTOK_URL = "__TIKTOK_URL__";
 var SYNONYMS = __SYNONYMS__;
 var FILLER_WORDS = __FILLER_WORDS__;
 
-/* Helper $ toàn cục */
 var $ = function(id) { return document.getElementById(id); };
 
 __JS__
 </script>
 
-<!-- ═══════════════════════════════════════════════════════════════
-     TELEGRAM MODULE — SCRIPT RIÊNG BIỆT
-     ═══════════════════════════════════════════════════════════════ -->
 <script>
 (function() {
     'use strict';
@@ -695,16 +722,13 @@ html_output = (HTML_SHELL
     .replace("__JS__", full_js)
     .replace("__DATA__", json_data)
     .replace("__FIREBASE_CONFIG__", firebase_config_json)
-    # ═══ DEMO ═══
     .replace("__DEMO_LIMIT__", str(CONFIG["demo_limit"]))
     .replace("__DEMO_DAILY_LIMIT__", str(CONFIG["demo_daily_limit"]))
     .replace("__DEMO_HSK_MAX__", str(CONFIG["demo_hsk_max"]))
-    # ═══ TRIAL ═══
     .replace("__TRIAL_MAX_QUESTIONS__", str(CONFIG.get("trial_max_questions", 50)))
     .replace("__TRIAL_MAX_HSK__", str(CONFIG.get("trial_max_hsk", 5)))
     .replace("__TRIAL_UNLIMITED_WRITING__",
              "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
-    # ═══ KHÁC ═══
     .replace("__TARGET_ADMINS__", str(CONFIG["target_admins"]))
     .replace("__SUPER_ADMIN__", CONFIG["super_admin"])
     .replace("__ZALO_PHONE__", CONFIG["zalo_phone"])
@@ -715,7 +739,6 @@ html_output = (HTML_SHELL
     .replace("__TIKTOK_URL__", CONFIG["tiktok_url"])
     .replace("__SYNONYMS__", synonyms_json)
     .replace("__FILLER_WORDS__", fillers_json)
-    # ═══ Telegram ═══
     .replace("__TELEGRAM_BOT_TOKEN__", telegram_bot_token)
     .replace("__TELEGRAM_CHAT_ID__", telegram_chat_id)
 )
@@ -727,21 +750,4 @@ size_kb = os.path.getsize(OUTPUT_HTML) / 1024
 print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
 print(f"📚 Tổng số câu: {len(data)}")
-print(f"🎁 Demo: {CONFIG['demo_limit']} câu + HSK1-{CONFIG['demo_hsk_max']} + {CONFIG['demo_daily_limit']} lượt")
-print(f"📚 Trial: {CONFIG.get('trial_max_questions', 50)} câu, HSK1-{CONFIG.get('trial_max_hsk', 5)}, "
-      f"nghe viết {'KHÔNG' if CONFIG.get('trial_unlimited_writing', True) else 'CÓ'} giới hạn")
-print(f"🔥 Firebase: {CONFIG['firebase_config'].get('projectId', 'N/A')}")
-print(f"👑 Super admin: {CONFIG['super_admin']}")
-print(f"🎉 Trial days: {CONFIG['trial_days']} ngày cho user mới")
-print(f"🏦 Bank: {CONFIG['bank_config']['bank_name']} - {CONFIG['bank_config']['account_no']}")
-print(f"💰 Packages: {len(CONFIG['packages'])} gói")
-permanent_count = sum(1 for p in CONFIG['packages'] if p.get("permanent"))
-if permanent_count:
-    print(f"💎 Gói VĨNH VIỄN: {permanent_count}")
-if telegram_bot_token and telegram_chat_id:
-    print(f"📲 Telegram: ĐÃ bật (chat_id: {telegram_chat_id})")
-else:
-    print(f"📲 Telegram: CHƯA cấu hình (thiếu token hoặc chat_id)")
-print(f"✅ Đã ghép 4 template + FULLWIDTH SCALE + HEADER DESIGN MỚI")
-print(f"🎨 Quy tắc: Mobile 1 cột | PC 2 cột | Full mode không chồng lấn")
-print(f"🎯 Header: gradient text, logo shimmer, badge animation")
+print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
