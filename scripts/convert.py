@@ -54,6 +54,7 @@ telegram_chat_id = CONFIG.get("telegram_chat_id", "")
 trial_days = CONFIG.get("trial_days", 3)
 trial_limit_per_hsk = CONFIG.get("trial_limit_per_hsk", 10)
 trial_hsk_max = CONFIG.get("trial_hsk_max", 6)
+trial_daily_limit = CONFIG.get("trial_daily_limit", 100)  # ✅ THÊM MỚI
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -121,6 +122,36 @@ __CSS__
 </head>
 <body>
 
+<!-- 🚨 ERROR OVERLAY: hiển thị lỗi JS trực tiếp trên màn hình -->
+<div id="errorOverlay" style="display:none;position:fixed;inset:0;background:rgba(220,38,38,.96);color:#fff;z-index:99999;padding:1rem;font-family:monospace;font-size:13px;overflow:auto;">
+    <div style="font-size:16px;font-weight:700;margin-bottom:.5rem;">🚨 CÓ LỖI JAVASCRIPT:</div>
+    <div id="errorMsg" style="background:rgba(0,0,0,.3);padding:.75rem;border-radius:8px;margin-bottom:.75rem;white-space:pre-wrap;word-break:break-all;"></div>
+    <div id="errorStack" style="background:rgba(0,0,0,.3);padding:.75rem;border-radius:8px;white-space:pre-wrap;font-size:11px;word-break:break-all;"></div>
+    <button onclick="document.getElementById('errorOverlay').style.display='none'" style="margin-top:1rem;padding:.5rem 1rem;background:#fff;color:#dc2626;border:none;border-radius:8px;font-weight:700;cursor:pointer;">Đóng</button>
+</div>
+<script>
+window.onerror = function(msg, url, line, col, error) {
+    var ov = document.getElementById('errorOverlay');
+    if (!ov) return;
+    ov.style.display = 'block';
+    document.getElementById('errorMsg').textContent =
+        'Message: ' + msg + '\n' +
+        'Line: ' + line + ':' + col;
+    document.getElementById('errorStack').textContent =
+        error && error.stack ? error.stack : '(no stack)';
+    return false;
+};
+window.addEventListener('unhandledrejection', function(e) {
+    var ov = document.getElementById('errorOverlay');
+    if (!ov) return;
+    ov.style.display = 'block';
+    document.getElementById('errorMsg').textContent =
+        'Promise rejected: ' + (e.reason && e.reason.message ? e.reason.message : e.reason);
+    document.getElementById('errorStack').textContent =
+        e.reason && e.reason.stack ? e.reason.stack : '(no stack)';
+});
+</script>
+
 __BODY__
 
 <script>
@@ -149,9 +180,10 @@ var TELEGRAM_CHAT_ID = "__TELEGRAM_CHAT_ID__";
 var TRIAL_DAYS = __TRIAL_DAYS__;
 var TRIAL_LIMIT_PER_HSK = __TRIAL_LIMIT_PER_HSK__;
 var TRIAL_HSK_MAX = __TRIAL_HSK_MAX__;
+var TRIAL_DAILY_LIMIT_CFG = __TRIAL_DAILY_LIMIT__;  /* ✅ THÊM MỚI */
 
-/* Helper $ toàn cục */
-var $ = function(id) { return document.getElementById(id); };
+/* Helper $ toàn cụ (c */
+var $HTML = function(id) { return document.getElementById_SHELL(id); };
 
 __JS__
 </script>
@@ -162,7 +194,7 @@ __JS__
 # ═══════════════════════════════════════════════════════════════════
 #  RENDER + GHI FILE
 # ═══════════════════════════════════════════════════════════════════
-html_output = (HTML_SHELL
+html_output =
     .replace("__CSS__", full_css)
     .replace("__BODY__", full_body)
     .replace("__JS__", full_js)
@@ -188,6 +220,7 @@ html_output = (HTML_SHELL
     .replace("__TRIAL_DAYS__", str(trial_days))
     .replace("__TRIAL_LIMIT_PER_HSK__", str(trial_limit_per_hsk))
     .replace("__TRIAL_HSK_MAX__", str(trial_hsk_max))
+    .replace("__TRIAL_DAILY_LIMIT__", str(trial_daily_limit))  # ✅ THÊM MỚI
 )
 
 with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
@@ -200,7 +233,7 @@ print(f"📚 Tổng số câu: {len(data)}")
 print(f"🎁 Demo: {CONFIG['demo_limit']} câu + HSK1-{CONFIG['demo_hsk_max']} + {CONFIG['demo_daily_limit']} lượt")
 print(f"🔥 Firebase: {CONFIG['firebase_config'].get('projectId', 'N/A')}")
 print(f"👑 Super admin: {CONFIG['super_admin']}")
-print(f"🎉 Trial: {trial_days} ngày — {trial_limit_per_hsk} câu × HSK1-{trial_hsk_max} cho user mới")
+print(f"🎉 Trial: {trial_days} ngày — {trial_limit_per_hsk} câu × HSK1-{trial_hsk_max} + {trial_daily_limit} lượt/ngày")
 print(f"🏦 Bank: {CONFIG['bank_config']['bank_name']} - {CONFIG['bank_config']['account_no']}")
 print(f"💰 Packages: {len(CONFIG['packages'])} gói")
 # ✅ Thông báo Telegram
