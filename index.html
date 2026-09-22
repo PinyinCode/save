@@ -2137,9 +2137,6 @@ body.hide-floating .tiktok-bar { display: none !important; }
     </div>
 </div>
 
-<!-- USER DROPDOWN ĐÃ ĐƯỢC CHÈN VÀO HEADER (trong ui_template) -->
-<!-- Các modal dưới đây được chèn tự động -->
-
 <div class="edit-modal" id="changeNameModal">
     <div class="edit-box">
         <button class="edit-close" id="changeNameClose"><i class="fas fa-times"></i></button>
@@ -4495,8 +4492,12 @@ var TRIAL_MAX_QUESTIONS = 50;
 var TRIAL_MAX_HSK = 4;
 var TRIAL_UNLIMITED_WRITING = true;
 var BANK_CONFIG = {"bank_id": "970418", "bank_name": "BIDV", "account_no": "8897014076", "account_name": "NGUYEN THI THAO"};
-var PACKAGES = [{"id": "1m", "label": "1 tháng", "amount": 50000, "days": 30, "popular": false}, {"id": "3m", "label": "3 tháng", "amount": 120000, "days": 90, "popular": true, "save": "Tiết kiệm 33%"}, {"id": "1y", "label": "1 năm", "amount": 300000, "days": 365, "popular": false, "save": "Tiết kiệm 58%"}, {"id": "forever", "label": "Vĩnh viễn", "amount": 1000000, "days": 36500, "popular": false, "save": "Dùng mãi mãi", "permanent": true}];
+var PACKAGES = [{"id": "1m", "label": "1 tháng", "amount": 50000, "days": 30, "popular": false}, {"id": "3m", "label": "3 tháng", "amount": 120000, "days": 90, "popular": true, "save": "Tiết kiệm 33%"}, {"id": "1y", "label": "1 năm", "amount": 300000, "days": 365, "popular": false, "save": "Tiết kiệm 58%"}, {"id": "forever", "label": "Vĩnh viễn", "amount": 1000000, "days": 36500, "popular": false, "save": "Premium - Admin Hỗ trợ trực tiếp", "permanent": true}];
 var RENEWAL_SUPPORT_ZALO = "0922331886";
+
+/* ═══ TELEGRAM — khai báo an toàn (có thể đã có global từ build_html) ═══ */
+if (typeof TELEGRAM_BOT_TOKEN === 'undefined') { var TELEGRAM_BOT_TOKEN = ''; }
+if (typeof TELEGRAM_CHAT_ID === 'undefined')   { var TELEGRAM_CHAT_ID = ''; }
 
 /* ============ STATE ============ */
 var currentUser = null;
@@ -4558,7 +4559,7 @@ function publishTierState() {
         window.APP_LIMITS = {
             maxQuestions: currentUser.trialMaxQuestions || TRIAL_MAX_QUESTIONS || 50,
             maxHSK: currentUser.trialMaxHSK || TRIAL_MAX_HSK || 5,
-            unlimitedWriting: true,
+            unlimitedWriting: (typeof TRIAL_UNLIMITED_WRITING === 'boolean') ? TRIAL_UNLIMITED_WRITING : true,
             isTrial: true,
             email: currentUser.email
         };
@@ -5063,6 +5064,94 @@ function logLogin(u) {
     } catch(e) {}
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   TELEGRAM NOTIFICATION
+   ═══════════════════════════════════════════════════════════════ */
+function sendTelegramMessage(text) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID) {
+        console.log('⚠️ Telegram chưa cấu hình — bỏ qua thông báo');
+        return Promise.resolve(false);
+    }
+    var url = 'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage';
+    var payload = {
+        chat_id: TELEGRAM_CHAT_ID,
+        text: text,
+        parse_mode: 'HTML',
+        disable_web_page_preview: true
+    };
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    })
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+        if (data.ok) {
+            console.log('✅ Đã gửi Telegram');
+            return true;
+        } else {
+            console.warn('⚠️ Telegram lỗi:', data.description);
+            return false;
+        }
+    })
+    .catch(function(err) {
+        console.error('❌ Lỗi gửi Telegram:', err);
+        return false;
+    });
+}
+
+function escapeTelegramHtml(s) {
+    if (s == null) return '';
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function notifyTelegramUserPaid(reqData) {
+    var isPermanent = reqData.isPermanent || false;
+    var now = new Date();
+    var timeStr = now.toLocaleString('vi-VN', { hour12: false });
+
+    var msg = '';
+    msg += '🔔 <b>CÓ YÊU CẦU GIA HẠN MỚI</b>\n';
+    msg += '━━━━━━━━━━━━━━━━━━━━\n';
+    msg += '👤 <b>User:</b> ' + escapeTelegramHtml(reqData.name || reqData.email) + '\n';
+    msg += '📧 <b>Email:</b> <code>' + escapeTelegramHtml(reqData.email) + '</code>\n';
+    msg += '💰 <b>Số tiền:</b> ' + formatMoney(reqData.amount) + 'đ\n';
+    msg += '📦 <b>Gói:</b> ' + escapeTelegramHtml(reqData.packageLabel || reqData.package);
+    if (isPermanent) msg += ' 💎 <b>VĨNH VIỄN</b>';
+    msg += '\n';
+    msg += '⏱ <b>Thời hạn:</b> ' + (isPermanent ? 'Mãi mãi' : reqData.days + ' ngày') + '\n';
+    msg += '🔑 <b>Mã CK:</b> <code>' + escapeTelegramHtml(reqData.transferCode) + '</code>\n';
+    msg += '🕐 <b>Lúc:</b> ' + timeStr + '\n';
+    msg += '━━━━━━━━━━━━━━━━━━━━\n';
+    msg += '⚡ <b>Vào Admin Panel để xác nhận!</b>';
+
+    return sendTelegramMessage(msg);
+}
+
+function notifyTelegramAdminConfirmed(reqData, newExpiry) {
+    var isPermanent = reqData.isPermanent || false;
+    var now = new Date();
+    var timeStr = now.toLocaleString('vi-VN', { hour12: false });
+
+    var msg = '';
+    msg += '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n';
+    msg += '━━━━━━━━━━━━━━━━━━━━\n';
+    msg += '👤 <b>User:</b> ' + escapeTelegramHtml(reqData.name || reqData.email) + '\n';
+    msg += '📧 <b>Email:</b> <code>' + escapeTelegramHtml(reqData.email) + '</code>\n';
+    msg += '💰 <b>Số tiền:</b> ' + formatMoney(reqData.amount) + 'đ\n';
+    if (isPermanent) {
+        msg += '💎 <b>Đã kích hoạt VĨNH VIỄN</b>\n';
+    } else if (newExpiry) {
+        msg += '📅 <b>Hạn mới:</b> ' + newExpiry + '\n';
+    }
+    msg += '👮 <b>Xác nhận bởi:</b> ' + escapeTelegramHtml(currentUser.email) + '\n';
+    msg += '🕐 <b>Lúc:</b> ' + timeStr;
+    return sendTelegramMessage(msg);
+}
+
 /* ============ RENEWAL: MỞ MODAL ============ */
 window.openRenewalModal = function() {
     if (!currentUser) { showLoginModal(); return; }
@@ -5258,11 +5347,33 @@ window.userConfirmPaid = async function() {
     var btn = $('renewalConfirmBtn');
     btn.disabled = true;
     btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang gửi...';
+
+    var reqData = null;
     try {
+        /* Bước 1: Lấy data request (để gửi Telegram) */
+        var docSnap = await db.collection('renewal_requests').doc(renewalCurrentReq.id).get();
+        if (!docSnap.exists) throw new Error('Không tìm thấy yêu cầu');
+        reqData = docSnap.data();
+
+        /* Bước 2: Update Firestore */
         await db.collection('renewal_requests').doc(renewalCurrentReq.id).update({
             userConfirmedAt: firebase.firestore.FieldValue.serverTimestamp(),
             status: 'user_paid'
         });
+
+        /* Bước 3: Gửi Telegram cho admin (không await — chạy song song) */
+        notifyTelegramUserPaid({
+            email: reqData.email || currentUser.email,
+            name: reqData.name || currentUser.name,
+            amount: reqData.amount,
+            package: reqData.package,
+            packageLabel: reqData.packageLabel,
+            days: reqData.days,
+            isPermanent: reqData.isPermanent || false,
+            transferCode: reqData.transferCode
+        });
+
+        /* Bước 4: Hiện màn hình chờ */
         renderPendingConfirm();
     } catch(e) {
         alert('❌ Lỗi: ' + e.message);
@@ -6055,6 +6166,7 @@ window.approveRenewal = async function(reqId) {
             confirmedBy: currentUser.email
         };
         var message = '';
+        var newExpiryStr = '';
 
         if (isPermanent) {
             updateData.expiresAt = null;
@@ -6071,12 +6183,24 @@ window.approveRenewal = async function(reqId) {
             updateData.isPermanent = false;
             reqUpdateData.newExpiresAt = firebase.firestore.Timestamp.fromDate(newExpiry);
             reqUpdateData.isPermanent = false;
+            newExpiryStr = newExpiry.toLocaleDateString('vi-VN');
             message = '✅ Đã gia hạn ' + req.days + ' ngày cho:\n' + req.email +
-                      '\n\nHạn mới: ' + newExpiry.toLocaleDateString('vi-VN');
+                      '\n\nHạn mới: ' + newExpiryStr;
         }
 
         await db.collection('allowed_users').doc(req.email).update(updateData);
         await db.collection('renewal_requests').doc(reqId).update(reqUpdateData);
+
+        /* 🔔 Gửi Telegram thông báo admin đã xác nhận */
+        notifyTelegramAdminConfirmed({
+            email: req.email,
+            name: req.name,
+            amount: req.amount,
+            package: req.package,
+            packageLabel: req.packageLabel,
+            days: req.days,
+            isPermanent: isPermanent
+        }, newExpiryStr);
 
         try { localStorage.removeItem('user_cache_' + req.email); } catch(e) {}
         alert(message);
@@ -6300,19 +6424,19 @@ function processImport(rows) {
     }
 
     if (importRows.length === 0) return alert('❌ Không có dòng hợp lệ!');
-    renderImportPreview();
-    $('importModal').classList.add('show');
+    render countImportPreview();
+    $('importModal').OkclassList.add('show');
 }
 
-function renderImportPreview() {
-    var tbody = $('importTableBody');
-    var html = '';
+function renderImport++;Preview() {
+    var tbody = }
+ $('importTableBody');
+           var html = '';
     var countOk = 0, countUpdate = 0, countWarn = 0, countErr = 0;
     importRows.forEach(function(r) {
         var rowCls = '', statusHtml = '';
         if (r.status === 'ok' && r.isUpdate) { rowCls = 'row-update'; statusHtml = '<span class="status-badge update"><i class="fas fa-sync-alt"></i> Cập nhật</span>'; countUpdate++; }
-        else if (r.status === 'ok') { rowCls = 'row-new'; statusHtml = '<span class="status-badge ok"><i class="fas fa-plus"></i> Thêm mới</span>'; countOk++; }
-        else if (r.status === 'warn') { rowCls = 'row-warn'; statusHtml = '<span class="status-badge warn">' + escapeHtml(r.reason) + '</span>'; countWarn++; }
+        else if (r.status === 'ok') { rowCls = 'row-new'; statusHtml = '<span class="status-badge ok"><i class="fas fa-plus"></i> Thêm mới</span>'; else if (r.status === 'warn') { rowCls = 'row-warn'; statusHtml = '<span class="status-badge warn">' + escapeHtml(r.reason) + '</span>'; countWarn++; }
         else { rowCls = 'row-error'; statusHtml = '<span class="status-badge err">' + escapeHtml(r.reason) + '</span>'; countErr++; }
         var expDisplay = r.expStr
             ? '<span style="color:#16a34a;font-size:.7rem;font-weight:600;">' + r.expStr + '</span>'
