@@ -19,12 +19,11 @@ from social_template import (
     build_social_css, build_social_html, build_social_js,
     build_tiktok_bar_html
 )
-# ✅ CHỈ CÒN 1 MODULE ACCOUNTS (đã gộp renewal)
 from accounts_template import (
     build_accounts_css,
     build_accounts_html,
     build_accounts_js,
-    build_all_auth,  # helper gộp CSS+HTML+JS
+    build_all_auth,
 )
 
 
@@ -46,7 +45,6 @@ firebase_config_json = json.dumps(CONFIG["firebase_config"], ensure_ascii=False)
 synonyms_json = json.dumps(CONFIG["synonyms"], ensure_ascii=True, separators=(',', ':'))
 fillers_json = json.dumps(CONFIG["filler_words"], ensure_ascii=True, separators=(',', ':'))
 
-# ✅ TELEGRAM CONFIG (lấy từ config.json, fallback chuỗi rỗng nếu chưa cấu hình)
 telegram_bot_token = CONFIG.get("telegram_bot_token", "")
 telegram_chat_id = CONFIG.get("telegram_chat_id", "")
 
@@ -79,12 +77,11 @@ ui_html = ui_html.replace(
     social_html + '\n<div class="writer-modal" id="writerModal">'
 )
 
-# ✅ Auth HTML đã chứa cả login modal + renewal modal + admin panel
 full_body = ui_html + "\n" + auth_html
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  GHÉP JS (3 khối: ui + social + auth đã inject config)
+#  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
 full_js = (
     build_ui_js()
@@ -122,9 +119,18 @@ __BODY__
 /* ============ DỮ LIỆU + CONFIG ============ */
 var RAW_DATA = __DATA__;
 var FIREBASE_CONFIG = __FIREBASE_CONFIG__;
+
+/* ═══ DEMO TIER ═══ */
 var DEMO_LIMIT = __DEMO_LIMIT__;
 var DEMO_DAILY_LIMIT = __DEMO_DAILY_LIMIT__;
 var DEMO_HSK_MAX = __DEMO_HSK_MAX__;
+
+/* ═══ TRIAL TIER (MỚI) ═══ */
+var TRIAL_MAX_QUESTIONS = __TRIAL_MAX_QUESTIONS__;
+var TRIAL_MAX_HSK = __TRIAL_MAX_HSK__;
+var TRIAL_UNLIMITED_WRITING = __TRIAL_UNLIMITED_WRITING__;
+
+/* ═══ KHÁC ═══ */
 var TARGET_ADMINS = __TARGET_ADMINS__;
 var SUPER_ADMIN = "__SUPER_ADMIN__";
 var ZALO_PHONE = "__ZALO_PHONE__";
@@ -136,7 +142,7 @@ var TIKTOK_URL = "__TIKTOK_URL__";
 var SYNONYMS = __SYNONYMS__;
 var FILLER_WORDS = __FILLER_WORDS__;
 
-/* ✅ Telegram config */
+/* ═══ Telegram ═══ */
 var TELEGRAM_BOT_TOKEN = "__TELEGRAM_BOT_TOKEN__";
 var TELEGRAM_CHAT_ID = "__TELEGRAM_CHAT_ID__";
 
@@ -158,9 +164,16 @@ html_output = (HTML_SHELL
     .replace("__JS__", full_js)
     .replace("__DATA__", json_data)
     .replace("__FIREBASE_CONFIG__", firebase_config_json)
+    # ═══ DEMO ═══
     .replace("__DEMO_LIMIT__", str(CONFIG["demo_limit"]))
     .replace("__DEMO_DAILY_LIMIT__", str(CONFIG["demo_daily_limit"]))
     .replace("__DEMO_HSK_MAX__", str(CONFIG["demo_hsk_max"]))
+    # ═══ TRIAL (MỚI) ═══
+    .replace("__TRIAL_MAX_QUESTIONS__", str(CONFIG.get("trial_max_questions", 50)))
+    .replace("__TRIAL_MAX_HSK__", str(CONFIG.get("trial_max_hsk", 5)))
+    .replace("__TRIAL_UNLIMITED_WRITING__",
+             "true" if CONFIG.get("trial_unlimited_writing", True) else "false")
+    # ═══ KHÁC ═══
     .replace("__TARGET_ADMINS__", str(CONFIG["target_admins"]))
     .replace("__SUPER_ADMIN__", CONFIG["super_admin"])
     .replace("__ZALO_PHONE__", CONFIG["zalo_phone"])
@@ -171,7 +184,7 @@ html_output = (HTML_SHELL
     .replace("__TIKTOK_URL__", CONFIG["tiktok_url"])
     .replace("__SYNONYMS__", synonyms_json)
     .replace("__FILLER_WORDS__", fillers_json)
-    # ✅ Telegram
+    # ═══ Telegram ═══
     .replace("__TELEGRAM_BOT_TOKEN__", telegram_bot_token)
     .replace("__TELEGRAM_CHAT_ID__", telegram_chat_id)
 )
@@ -184,12 +197,16 @@ print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
 print(f"📚 Tổng số câu: {len(data)}")
 print(f"🎁 Demo: {CONFIG['demo_limit']} câu + HSK1-{CONFIG['demo_hsk_max']} + {CONFIG['demo_daily_limit']} lượt")
+print(f"📚 Trial: {CONFIG.get('trial_max_questions', 50)} câu, HSK1-{CONFIG.get('trial_max_hsk', 5)}, "
+      f"nghe viết {'KHÔNG' if CONFIG.get('trial_unlimited_writing', True) else 'CÓ'} giới hạn")
 print(f"🔥 Firebase: {CONFIG['firebase_config'].get('projectId', 'N/A')}")
 print(f"👑 Super admin: {CONFIG['super_admin']}")
-print(f"🎉 Trial: {CONFIG['trial_days']} ngày cho user mới")
+print(f"🎉 Trial days: {CONFIG['trial_days']} ngày cho user mới")
 print(f"🏦 Bank: {CONFIG['bank_config']['bank_name']} - {CONFIG['bank_config']['account_no']}")
 print(f"💰 Packages: {len(CONFIG['packages'])} gói")
-# ✅ Thông báo Telegram
+permanent_count = sum(1 for p in CONFIG['packages'] if p.get("permanent"))
+if permanent_count:
+    print(f"💎 Gói VĨNH VIỄN: {permanent_count}")
 if telegram_bot_token and telegram_chat_id:
     print(f"📲 Telegram: ĐÃ bật (chat_id: {telegram_chat_id})")
 else:
