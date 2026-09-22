@@ -11,6 +11,9 @@ Ghép 4 template: ui + social + accounts (gộp renewal) + data.
    - Chế độ Full không chồng lấn: header/filters/nav flex:0 0 auto,
      body flex:1 1 auto + overflow-y:auto.
    - Ô đánh chữ trong chế độ Full là trung tâm lớn nhất.
+
+✅ FIX HEADER: Trải rộng toàn bộ chiều ngang trên PC,
+   logo dạt trái, actions dạt phải — không còn khoảng trống.
 """
 import json
 import os
@@ -76,6 +79,7 @@ auth_css, auth_html, auth_js = build_all_auth(CONFIG)
 #    - Màn hình siêu rộng: mở rộng 3-4 cột (vẫn giữ tinh thần 2 cột).
 #    - Header KHÔNG sticky để tránh đè nội dung.
 #    - Chế độ Full: header/filters/nav không co giãn, body cuộn.
+#    - ★ FIX HEADER: trải rộng toàn bộ chiều ngang, logo trái - actions phải.
 # ═══════════════════════════════════════════════════════════════════
 FULLWIDTH_CSS = r"""
 
@@ -114,26 +118,6 @@ FULLWIDTH_CSS = r"""
 #mainContent {
     width: 100% !important;
     max-width: 100% !important;
-}
-
-/* ═══ HEADER SCALE ═══ */
-.header-inner {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    gap: 1rem !important;
-    width: 100% !important;
-}
-.logo {
-    flex: 1 1 auto !important;
-    min-width: 0 !important;
-}
-.header-actions {
-    flex: 0 0 auto !important;
-    margin-left: auto !important;
-    display: flex !important;
-    gap: .5rem !important;
-    align-items: center !important;
 }
 
 /* ═══ SEARCH + FILTER ═══ */
@@ -250,6 +234,32 @@ FULLWIDTH_CSS = r"""
     width: 100% !important;
     text-align: center !important;
     font-size: clamp(1.15rem, 2.2vw, 1.6rem) !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★★★ FIX HEADER: TRẢI RỘNG TOÀN BỘ CHIỀU NGANG ★★★
+   - Logo dạt trái, actions dạt phải
+   - Không còn khoảng trống bên phải trên PC
+   ═══════════════════════════════════════════════════════════════════ */
+.header-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 1rem !important;
+}
+
+.logo {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+}
+
+.header-actions {
+    flex: 0 0 auto !important;
+    margin-left: auto !important;
+    display: flex !important;
+    gap: .5rem !important;
+    align-items: center !important;
 }
 """
 
@@ -496,3 +506,4 @@ else:
     print(f"📲 Telegram: CHƯA cấu hình (thiếu token hoặc chat_id)")
 print(f"✅ Đã ghép 4 template + FULLWIDTH SCALE cho header/search/filter/cards")
 print(f"🎨 Quy tắc: Mobile 1 cột | PC 2 cột | Full mode không chồng lấn")
+print(f"🎯 Header: trải rộng toàn bộ chiều ngang, logo trái - actions phải")
