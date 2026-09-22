@@ -1379,6 +1379,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .user-info .email{font-size:.75rem;color:var(--text-3);word-break:break-all}
 .user-info .role{display:inline-block;margin-top:.4rem;padding:.15rem .5rem;background:var(--primary-light);color:var(--primary-dark);border-radius:50px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;}
 .user-info .role.admin{background:var(--amber-light);color:#92400e}
+.user-info .role.subadmin{background:linear-gradient(135deg,#06b6d4,#0891b2);color:#fff}
 .dropdown-item{display:flex;align-items:center;gap:.5rem;width:100%;padding:.65rem .75rem;border:none;border-radius:var(--radius-sm);background:transparent;color:var(--text);font-size:.85rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;text-align:left;text-decoration:none;}
 .dropdown-item:hover{background:var(--surface-2)}
 .dropdown-item.danger{color:var(--danger)}
@@ -1568,6 +1569,33 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .admin-header h2 i{color:var(--amber)}
 .admin-header-actions{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
 .admin-body{padding:1.25rem 1.5rem;overflow-y:auto;flex:1}
+
+/* Search box */
+.admin-search-wrap{position:relative;margin-bottom:1rem;}
+.admin-search-wrap i{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:.9rem;pointer-events:none;}
+.admin-search{width:100%;padding:.7rem .85rem .7rem 2.4rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:.88rem;outline:none;transition:.15s;font-family:inherit;}
+.admin-search:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.admin-search-clear{position:absolute;right:.6rem;top:50%;transform:translateY(-50%);width:24px;height:24px;border-radius:50%;border:none;background:var(--surface-2);color:var(--text-2);cursor:pointer;font-size:.75rem;display:none;align-items:center;justify-content:center;transition:.15s;}
+.admin-search-clear.show{display:flex}
+.admin-search-clear:hover{background:var(--danger-light);color:var(--danger)}
+
+/* Filter buttons */
+.admin-filter-row{display:flex;gap:.4rem;flex-wrap:wrap;margin-bottom:1rem;}
+.admin-filter-btn{padding:.35rem .75rem;border-radius:50px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.75rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;}
+.admin-filter-btn:hover{border-color:var(--primary);color:var(--primary);}
+.admin-filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);box-shadow:0 2px 8px rgba(37,99,235,.3);}
+.admin-filter-btn .count{background:rgba(255,255,255,.25);padding:.05rem .4rem;border-radius:50px;font-size:.68rem;font-weight:700;min-width:18px;text-align:center;}
+.admin-filter-btn.active .count{background:rgba(255,255,255,.35);}
+
+/* Toggle show/hide admin panel */
+.admin-toggle-btn{padding:.35rem .7rem;border-radius:8px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.75rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;}
+.admin-toggle-btn:hover{background:var(--surface-2);color:var(--primary);border-color:var(--primary);}
+.admin-toggle-btn.active{background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary);}
+
+/* Admin panel collapsible sections */
+.admin-section-collapse{overflow:hidden;transition:max-height .3s ease, opacity .3s ease, margin .3s ease;max-height:2000px;opacity:1;margin-bottom:0;}
+.admin-section-collapse.collapsed{max-height:0;opacity:0;margin-bottom:0;}
+
 .admin-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:.75rem;margin-bottom:1.25rem;}
 .stat-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);padding:1rem;text-align:center;}
 .stat-card .num{font-size:1.8rem;font-weight:800;color:var(--primary);line-height:1;margin-bottom:.3rem}
@@ -1586,6 +1614,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .user-row .u-role.admin{background:var(--amber-light);color:#92400e}
 .user-row .u-role.user{background:var(--primary-light);color:var(--primary-dark)}
 .user-row .u-role.super{background:linear-gradient(135deg, #f59e0b, #d97706);color:#fff;box-shadow:0 2px 6px rgba(245,158,11,.4);}
+.user-row .u-role.subadmin{background:linear-gradient(135deg, #06b6d4, #0891b2);color:#fff;box-shadow:0 2px 6px rgba(6,182,212,.4);}
 .user-row .u-role.perm{background:linear-gradient(135deg,#dc2626,#7c2d12);color:#fde68a;box-shadow:0 2px 6px rgba(220,38,38,.4);}
 .user-row .u-role.trial{background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e1b4b;box-shadow:0 2px 6px rgba(245,158,11,.4);}
 .user-row .u-actions{display:flex;gap:.3rem}
@@ -1865,6 +1894,28 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .renewal-history-stats .rhs-label{font-size:.7rem;color:var(--text-3);text-transform:uppercase;font-weight:700;letter-spacing:.3px;}
 .renewal-history-stats .rhs-value{font-size:1.1rem;font-weight:900;color:var(--primary);line-height:1.2;margin-top:.15rem;}
 .renewal-history-stats .rhs-value.amount{color:var(--success);}
+
+/* ============ ADMIN PERMISSIONS ============ */
+.permission-modal{position:fixed;inset:0;background:rgba(15,23,42,.85);backdrop-filter:blur(4px);z-index:4000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s;}
+.permission-modal.show{display:flex}
+.permission-box{background:var(--surface);border-radius:20px;width:100%;max-width:520px;box-shadow:0 20px 60px rgba(0,0,0,.4);padding:1.5rem;position:relative;animation:slideUp .3s cubic-bezier(.34,1.56,.64,1);}
+.permission-box h2{font-size:1.1rem;color:var(--text);font-weight:700;display:flex;align-items:center;gap:.5rem;margin-bottom:1rem;}
+.permission-box h2 i{color:#06b6d4;}
+.permission-list{display:flex;flex-direction:column;gap:.5rem;margin-bottom:1.25rem;}
+.permission-item{display:flex;align-items:center;justify-content:space-between;gap:.75rem;padding:.7rem .85rem;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);transition:.15s;}
+.permission-item:hover{border-color:#06b6d4}
+.permission-item .pi-info{flex:1;min-width:0;}
+.permission-item .pi-name{font-weight:700;font-size:.85rem;color:var(--text);margin-bottom:.1rem;}
+.permission-item .pi-desc{font-size:.72rem;color:var(--text-3);line-height:1.4;}
+.permission-item .pi-toggle{position:relative;width:44px;height:24px;flex-shrink:0;}
+.permission-item .pi-toggle input{opacity:0;width:0;height:0;position:absolute;}
+.permission-item .pi-slider{position:absolute;inset:0;background:var(--border);border-radius:50px;cursor:pointer;transition:.3s;}
+.permission-item .pi-slider::before{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:#fff;left:3px;top:3px;transition:.3s;box-shadow:0 1px 3px rgba(0,0,0,.2);}
+.permission-item .pi-toggle input:checked + .pi-slider{background:linear-gradient(135deg,#06b6d4,#0891b2);}
+.permission-item .pi-toggle input:checked + .pi-slider::before{transform:translateX(20px);}
+.permission-item .pi-toggle input:disabled + .pi-slider{opacity:.5;cursor:not-allowed;}
+.permission-note{padding:.65rem .85rem;border-radius:10px;background:rgba(6,182,212,.08);border:1px solid rgba(6,182,212,.25);font-size:.78rem;color:var(--text-2);line-height:1.5;display:flex;align-items:flex-start;gap:.5rem;margin-bottom:1rem;}
+.permission-note i{color:#06b6d4;margin-top:.1rem;flex-shrink:0;}
 
 </style>
 </head>
@@ -2363,11 +2414,34 @@ body.hide-floating .tiktok-bar { display: none !important; }
     </div>
 </div>
 
+<div class="permission-modal" id="permissionModal">
+    <div class="permission-box">
+        <button class="edit-close" id="permissionClose"><i class="fas fa-times"></i></button>
+        <h2><i class="fas fa-user-shield"></i> Phân quyền Admin</h2>
+        <div class="edit-user-info">
+            <div class="eu-name" id="permissionName">-</div>
+            <div class="eu-email" id="permissionEmail">-</div>
+        </div>
+        <div class="permission-note">
+            <i class="fas fa-info-circle"></i>
+            <div>Admin thường chỉ có các quyền được bật. Quyền <b>Quản lý Admin</b> chỉ dành cho Super Admin.</div>
+        </div>
+        <div class="permission-list" id="permissionList"></div>
+        <div class="form-actions">
+            <button class="btn" id="permissionCancel">Hủy</button>
+            <button class="btn primary" id="permissionSave"><i class="fas fa-check"></i> Lưu quyền</button>
+        </div>
+    </div>
+</div>
+
 <div class="admin-modal" id="adminModal">
     <div class="admin-box">
         <div class="admin-header">
             <h2><i class="fas fa-shield-alt"></i> Quản lý tài khoản</h2>
             <div class="admin-header-actions">
+                <button class="admin-toggle-btn" id="toggleAdminStatsBtn" title="Ẩn/hiện thống kê"><i class="fas fa-chart-bar"></i></button>
+                <button class="admin-toggle-btn" id="toggleAdminRenewalsBtn" title="Ẩn/hiện yêu cầu gia hạn"><i class="fas fa-gem"></i></button>
+                <button class="admin-toggle-btn" id="toggleAdminLogsBtn" title="Ẩn/hiện lịch sử"><i class="fas fa-history"></i></button>
                 <button class="btn" id="exportExcelBtn" title="Xuất danh sách USER ra Excel"><i class="fas fa-file-export"></i> Export</button>
                 <button class="btn" id="importExcelBtn" title="Import từ Excel (chỉ import user)"><i class="fas fa-file-import"></i> Import</button>
                 <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display:none">
@@ -2376,7 +2450,26 @@ body.hide-floating .tiktok-bar { display: none !important; }
             </div>
         </div>
         <div class="admin-body">
-            <div class="admin-stats" id="adminStats"></div>
+            <div class="admin-section-collapse" id="adminStatsSection">
+                <div class="admin-stats" id="adminStats"></div>
+            </div>
+
+            <div class="admin-search-wrap">
+                <i class="fas fa-search"></i>
+                <input type="text" class="admin-search" id="adminSearchInput" placeholder="Tìm kiếm theo email hoặc tên...">
+                <button class="admin-search-clear" id="adminSearchClear"><i class="fas fa-times"></i></button>
+            </div>
+
+            <div class="admin-filter-row" id="adminFilterRow">
+                <button class="admin-filter-btn active" data-filter="all"><i class="fas fa-users"></i> Tất cả <span class="count" id="filterCountAll">0</span></button>
+                <button class="admin-filter-btn" data-filter="user"><i class="fas fa-user"></i> User <span class="count" id="filterCountUser">0</span></button>
+                <button class="admin-filter-btn" data-filter="admin"><i class="fas fa-shield-alt"></i> Admin <span class="count" id="filterCountAdmin">0</span></button>
+                <button class="admin-filter-btn" data-filter="trial"><i class="fas fa-gift"></i> Trial <span class="count" id="filterCountTrial">0</span></button>
+                <button class="admin-filter-btn" data-filter="expiring"><i class="fas fa-clock"></i> Sắp hết hạn <span class="count" id="filterCountExpiring">0</span></button>
+                <button class="admin-filter-btn" data-filter="expired"><i class="fas fa-exclamation-circle"></i> Hết hạn <span class="count" id="filterCountExpired">0</span></button>
+                <button class="admin-filter-btn" data-filter="permanent"><i class="fas fa-crown"></i> Vĩnh viễn <span class="count" id="filterCountPermanent">0</span></button>
+            </div>
+
             <div class="admin-section-title">
                 <span><i class="fas fa-users"></i> Danh sách tài khoản (<span id="adminUserCount">0</span>)</span>
                 <button class="btn-add" id="showAddUserBtn"><i class="fas fa-plus"></i> Thêm</button>
@@ -2411,19 +2504,23 @@ body.hide-floating .tiktok-bar { display: none !important; }
                 <div class="no-data"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>
             </div>
 
-            <div class="admin-section-title" style="margin-top:1.5rem" id="renewalsTitle">
-                <span><i class="fas fa-gem"></i> Yêu cầu gia hạn (<span id="pendingRenewalsBadge">0</span>)</span>
-                <button class="btn" id="refreshRenewalsBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
-            </div>
-            <div class="renewals-list" id="renewalsList">
-                <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>
+            <div class="admin-section-collapse" id="adminRenewalsSection">
+                <div class="admin-section-title" style="margin-top:1.5rem" id="renewalsTitle">
+                    <span><i class="fas fa-gem"></i> Yêu cầu gia hạn (<span id="pendingRenewalsBadge">0</span>)</span>
+                    <button class="btn" id="refreshRenewalsBtn" style="padding:.35rem .7rem;font-size:.75rem"><i class="fas fa-sync-alt"></i> Làm mới</button>
+                </div>
+                <div class="renewals-list" id="renewalsList">
+                    <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i> Đang tải...</div>
+                </div>
             </div>
 
-            <div class="admin-section-title" style="margin-top:1.5rem" id="logsTitle">
-                <span><i class="fas fa-history"></i> Lịch sử đăng nhập (gần đây)</span>
-            </div>
-            <div class="logs-list" id="logsList">
-                <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>
+            <div class="admin-section-collapse" id="adminLogsSection">
+                <div class="admin-section-title" style="margin-top:1.5rem" id="logsTitle">
+                    <span><i class="fas fa-history"></i> Lịch sử đăng nhập (gần đây)</span>
+                </div>
+                <div class="logs-list" id="logsList">
+                    <div class="no-data" style="padding:1rem;font-size:.8rem"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>
+                </div>
             </div>
         </div>
     </div>
@@ -4661,6 +4758,23 @@ var renewalSelectedPkg = null;
 var renewalCurrentReq = null;
 var renewalListener = null;
 
+/* Search & Filter state */
+var adminSearchQuery = '';
+var adminCurrentFilter = 'all';
+var editingPermissionEmail = null;
+
+/* Admin permissions definition */
+var ADMIN_PERMISSIONS = [
+    { key: 'canViewUsers',      name: 'Xem danh sách user',   desc: 'Xem thông tin tất cả tài khoản user' },
+    { key: 'canEditExpiry',     name: 'Chỉnh hạn sử dụng',    desc: 'Thay đổi ngày hết hạn của user' },
+    { key: 'canRenew',          name: 'Duyệt gia hạn',        desc: 'Xác nhận/từ chối yêu cầu gia hạn của user' },
+    { key: 'canAddUser',        name: 'Thêm user mới',        desc: 'Tạo tài khoản user mới' },
+    { key: 'canDeleteUser',     name: 'Xóa user',             desc: 'Xóa tài khoản user khỏi hệ thống' },
+    { key: 'canImportExport',   name: 'Import/Export Excel',  desc: 'Nhập/xuất danh sách user' },
+    { key: 'canViewLogs',       name: 'Xem lịch sử đăng nhập', desc: 'Xem log đăng nhập của user' },
+    { key: 'canManageAdmin',    name: 'Quản lý Admin',        desc: 'Thêm/xóa/phân quyền admin khác (chỉ Super Admin)' }
+];
+
 /* ============ HELPERS ============ */
 function escapeHtml(s) {
     if (s == null) return '';
@@ -4678,6 +4792,17 @@ function isSuperAdmin() {
 function isHiddenAdmin() {
     if (!currentUser || currentUser.role !== 'admin') return false;
     return !isSuperAdmin();
+}
+function isSubAdmin() {
+    if (!currentUser || currentUser.role !== 'admin') return false;
+    if (isSuperAdmin()) return false;
+    return currentUser.isSubAdmin === true || currentUser.permissions !== undefined;
+}
+function hasPermission(permKey) {
+    if (!currentUser || currentUser.role !== 'admin') return false;
+    if (isSuperAdmin()) return true;
+    var perms = currentUser.permissions || {};
+    return perms[permKey] === true;
 }
 
 /* ============ TIER STATE — API cho ui_template đọc ============ */
@@ -4816,7 +4941,9 @@ async function handleAuthChange(user) {
             isPermanent: data.isPermanent || false,
             tier: userTier,
             trialMaxQuestions: data.trialMaxQuestions || TRIAL_MAX_QUESTIONS,
-            trialMaxHSK: data.trialMaxHSK || TRIAL_MAX_HSK
+            trialMaxHSK: data.trialMaxHSK || TRIAL_MAX_HSK,
+            isSubAdmin: data.isSubAdmin || false,
+            permissions: data.permissions || null
         };
 
         currentUser = userData;
@@ -5052,8 +5179,15 @@ function applyUserUI() {
         if ($('userName')) $('userName').textContent = currentUser.name;
         if ($('userEmail')) $('userEmail').textContent = currentUser.email;
         if ($('userRole')) {
-            $('userRole').textContent = currentUser.role;
-            $('userRole').className = 'role' + (currentUser.role === 'admin' ? ' admin' : '');
+            var roleText = currentUser.role;
+            var roleCls = 'role';
+            if (currentUser.role === 'admin') {
+                if (isSuperAdmin()) { roleText = 'super admin'; roleCls += ' admin'; }
+                else if (isSubAdmin()) { roleText = 'sub admin'; roleCls += ' subadmin'; }
+                else { roleText = 'admin'; roleCls += ' admin'; }
+            }
+            $('userRole').textContent = roleText;
+            $('userRole').className = roleCls;
         }
         if ($('openAdminBtn')) $('openAdminBtn').style.display = currentUser.role === 'admin' ? 'flex' : 'none';
 
@@ -5105,7 +5239,7 @@ function updateUserDetails() {
     if (currentUser.role === 'admin') {
         expiryValue.textContent = 'Vĩnh viễn';
         expiryValue.className = 'detail-value permanent';
-        expirySub.textContent = 'Tài khoản quản trị viên';
+        expirySub.textContent = isSuperAdmin() ? 'Super Admin' : (isSubAdmin() ? 'Sub Admin' : 'Quản trị viên');
         if (expiryIcon) expiryIcon.className = 'fas fa-infinity';
         if (expiryIconWrap) expiryIconWrap.className = 'detail-icon permanent';
         if (progressWrap) progressWrap.style.display = 'none';
@@ -5211,6 +5345,85 @@ function logLogin(u) {
         }).then(function() { try { localStorage.setItem(logKey, today); } catch(e) {} }).catch(function(){});
     } catch(e) {}
 }
+
+/* ============ ADMIN SEARCH & FILTER ============ */
+function filterUsers(items) {
+    var query = adminSearchQuery.toLowerCase().trim();
+    var filter = adminCurrentFilter;
+    var now = Date.now();
+
+    return items.filter(function(u) {
+        // Search filter
+        if (query) {
+            var email = (u.email || '').toLowerCase();
+            var name = (u.name || '').toLowerCase();
+            if (email.indexOf(query) === -1 && name.indexOf(query) === -1) return false;
+        }
+        // Type filter
+        if (filter === 'all') return true;
+        if (filter === 'user') return u.role !== 'admin';
+        if (filter === 'admin') return u.role === 'admin';
+        if (filter === 'trial') return u.role !== 'admin' && (u.tier === 'trial' || u.isTrial);
+        if (filter === 'permanent') return u.role !== 'admin' && u.isPermanent;
+        if (filter === 'expiring') {
+            if (u.role === 'admin' || u.isPermanent || !u.expiresAt) return false;
+            var d = getExpiryDate(u.expiresAt);
+            if (!d || isNaN(d.getTime())) return false;
+            var daysLeft = Math.ceil((d.getTime() - now) / 86400000);
+            return daysLeft >= 0 && daysLeft <= 7;
+        }
+        if (filter === 'expired') {
+            if (u.role === 'admin' || u.isPermanent || !u.expiresAt) return false;
+            var d2 = getExpiryDate(u.expiresAt);
+            if (!d2 || isNaN(d2.getTime())) return false;
+            return d2.getTime() < now;
+        }
+        return true;
+    });
+}
+
+function updateFilterCounts(items) {
+    var now = Date.now();
+    var counts = { all: 0, user: 0, admin: 0, trial: 0, expiring: 0, expired: 0, permanent: 0 };
+    var hidden = isHiddenAdmin();
+    var myEmail = (currentUser && currentUser.email ? currentUser.email.toLowerCase() : '');
+
+    items.forEach(function(u) {
+        var uEmail = (u.email || '').toLowerCase();
+        if (hidden && u.role === 'admin' && uEmail !== myEmail) return;
+        counts.all++;
+        if (u.role === 'admin') { counts.admin++; }
+        else {
+            counts.user++;
+            if (u.tier === 'trial' || u.isTrial) counts.trial++;
+            if (u.isPermanent) counts.permanent++;
+            if (u.expiresAt && !u.isPermanent) {
+                var d = getExpiryDate(u.expiresAt);
+                if (d && !isNaN(d.getTime())) {
+                    var daysLeft = Math.ceil((d.getTime() - now) / 86400000);
+                    if (daysLeft < 0) counts.expired++;
+                    else if (daysLeft <= 7) counts.expiring++;
+                }
+            }
+        }
+    });
+
+    var map = { all: 'filterCountAll', user: 'filterCountUser', admin: 'filterCountAdmin',
+                trial: 'filterCountTrial', expiring: 'filterCountExpiring',
+                expired: 'filterCountExpired', permanent: 'filterCountPermanent' };
+    Object.keys(map).forEach(function(k) {
+        var el = $(map[k]);
+        if (el) el.textContent = counts[k];
+    });
+}
+
+window.setAdminFilter = function(filter) {
+    adminCurrentFilter = filter;
+    document.querySelectorAll('.admin-filter-btn').forEach(function(btn) {
+        btn.classList.toggle('active', btn.dataset.filter === filter);
+    });
+    renderUsers(usersCache);
+};
 
 /* ============ RENEWAL: MỞ MODAL ============ */
 window.openRenewalModal = function() {
@@ -5528,6 +5741,8 @@ async function refreshCurrentUser() {
         currentUser.name = data.name || currentUser.name;
         currentUser.isPermanent = data.isPermanent || false;
         if (data.tier) currentUser.tier = data.tier;
+        if (data.permissions) currentUser.permissions = data.permissions;
+        if (data.isSubAdmin !== undefined) currentUser.isSubAdmin = data.isSubAdmin;
 
         if (currentUser.role !== 'admin' && currentUser.expiresAt && !currentUser.isPermanent) {
             var expDate = getExpiryDate(currentUser.expiresAt);
@@ -5781,6 +5996,64 @@ window.openUserRenewalHistory = async function(email) {
     }
 };
 
+/* ============ ADMIN PERMISSIONS UI ============ */
+window.openPermissionModal = function(email) {
+    if (!isSuperAdmin()) {
+        alert('Chỉ Super Admin mới có quyền phân quyền!');
+        return;
+    }
+    var user = usersCache.find(function(u) { return u.email === email; });
+    if (!user) return alert('Không tìm thấy user!');
+    if (user.role !== 'admin') return alert('Chỉ phân quyền cho admin!');
+    
+    editingPermissionEmail = email;
+    $('permissionName').textContent = user.name || email.split('@')[0];
+    $('permissionEmail').textContent = email;
+
+    var perms = user.permissions || {};
+    var html = '';
+    ADMIN_PERMISSIONS.forEach(function(p) {
+        var checked = perms[p.key] === true ? 'checked' : '';
+        var disabled = p.key === 'canManageAdmin' ? 'disabled' : '';
+        html += '<div class="permission-item">' +
+            '<div class="pi-info">' +
+                '<div class="pi-name">' + escapeHtml(p.name) + '</div>' +
+                '<div class="pi-desc">' + escapeHtml(p.desc) + '</div>' +
+            '</div>' +
+            '<label class="pi-toggle">' +
+                '<input type="checkbox" data-perm="' + p.key + '" ' + checked + ' ' + disabled + '>' +
+                '<span class="pi-slider"></span>' +
+            '</label>' +
+        '</div>';
+    });
+    $('permissionList').innerHTML = html;
+    $('permissionModal').classList.add('show');
+};
+
+window.closePermissionModal = function() {
+    $('permissionModal').classList.remove('show');
+    editingPermissionEmail = null;
+};
+
+window.savePermissions = async function() {
+    if (!editingPermissionEmail || !isSuperAdmin()) return;
+    var perms = {};
+    $('permissionList').querySelectorAll('input[data-perm]').forEach(function(cb) {
+        perms[cb.dataset.perm] = cb.checked;
+    });
+    try {
+        await db.collection('allowed_users').doc(editingPermissionEmail).update({
+            permissions: perms,
+            isSubAdmin: true
+        });
+        try { localStorage.removeItem('user_cache_' + editingPermissionEmail); } catch(e) {}
+        try { localStorage.removeItem('admin_users_cache'); } catch(e) {}
+        $('permissionModal').classList.remove('show');
+        alert('✅ Đã lưu quyền!');
+        loadUsers(true);
+    } catch(e) { alert('❌ Lỗi: ' + e.message); }
+};
+
 /* ============ ADMIN PANEL ============ */
 function initAdminPanel() {
     if ($('openAdminBtn')) $('openAdminBtn').addEventListener('click', function() {
@@ -5811,6 +6084,63 @@ function initAdminPanel() {
     });
     if ($('confirmAddUser')) $('confirmAddUser').addEventListener('click', doAddUser);
     if ($('refreshRenewalsBtn')) $('refreshRenewalsBtn').addEventListener('click', function() { loadRenewals(); });
+
+    /* Search */
+    if ($('adminSearchInput')) {
+        $('adminSearchInput').addEventListener('input', function() {
+            adminSearchQuery = this.value;
+            var clearBtn = $('adminSearchClear');
+            if (clearBtn) clearBtn.classList.toggle('show', this.value.length > 0);
+            renderUsers(usersCache);
+        });
+    }
+    if ($('adminSearchClear')) {
+        $('adminSearchClear').addEventListener('click', function() {
+            $('adminSearchInput').value = '';
+            adminSearchQuery = '';
+            this.classList.remove('show');
+            renderUsers(usersCache);
+        });
+    }
+
+    /* Filter buttons */
+    document.querySelectorAll('.admin-filter-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+            setAdminFilter(this.dataset.filter);
+        });
+    });
+
+    /* Section toggles */
+    if ($('toggleAdminStatsBtn')) {
+        $('toggleAdminStatsBtn').addEventListener('click', function() {
+            var sec = $('adminStatsSection');
+            sec.classList.toggle('collapsed');
+            this.classList.toggle('active', !sec.classList.contains('collapsed'));
+        });
+        $('toggleAdminStatsBtn').classList.add('active');
+    }
+    if ($('toggleAdminRenewalsBtn')) {
+        $('toggleAdminRenewalsBtn').addEventListener('click', function() {
+            var sec = $('adminRenewalsSection');
+            sec.classList.toggle('collapsed');
+            this.classList.toggle('active', !sec.classList.contains('collapsed'));
+        });
+        $('toggleAdminRenewalsBtn').classList.add('active');
+    }
+    if ($('toggleAdminLogsBtn')) {
+        $('toggleAdminLogsBtn').addEventListener('click', function() {
+            var sec = $('adminLogsSection');
+            sec.classList.toggle('collapsed');
+            this.classList.toggle('active', !sec.classList.contains('collapsed'));
+        });
+        $('toggleAdminLogsBtn').classList.add('active');
+    }
+
+    /* Permission modal */
+    if ($('permissionClose')) $('permissionClose').addEventListener('click', closePermissionModal);
+    if ($('permissionCancel')) $('permissionCancel').addEventListener('click', closePermissionModal);
+    if ($('permissionSave')) $('permissionSave').addEventListener('click', savePermissions);
+    if ($('permissionModal')) $('permissionModal').addEventListener('click', function(e) { if (e.target === this) closePermissionModal(); });
 }
 
 async function doAddUser() {
@@ -5835,6 +6165,19 @@ async function doAddUser() {
             addedAt: firebase.firestore.FieldValue.serverTimestamp(),
             addedBy: currentUser.email
         };
+        if (role === 'admin') {
+            setData.isSubAdmin = true;
+            setData.permissions = {
+                canViewUsers: true,
+                canEditExpiry: true,
+                canRenew: true,
+                canAddUser: false,
+                canDeleteUser: false,
+                canImportExport: false,
+                canViewLogs: false,
+                canManageAdmin: false
+            };
+        }
         if (expiresVal && role !== 'admin') {
             var d = new Date(expiresVal + 'T23:59:59');
             if (!isNaN(d.getTime())) setData.expiresAt = firebase.firestore.Timestamp.fromDate(d);
@@ -5887,7 +6230,9 @@ function loadUsers(forceRefresh) {
                 expiresAt: data.expiresAt || null,
                 tier: data.tier || 'active',
                 isTrial: data.isTrial || false,
-                isPermanent: data.isPermanent || false
+                isPermanent: data.isPermanent || false,
+                isSubAdmin: data.isSubAdmin || false,
+                permissions: data.permissions || null
             });
         });
         usersCache.sort(function(a, b) { return (a.email || '').localeCompare(b.email || ''); });
@@ -5965,6 +6310,7 @@ function renderAdminStats() {
             '<div class="stat-card"><div class="num" style="color:#dc2626">' + permanentCount + '</div><div class="label">💎 Vĩnh viễn</div></div>';
     }
     $('adminUserCount').textContent = users;
+    updateFilterCounts(usersCache);
 }
 
 function renderUsers(items) {
@@ -5981,8 +6327,13 @@ function renderUsers(items) {
             return true;
         });
     }
+
+    // Apply search + filter
+    displayItems = filterUsers(displayItems);
+
     if (!displayItems.length) {
-        list.innerHTML = '<div class="no-data" style="padding:1.5rem;font-size:.85rem"><i class="fas fa-search"></i>Không có user nào</div>';
+        var msg = adminSearchQuery ? 'Không tìm thấy kết quả cho "' + escapeHtml(adminSearchQuery) + '"' : 'Không có user nào';
+        list.innerHTML = '<div class="no-data" style="padding:1.5rem;font-size:.85rem"><i class="fas fa-search"></i>' + msg + '</div>';
         return;
     }
 
@@ -5994,6 +6345,7 @@ function renderUsers(items) {
         var isMe = u.email === currentUser.email;
         var isAdmin = u.role === 'admin';
         var targetIsSuper = (u.email || '').toLowerCase() === SUPER_ADMIN.toLowerCase();
+        var targetIsSubAdmin = isAdmin && u.isSubAdmin && !targetIsSuper;
         var canModifyAdmin = superAdmin && isAdmin && !isMe && !targetIsSuper;
 
         var roleBtn = isAdmin
@@ -6003,6 +6355,11 @@ function renderUsers(items) {
             : (superAdmin
                 ? '<button class="u-btn" onclick="changeRole(\'' + escapeJs(u.email) + '\', \'admin\')" title="Nâng lên Admin"><i class="fas fa-shield-alt"></i></button>'
                 : '<button class="u-btn" disabled title="Chỉ Super Admin"><i class="fas fa-shield-alt"></i></button>');
+
+        var permBtn = '';
+        if (superAdmin && targetIsSubAdmin) {
+            permBtn = '<button class="u-btn" style="background:rgba(6,182,212,.1);color:#06b6d4;border-color:rgba(6,182,212,.4);" onclick="openPermissionModal(\'' + escapeJs(u.email) + '\')" title="Phân quyền"><i class="fas fa-user-shield"></i></button>';
+        }
 
         var deleteBtn = isMe
             ? '<button class="u-btn danger" disabled title="Không thể tự xóa"><i class="fas fa-trash"></i></button>'
@@ -6056,13 +6413,18 @@ function renderUsers(items) {
             }
         }
 
-        var roleBadge = isAdmin
-            ? '<span class="u-role ' + (targetIsSuper ? 'super' : 'admin') + '">' + (targetIsSuper ? '👑 super' : 'admin') + '</span>'
-            : (u.isPermanent
-                ? '<span class="u-role perm">💎 perm</span>'
-                : ((u.tier === 'trial' || u.isTrial)
-                    ? '<span class="u-role trial">🎁 trial</span>'
-                    : '<span class="u-role user">user</span>'));
+        var roleBadge;
+        if (isAdmin) {
+            if (targetIsSuper) roleBadge = '<span class="u-role super">👑 super</span>';
+            else if (targetIsSubAdmin) roleBadge = '<span class="u-role subadmin">🛡 sub</span>';
+            else roleBadge = '<span class="u-role admin">admin</span>';
+        } else if (u.isPermanent) {
+            roleBadge = '<span class="u-role perm">💎 perm</span>';
+        } else if (u.tier === 'trial' || u.isTrial) {
+            roleBadge = '<span class="u-role trial">🎁 trial</span>';
+        } else {
+            roleBadge = '<span class="u-role user">user</span>';
+        }
 
         return '<div class="user-row" data-email="' + escapeHtml(u.email) + '">' +
             '<div class="u-info">' +
@@ -6070,7 +6432,7 @@ function renderUsers(items) {
                 '<div class="u-email">' + escapeHtml(u.email) + '</div>' +
                 lastLoginHtml + expiryHtml +
             '</div>' + roleBadge +
-            '<div class="u-actions">' + historyBtn + expiryBtn + roleBtn + deleteBtn + '</div>' +
+            '<div class="u-actions">' + historyBtn + permBtn + expiryBtn + roleBtn + deleteBtn + '</div>' +
         '</div>';
     }).join('');
 }
@@ -6089,7 +6451,24 @@ window.changeRole = async function(email, newRole) {
     var action = newRole === 'admin' ? 'NÂNG LÊN ADMIN' : 'HẠ XUỐNG USER';
     if (!confirm(action + ' cho:\n\n' + email + ' ?')) return;
     try {
-        await db.collection('allowed_users').doc(email).update({ role: newRole });
+        var updateData = { role: newRole };
+        if (newRole === 'admin') {
+            updateData.isSubAdmin = true;
+            updateData.permissions = {
+                canViewUsers: true,
+                canEditExpiry: true,
+                canRenew: true,
+                canAddUser: false,
+                canDeleteUser: false,
+                canImportExport: false,
+                canViewLogs: false,
+                canManageAdmin: false
+            };
+        } else {
+            updateData.isSubAdmin = false;
+            updateData.permissions = null;
+        }
+        await db.collection('allowed_users').doc(email).update(updateData);
         try { localStorage.removeItem('user_cache_' + email); } catch(e) {}
         try { localStorage.removeItem('admin_users_cache'); } catch(e) {}
         loadUsers(true);
@@ -6116,7 +6495,7 @@ window.deleteUser = async function(email) {
 };
 
 function loadLogs() {
-    if (isHiddenAdmin()) {
+    if (isHiddenAdmin() || !hasPermission('canViewLogs')) {
         if ($('logsTitle')) $('logsTitle').style.display = 'none';
         $('logsList').style.display = 'none';
         return;
@@ -6141,7 +6520,7 @@ function loadLogs() {
 }
 
 function loadRenewals() {
-    if (isHiddenAdmin()) {
+    if (isHiddenAdmin() && !hasPermission('canRenew')) {
         if ($('renewalsTitle')) $('renewalsTitle').style.display = 'none';
         if ($('renewalsList')) $('renewalsList').style.display = 'none';
         return;
@@ -6171,6 +6550,13 @@ function loadRenewals() {
             var statusCls = d.status === 'user_paid' ? 'user_paid' : 'pending';
             var statusText = d.status === 'user_paid' ? '⏳ Chờ xác nhận' : '⏱ Chờ CK';
             var isPermanent = d.isPermanent || d.package === 'forever' || d.days >= 36500;
+
+            var canApprove = isSuperAdmin() || hasPermission('canRenew');
+            var actionBtns = canApprove
+                ? '<button class="btn primary" style="padding:.4rem .75rem;font-size:.75rem" onclick="approveRenewal(\'' + escapeJs(d._id) + '\')"><i class="fas fa-check"></i> Xác nhận</button>' +
+                  '<button class="btn" style="padding:.4rem .65rem;font-size:.75rem" onclick="rejectRenewal(\'' + escapeJs(d._id) + '\')"><i class="fas fa-times"></i></button>'
+                : '<span style="font-size:.72rem;color:var(--text-3)">Không có quyền duyệt</span>';
+
             html +=
                 '<div class="renewal-admin-row">' +
                     '<div class="rar-head">' +
@@ -6190,8 +6576,7 @@ function loadRenewals() {
                         '<div>Mã: <span class="rar-code">' + escapeHtml(d.transferCode) + '</span></div>' +
                         '<div class="rar-actions">' +
                             '<span class="rar-status ' + statusCls + '">' + statusText + '</span>' +
-                            '<button class="btn primary" style="padding:.4rem .75rem;font-size:.75rem" onclick="approveRenewal(\'' + escapeJs(d._id) + '\')"><i class="fas fa-check"></i> Xác nhận</button>' +
-                            '<button class="btn" style="padding:.4rem .65rem;font-size:.75rem" onclick="rejectRenewal(\'' + escapeJs(d._id) + '\')"><i class="fas fa-times"></i></button>' +
+                            actionBtns +
                         '</div>' +
                     '</div>' +
                 '</div>';
@@ -6204,6 +6589,10 @@ function loadRenewals() {
 
 /* ⭐ ĐÃ TÍCH HỢP TELEGRAM — gọi window.notifyTelegramAdminConfirmed nếu có */
 window.approveRenewal = async function(reqId) {
+    if (!isSuperAdmin() && !hasPermission('canRenew')) {
+        alert('Bạn không có quyền duyệt gia hạn!');
+        return;
+    }
     if (!confirm('Xác nhận đã nhận tiền và gia hạn?')) return;
     try {
         var reqDoc = await db.collection('renewal_requests').doc(reqId).get();
@@ -6278,6 +6667,10 @@ window.approveRenewal = async function(reqId) {
 };
 
 window.rejectRenewal = async function(reqId) {
+    if (!isSuperAdmin() && !hasPermission('canRenew')) {
+        alert('Bạn không có quyền duyệt gia hạn!');
+        return;
+    }
     var reason = prompt('Lý do từ chối (tùy chọn):', '');
     if (reason === null) return;
     try {
