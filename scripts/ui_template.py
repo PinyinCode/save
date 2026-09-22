@@ -7,6 +7,9 @@ KHÔNG chứa login/admin/social/renewal (đã tách sang file khác).
 ✅ HỖ TRỢ 4 TIER: demo / trial / active / expired
    - Đọc window.APP_TIER + window.APP_LIMITS do accounts_template publish
    - Fallback về demo nếu chưa login
+
+✅ FIX 2024: Practice-full-modal không còn bị cắt nội dung khi
+   chiều cao màn hình thấp (PC ngang, laptop nhỏ) hoặc chiều rộng hẹp.
 """
 
 
@@ -588,14 +591,26 @@ body.practice-full-open .expiry-banner { display: none !important; }
     border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ★★★ PRACTICE FULL BODY — FIX KHÔNG CẮT NỘI DUNG ★★★
+   Dùng margin:auto cho content con thay vì justify-content:center
+   → vẫn căn giữa khi đủ chỗ, KHÔNG cắt khi content overflow.
+   ═══════════════════════════════════════════════════════════════ */
 .practice-full-body{
     flex:1;overflow-y:auto;padding:2rem 1.25rem;
     display:flex;flex-direction:column;
-    align-items:center;justify-content:center;min-height:0;
+    align-items:center;
+    justify-content:flex-start;     /* ← đổi từ center */
+    min-height:0;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
 }
 .practice-full-content{
     width:100%;max-width:700px;
     display:flex;flex-direction:column;gap:1.5rem;
+    margin-top:auto;                /* ← đẩy xuống khi dư chỗ */
+    margin-bottom:auto;             /* ← đẩy lên khi dư chỗ */
+                                    /* 2 cái kết hợp = vẫn center khi đủ, không cắt khi thiếu */
 }
 
 .practice-full-vi{
@@ -1033,6 +1048,216 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .logo-text .title{font-size:1.35rem}
     .logo-text .subtitle{display:none}
     .icon-btn{width:32px;height:32px;font-size:.75rem}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★★★ FIX THEO CHIỀU CAO MÀN HÌNH ★★★
+   PC ngang / laptop nhỏ / màn hình thấp → giảm size để không cắt.
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Khi chiều cao ≤ 700px (PC ngang, laptop nhỏ) */
+@media (max-height: 700px) {
+    .practice-full-body{
+        padding: 1rem .85rem;
+    }
+    .practice-full-content{
+        gap: 1rem;
+    }
+    .practice-full-vi{
+        font-size: 1.35rem;
+        padding: .85rem .75rem;
+    }
+    .practice-full-input{
+        font-size: 1.25rem;
+        padding: .75rem 1rem;
+    }
+    .practice-speak-btn{
+        min-width: 48px;
+        font-size: 1.15rem;
+    }
+    .char-preview{
+        min-height: 2rem;
+        padding: .5rem;
+    }
+    .char-slot{
+        font-size: 1.4rem;
+        min-width: 1.6rem;
+        height: 2.1rem;
+    }
+    .reveal-actions button{
+        padding: .6rem;
+        font-size: .82rem;
+    }
+    .practice-full-nav{
+        padding: .6rem .85rem;
+    }
+    .pf-nav-btn{
+        padding: .65rem .75rem;
+        font-size: .82rem;
+    }
+    .practice-full-header{
+        padding: .6rem .85rem;
+    }
+    .pf-filters{
+        padding: .5rem .85rem .4rem .85rem;
+    }
+    .pf-search-wrap{
+        margin-bottom: .35rem;
+    }
+}
+
+/* Khi chiều cao ≤ 500px (PC ngang rất thấp) */
+@media (max-height: 500px) {
+    .practice-full-body{
+        padding: .75rem .75rem;
+    }
+    .practice-full-content{
+        gap: .75rem;
+    }
+    .practice-full-vi{
+        font-size: 1.15rem;
+        padding: .7rem .6rem;
+    }
+    .practice-full-input{
+        font-size: 1.1rem;
+        padding: .6rem .85rem;
+    }
+    .practice-speak-btn{
+        min-width: 42px;
+        font-size: 1rem;
+    }
+    .char-preview{
+        min-height: 1.75rem;
+        padding: .4rem;
+    }
+    .char-slot{
+        font-size: 1.15rem;
+        min-width: 1.3rem;
+        height: 1.75rem;
+    }
+    .practice-full-header{
+        padding: .5rem .85rem;
+    }
+    .practice-full-header .pf-counter{
+        font-size: .7rem;
+        padding: .25rem .5rem;
+    }
+    .practice-full-header .pf-close{
+        width: 32px;
+        height: 32px;
+    }
+    .pf-filters{
+        padding: .4rem .85rem .3rem .85rem;
+    }
+    .pf-search-wrap{
+        margin-bottom: .3rem;
+    }
+    .reveal-actions button{
+        padding: .5rem;
+        font-size: .78rem;
+    }
+    .practice-full-nav{
+        padding: .5rem .85rem;
+    }
+    .pf-nav-btn{
+        padding: .55rem .65rem;
+        font-size: .78rem;
+    }
+}
+
+/* Khi chiều cao ≤ 420px (chỉ còn input + nav) */
+@media (max-height: 420px) {
+    .practice-full-header{
+        padding: .35rem .75rem;
+    }
+    .practice-full-header .pf-counter{
+        font-size: .65rem;
+        padding: .2rem .45rem;
+    }
+    .practice-full-header .pf-tags{
+        display: none;
+    }
+    .practice-full-header .pf-close{
+        width: 28px;
+        height: 28px;
+    }
+    .pf-filters{
+        padding: .35rem .75rem .25rem .75rem;
+    }
+    .pf-quick-nav{
+        margin-top: .35rem;
+    }
+    .practice-full-vi{
+        font-size: 1rem;
+        padding: .55rem .5rem;
+    }
+    .practice-full-input{
+        font-size: 1rem;
+        padding: .5rem .75rem;
+    }
+    .practice-full-body{
+        padding: .5rem .6rem;
+    }
+    .practice-full-content{
+        gap: .55rem;
+    }
+    .char-preview{
+        min-height: 1.5rem;
+        padding: .3rem;
+    }
+    .char-slot{
+        font-size: 1rem;
+        min-width: 1.15rem;
+        height: 1.5rem;
+    }
+    .reveal-actions button{
+        padding: .4rem;
+        font-size: .75rem;
+    }
+    .practice-full-nav{
+        padding: .4rem .75rem;
+    }
+    .pf-nav-btn{
+        padding: .45rem .55rem;
+        font-size: .75rem;
+    }
+    .practice-full-status{
+        font-size: .85rem;
+        min-height: 1.2rem;
+    }
+}
+
+/* Khi chiều rộng ≤ 400px (điện thoại nhỏ) */
+@media (max-width: 400px) {
+    .practice-full-body{
+        padding: .75rem .55rem;
+    }
+    .practice-full-content{
+        gap: .85rem;
+    }
+    .practice-full-vi{
+        font-size: 1.15rem;
+        padding: .7rem .55rem;
+    }
+    .practice-full-input{
+        font-size: 1.15rem;
+        padding: .65rem .85rem;
+    }
+    .practice-speak-btn{
+        min-width: 42px;
+        font-size: 1rem;
+    }
+    .reveal-actions{
+        grid-template-columns: 1fr;
+        gap: .5rem;
+    }
+    .pf-nav-btn{
+        padding: .65rem .55rem;
+        font-size: .78rem;
+    }
+    .practice-full-nav{
+        gap: .5rem;
+    }
 }
 """
 
