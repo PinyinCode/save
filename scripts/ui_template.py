@@ -1,18 +1,20 @@
 # -*- coding: utf-8 -*-
 """
-Template GIAO DIỆN HỌC: header, search, filter, card, practice focus, writer.
+Template GIAO DIỆN HỌC: header, search, filter, card, practice full, writer.
+🎨 CHỈ SỬA FILE NÀY KHI ĐỔI CẤU TRÚC GIAO DIỆN HỌC TẬP.
+KHÔNG chứa login/admin/social/renewal (đã tách sang file khác).
+
+✅ HỖ TRỢ 4 TIER: demo / trial / active / expired
+   - Đọc window.APP_TIER + window.APP_LIMITS do accounts_template publish
+   - Fallback về demo nếu chưa login
 
 ✅ QUY TẮC MỚI:
    - Mobile (<= 768px): 1 cột card.
    - Máy tính (>= 769px): 2 cột card.
-   - Tự scale theo độ phân giải.
-
-✅ CHẾ ĐỘ FOCUS (thay cho full modal):
-   - KHÔNG che header.
-   - Thông tin TikTok nằm cùng hàng với header (sẽ chèn bởi social).
-   - GIỮ search + HSK + Chủ đề trên cùng 1 hàng.
-   - Ẩn grid cards, hiện panel luyện tập ở giữa trang.
-   - Ô nhập liệu vẫn là trung tâm lớn nhất.
+   - Tự scale theo độ phân giải (clamp, vh, media queries).
+   - Chế độ Full không chồng lấn: dùng flex column,
+     header/filters/nav flex: 0 0 auto, body flex: 1 1 auto + overflow-y: auto.
+   - Ô đánh chữ trong chế độ Full là trung tâm lớn nhất.
 """
 
 
@@ -68,10 +70,12 @@ body{
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ HEADER: KHÔNG DÙNG position:sticky ★
+   ★ HEADER: KHÔNG DÙNG position:sticky ĐỂ TRÁNH ĐÈ NỘI DUNG ★
+   - Chỉ dùng position:relative, chiều cao tự nhiên.
+   - Tự scale theo độ phân giải bằng clamp().
    ═══════════════════════════════════════════════════════════════ */
 .sticky-top{
-    position:relative;
+    position:relative; /* KHÔNG sticky -> không đè nội dung */
     z-index:150;background:var(--bg);
     padding:clamp(.35rem,.8vh,.7rem) 0 clamp(.4rem,1vh,.8rem) 0;
     transition:background .2s, box-shadow .2s, border-color .2s;
@@ -354,19 +358,19 @@ body.show-practice .card-body{
    ═══════════════════════════════════════════════════════════════ */
 .mobile-view{
     display:grid;
-    grid-template-columns:1fr;
+    grid-template-columns:1fr; /* Mobile: 1 cột */
     gap:clamp(.6rem,1.5vw,.9rem);
     max-width:100%;
 }
 @media(min-width:769px){
     .mobile-view{
-        grid-template-columns:1fr 1fr;
+        grid-template-columns:1fr 1fr; /* Máy tính: 2 cột */
         gap:clamp(.9rem,1.8vw,1.2rem);
     }
 }
 @media(min-width:1800px){
     .mobile-view{
-        grid-template-columns:1fr 1fr 1fr;
+        grid-template-columns:1fr 1fr 1fr; /* Màn hình siêu rộng: 3 cột */
         gap:1.2rem;
     }
 }
@@ -530,72 +534,175 @@ body.show-practice .card-body{
 .no-data i{font-size:2.5rem;margin-bottom:.75rem;color:var(--border-strong);display:block}
 
 /* ═══════════════════════════════════════════════════════════════
-   ★★★ PRACTICE FOCUS PANEL — KHÔNG CHE HEADER ★★★
-   Khi body có class .focus-mode:
-   - Ẩn grid cards, demo banner.
-   - Hiện panel luyện tập.
-   - Header + search/filter vẫn giữ nguyên.
+   ★★★ PRACTICE FULL MODAL — KHÔNG CHỒNG LẤN ★★★
+   - Dùng flex column, header/filters/nav flex: 0 0 auto.
+   - Body flex: 1 1 auto + overflow-y: auto -> không đè nội dung.
+   - Ô input là trung tâm lớn nhất.
    ═══════════════════════════════════════════════════════════════ */
-
-.practice-focus-panel{
+.practice-full-modal{
+    position:fixed;
+    inset:0;
+    background:var(--bg);
+    z-index:2500;
     display:none;
-    width:100%;
-    max-width:900px;
-    margin:1.5rem auto 2rem auto;
+    flex-direction:column;
+    animation:fadeIn .2s;
+    overflow:hidden;
+    height:100vh;
+    height:100dvh;
 }
-body.focus-mode .practice-focus-panel{display:block}
-body.focus-mode .mobile-view{display:none !important}
-body.focus-mode .demo-banner,
-body.focus-mode .expiry-banner{display:none !important}
+.practice-full-modal.show{display:flex}
 
-/* Nút đóng focus */
-.pf-focus-close{
-    display:inline-flex;align-items:center;gap:.5rem;
-    padding:.5rem 1rem;margin-bottom:1rem;
-    border-radius:50px;border:1.5px solid var(--border);
-    background:var(--surface);color:var(--text-2);
-    font-size:.85rem;font-weight:700;cursor:pointer;
-    transition:.15s;font-family:inherit;
-}
-.pf-focus-close:hover{
-    background:var(--danger-light);color:var(--danger);
-    border-color:var(--danger);transform:translateX(-2px);
-}
-.pf-focus-close i{font-size:.9rem;}
+body.practice-full-open .search-bar,
+body.practice-full-open .filters,
+body.practice-full-open .result-count { display: none !important; }
+body.practice-full-open .demo-banner,
+body.practice-full-open .expiry-banner { display: none !important; }
 
-/* Bộ đếm câu + tags */
-.pf-focus-counter{
+/* ─── HEADER: cố định, mỏng ─── */
+.practice-full-header{
     display:flex;align-items:center;gap:.75rem;
-    margin-bottom:1.25rem;flex-wrap:wrap;
+    padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    flex:0 0 auto; /* Không co giãn */
+    min-height:clamp(42px,6vh,56px);
+    box-shadow:0 2px 8px rgba(15,23,42,.04);
 }
-.pf-focus-counter .pf-counter{
-    font-size:.9rem;font-weight:800;color:var(--primary-dark);
-    background:var(--primary-light);
-    padding:.4rem 1rem;border-radius:50px;
+.practice-full-header .pf-counter{
+    font-size:clamp(.7rem,.9vw,.82rem);font-weight:700;color:var(--text-2);
+    background:var(--surface-2);padding:.3rem .7rem;border-radius:50px;
     white-space:nowrap;
-    box-shadow:0 2px 8px rgba(37,99,235,.15);
 }
-.pf-focus-counter .pf-tags{
+.practice-full-header .pf-tags{
     display:flex;gap:.35rem;flex:1;min-width:0;flex-wrap:wrap;
 }
+.practice-full-header .pf-close{
+    width:clamp(30px,3vw,36px);height:clamp(30px,3vw,36px);
+    border-radius:50%;border:none;
+    background:var(--surface-2);color:var(--text-2);cursor:pointer;
+    font-size:clamp(.82rem,1vw,.95rem);
+    display:flex;align-items:center;justify-content:center;
+    transition:.15s;flex-shrink:0;
+}
+.practice-full-header .pf-close:hover{background:var(--danger-light);color:var(--danger)}
 
-/* Câu tiếng Việt - TRUNG TÂM */
+/* ─── FILTERS: cố định, mỏng ─── */
+.pf-filters{
+    padding:clamp(.4rem,1vh,.55rem) clamp(.85rem,2vw,1.25rem) clamp(.35rem,.8vh,.45rem) clamp(.85rem,2vw,1.25rem);
+    background:var(--surface);
+    border-bottom:1px solid var(--border);
+    flex:0 0 auto; /* Không co giãn */
+    overflow-y:auto;
+}
+.pf-search-wrap{position:relative;margin-bottom:.45rem;}
+.pf-search-wrap i.fa-search{
+    position:absolute;left:14px;top:50%;transform:translateY(-50%);
+    color:var(--text-3);font-size:.82rem;pointer-events:none;
+}
+.pf-search-wrap input{
+    width:100%;padding:clamp(.35rem,.6vh,.55rem) 2.3rem clamp(.35rem,.6vh,.55rem) 2.3rem;
+    border-radius:var(--radius-full);border:1.5px solid var(--border);
+    background:var(--bg);color:var(--text);
+    font-size:clamp(.72rem,.9vw,.85rem);
+    outline:none;transition:.15s;font-family:inherit;
+    -webkit-appearance:none;
+}
+.pf-search-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.pf-search-wrap input::placeholder{color:var(--text-3)}
+.pf-search-clear{
+    position:absolute;right:8px;top:50%;transform:translateY(-50%);
+    width:26px;height:26px;border-radius:50%;border:none;
+    background:var(--surface-2);color:var(--text-2);
+    cursor:pointer;display:none;align-items:center;justify-content:center;font-size:.72rem;
+}
+.pf-search-clear.show{display:flex}
+
+.pf-filter-row{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;}
+.pf-chip{
+    display:flex;align-items:center;gap:.4rem;
+    padding:clamp(.25rem,.5vh,.4rem) clamp(.5rem,.8vw,.75rem);
+    border-radius:var(--radius-full);
+    border:1.5px solid var(--border);background:var(--bg);
+    color:var(--text);font-size:clamp(.68rem,.85vw,.78rem);font-weight:500;
+    cursor:pointer;transition:.15s;outline:none;font-family:inherit;
+    min-width:0;position:relative;overflow:hidden;
+}
+.pf-chip:active{transform:scale(.98)}
+.pf-chip.has-value{background:var(--primary);color:#fff;border-color:var(--primary)}
+.pf-chip.has-value .pf-chip-label{color:#fff;opacity:.85}
+.pf-chip-label{font-size:clamp(.55rem,.7vw,.62rem);color:var(--text-3);text-transform:uppercase;letter-spacing:.3px;font-weight:700;flex-shrink:0}
+.pf-chip-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+.pf-chip-arrow{color:inherit;opacity:.5;font-size:.62rem;flex-shrink:0}
+.pf-chip select{
+    position:absolute;inset:0;opacity:0;cursor:pointer;font-size:1rem;
+    -webkit-appearance:none;appearance:none;width:100%;height:100%;
+}
+.pf-result-count{
+    display:none;align-items:center;gap:.4rem;margin-top:.4rem;
+    padding:.3rem .65rem;border-radius:var(--radius-full);
+    background:var(--bg);border:1px solid var(--border);
+    color:var(--text-2);font-size:clamp(.62rem,.8vw,.72rem);font-weight:600;
+    width:fit-content;
+}
+.pf-result-count.show{display:inline-flex}
+.pf-result-count i{color:var(--primary);font-size:.78rem}
+.pf-result-count b{color:var(--primary);font-weight:800}
+.pf-result-count.empty{background:var(--danger-light);color:var(--danger)}
+.pf-result-count.empty i,.pf-result-count.empty b{color:var(--danger)}
+
+.pf-quick-nav{margin-top:.4rem;display:flex;align-items:center;gap:.5rem;}
+.pf-quick-nav-label{
+    font-size:clamp(.55rem,.72vw,.68rem);font-weight:700;color:var(--text-3);
+    text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;
+}
+.pf-quick-nav-select{
+    flex:1;min-width:0;
+    padding:clamp(.25rem,.5vh,.45rem) 2rem clamp(.25rem,.5vh,.45rem) clamp(.5rem,.8vw,.75rem);
+    border-radius:var(--radius-full);border:1.5px solid var(--border);
+    background:var(--bg);color:var(--text);
+    font-size:clamp(.68rem,.85vw,.78rem);
+    font-family:inherit;outline:none;cursor:pointer;transition:.15s;
+    -webkit-appearance:none;appearance:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%2394a3b8' d='M6 9L1 4h10z'/></svg>");
+    background-repeat:no-repeat;background-position:right 12px center;background-size:10px;
+}
+.pf-quick-nav-select:focus{
+    border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15);
+}
+
+/* ─── BODY: chiếm hết phần còn lại, KHÔNG chồng lấn ─── */
+.practice-full-body{
+    flex:1 1 auto;     /* Co giãn chiếm hết khoảng trống còn lại */
+    min-height:0;      /* QUAN TRỌNG: cho phép overflow-y hoạt động đúng */
+    overflow-y:auto;
+    padding:clamp(.85rem,2vh,1.5rem) clamp(.75rem,2vw,1.25rem);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:thin;
+}
+.practice-full-content{
+    width:100%;
+    max-width:clamp(320px,60vw,700px); /* Tự scale theo độ phân giải */
+    display:flex;flex-direction:column;
+    gap:clamp(.65rem,1.5vh,1.25rem);
+    margin-top:auto;
+    margin-bottom:auto;
+}
+
 .practice-full-vi{
     font-size:clamp(1.15rem,2.2vw,1.65rem);font-weight:600;color:var(--text);
     text-align:center;line-height:1.45;
     padding:clamp(.7rem,1.5vh,1.1rem) clamp(.6rem,1.5vw,.9rem);
     background:linear-gradient(135deg, var(--surface-2), rgba(37,99,235,.06));
     border-radius:16px;border-left:4px solid var(--primary);
-    margin-bottom:1.25rem;
 }
 @media(min-width:769px){.practice-full-vi{font-size:clamp(1.4rem,2.5vw,2rem);}}
 
-/* Ô nhập liệu - LỚN NHẤT */
-.practice-full-input-wrap{
-    display:flex;flex-direction:column;
-    gap:clamp(.4rem,.8vh,.65rem);
-    margin-bottom:1.25rem;
-}
+.practice-full-input-wrap{display:flex;flex-direction:column;gap:clamp(.4rem,.8vh,.65rem);}
 
 .practice-input-row{
     position:relative;display:flex;align-items:stretch;gap:.5rem;
@@ -604,6 +711,7 @@ body.focus-mode .expiry-banner{display:none !important}
     flex:1;min-width:0;
 }
 
+/* ═══ Ô ĐÁNH CHỮ: TRUNG TÂM LỚN NHẤT ═══ */
 .practice-full-input{
     width:100%;
     padding:clamp(.7rem,1.5vh,.9rem) clamp(.85rem,1.5vw,1.1rem);
@@ -772,7 +880,6 @@ body.focus-mode .expiry-banner{display:none !important}
 .reveal-actions{
     display:grid;grid-template-columns:1fr 1fr;
     gap:clamp(.5rem,1vw,.7rem);
-    margin-bottom:1.25rem;
 }
 .reveal-actions button{
     width:100%;
@@ -805,7 +912,6 @@ body.focus-mode .expiry-banner{display:none !important}
     padding:clamp(.85rem,1.5vw,1.1rem);
     background:var(--surface-2);
     border-radius:14px;border:1px solid var(--border);
-    margin-bottom:1.25rem;
 }
 .answer-reveal.show{display:flex}
 .answer-reveal .ar-label{
@@ -872,11 +978,14 @@ body.focus-mode .expiry-banner{display:none !important}
 .answer-actions button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 .answer-actions button.primary:hover{background:var(--primary-dark)}
 
-/* ─── NAV prev/next ─── */
-.practice-focus-nav{
+/* ─── NAV: cố định, mỏng ─── */
+.practice-full-nav{
     display:flex;gap:clamp(.4rem,1vw,.65rem);
+    padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);
+    background:var(--surface);border-top:1px solid var(--border);
+    flex:0 0 auto; /* Không co giãn */
     justify-content:center;
-    margin-bottom:1.5rem;
+    min-height:clamp(44px,6vh,58px);
 }
 .pf-nav-btn{
     flex:1;max-width:240px;
@@ -897,34 +1006,6 @@ body.focus-mode .expiry-banner{display:none !important}
     box-shadow:0 4px 12px rgba(37,99,235,.3);
 }
 .pf-nav-btn.primary:hover:not(:disabled){background:var(--primary-dark)}
-
-/* Quick nav select */
-.pf-quick-nav{
-    display:flex;align-items:center;gap:.5rem;
-    margin-bottom:1rem;
-    padding:.6rem .85rem;
-    background:var(--surface);
-    border-radius:var(--radius);
-    border:1px solid var(--border);
-}
-.pf-quick-nav-label{
-    font-size:.72rem;font-weight:700;color:var(--text-3);
-    text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;
-}
-.pf-quick-nav-select{
-    flex:1;min-width:0;
-    padding:clamp(.35rem,.6vh,.5rem) 2rem clamp(.35rem,.6vh,.5rem) clamp(.55rem,.8vw,.75rem);
-    border-radius:var(--radius-full);border:1.5px solid var(--border);
-    background:var(--surface);color:var(--text);
-    font-size:clamp(.72rem,.85vw,.82rem);
-    font-family:inherit;outline:none;cursor:pointer;transition:.15s;
-    -webkit-appearance:none;appearance:none;
-    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%2394a3b8' d='M6 9L1 4h10z'/></svg>");
-    background-repeat:no-repeat;background-position:right 12px center;background-size:10px;
-}
-.pf-quick-nav-select:focus{
-    border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15);
-}
 
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes slideUp{
@@ -1063,42 +1144,69 @@ body.focus-mode .expiry-banner{display:none !important}
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ FIX MÀN HÌNH THẤP ★
+   ★ FIX MÀN HÌNH THẤP (PC ngang, laptop nhỏ) ★
    ═══════════════════════════════════════════════════════════════ */
 @media (min-width: 769px) and (max-height: 700px) {
+    .practice-full-body{ padding: .75rem .85rem; }
+    .practice-full-content{ gap: .75rem; }
     .practice-full-vi{ font-size: 1.3rem; padding: .7rem .6rem; }
     .practice-full-input{ font-size: 1.3rem; padding: .7rem .9rem; }
     .practice-speak-btn{ min-width: 46px; font-size: 1.1rem; }
     .char-preview{ min-height: 1.75rem; padding: .4rem; }
     .char-slot{ font-size: 1.3rem; min-width: 1.5rem; height: 1.9rem; }
     .reveal-actions button{ padding: .5rem; font-size: .8rem; }
+    .practice-full-nav{ padding: .5rem .85rem; }
     .pf-nav-btn{ padding: .55rem .75rem; font-size: .8rem; }
+}
+@media (min-width: 769px) and (max-height: 550px) {
+    .practice-full-header{ padding: .3rem .85rem; }
+    .practice-full-header .pf-tags{ display: none; }
+    .pf-filters{ padding: .25rem .85rem .2rem .85rem; }
+    .pf-search-wrap{ display: none; }
+    .pf-quick-nav{ margin-top: 0; }
+    .practice-full-body{ padding: .5rem .6rem; }
+    .practice-full-content{ gap: .5rem; }
+    .practice-full-vi{ font-size: 1.1rem; padding: .55rem .5rem; }
+    .practice-full-input{ font-size: 1.15rem; padding: .55rem .8rem; }
+    .practice-speak-btn{ min-width: 40px; font-size: 1rem; }
+    .char-preview{ min-height: 1.5rem; padding: .3rem; }
+    .char-slot{ font-size: 1.1rem; min-width: 1.25rem; height: 1.6rem; }
+    .reveal-actions button{ padding: .4rem; font-size: .75rem; }
+    .practice-full-nav{ padding: .4rem .65rem; }
+    .pf-nav-btn{ padding: .45rem .6rem; font-size: .75rem; }
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ MOBILE ★
+   ★ MOBILE: giữ nguyên cấu trúc nhưng 1 cột ★
    ═══════════════════════════════════════════════════════════════ */
 @media(max-width:768px){
     .container{padding:0 .7rem}
     .header-inner{gap:.5rem;margin-bottom:.4rem}
     .main{padding:.15rem 0 2rem}
 
-    .practice-focus-panel{padding:0 .7rem; margin-top:1rem;}
+    .practice-full-header{padding:.5rem .85rem;gap:.5rem}
+    .pf-filters{padding:.4rem .85rem .3rem .85rem}
+    .practice-full-body{padding:.85rem .7rem}
+    .practice-full-content{gap:.85rem}
     .practice-full-vi{font-size:1.2rem;padding:.75rem .6rem}
     .practice-full-input{font-size:1.2rem;padding:.75rem .85rem}
     .practice-speak-btn{min-width:44px;padding:0 .6rem;font-size:1.05rem;border-radius:12px;}
     .char-slot{font-size:1.2rem;min-width:1.4rem;height:1.85rem}
     .answer-phrase-btn{font-size:1.2rem;padding:.35rem .65rem;}
     .pf-nav-btn{padding:.6rem .7rem;font-size:.78rem}
+    .practice-full-nav{padding:.55rem .85rem;gap:.5rem}
     .reveal-actions button{padding:.6rem;font-size:.8rem;}
     .reveal-actions{grid-template-columns:1fr 1fr;gap:.5rem;}
 }
 @media(max-width:400px){
+    .practice-full-body{padding:.7rem .5rem}
+    .practice-full-content{gap:.7rem}
     .practice-full-vi{font-size:1.1rem;padding:.65rem .5rem}
     .practice-full-input{font-size:1.1rem;padding:.65rem .75rem}
     .practice-speak-btn{min-width:40px;font-size:1rem}
     .reveal-actions{grid-template-columns:1fr;gap:.45rem;}
     .pf-nav-btn{padding:.5rem .5rem;font-size:.75rem}
+    .practice-full-nav{gap:.4rem}
 }
 """
 
@@ -1124,7 +1232,6 @@ def build_ui_html():
                         <div class="subtitle">Văn phòng &amp; Công xưởng</div>
                     </div>
                 </div>
-                <!-- __TIKTOK_INLINE__ -->
                 <div class="header-actions">
                     <div class="trial-badge" id="trialBadge">
                         <i class="fas fa-gem"></i> <span id="trialBadgeText">Trial</span>
@@ -1191,6 +1298,8 @@ def build_ui_html():
             </div>
         </header>
 
+        <!-- __TIKTOK_BAR__ -->
+
         <div class="search-filter-row">
             <div class="search-bar">
                 <i class="fas fa-search"></i>
@@ -1251,77 +1360,6 @@ def build_ui_html():
 
 <main class="main" id="mainContent" style="display:none">
     <div class="container">
-
-        <!-- ═══════════════════════════════════════════════════════
-             PANEL LUYỆN TẬP FOCUS MODE
-             Chỉ hiển thị khi body có class .focus-mode
-             ═══════════════════════════════════════════════════════ -->
-        <div class="practice-focus-panel" id="practiceFocusPanel">
-
-            <button class="pf-focus-close" id="pfClose" type="button">
-                <i class="fas fa-arrow-left"></i> Quay lại danh sách
-            </button>
-
-            <div class="pf-focus-counter">
-                <div class="pf-counter" id="pfCounter">Câu 1 / 1</div>
-                <div class="pf-tags" id="pfTags"></div>
-            </div>
-
-            <div class="pf-quick-nav">
-                <span class="pf-quick-nav-label">Câu:</span>
-                <select class="pf-quick-nav-select" id="pfQuickNav">
-                    <option value="">-- Chọn câu --</option>
-                </select>
-            </div>
-
-            <div class="practice-full-vi" id="pfVi">-</div>
-
-            <div class="practice-full-input-wrap">
-                <div class="practice-input-row">
-                    <input type="text" class="practice-full-input" id="pfInput"
-                        placeholder="Gõ tiếng Trung..." autocomplete="off"
-                        autocorrect="off" autocapitalize="off" spellcheck="false">
-                    <button class="practice-speak-btn" id="pfSpeakBtn" type="button"
-                            title="Nghe câu này bằng tiếng Trung"
-                            aria-label="Nghe câu này">
-                        <i class="fas fa-volume-up"></i>
-                    </button>
-                </div>
-                <div class="char-preview" id="pfPreview"></div>
-                <div class="practice-full-status" id="pfStatus"></div>
-            </div>
-
-            <div class="reveal-actions">
-                <button id="pfHintBtn" type="button">
-                    <i class="fas fa-lightbulb"></i> Gợi ý
-                </button>
-                <button id="pfRevealBtn" type="button">
-                    <i class="fas fa-eye"></i> Xem đáp án
-                </button>
-            </div>
-
-            <div class="answer-reveal" id="pfAnswer">
-                <div class="ar-label">Đáp án</div>
-                <div class="answer-chars" id="pfAnswerChars"></div>
-                <div class="answer-pinyin" id="pfAnswerPinyin"></div>
-                <div class="answer-actions">
-                    <button class="primary" onclick="speakFullSentence()" type="button">
-                        <i class="fas fa-volume-up"></i> Đọc cả câu
-                    </button>
-                </div>
-            </div>
-
-            <div class="practice-focus-nav">
-                <button class="pf-nav-btn" id="pfPrevBtn" type="button">
-                    <i class="fas fa-chevron-left"></i> Câu trước
-                </button>
-                <button class="pf-nav-btn primary" id="pfNextBtn" type="button">
-                    Câu sau <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- ═══ DEMO BANNER ═══ -->
         <div class="demo-banner" id="demoBanner" style="display:none">
             <div class="demo-banner-icon"><i class="fas fa-gift"></i></div>
             <div class="demo-banner-text">
@@ -1351,7 +1389,6 @@ def build_ui_html():
             </a>
         </div>
 
-        <!-- ═══ GRID CARDS ═══ -->
         <div class="mobile-view" id="mobileWrapper">
             <div class="no-data"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div>
         </div>
@@ -1375,6 +1412,108 @@ def build_ui_html():
         </div>
     </div>
 </div>
+
+<div class="practice-full-modal" id="practiceFullModal">
+    <div class="practice-full-header">
+        <div class="pf-counter" id="pfCounter">Câu 1 / 1</div>
+        <div class="pf-tags" id="pfTags"></div>
+        <button class="pf-close" id="pfClose" aria-label="Đóng">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="pf-filters">
+        <div class="pf-search-wrap">
+            <i class="fas fa-search"></i>
+            <input type="text" id="pfSearchInput" placeholder="Tìm kiếm..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+            <button class="pf-search-clear" id="pfClearSearchBtn" aria-label="Xóa">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="pf-filter-row">
+            <div class="pf-chip" id="pfHskChip">
+                <span class="pf-chip-label">HSK</span>
+                <span class="pf-chip-value" id="pfHskValue">Tất cả</span>
+                <i class="fas fa-chevron-down pf-chip-arrow"></i>
+                <select id="pfHskFilter">
+                    <option value="">Tất cả</option>
+                    <option value="HSK1">HSK1</option>
+                    <option value="HSK2">HSK2</option>
+                    <option value="HSK3">HSK3</option>
+                    <option value="HSK4">HSK4</option>
+                    <option value="HSK5">HSK5</option>
+                    <option value="HSK6">HSK6</option>
+                </select>
+            </div>
+            <div class="pf-chip" id="pfSubjectChip">
+                <span class="pf-chip-label">Chủ đề</span>
+                <span class="pf-chip-value" id="pfSubjectValue">Tất cả</span>
+                <i class="fas fa-chevron-down pf-chip-arrow"></i>
+                <select id="pfSubjectFilter"><option value="">Tất cả chủ đề</option></select>
+            </div>
+        </div>
+        <div class="pf-result-count" id="pfResultCount">
+            <i class="fas fa-list-ul"></i>
+            <span>Tìm thấy <b id="pfResultCountNum">0</b> kết quả</span>
+        </div>
+        <div class="pf-quick-nav">
+            <span class="pf-quick-nav-label">Câu:</span>
+            <select class="pf-quick-nav-select" id="pfQuickNav">
+                <option value="">-- Chọn câu --</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="practice-full-body">
+        <div class="practice-full-content">
+            <div class="practice-full-vi" id="pfVi">-</div>
+
+            <div class="practice-full-input-wrap">
+                <div class="practice-input-row">
+                    <input type="text" class="practice-full-input" id="pfInput"
+                        placeholder="Gõ tiếng Trung..." autocomplete="off"
+                        autocorrect="off" autocapitalize="off" spellcheck="false">
+                    <button class="practice-speak-btn" id="pfSpeakBtn" type="button"
+                            title="Nghe câu này bằng tiếng Trung"
+                            aria-label="Nghe câu này">
+                        <i class="fas fa-volume-up"></i>
+                    </button>
+                </div>
+                <div class="char-preview" id="pfPreview"></div>
+                <div class="practice-full-status" id="pfStatus"></div>
+            </div>
+
+            <div class="reveal-actions">
+                <button id="pfHintBtn">
+                    <i class="fas fa-lightbulb"></i> Gợi ý
+                </button>
+                <button id="pfRevealBtn">
+                    <i class="fas fa-eye"></i> Xem đáp án
+                </button>
+            </div>
+
+            <div class="answer-reveal" id="pfAnswer">
+                <div class="ar-label">Đáp án</div>
+                <div class="answer-chars" id="pfAnswerChars"></div>
+                <div class="answer-pinyin" id="pfAnswerPinyin"></div>
+                <div class="answer-actions">
+                    <button class="primary" onclick="speakFullSentence()">
+                        <i class="fas fa-volume-up"></i> Đọc cả câu
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="practice-full-nav">
+        <button class="pf-nav-btn" id="pfPrevBtn">
+            <i class="fas fa-chevron-left"></i> Câu trước
+        </button>
+        <button class="pf-nav-btn primary" id="pfNextBtn">
+            Câu sau <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+</div>
 """
 
 
@@ -1383,7 +1522,7 @@ def build_ui_html():
 # ═══════════════════════════════════════════════════════════════════
 def build_ui_js():
     return r"""
-/* ============ BIẾN TOÀN CỤC ============ */
+/* ============ BIẾN TOÀN CỤC (chỉ phần học) ============ */
 var filtered = [];
 var state = { search:'', hsk:'', subject:'' };
 var PAGE_SIZE = 300;
@@ -1395,7 +1534,7 @@ var currentBtn = null;
 var displayState = { vi: true, pinyin: false, practice: false };
 
 /* ═══════════════════════════════════════════════════════════════
-   TIER SYSTEM
+   TIER SYSTEM — Đọc từ window.APP_TIER / window.APP_LIMITS
    ═══════════════════════════════════════════════════════════════ */
 function getTierInfo() {
     if (typeof window.APP_TIER !== 'undefined' && window.APP_LIMITS) {
@@ -1576,6 +1715,18 @@ function escapeJs(str) {
         .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"')
         .replace(/\n/g, '\\n').replace(/\r/g, '');
 }
+function formatTimeDiff(ms) {
+    var s = Math.floor(ms / 1000);
+    if (s < 60) return 'Vừa xong';
+    var m = Math.floor(s / 60);
+    if (m < 60) return m + ' phút trước';
+    var h = Math.floor(m / 60);
+    if (h < 24) return h + ' giờ trước';
+    var d = Math.floor(h / 24);
+    if (d < 30) return d + ' ngày trước';
+    var mo = Math.floor(d / 30);
+    return mo + ' tháng trước';
+}
 
 function initApp() {
     mobileWrapper = $('mobileWrapper');
@@ -1594,7 +1745,7 @@ function initApp() {
     initDisplayState();
     initSpeech();
     initWriter();
-    initFocusMode();
+    initPracticeFull();
 
     $('searchInput').addEventListener('input', applyFilter);
     $('resetBtn').addEventListener('click', function() {
@@ -1656,8 +1807,11 @@ function refreshApp() {
 
 function updateTierBadge() {
     var badge = $('trialBadge');
+    var demoBadge = $('demoBadge');
     if (!badge) return;
+
     var info = getTierInfo();
+
     if (info.tier === 'trial') {
         badge.classList.add('show');
         var daysLeft = null;
@@ -1681,10 +1835,14 @@ function updateDemoBanner() {
     var info = getTierInfo();
     var banner = $('demoBanner');
     if (!banner) return;
-    if (info.tier !== 'demo' && info.tier !== 'expired') return;
+
+    if (info.tier !== 'demo' && info.tier !== 'expired') {
+        return;
+    }
 
     var titleEl = $('demoBannerTitle');
     var descEl  = $('demoBannerDesc');
+    var btnEl   = $('demoBannerBtn');
     var btnText = $('demoBannerBtnText');
     var iconEl  = banner.querySelector('.demo-banner-icon');
 
@@ -1696,6 +1854,12 @@ function updateDemoBanner() {
                 DEMO_DAILY_LIMIT + ' lượt/ngày).<br>' +
                 'Gia hạn để mở khóa toàn bộ ' +
                 (typeof RAW_DATA !== 'undefined' ? RAW_DATA.length : '') + ' câu!';
+        }
+        if (btnEl) {
+            btnEl.onclick = function() {
+                if (typeof openRenewalModal === 'function') openRenewalModal();
+            };
+            btnEl.setAttribute('onclick', '');
         }
         if (btnText) btnText.textContent = 'Gia hạn ngay';
         if (iconEl) iconEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
@@ -1891,7 +2055,7 @@ document.addEventListener('click', function(e) {
         e.target.closest('.search-filter-row') ||
         e.target.closest('.writer-modal') || e.target.closest('.user-menu') ||
         e.target.closest('.login-modal') || e.target.closest('.admin-modal') ||
-        e.target.closest('.practice-focus-panel') || e.target.closest('.import-modal') ||
+        e.target.closest('.practice-full-modal') || e.target.closest('.import-modal') ||
         e.target.closest('.edit-modal') || e.target.closest('.zalo-btn') ||
         e.target.closest('.tiktok-float-wrap') || e.target.closest('.tiktok-bar') ||
         e.target.closest('.renewal-modal') ||
@@ -2084,7 +2248,7 @@ function render(reset) {
         }
         var fullBtn = '';
         if (r.zh) {
-            fullBtn = '<button class="practice-full-btn" onclick="openFocusMode(\'' + sttJs + '\', event)" title="Luyện tập"><i class="fas fa-expand"></i></button>';
+            fullBtn = '<button class="practice-full-btn" onclick="openPracticeFull(\'' + sttJs + '\', event)" title="Luyện tập full màn hình"><i class="fas fa-expand"></i></button>';
         }
         var practiceInput = '<input type="text" class="practice-input" placeholder="Gõ tiếng Trung..." data-answer="' + zhHtml + '" data-vi-hint="' + viHtml + '" data-stt="' + sttSafe + '" oninput="checkInput(this)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
         var toggleCheckBtn = '<button class="toggle-check-btn" onclick="toggleInlineCheck(this, event)" title="Ẩn/hiện kết quả kiểm tra" data-visible="0"><i class="fas fa-eye"></i></button>';
@@ -2369,11 +2533,14 @@ function updateInlinePreview(input, answer) {
 
 window.fixInlineChar = function(el, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
+
     var wrap = el.closest('.card-practice');
     var input = wrap ? wrap.querySelector('.practice-input') : null;
     if (!input) return;
+
     var strippedIdx = parseInt(el.dataset.idx);
     var rawVal = input.value;
+
     var rawIdx = -1;
     var strippedCount = -1;
     for (var i = 0; i < rawVal.length; i++) {
@@ -2385,10 +2552,13 @@ window.fixInlineChar = function(el, evt) {
             }
         }
     }
+
     if (rawIdx === -1) rawIdx = rawVal.length;
+
     while (rawIdx < rawVal.length && /\s/.test(rawVal[rawIdx])) {
         rawIdx++;
     }
+
     input.focus();
     setTimeout(function() {
         try {
@@ -2514,16 +2684,13 @@ function applyFilter() {
     render(true);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   FOCUS MODE
-   ═══════════════════════════════════════════════════════════════ */
 var pfCurrentStt = null;
 var pfCurrentAnswer = '';
 var pfCurrentVi = '';
 var pfCurrentPinyin = '';
 var pfHintEnabled = false;
 
-window.openFocusMode = function(stt, evt) {
+window.openPracticeFull = function(stt, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
 
     if (isExpiredTier()) {
@@ -2531,30 +2698,46 @@ window.openFocusMode = function(stt, evt) {
         return;
     }
 
+    pfBuildFilterOptions();
+    pfBuildQuickNav();
+
     var idx = -1;
     for (var i = 0; i < filtered.length; i++) {
         if (String(filtered[i].stt) === String(stt)) { idx = i; break; }
     }
     if (idx === -1) { alert('Không tìm thấy câu!'); return; }
+    pfCurrentStt = stt;
 
-    document.body.classList.add('focus-mode');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.body.classList.add('practice-full-open');
+    if (typeof updateFloatingLeftVisibility === 'function') updateFloatingLeftVisibility();
+    document.body.style.overflow = 'hidden';
 
-    loadFocusQuestion(stt);
+    $('practiceFullModal').classList.add('show');
+
+    loadPracticeFull(stt);
 };
-
-window.closeFocusMode = function() {
-    document.body.classList.remove('focus-mode');
+window.closePracticeFull = function() {
+    $('practiceFullModal').classList.remove('show');
+    document.body.style.overflow = '';
+    document.body.classList.remove('practice-full-open');
+    if (typeof updateFloatingLeftVisibility === 'function') updateFloatingLeftVisibility();
     pfCurrentStt = null;
     if ('speechSynthesis' in window) speechSynthesis.cancel();
 };
 
-function loadFocusQuestion(stt) {
+function loadPracticeFull(stt) {
     var idx = -1;
     for (var i = 0; i < filtered.length; i++) {
         if (String(filtered[i].stt) === String(stt)) { idx = i; break; }
     }
     if (idx === -1) return;
+
+    if (!$('pfSearchInput').value && !$('pfHskFilter').value && !$('pfSubjectFilter').value) {
+        $('pfSearchInput').value = $('searchInput').value;
+        $('pfHskFilter').value = $('hskFilter').value;
+        $('pfSubjectFilter').value = $('subjectFilter').value;
+    }
+    pfUpdateFilterUI();
 
     var r = filtered[idx];
     pfCurrentStt = stt;
@@ -2583,15 +2766,15 @@ function loadFocusQuestion(stt) {
     pfHintEnabled = false;
     $('pfHintBtn').classList.remove('active');
 
-    updateFocusPreview();
+    updateCharPreview();
 
     $('pfPrevBtn').disabled = (idx === 0);
     $('pfNextBtn').disabled = (idx === filtered.length - 1);
 
-    buildQuickNav();
-
     var quickNav = $('pfQuickNav');
-    if (quickNav) quickNav.value = stt;
+    if (quickNav && quickNav.value !== stt) {
+        quickNav.value = stt;
+    }
 
     setTimeout(function() {
         var active = document.activeElement;
@@ -2604,9 +2787,30 @@ function loadFocusQuestion(stt) {
     }, 200);
 }
 
-function buildQuickNav() {
+window.pfNext = function() {
+    if (!pfCurrentStt) return;
+    var idx = -1;
+    for (var i = 0; i < filtered.length; i++) {
+        if (String(filtered[i].stt) === String(pfCurrentStt)) { idx = i; break; }
+    }
+    if (idx === -1 || idx >= filtered.length - 1) return;
+    loadPracticeFull(filtered[idx + 1].stt);
+};
+
+window.pfPrev = function() {
+    if (!pfCurrentStt) return;
+    var idx = -1;
+    for (var i = 0; i < filtered.length; i++) {
+        if (String(filtered[i].stt) === String(pfCurrentStt)) { idx = i; break; }
+    }
+    if (idx <= 0) return;
+    loadPracticeFull(filtered[idx - 1].stt);
+};
+
+function pfBuildQuickNav() {
     var sel = $('pfQuickNav');
     if (!sel) return;
+
     var html = '<option value="">-- Chọn câu (' + filtered.length + ') --</option>';
     filtered.forEach(function(r, i) {
         var vi = (r.vi || '').substring(0, 45);
@@ -2614,39 +2818,204 @@ function buildQuickNav() {
         html += '<option value="' + escapeHtml(r.stt) + '">' + escapeHtml(label) + '</option>';
     });
     sel.innerHTML = html;
-    if (pfCurrentStt) sel.value = pfCurrentStt;
-}
 
-function focusNext() {
-    if (!pfCurrentStt) return;
-    var idx = -1;
-    for (var i = 0; i < filtered.length; i++) {
-        if (String(filtered[i].stt) === String(pfCurrentStt)) { idx = i; break; }
+    if (pfCurrentStt) {
+        sel.value = pfCurrentStt;
     }
-    if (idx === -1 || idx >= filtered.length - 1) return;
-    loadFocusQuestion(filtered[idx + 1].stt);
 }
 
-function focusPrev() {
-    if (!pfCurrentStt) return;
-    var idx = -1;
-    for (var i = 0; i < filtered.length; i++) {
-        if (String(filtered[i].stt) === String(pfCurrentStt)) { idx = i; break; }
+function pfQuickNavChange() {
+    var sel = $('pfQuickNav');
+    if (!sel) return;
+    var stt = sel.value;
+    if (!stt) return;
+    loadPracticeFull(stt);
+}
+
+function pfBuildFilterOptions() {
+    var hskSel = $('pfHskFilter');
+    var subjSel = $('pfSubjectFilter');
+    var info = getTierInfo();
+    var isLimited = info.tier !== 'active';
+
+    if (isLimited) {
+        var allowedHsk = getAllowedHskList();
+        var hskHtml = '<option value="">Tất cả</option>';
+        allowedHsk.forEach(function(h) {
+            hskHtml += '<option value="' + h + '">' + h + '</option>';
+        });
+        var allHskList = ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
+        allHskList.forEach(function(h) {
+            if (allowedHsk.indexOf(h) === -1) {
+                var lockLabel = info.tier === 'trial' ? '(gia hạn)' : '(đăng nhập)';
+                hskHtml += '<option value="' + h + '" disabled>🔒 ' + h + ' ' + lockLabel + '</option>';
+            }
+        });
+        hskSel.innerHTML = hskHtml;
+
+        var allowedSubjects = getAllowedSubjectList();
+        var allSubjectSet = {};
+        RAW_DATA.forEach(function(r) { if (r.subject) allSubjectSet[r.subject] = 1; });
+        var allSubjects = Object.keys(allSubjectSet).sort();
+
+        var unlocked = [];
+        var locked = [];
+        allSubjects.forEach(function(s) {
+            if (allowedSubjects.indexOf(s) !== -1) unlocked.push(s);
+            else locked.push(s);
+        });
+        var subjHtml = '<option value="">Tất cả chủ đề</option>';
+        unlocked.forEach(function(s) { subjHtml += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
+        locked.forEach(function(s) {
+            var lockLabel = info.tier === 'trial' ? '(gia hạn)' : '(đăng nhập)';
+            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' + escapeHtml(s) + ' ' + lockLabel + '</option>';
+        });
+        subjSel.innerHTML = subjHtml;
+    } else {
+        hskSel.innerHTML =
+            '<option value="">Tất cả</option>' +
+            '<option value="HSK1">HSK1</option>' +
+            '<option value="HSK2">HSK2</option>' +
+            '<option value="HSK3">HSK3</option>' +
+            '<option value="HSK4">HSK4</option>' +
+            '<option value="HSK5">HSK5</option>' +
+            '<option value="HSK6">HSK6</option>';
+        var allSubjectSet2 = {};
+        RAW_DATA.forEach(function(r) { if (r.subject) allSubjectSet2[r.subject] = 1; });
+        var allSubjects2 = Object.keys(allSubjectSet2).sort();
+        subjSel.innerHTML = '<option value="">Tất cả chủ đề</option>' +
+            allSubjects2.map(function(v){ return '<option value="'+escapeHtml(v)+'">'+escapeHtml(v)+'</option>'; }).join('');
     }
-    if (idx <= 0) return;
-    loadFocusQuestion(filtered[idx - 1].stt);
+
+    hskSel.value = $('hskFilter').value;
+    subjSel.value = $('subjectFilter').value;
+    $('pfSearchInput').value = $('searchInput').value;
+
+    pfUpdateFilterUI();
 }
 
-function updateFocusPreview() {
+function pfUpdateFilterUI() {
+    var hsk = $('pfHskFilter').value;
+    var subject = $('pfSubjectFilter').value;
+    $('pfHskValue').textContent = hsk || 'Tất cả';
+    $('pfSubjectValue').textContent = subject || 'Tất cả';
+    $('pfHskChip').classList.toggle('has-value', !!hsk);
+    $('pfSubjectChip').classList.toggle('has-value', !!subject);
+
+    var search = $('pfSearchInput').value.trim();
+    if (search) $('pfClearSearchBtn').classList.add('show');
+    else $('pfClearSearchBtn').classList.remove('show');
+
+    pfUpdateResultCount();
+}
+
+function pfUpdateResultCount() {
+    var el = $('pfResultCount');
+    if (!el) return;
+    var total = filtered ? filtered.length : 0;
+    var search = $('pfSearchInput').value.trim();
+    var hsk = $('pfHskFilter').value;
+    var subject = $('pfSubjectFilter').value;
+    var hasFilter = !!(search || hsk || subject);
+    if (!hasFilter) { el.classList.remove('show', 'empty'); return; }
+    el.classList.add('show');
+    el.classList.toggle('empty', total === 0);
+    var spanEl = el.querySelector('span');
+    if (spanEl) {
+        if (total === 0) spanEl.innerHTML = 'Không tìm thấy kết quả';
+        else spanEl.innerHTML = 'Tìm thấy <b>' + total + '</b> kết quả';
+    }
+}
+
+function pfApplyFilter() {
+    $('searchInput').value = $('pfSearchInput').value;
+    $('hskFilter').value = $('pfHskFilter').value;
+    $('subjectFilter').value = $('pfSubjectFilter').value;
+
+    state.search = $('pfSearchInput').value.trim().toLowerCase();
+    state.hsk = $('pfHskFilter').value;
+    state.subject = $('pfSubjectFilter').value;
+
+    var baseData = getLimitedData();
+
+    filtered = baseData.filter(function(r) {
+        if (state.search) {
+            var s = state.search;
+            var inVi = (r.vi || '').toLowerCase().indexOf(s) !== -1;
+            var inZh = (r.zh || '').toLowerCase().indexOf(s) !== -1;
+            var inPinyin = (r.pinyin || '').toLowerCase().indexOf(s) !== -1;
+            var inTopic = (r.topic || '').toLowerCase().indexOf(s) !== -1;
+            var inSubject = (r.subject || '').toLowerCase().indexOf(s) !== -1;
+            if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
+        }
+        if (state.hsk && r.hsk !== state.hsk) return false;
+        if (state.subject && r.subject !== state.subject) return false;
+        return true;
+    });
+
+    updateFilterUI();
+    var clearBtn = $('clearSearchBtn');
+    if (state.search) clearBtn.classList.add('show');
+    else clearBtn.classList.remove('show');
+
+    pfUpdateFilterUI();
+    pfBuildQuickNav();
+    render(true);
+
+    var activeEl = document.activeElement;
+    var isTypingInSearch = activeEl && activeEl.id === 'pfSearchInput';
+
+    var currentStillValid = false;
+    if (pfCurrentStt) {
+        for (var i = 0; i < filtered.length; i++) {
+            if (String(filtered[i].stt) === String(pfCurrentStt)) {
+                currentStillValid = true;
+                break;
+            }
+        }
+    }
+
+    if (filtered.length > 0) {
+        if (isTypingInSearch && currentStillValid) {
+            var idx = -1;
+            for (var j = 0; j < filtered.length; j++) {
+                if (String(filtered[j].stt) === String(pfCurrentStt)) { idx = j; break; }
+            }
+            if (idx !== -1) {
+                $('pfCounter').textContent = 'Câu ' + (idx + 1) + ' / ' + filtered.length;
+            }
+            return;
+        }
+        loadPracticeFull(filtered[0].stt);
+    } else {
+        pfCurrentStt = null;
+        pfCurrentAnswer = '';
+        pfCurrentVi = 'Không tìm thấy câu nào';
+        pfCurrentPinyin = '';
+        $('pfVi').textContent = 'Không tìm thấy câu nào';
+        $('pfInput').value = '';
+        $('pfCounter').textContent = 'Câu 0 / 0';
+        $('pfTags').innerHTML = '';
+        $('pfAnswer').classList.remove('show');
+        $('pfPreview').innerHTML = '';
+        $('pfStatus').textContent = '';
+        $('pfPrevBtn').disabled = true;
+        $('pfNextBtn').disabled = true;
+    }
+}
+
+function updateCharPreview() {
     var input = $('pfInput');
     var preview = $('pfPreview');
-    if (!input || !preview) return;
-    var cleanUser = input.value.replace(/\s+/g, '');
+    var userVal = input.value;
+    var cleanUser = userVal.replace(/\s+/g, '');
     var cleanAnswer = pfCurrentAnswer.replace(/\s+/g, '');
+
     if (!cleanAnswer) { preview.innerHTML = ''; return; }
 
     var html = '';
     var maxLen = Math.max(cleanUser.length, cleanAnswer.length);
+
     for (var i = 0; i < maxLen; i++) {
         var userChar = cleanUser[i] || '';
         var answerChar = cleanAnswer[i] || '';
@@ -2656,33 +3025,49 @@ function updateFocusPreview() {
 
         if (userChar && answerChar) {
             if (userChar === answerChar) {
-                cls += ' correct'; display = userChar;
+                cls += ' correct';
+                display = userChar;
             } else {
-                cls += ' wrong'; display = userChar; clickable = true;
+                cls += ' wrong';
+                display = userChar;
+                clickable = true;
             }
         } else if (!userChar && answerChar) {
-            if (pfHintEnabled) { cls += ' ghost'; display = answerChar; }
-            else continue;
+            if (pfHintEnabled) {
+                cls += ' ghost';
+                display = answerChar;
+            } else {
+                continue;
+            }
         } else if (userChar && !answerChar) {
-            cls += ' extra'; display = userChar; clickable = true;
-        } else continue;
+            cls += ' extra';
+            display = userChar;
+            clickable = true;
+        } else {
+            continue;
+        }
 
         if (clickable) {
-            html += '<span class="' + cls + '" data-idx="' + i + '" onclick="fixFocusChar(' + i + ', this)">' + escapeHtml(display) + '</span>';
+            html += '<span class="' + cls + '" data-idx="' + i + '" onclick="fixCharAt(' + i + ', this)">' + escapeHtml(display) + '</span>';
         } else {
             html += '<span class="' + cls + '">' + escapeHtml(display) + '</span>';
         }
     }
+
     preview.innerHTML = html;
 }
 
-window.fixFocusChar = function(idx, el) {
+window.fixCharAt = function(idx, el) {
     var input = $('pfInput');
     if (!input) return;
     input.focus();
     setTimeout(function() {
-        try { input.setSelectionRange(idx, idx + 1); }
-        catch(e) { input.selectionStart = idx; input.selectionEnd = idx + 1; }
+        try {
+            input.setSelectionRange(idx, idx + 1);
+        } catch(e) {
+            input.selectionStart = idx;
+            input.selectionEnd = idx + 1;
+        }
         if (el) {
             el.classList.add('highlight');
             setTimeout(function() { el.classList.remove('highlight'); }, 1200);
@@ -2690,15 +3075,15 @@ window.fixFocusChar = function(idx, el) {
     }, 10);
 };
 
-function toggleHintFocus() {
+function toggleHint() {
     pfHintEnabled = !pfHintEnabled;
     var btn = $('pfHintBtn');
     if (pfHintEnabled) btn.classList.add('active');
     else btn.classList.remove('active');
-    updateFocusPreview();
+    updateCharPreview();
 }
 
-function checkFocusAnswer() {
+function checkFullAnswer() {
     var input = $('pfInput');
     var statusEl = $('pfStatus');
     var val = input.value.trim();
@@ -2720,7 +3105,7 @@ function checkFocusAnswer() {
     }
 }
 
-function revealFocusAnswer() {
+function revealFullAnswer() {
     var answerEl = $('pfAnswer');
     var revealBtn = $('pfRevealBtn');
 
@@ -2733,18 +3118,22 @@ function revealFocusAnswer() {
 
     var charsEl = $('pfAnswerChars');
     var pinyinEl = $('pfAnswerPinyin');
+
     charsEl.innerHTML = '';
     var phrases = splitByPinyin(pfCurrentAnswer, pfCurrentPinyin);
+
     if (phrases.length === 0) {
         pfCurrentAnswer.split('').forEach(function(c) {
             if (/[\u4e00-\u9fa5]/.test(c)) phrases.push({ text: c, type: 'phrase' });
         });
     }
+
     phrases.forEach(function(item) {
         var btn = document.createElement('button');
         btn.className = 'answer-phrase-btn';
         btn.textContent = item.text;
         btn.title = 'Nhấn để đọc: ' + item.text;
+
         btn.onclick = (function(text, el) {
             return function(e) {
                 e.stopPropagation();
@@ -2753,8 +3142,10 @@ function revealFocusAnswer() {
                 speakPhrase(text, el);
             };
         })(item.text, btn);
+
         charsEl.appendChild(btn);
     });
+
     pinyinEl.textContent = pfCurrentPinyin;
     answerEl.classList.add('show');
     revealBtn.classList.add('revealed');
@@ -2790,47 +3181,103 @@ window.speakFullSentence = function() {
     setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
 };
 
-function initFocusMode() {
-    var closeBtn = $('pfClose');
-    if (closeBtn) closeBtn.addEventListener('click', closeFocusMode);
+function initPracticeFull() {
+    $('pfClose').addEventListener('click', closePracticeFull);
+    $('pfPrevBtn').addEventListener('click', pfPrev);
+    $('pfNextBtn').addEventListener('click', pfNext);
+    $('pfRevealBtn').addEventListener('click', revealFullAnswer);
+    $('pfHintBtn').addEventListener('click', toggleHint);
+    $('pfInput').addEventListener('input', function() {
+        updateCharPreview();
+        checkFullAnswer();
+    });
 
-    var prevBtn = $('pfPrevBtn');
-    if (prevBtn) prevBtn.addEventListener('click', focusPrev);
+    $('pfQuickNav').addEventListener('change', pfQuickNavChange);
 
-    var nextBtn = $('pfNextBtn');
-    if (nextBtn) nextBtn.addEventListener('click', focusNext);
+    $('pfSearchInput').addEventListener('input', function() {
+        pfApplyFilter();
+    });
+    $('pfClearSearchBtn').addEventListener('click', function() {
+        $('pfSearchInput').value = '';
+        $('pfSearchInput').focus();
+        pfApplyFilter();
+    });
 
-    var revealBtn = $('pfRevealBtn');
-    if (revealBtn) revealBtn.addEventListener('click', revealFocusAnswer);
+    $('pfHskFilter').addEventListener('change', function() {
+        var val = this.value;
+        var allowed = getAllowedHskList();
+        if (val && allowed.indexOf(val) === -1) {
+            var info = getTierInfo();
+            var msg = info.tier === 'trial'
+                ? '🔒 Bản Trial chỉ cho phép lọc HSK1-' + info.maxHSK + '.'
+                : '🔒 Bản Demo chỉ cho phép lọc HSK1-' + info.maxHSK + '.';
+            alert(msg);
+            this.value = '';
+            return;
+        }
+        pfApplyFilter();
+    });
+    $('pfSubjectFilter').addEventListener('change', function() {
+        var val = this.value;
+        var allowed = getAllowedSubjectList();
+        if (val && allowed.indexOf(val) === -1) {
+            var info = getTierInfo();
+            var msg = info.tier === 'trial'
+                ? '🔒 Chủ đề này chưa có trong ' + info.maxQuestions + ' câu Trial.'
+                : '🔒 Chủ đề này chưa có trong ' + info.maxQuestions + ' câu Demo.';
+            alert(msg);
+            this.value = '';
+            return;
+        }
+        pfApplyFilter();
+    });
 
-    var hintBtn = $('pfHintBtn');
-    if (hintBtn) hintBtn.addEventListener('click', toggleHintFocus);
+    document.addEventListener('keydown', function(e) {
+        if (!$('practiceFullModal').classList.contains('show')) return;
 
-    var input = $('pfInput');
-    if (input) {
-        input.addEventListener('input', function() {
-            updateFocusPreview();
-            checkFocusAnswer();
-        });
-    }
+        var active = document.activeElement;
+        var isTyping = active && (active.tagName === 'INPUT' ||
+                                    active.tagName === 'TEXTAREA' ||
+                                    active.tagName === 'SELECT');
 
-    var quickNav = $('pfQuickNav');
-    if (quickNav) {
-        quickNav.addEventListener('change', function() {
-            var stt = this.value;
-            if (!stt) return;
-            loadFocusQuestion(stt);
-        });
-    }
+        if (e.key === 'Escape') {
+            closePracticeFull();
+            return;
+        }
+
+        if (isTyping) return;
+
+        if (e.key === 'ArrowRight' && e.ctrlKey) pfNext();
+        if (e.key === 'ArrowLeft' && e.ctrlKey) pfPrev();
+    });
+
+    var modal = $('practiceFullModal');
+    var touchStartX = 0;
+    modal.addEventListener('touchstart', function(e) {
+        touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+    modal.addEventListener('touchend', function(e) {
+        var dx = e.changedTouches[0].clientX - touchStartX;
+        if (Math.abs(dx) > 100) {
+            if (dx < 0) pfNext();
+            else pfPrev();
+        }
+    }, { passive: true });
 
     var speakBtn = $('pfSpeakBtn');
     if (speakBtn) {
         speakBtn.addEventListener('click', function(e) {
             e.stopPropagation();
             if (!pfCurrentAnswer) return;
+
             if (!canUseFeature()) { showLimitMessage(); return; }
+
             if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
-            if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
+
+            if (!('speechSynthesis' in window)) {
+                alert('Trình duyệt không hỗ trợ phát âm.');
+                return;
+            }
 
             speechSynthesis.cancel();
             document.querySelectorAll('.practice-speak-btn.speaking').forEach(function(b) {
@@ -2858,23 +3305,8 @@ function initFocusMode() {
             setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
         });
     }
-
-    document.addEventListener('keydown', function(e) {
-        if (!document.body.classList.contains('focus-mode')) return;
-        var active = document.activeElement;
-        var isTyping = active && (active.tagName === 'INPUT' ||
-                                    active.tagName === 'TEXTAREA' ||
-                                    active.tagName === 'SELECT');
-        if (e.key === 'Escape') { closeFocusMode(); return; }
-        if (isTyping) return;
-        if (e.key === 'ArrowRight' && e.ctrlKey) focusNext();
-        if (e.key === 'ArrowLeft' && e.ctrlKey) focusPrev();
-    });
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   WRITER MODAL
-   ═══════════════════════════════════════════════════════════════ */
 var writerInstance = null;
 var currentWriteZh = '';
 var currentWriteVi = '';
