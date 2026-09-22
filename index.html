@@ -1260,6 +1260,112 @@ body.practice-full-open .expiry-banner { display: none !important; }
 body.hide-floating .floating-left-group,
 body.hide-floating .tiktok-bar { display: none !important; }
 
+/* ═══════════════════════════════════════════════════════════════
+   MOBILE FIX — Thu nhỏ nút Zalo + TikTok
+   Chuyển thành nút tròn compact, chỉ hiện icon
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+    /* Wrapper — dồn về góc trái, gap nhỏ hơn */
+    .floating-left-group {
+        gap: 0.4rem;
+        left: 12px;
+        bottom: calc(80px + env(safe-area-inset-bottom));
+    }
+
+    /* Nút Zalo — chuyển thành nút tròn */
+    .zalo-btn {
+        width: 46px;
+        height: 46px;
+        padding: 0;
+        border-radius: 50%;
+        justify-content: center;
+        gap: 0;
+    }
+    .zalo-btn i {
+        font-size: 1.25rem;
+    }
+    .zalo-btn .zalo-text {
+        opacity: 0;
+        max-width: 0;
+        overflow: hidden;
+    }
+    .zalo-btn::before {
+        border-radius: 50%;
+    }
+    .zalo-btn:hover,
+    .zalo-btn:active {
+        transform: scale(1.08);
+    }
+
+    /* Nút TikTok — chuyển thành nút tròn */
+    .tiktok-float-btn {
+        width: 46px;
+        height: 46px;
+        padding: 0;
+        border-radius: 50%;
+        justify-content: center;
+        gap: 0;
+    }
+    .tiktok-float-btn i {
+        font-size: 1.25rem;
+    }
+    .tiktok-float-btn .tiktok-text {
+        opacity: 0;
+        max-width: 0;
+        overflow: hidden;
+    }
+    .tiktok-float-btn::before {
+        border-radius: 50%;
+    }
+    .tiktok-float-btn:hover,
+    .tiktok-float-btn:active {
+        transform: scale(1.08);
+    }
+
+    /* Hover card TikTok trên mobile — hiện khi double-tap, thu nhỏ */
+    .tiktok-float-wrap.show-mobile .tiktok-hover-card {
+        left: -4px;
+        width: min(280px, calc(100vw - 32px));
+        padding: 0.85rem;
+    }
+
+    /* TikTok bar dưới header — thu nhỏ */
+    .tiktok-bar {
+        padding: 0.4rem 0.65rem;
+        gap: 0.5rem;
+    }
+    .tiktok-bar-avatar {
+        width: 28px;
+        height: 28px;
+    }
+    .tiktok-bar-info .tiktok-nick {
+        font-size: 0.85rem;
+    }
+    .tiktok-bar-info .tiktok-user {
+        font-size: 0.7rem;
+    }
+    .tiktok-bar-link {
+        padding: 0.35rem 0.65rem;
+        font-size: 0.7rem;
+    }
+    .tiktok-bar-link i {
+        font-size: 0.75rem;
+    }
+}
+
+/* Mobile rất nhỏ (≤ 400px) — thu nhỏ thêm */
+@media (max-width: 400px) {
+    .zalo-btn,
+    .tiktok-float-btn {
+        width: 42px;
+        height: 42px;
+    }
+    .zalo-btn i,
+    .tiktok-float-btn i {
+        font-size: 1.1rem;
+    }
+}
+
 /* ==== ACCOUNTS + RENEWAL CSS ==== */
 
 /* ============ USER MENU ============ */
