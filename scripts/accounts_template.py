@@ -15,6 +15,8 @@ FIX (2026-09):
   do .header-inner có overflow:hidden trong @media (min-width:769px).
 - Đổi overflow:hidden → overflow:visible và nâng z-index cho
   .header-actions / .user-menu / .user-dropdown.
+- Thêm banner cảnh báo gia hạn 3 mức: warning (≤7 ngày) / urgent (≤3 ngày)
+  / expired (đã hết hạn) — với icon + text + nút điều hướng đầy đủ.
 """
 
 import json
@@ -556,23 +558,192 @@ def build_accounts_css():
 .import-info i{margin-top:.15rem;flex-shrink:0;}
 .import-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:.5rem;justify-content:flex-end;align-items:center;background:var(--surface);}
 
-/* ============ EXPIRY BANNER ============ */
-.expiry-banner{background:linear-gradient(135deg, #fef3c7, #fde68a);border:1.5px solid #f59e0b;border-radius:var(--radius);padding:.85rem 1.1rem;margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
-.expiry-banner.urgent{background:linear-gradient(135deg, #fecaca, #fca5a5);border-color:#dc2626;animation:pulseUrgent 2s infinite;}
-@keyframes pulseUrgent{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.4);}50%{box-shadow:0 0 0 8px rgba(220,38,38,0);}}
-.expiry-banner-icon{width:36px;height:36px;border-radius:50%;background:#f59e0b;color:#fff;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
-.expiry-banner.urgent .expiry-banner-icon{background:#dc2626;}
-.expiry-banner-text{flex:1;min-width:200px}
-.expiry-banner-text .title{font-weight:700;font-size:.9rem;color:#92400e;margin-bottom:.15rem;}
-.expiry-banner-text .desc{font-size:.78rem;color:#78350f;line-height:1.5;}
-.expiry-banner-text b{color:#dc2626;}
-.expiry-banner-btn{padding:.5rem .9rem;border-radius:50px;border:none;background:#f59e0b;color:#fff;text-decoration:none;font-size:.8rem;font-weight:700;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:.35rem;white-space:nowrap;}
-.expiry-banner-btn:hover{background:#d97706;color:#fff;transform:translateY(-1px);}
+/* ═══════════════════════════════════════════════════════════════
+   ⏰ EXPIRY BANNER — Cảnh báo gia hạn 3 mức
+   • .expiry-banner              → Vàng (còn ≤7 ngày)
+   • .expiry-banner.urgent       → Cam đậm (còn ≤3 ngày)
+   • .expiry-banner.expired      → Đỏ (đã hết hạn)
+   ═══════════════════════════════════════════════════════════════ */
+.expiry-banner{
+    display:flex;
+    align-items:center;
+    gap:clamp(.6rem,1.2vw,1rem);
+    padding:clamp(.7rem,1.4vw,1rem) clamp(.8rem,1.5vw,1.15rem);
+    margin-bottom:1rem;
+    border-radius:var(--radius);
+    flex-wrap:wrap;
+    position:relative;
+    overflow:hidden;
+    animation:expirySlideDown .35s cubic-bezier(.34,1.56,.64,1);
+    box-shadow:0 6px 20px rgba(0,0,0,.08);
+    /* Mặc định: mức warning — vàng */
+    background:linear-gradient(135deg,#fef3c7,#fde68a);
+    border:1.5px solid #f59e0b;
+}
+[data-theme="dark"] .expiry-banner{
+    background:linear-gradient(135deg,rgba(245,158,11,.2),rgba(245,158,11,.3));
+    border-color:#f59e0b;
+}
+@keyframes expirySlideDown{
+    from{opacity:0;transform:translateY(-12px);}
+    to{opacity:1;transform:translateY(0);}
+}
+
+/* ═══ Mức 2: Nguy cấp (≤3 ngày) — CAM ĐẬM + PULSE ═══ */
+.expiry-banner.urgent{
+    background:linear-gradient(135deg,#fed7aa,#fdba74);
+    border-color:#ea580c;
+    animation:expirySlideDown .35s cubic-bezier(.34,1.56,.64,1),
+              pulseUrgent 2.5s ease-in-out infinite;
+}
+[data-theme="dark"] .expiry-banner.urgent{
+    background:linear-gradient(135deg,rgba(234,88,12,.25),rgba(234,88,12,.35));
+    border-color:#ea580c;
+}
+@keyframes pulseUrgent{
+    0%,100%{box-shadow:0 6px 20px rgba(234,88,12,.25);}
+    50%{box-shadow:0 6px 28px rgba(234,88,12,.55);}
+}
+
+/* ═══ Mức 3: Đã hết hạn — ĐỎ + PULSE MẠNH ═══ */
+.expiry-banner.expired{
+    background:linear-gradient(135deg,#fecaca,#fca5a5);
+    border-color:#dc2626;
+    animation:expirySlideDown .35s cubic-bezier(.34,1.56,.64,1),
+              pulseExpired 1.8s ease-in-out infinite;
+}
+[data-theme="dark"] .expiry-banner.expired{
+    background:linear-gradient(135deg,rgba(220,38,38,.3),rgba(220,38,38,.4));
+    border-color:#dc2626;
+}
+@keyframes pulseExpired{
+    0%,100%{box-shadow:0 6px 20px rgba(220,38,38,.3);}
+    50%{box-shadow:0 6px 28px rgba(220,38,38,.6);}
+}
+
+/* ═══ Icon ═══ */
+.expiry-banner-icon{
+    width:40px;
+    height:40px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    font-size:1.1rem;
+    color:#fff;
+    box-shadow:0 4px 12px rgba(0,0,0,.15);
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+}
+.expiry-banner.urgent .expiry-banner-icon{
+    background:linear-gradient(135deg,#ea580c,#c2410c);
+    animation:expiryIconShake 2s ease-in-out infinite;
+}
+@keyframes expiryIconShake{
+    0%,100%{transform:rotate(0deg);}
+    25%{transform:rotate(-8deg);}
+    75%{transform:rotate(8deg);}
+}
+.expiry-banner.expired .expiry-banner-icon{
+    background:linear-gradient(135deg,#dc2626,#991b1b);
+    animation:expiryIconShake 1.5s ease-in-out infinite;
+}
+
+/* ═══ Text ═══ */
+.expiry-banner-text{
+    flex:1 1 200px;
+    min-width:0;
+}
+.expiry-banner-text .title{
+    font-weight:800;
+    font-size:clamp(.86rem,1vw,.96rem);
+    color:#92400e;
+    margin-bottom:.15rem;
+    line-height:1.3;
+}
+.expiry-banner.urgent .expiry-banner-text .title{color:#9a3412;}
+.expiry-banner.expired .expiry-banner-text .title{color:#7f1d1d;}
+
+[data-theme="dark"] .expiry-banner-text .title{color:#fcd34d;}
+[data-theme="dark"] .expiry-banner.urgent .expiry-banner-text .title{color:#fdba74;}
+[data-theme="dark"] .expiry-banner.expired .expiry-banner-text .title{color:#fca5a5;}
+
+.expiry-banner-text .desc{
+    font-size:clamp(.72rem,.88vw,.82rem);
+    color:#78350f;
+    line-height:1.5;
+}
+.expiry-banner.urgent .expiry-banner-text .desc{color:#7c2d12;}
+.expiry-banner.expired .expiry-banner-text .desc{color:#7f1d1d;}
+
+[data-theme="dark"] .expiry-banner-text .desc{color:#fde68a;}
+[data-theme="dark"] .expiry-banner.urgent .expiry-banner-text .desc{color:#fed7aa;}
+[data-theme="dark"] .expiry-banner.expired .expiry-banner-text .desc{color:#fecaca;}
+
+.expiry-banner-text b{
+    font-weight:900;
+    font-size:1.08em;
+    color:#dc2626;
+}
+[data-theme="dark"] .expiry-banner-text b{color:#fef08a;}
+
+/* ═══ Button ═══ */
+.expiry-banner-btn{
+    padding:clamp(.5rem,.9vw,.62rem) clamp(.85rem,1.3vw,1.1rem);
+    border-radius:50px;
+    border:none;
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+    color:#fff;
+    font-size:clamp(.74rem,.88vw,.84rem);
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:.4rem;
+    white-space:nowrap;
+    transition:transform .15s,box-shadow .2s,background .2s;
+    box-shadow:0 4px 14px rgba(245,158,11,.45);
+    text-transform:uppercase;
+    letter-spacing:.3px;
+}
+.expiry-banner-btn:hover{
+    transform:translateY(-1px) scale(1.03);
+    box-shadow:0 6px 20px rgba(245,158,11,.65);
+}
 .expiry-banner.urgent .expiry-banner-btn{
+    background:linear-gradient(135deg,#ea580c,#c2410c);
+    box-shadow:0 4px 14px rgba(234,88,12,.5);
+    animation:renewUrgent 1.2s infinite;
+}
+.expiry-banner.urgent .expiry-banner-btn:hover{
+    box-shadow:0 6px 20px rgba(234,88,12,.7);
+}
+.expiry-banner.expired .expiry-banner-btn{
     background:linear-gradient(135deg,#7f1d1d,#b91c1c);
     box-shadow:0 4px 14px rgba(220,38,38,.5);
     animation:renewUrgent 1.2s infinite;
-    font-weight:800;text-transform:uppercase;letter-spacing:.5px;
+}
+.expiry-banner.expired .expiry-banner-btn:hover{
+    box-shadow:0 6px 20px rgba(220,38,38,.8);
+}
+
+/* ═══ Responsive mobile ═══ */
+@media (max-width:600px){
+    .expiry-banner{
+        padding:.65rem .75rem;
+        gap:.55rem;
+    }
+    .expiry-banner-icon{
+        width:34px;
+        height:34px;
+        font-size:.95rem;
+    }
+    .expiry-banner-btn{
+        width:100%;
+        margin-top:.2rem;
+    }
 }
 
 /* ============ RENEWAL MODAL ============ */
@@ -1165,7 +1336,7 @@ def build_renewal_html():
 
 
 # ═══════════════════════════════════════════════════════════════
-# JS  (giữ nguyên — không thay đổi gì)
+# JS
 # ═══════════════════════════════════════════════════════════════
 def build_accounts_js(config):
     js = r"""
@@ -1263,15 +1434,17 @@ function publishTierState() {
     if (!currentUser) {
         window.APP_TIER = 'demo';
         window.APP_LIMITS = {
-            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 200,
+            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
             maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
             unlimitedWriting: false, isTrial: false, email: null
         };
+        _refreshDatasetLockUI();
         return;
     }
     if (currentUser.role === 'admin') {
         window.APP_TIER = 'active';
         window.APP_LIMITS = { maxQuestions: Infinity, maxHSK: 6, unlimitedWriting: true, isTrial: false, email: currentUser.email };
+        _refreshDatasetLockUI();
         return;
     }
     var tier = currentUser.tier || 'active';
@@ -1285,7 +1458,7 @@ function publishTierState() {
     } else if (tier === 'expired') {
         window.APP_TIER = 'expired';
         window.APP_LIMITS = {
-            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 200,
+            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
             maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
             unlimitedWriting: false, isTrial: false, email: currentUser.email
         };
@@ -1293,12 +1466,36 @@ function publishTierState() {
         window.APP_TIER = 'active';
         window.APP_LIMITS = { maxQuestions: Infinity, maxHSK: 6, unlimitedWriting: true, isTrial: false, email: currentUser.email };
     }
+    _refreshDatasetLockUI();
 }
 
-window.getUserTier = function() { return window.APP_TIER || 'demo'; };
-window.getUserLimits = function() {
-    return window.APP_LIMITS || { maxQuestions: 25, maxHSK: 3, unlimitedWriting: false };
-};
+/* ✅ Refresh lại UI khoá chuyên ngành mỗi khi tier đổi (login/logout/gia hạn) */
+function _refreshDatasetLockUI() {
+    // 1. Refresh selector trang chủ (sub-buttons + nút chính)
+    if (typeof initDatasetSelector === 'function') {
+        try { initDatasetSelector(); } catch(e) {}
+    }
+    // 2. Refresh selector trong Practice Full
+    if (typeof pfBuildDatasetSelect === 'function') {
+        try { pfBuildDatasetSelect(); } catch(e) {}
+    }
+    // 3. Nếu đang ở chuyên ngành mà bị mất quyền → đẩy về tổng hợp
+    if (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET !== 'tonghop') {
+        var canAccess = (window.APP_TIER === 'active');
+        if (!canAccess) {
+            try {
+                if (typeof window.__switchRawData === 'function') {
+                    window.__switchRawData('tonghop');
+                }
+                if (typeof applyFilter === 'function') applyFilter();
+                // Đồng bộ UI nút
+                if (typeof markCurrentDatasetActive === 'function') {
+                    markCurrentDatasetActive();
+                }
+            } catch(e) {}
+        }
+    }
+}
 
 /* ============ FIREBASE INIT ============ */
 try {
@@ -1483,65 +1680,142 @@ function enterDemoMode() {
     if ($('mainContent')) $('mainContent').style.display = 'block';
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ⏰ RENDER BANNER CẢNH BÁO GIA HẠN
+   Hiện 3 mức:
+     • Warning (vàng)   : còn ≤ 7 ngày
+     • Urgent  (cam đậm): còn ≤ 3 ngày
+     • Expired (đỏ)     : đã hết hạn (daysLeft ≤ 0)
+   Ẩn khi: chưa đăng nhập / admin / vĩnh viễn / còn > 7 ngày
+   ═══════════════════════════════════════════════════════════════ */
+function renderExpiryBanner() {
+    var banner = $('expiryBanner');
+    if (!banner) return;
+
+    // ─── 1. Chưa đăng nhập → ẩn ───
+    if (!currentUser) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    // ─── 2. Admin / vĩnh viễn → ẩn ───
+    if (currentUser.role === 'admin' || currentUser.isPermanent) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    // ─── 3. Không có ngày hết hạn → coi như vĩnh viễn, ẩn ───
+    if (!currentUser.expiresAt) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    // ─── 4. Parse ngày hết hạn ───
+    var expDate = getExpiryDate(currentUser.expiresAt);
+    if (!expDate || isNaN(expDate.getTime())) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    var now = Date.now();
+    var daysLeft = Math.ceil((expDate.getTime() - now) / (24 * 60 * 60 * 1000));
+    var expDateStr = expDate.toLocaleDateString('vi-VN');
+    var tier = currentUser.tier || 'active';
+
+    // ─── 5. Còn > 7 ngày → ẩn ───
+    if (daysLeft > 7) {
+        banner.style.display = 'none';
+        return;
+    }
+
+    // ─── 6. Xác định mức ───
+    var isExpired = daysLeft <= 0;
+    var isUrgent  = !isExpired && daysLeft <= 3;
+
+    // ─── 7. Reset + set class ───
+    banner.classList.remove('urgent', 'expired');
+    if (isExpired) {
+        banner.classList.add('expired');
+    } else if (isUrgent) {
+        banner.classList.add('urgent');
+    }
+
+    // ─── 8. Icon ───
+    var iconWrap = $('expiryBannerIcon') || banner.querySelector('.expiry-banner-icon');
+    if (iconWrap) {
+        if (isExpired) {
+            iconWrap.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
+        } else if (isUrgent) {
+            iconWrap.innerHTML = '<i class="fas fa-exclamation-circle"></i>';
+        } else {
+            iconWrap.innerHTML = '<i class="fas fa-hourglass-half"></i>';
+        }
+    }
+
+    // ─── 9. Title ───
+    var titleEl = $('expiryBannerTitle') || banner.querySelector('.expiry-banner-text .title');
+    if (titleEl) {
+        if (isExpired) {
+            titleEl.innerHTML = '❌ Tài khoản đã HẾT HẠN!';
+        } else if (isUrgent) {
+            titleEl.innerHTML = '🔥 Chỉ còn ' + daysLeft + ' ngày!';
+        } else if (tier === 'trial') {
+            titleEl.innerHTML = '🎁 Trial còn ' + daysLeft + ' ngày';
+        } else {
+            titleEl.innerHTML = '⏰ Tài khoản sắp hết hạn';
+        }
+    }
+
+    // ─── 10. Description ───
+    var descEl = $('expiryBannerDesc') || banner.querySelector('.expiry-banner-text .desc');
+    if (descEl) {
+        if (isExpired) {
+            descEl.innerHTML = 'Đã hết hạn vào <b>' + expDateStr + '</b> (' +
+                Math.abs(daysLeft) + ' ngày trước). Bạn đang ở chế độ giới hạn — ' +
+                'gia hạn ngay để mở khóa toàn bộ!';
+        } else if (isUrgent) {
+            descEl.innerHTML = 'Tài khoản sẽ hết hạn vào <b>' + expDateStr + '</b> — ' +
+                'chỉ còn <b>' + daysLeft + ' ngày</b>. Gia hạn ngay để không bị gián đoạn!';
+        } else if (tier === 'trial') {
+            descEl.innerHTML = 'Còn <b>' + daysLeft + ' ngày</b> dùng thử (đến <b>' +
+                expDateStr + '</b>). Nâng cấp để mở khóa toàn bộ nội dung!';
+        } else {
+            descEl.innerHTML = 'Còn <b>' + daysLeft + ' ngày</b> sử dụng (đến <b>' +
+                expDateStr + '</b>). Gia hạn sớm để yên tâm học tập!';
+        }
+    }
+
+    // ─── 11. Nút button ───
+    var contactBtn = $('expiryContactBtn') || banner.querySelector('.expiry-banner-btn');
+    if (contactBtn) {
+        if (isExpired) {
+            contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
+        } else if (isUrgent) {
+            contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
+        } else {
+            contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn';
+        }
+        contactBtn.onclick = function(e) {
+            e.preventDefault();
+            if (typeof openRenewalModal === 'function') openRenewalModal();
+        };
+    }
+
+    // ─── 12. Hiện banner ───
+    banner.style.display = 'flex';
+}
+
 /* ============ USER UI ============ */
 function applyUserUI() {
     var demoBadge = $('demoBadge');
     var headerLoginBtn = $('headerLoginBtn');
     var userMenu = $('userMenu');
 
-    var expiryBanner = $('expiryBanner');
-    if (expiryBanner) {
-        var tier = (typeof getUserTier === 'function') ? getUserTier() : (isDemo ? 'demo' : 'active');
-        if (currentUser && currentUser.role !== 'admin' && !currentUser.isPermanent) {
-            var daysLeft = getDaysRemaining(currentUser);
-            if (daysLeft !== null && daysLeft <= 7) {
-                expiryBanner.style.display = 'flex';
-                var isExpired = daysLeft <= 0;
-                expiryBanner.classList.toggle('urgent', isExpired || daysLeft <= 3);
-                var iconWrap = expiryBanner.querySelector('.expiry-banner-icon');
-                if (iconWrap) iconWrap.innerHTML = isExpired ? '<i class="fas fa-exclamation-triangle"></i>' : '<i class="fas fa-hourglass-half"></i>';
-                var titleEl = expiryBanner.querySelector('.expiry-banner-text .title');
-                if (titleEl) {
-                    if (isExpired) titleEl.innerHTML = '❌ Tài khoản đã hết hạn!';
-                    else if (tier === 'trial') titleEl.innerHTML = '🎁 Trial còn ' + daysLeft + ' ngày';
-                    else titleEl.innerHTML = '⏳ Sắp hết hạn — còn ' + daysLeft + ' ngày';
-                }
-                var descEl = expiryBanner.querySelector('.expiry-banner-text .desc');
-                if (descEl) {
-                    var expDate = getExpiryDate(currentUser.expiresAt);
-                    var expDateStr = expDate ? expDate.toLocaleDateString('vi-VN') : '';
-                    if (isExpired) descEl.innerHTML = 'Đã hết hạn vào <b>' + expDateStr + '</b>. Gia hạn ngay!';
-                    else if (tier === 'trial') descEl.innerHTML = 'Còn <b>' + daysLeft + ' ngày</b> dùng thử (đến <b>' + expDateStr + '</b>). Gia hạn để mở khóa toàn bộ!';
-                    else descEl.innerHTML = 'Còn <b>' + daysLeft + ' ngày</b> (đến <b>' + expDateStr + '</b>).';
-                }
-                var contactBtn = $('expiryContactBtn');
-                if (contactBtn) {
-                    contactBtn.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
-                    contactBtn.href = '#';
-                    contactBtn.onclick = function(e) { e.preventDefault(); openRenewalModal(); };
-                }
-            } else expiryBanner.style.display = 'none';
-        } else if (currentUser && currentUser.isExpiredOnly) {
-            expiryBanner.style.display = 'flex';
-            expiryBanner.classList.add('urgent');
-            var iconWrap2 = expiryBanner.querySelector('.expiry-banner-icon');
-            if (iconWrap2) iconWrap2.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
-            var titleEl2 = expiryBanner.querySelector('.expiry-banner-text .title');
-            if (titleEl2) titleEl2.innerHTML = '❌ Tài khoản đã hết hạn!';
-            var descEl2 = expiryBanner.querySelector('.expiry-banner-text .desc');
-            if (descEl2) {
-                var expDate2 = getExpiryDate(currentUser.expiresAt);
-                var expDateStr2 = expDate2 ? expDate2.toLocaleDateString('vi-VN') : '';
-                descEl2.innerHTML = 'Đã hết hạn vào <b>' + expDateStr2 + '</b>. Chỉ dùng được tính năng demo. Gia hạn ngay!';
-            }
-            var contactBtn2 = $('expiryContactBtn');
-            if (contactBtn2) {
-                contactBtn2.innerHTML = '<i class="fas fa-gem"></i> Gia hạn ngay';
-                contactBtn2.href = '#';
-                contactBtn2.onclick = function(e) { e.preventDefault(); openRenewalModal(); };
-            }
-        } else expiryBanner.style.display = 'none';
-    }
+    // ═══════════════════════════════════════════════════════════
+    // ⏰ BANNER CẢNH BÁO GIA HẠN
+    // Hiện khi: Sắp hết hạn (≤7 ngày) / Nguy cấp (≤3 ngày) / Đã hết hạn
+    // ═══════════════════════════════════════════════════════════
+    renderExpiryBanner();
 
     var renewBtn = $('dropdownRenewBtn');
     if (renewBtn) {
