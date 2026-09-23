@@ -574,19 +574,21 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 
 /* ============================================================ */
-/* NAV TỐI GIẢN — 3 nút tròn icon */
+/* NAV — 2 NÚT CHÍNH TO + 3 NÚT PHỤ NHỎ */
 /* ============================================================ */
 .practice-full-nav{
     display:flex;
-    gap:clamp(.55rem,1.2vw,.9rem);
-    padding:clamp(.5rem,1vh,.75rem) clamp(.85rem,2vw,1.25rem);
+    gap:.65rem;
+    padding:.65rem 1rem;
     background:var(--surface);
     border-top:1px solid var(--border);
     flex:0 0 auto;
     justify-content:center;
     align-items:center;
-    min-height:clamp(52px,7vh,64px);
+    min-height:72px;
 }
+
+/* Nút cơ bản */
 .pf-nav-icon{
     width:clamp(42px,5vw,50px);
     height:clamp(42px,5vw,50px);
@@ -602,53 +604,84 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     font-family:inherit;
     padding:0;
     flex-shrink:0;
-    transition:transform .15s cubic-bezier(.34,1.56,.64,1),background .2s,color .2s,border-color .2s,box-shadow .2s;
+    transition:transform .15s cubic-bezier(.34,1.56,.64,1),background .2s,color .2s,border-color .2s,box-shadow .2s,opacity .2s;
     box-shadow:0 2px 6px rgba(15,23,42,.06);
     position:relative;
-}
-.pf-nav-icon:hover:not(:disabled){
-    background:var(--primary-light);
-    border-color:var(--primary);
-    color:var(--primary-dark);
-    transform:scale(1.08);
-    box-shadow:0 6px 16px rgba(37,99,235,.25);
-}
-.pf-nav-icon:active:not(:disabled){
-    transform:scale(.94);
 }
 .pf-nav-icon:disabled{
     opacity:.3;
     cursor:not-allowed;
 }
-.pf-nav-icon.primary{
+
+/* ═══ NÚT CHÍNH (◀ ▶) — TO, NỔI BẬT ═══ */
+.pf-nav-icon.main-nav{
+    width:clamp(56px,7vw,68px);
+    height:clamp(56px,7vw,68px);
+    font-size:clamp(1.3rem,1.8vw,1.6rem);
+    border-width:2px;
+}
+.pf-nav-icon.main-nav:not(.primary){
+    background:var(--surface);
+    color:var(--text);
+    border:2px solid var(--border);
+    box-shadow:0 4px 12px rgba(15,23,42,.12);
+}
+.pf-nav-icon.main-nav:not(.primary):hover:not(:disabled){
+    transform:scale(1.12);
+    border-color:var(--primary);
+    color:var(--primary);
+    box-shadow:0 8px 20px rgba(37,99,235,.3);
+}
+.pf-nav-icon.main-nav:not(.primary):active:not(:disabled){
+    transform:scale(1.02);
+}
+.pf-nav-icon.main-nav.primary{
     background:linear-gradient(135deg,#4f46e5,#7c3aed);
     color:#fff;
     border-color:transparent;
-    box-shadow:0 4px 14px rgba(124,58,237,.35);
-}
-.pf-nav-icon.primary:hover:not(:disabled){
-    background:linear-gradient(135deg,#4338ca,#6d28d9);
-    color:#fff;
-    border-color:transparent;
     box-shadow:0 8px 22px rgba(124,58,237,.5);
+    transform:scale(1.08);
 }
-.pf-nav-icon.speak{
-    background:var(--primary-light);
-    color:var(--primary-dark);
-    border-color:var(--primary);
+.pf-nav-icon.main-nav.primary:hover:not(:disabled){
+    transform:scale(1.15);
+    background:linear-gradient(135deg,#4338ca,#6d28d9);
+    box-shadow:0 12px 30px rgba(124,58,237,.65);
 }
-.pf-nav-icon.speak:hover:not(:disabled){
+.pf-nav-icon.main-nav.primary:active:not(:disabled){
+    transform:scale(1.05);
+}
+
+/* ═══ NÚT PHỤ (⏱ 🔊 🎧) — NHỎ, NHẸ NHÀNG ═══ */
+.pf-nav-icon.mini-nav{
+    width:clamp(36px,4.5vw,42px);
+    height:clamp(36px,4.5vw,42px);
+    font-size:clamp(.75rem,1vw,.85rem);
+    border-width:1.5px;
+    opacity:.75;
+}
+.pf-nav-icon.mini-nav:hover:not(:disabled){
+    opacity:1;
+    transform:scale(1.06);
+}
+.pf-nav-icon.mini-nav.speak{
+    background:rgba(37,99,235,.12);
+    color:var(--primary);
+    border-color:rgba(37,99,235,.3);
+}
+.pf-nav-icon.mini-nav.speak:hover:not(:disabled){
     background:var(--primary);
     color:#fff;
     border-color:var(--primary);
+    box-shadow:0 6px 16px rgba(37,99,235,.35);
 }
-.pf-nav-icon.speak.speaking{
+.pf-nav-icon.mini-nav.speak.speaking{
     background:var(--danger);
     color:#fff;
     border-color:var(--danger);
+    opacity:1;
     animation:pulse 1s infinite;
 }
-.pf-nav-icon.speak.speaking::after{
+.pf-nav-icon.mini-nav.speak.speaking::after{
     content:'';
     position:absolute;
     inset:-3px;
@@ -656,31 +689,93 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     border:2px solid var(--danger);
     animation:speakingRing 1s infinite;
 }
-.pf-nav-icon.speak i.fa-stop{
+.pf-nav-icon.mini-nav.speak i.fa-stop{
     animation:stopPulse .8s ease-in-out infinite;
 }
-[data-theme="dark"] .pf-nav-icon{
+.pf-nav-icon.mini-nav.speed{
+    background:rgba(245,158,11,.12);
+    color:#d97706;
+    border-color:rgba(245,158,11,.3);
+}
+.pf-nav-icon.mini-nav.speed:hover:not(:disabled){
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+    color:#fff;
+    border-color:#d97706;
+    box-shadow:0 6px 16px rgba(245,158,11,.35);
+}
+.pf-nav-icon.mini-nav.voice{
+    background:rgba(6,182,212,.12);
+    color:#0891b2;
+    border-color:rgba(6,182,212,.3);
+}
+.pf-nav-icon.mini-nav.voice:hover:not(:disabled){
+    background:linear-gradient(135deg,#06b6d4,#0891b2);
+    color:#fff;
+    border-color:#0891b2;
+    box-shadow:0 6px 16px rgba(6,182,212,.35);
+}
+
+/* Badge tốc độ trên nút ⏱ */
+.pf-nav-icon.mini-nav.speed .speed-badge{
+    position:absolute;
+    bottom:-4px;
+    right:-4px;
+    background:#fff;
+    color:#b45309;
+    font-size:.5rem;
+    font-weight:900;
+    padding:.02rem .25rem;
+    border-radius:50px;
+    border:1.5px solid #f59e0b;
+    min-width:24px;
+    text-align:center;
+    line-height:1.2;
+    font-family:-apple-system,sans-serif;
+    box-shadow:0 1px 3px rgba(0,0,0,.15);
+}
+[data-theme="dark"] .pf-nav-icon.mini-nav.speed .speed-badge{
+    background:#1e293b;
+    color:#fbbf24;
+    border-color:#f59e0b;
+}
+
+/* Nhóm 3 nút phụ — ngăn cách bằng đường kẻ dọc */
+.practice-full-nav .mini-group{
+    display:flex;
+    gap:.35rem;
+    margin-left:.5rem;
+    padding-left:.65rem;
+    border-left:1px solid var(--border);
+}
+
+/* Dark mode cho nút chính */
+[data-theme="dark"] .pf-nav-icon.main-nav:not(.primary){
+    background:var(--surface-2);
+    color:var(--text);
+    border-color:var(--border);
     box-shadow:0 2px 6px rgba(0,0,0,.3);
 }
-[data-theme="dark"] .pf-nav-icon.speak{
-    background:rgba(59,130,246,.22);
+[data-theme="dark"] .pf-nav-icon.main-nav:not(.primary):hover:not(:disabled){
+    border-color:var(--primary);
     color:#93c5fd;
-    border-color:rgba(59,130,246,.5);
 }
-[data-theme="dark"] .pf-nav-icon.speak:hover:not(:disabled){
-    background:var(--primary);
-    color:#fff;
-}
+
+/* Responsive */
 @media(max-width:768px){
     .practice-full-nav{
         gap:.5rem;
-        padding:.55rem .85rem;
-        min-height:56px;
+        padding:.55rem .7rem;
+        min-height:66px;
     }
-    .pf-nav-icon{
-        width:46px;
-        height:46px;
-        font-size:1rem;
+    .pf-nav-icon.main-nav{
+        width:54px;
+        height:54px;
+        font-size:1.25rem;
+    }
+    .pf-nav-icon.mini-nav{
+        width:36px;
+        height:36px;
+        font-size:.78rem;
     }
 }
 @media(max-width:400px){
@@ -688,10 +783,19 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
         gap:.4rem;
         padding:.5rem .5rem;
     }
-    .pf-nav-icon{
-        width:42px;
-        height:42px;
-        font-size:.92rem;
+    .pf-nav-icon.main-nav{
+        width:50px;
+        height:50px;
+        font-size:1.15rem;
+    }
+    .pf-nav-icon.mini-nav{
+        width:34px;
+        height:34px;
+        font-size:.72rem;
+    }
+    .practice-full-nav .mini-group{
+        gap:.25rem;
+        padding-left:.5rem;
     }
 }
 
@@ -926,6 +1030,214 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .voice-reset{padding:.55rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:.15s}
 .voice-reset:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger)}
 [data-theme="dark"] .voice-slider{background:var(--surface-2)}
+
+/* ============================================================ */
+/* SPEED SETTINGS MODAL — popup chỉ chỉnh tốc độ */
+/* ============================================================ */
+.speed-modal{
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,.75);
+    backdrop-filter:blur(6px);
+    z-index:4100;
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:1rem;
+    animation:fadeIn .2s;
+}
+.speed-modal.show{display:flex}
+.speed-box{
+    background:var(--surface);
+    border-radius:20px;
+    width:100%;
+    max-width:380px;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+    overflow:hidden;
+    animation:voiceSlideUp .3s cubic-bezier(.34,1.56,.64,1);
+}
+.speed-header{
+    padding:1rem 1.25rem;
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:.75rem;
+}
+.speed-header h2{
+    font-size:1rem;
+    font-weight:800;
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    color:#fff;
+    margin:0;
+}
+.speed-header h2 i{color:#fff}
+.speed-close{
+    width:30px;height:30px;border-radius:50%;
+    border:none;background:rgba(255,255,255,.2);
+    color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.9rem;transition:.15s;flex-shrink:0;
+}
+.speed-close:hover{background:rgba(255,255,255,.35)}
+.speed-body{
+    padding:1.25rem;
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+}
+.speed-current{
+    text-align:center;
+    font-size:2.2rem;
+    font-weight:900;
+    color:#d97706;
+    line-height:1;
+    letter-spacing:-.03em;
+}
+.speed-current small{
+    font-size:.85rem;
+    font-weight:700;
+    color:var(--text-3);
+    display:block;
+    margin-top:.2rem;
+    letter-spacing:.03em;
+}
+.speed-slider-row{
+    display:flex;align-items:center;gap:.6rem;
+}
+.speed-slider-row button{
+    width:38px;height:38px;border-radius:50%;
+    border:2px solid var(--border);
+    background:var(--surface-2);
+    color:var(--text);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.05rem;font-weight:900;
+    transition:.15s;flex-shrink:0;font-family:inherit;
+}
+.speed-slider-row button:hover{
+    background:#fef3c7;
+    color:#b45309;
+    border-color:#f59e0b;
+}
+.speed-slider-row button:active{transform:scale(.94)}
+.speed-slider-row input[type=range]{
+    flex:1;
+    -webkit-appearance:none;
+    appearance:none;
+    height:8px;
+    border-radius:50px;
+    background:linear-gradient(90deg,#fbbf24,#f59e0b,#d97706);
+    outline:none;cursor:pointer;
+}
+.speed-slider-row input[type=range]::-webkit-slider-thumb{
+    -webkit-appearance:none;appearance:none;
+    width:26px;height:26px;border-radius:50%;
+    background:#fff;
+    border:3px solid #f59e0b;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(245,158,11,.5);
+}
+.speed-slider-row input[type=range]::-moz-range-thumb{
+    width:26px;height:26px;border-radius:50%;
+    background:#fff;border:3px solid #f59e0b;
+    cursor:pointer;
+    box-shadow:0 2px 8px rgba(245,158,11,.5);
+}
+.speed-preset-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:.4rem;
+}
+.speed-preset-btn{
+    padding:.5rem .3rem;
+    border-radius:10px;
+    border:1.5px solid var(--border);
+    background:var(--surface);
+    color:var(--text-2);
+    font-size:.72rem;
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+    transition:.15s;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:.15rem;
+    line-height:1.2;
+}
+.speed-preset-btn span:first-child{
+    font-size:.95rem;
+    font-weight:900;
+}
+.speed-preset-btn span:last-child{
+    font-size:.6rem;
+    opacity:.7;
+    font-weight:600;
+}
+.speed-preset-btn:hover{
+    border-color:#f59e0b;
+    color:#d97706;
+    background:#fef3c7;
+}
+.speed-preset-btn.active{
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+    color:#fff;
+    border-color:#d97706;
+    box-shadow:0 4px 12px rgba(245,158,11,.4);
+}
+.speed-preset-btn.active span:last-child{opacity:.9}
+[data-theme="dark"] .speed-preset-btn:hover{
+    background:rgba(245,158,11,.15);
+    color:#fbbf24;
+}
+.speed-test-row{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:.5rem;
+}
+.speed-test-btn{
+    padding:.75rem 1rem;
+    border-radius:12px;
+    border:none;
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+    color:#fff;
+    font-size:.88rem;
+    font-weight:800;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    gap:.5rem;transition:.15s;font-family:inherit;
+    box-shadow:0 4px 12px rgba(245,158,11,.35);
+}
+.speed-test-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(245,158,11,.5)}
+.speed-test-btn.speaking{background:var(--danger);box-shadow:0 4px 12px rgba(220,38,38,.5)}
+.speed-reset-mini{
+    width:46px;height:46px;border-radius:12px;
+    border:1.5px solid var(--border);
+    background:var(--surface);
+    color:var(--text-2);
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.9rem;transition:.15s;font-family:inherit;
+    flex-shrink:0;
+}
+.speed-reset-mini:hover{
+    background:var(--danger-light);
+    color:var(--danger);
+    border-color:var(--danger);
+}
+.speed-hint{
+    font-size:.72rem;
+    color:var(--text-3);
+    text-align:center;
+    line-height:1.5;
+    padding:.5rem;
+    background:var(--surface-2);
+    border-radius:10px;
+    border:1px solid var(--border);
+}
 """
 
 
@@ -981,7 +1293,6 @@ def build_ui_html():
 <button class="fab-btn fab-sub" id="toggleViBtn" title="Ẩn/hiện Tiếng Việt"><i class="fas fa-language"></i></button>
 <button class="fab-btn fab-sub" id="togglePinyinBtn" title="Ẩn/hiện Pinyin"><i class="fas fa-spell-check"></i></button>
 <button class="fab-btn fab-sub" id="togglePracticeBtn" title="Ẩn/hiện Ô luyện dịch"><i class="fas fa-keyboard"></i></button>
-<button class="fab-btn fab-sub" id="toggleVoiceBtn" title="Cài đặt giọng đọc"><i class="fas fa-headphones"></i></button>
 <button class="fab-btn fab-sub fab-focus" id="toggleFocusBtn" title="Click để tắt Zalo/TikTok (Silent mode)"><i class="fas fa-bell"></i></button>
 <button class="fab-btn fab-main" id="fabMainBtn" title="Tùy chọn hiển thị"><i class="fas fa-sliders-h"></i></button>
 </div>
@@ -1059,9 +1370,24 @@ def build_ui_html():
 </div>
 </div>
 <div class="practice-full-nav">
-<button class="pf-nav-icon" id="pfPrevBtn" type="button" title="Câu trước" aria-label="Câu trước"><i class="fas fa-chevron-left"></i></button>
-<button class="pf-nav-icon primary" id="pfNextBtn" type="button" title="Câu sau" aria-label="Câu sau"><i class="fas fa-chevron-right"></i></button>
-<button class="pf-nav-icon speak" id="pfQuickSpeakBtn" type="button" title="Đọc cả câu" aria-label="Đọc cả câu"><i class="fas fa-volume-up"></i></button>
+    <button class="pf-nav-icon main-nav" id="pfPrevBtn" type="button" title="Câu trước" aria-label="Câu trước">
+        <i class="fas fa-chevron-left"></i>
+    </button>
+    <button class="pf-nav-icon main-nav primary" id="pfNextBtn" type="button" title="Câu sau" aria-label="Câu sau">
+        <i class="fas fa-chevron-right"></i>
+    </button>
+    <div class="mini-group">
+        <button class="pf-nav-icon mini-nav speed" id="pfSpeedBtn" type="button" title="Tốc độ đọc" aria-label="Tốc độ đọc">
+            <i class="fas fa-tachometer-alt"></i>
+            <span class="speed-badge" id="speedBadge">1.0×</span>
+        </button>
+        <button class="pf-nav-icon mini-nav speak" id="pfQuickSpeakBtn" type="button" title="Đọc cả câu" aria-label="Đọc cả câu">
+            <i class="fas fa-volume-up"></i>
+        </button>
+        <button class="pf-nav-icon mini-nav voice" id="pfVoiceBtn" type="button" title="Cài đặt giọng đọc" aria-label="Cài đặt giọng đọc">
+            <i class="fas fa-headphones"></i>
+        </button>
+    </div>
 </div>
 <a class="pf-tiktok-float" id="pfTiktokFloat" href="#" target="_blank" rel="noopener noreferrer" title="Theo dõi TikTok">
 <span class="pf-tiktok-avatar-wrap">
@@ -1151,6 +1477,60 @@ def build_ui_html():
         </div>
     </div>
 </div>
+<div class="speed-modal" id="speedModal">
+    <div class="speed-box">
+        <div class="speed-header">
+            <h2><i class="fas fa-tachometer-alt"></i> Tốc độ đọc</h2>
+            <button class="speed-close" id="speedClose" aria-label="Đóng"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="speed-body">
+            <div class="speed-current">
+                <span id="speedCurrentValue">1.00</span>×
+                <small id="speedCurrentLabel">Bình thường</small>
+            </div>
+
+            <div class="speed-slider-row">
+                <button type="button" id="speedMinus" title="Chậm hơn">−</button>
+                <input type="range" id="speedSlider" min="0.5" max="1.5" step="0.05" value="1.0">
+                <button type="button" id="speedPlus" title="Nhanh hơn">+</button>
+            </div>
+
+            <div class="speed-preset-grid">
+                <button class="speed-preset-btn" data-rate="0.6">
+                    <span>0.6×</span><span>Rất chậm</span>
+                </button>
+                <button class="speed-preset-btn" data-rate="0.75">
+                    <span>0.75×</span><span>Chậm</span>
+                </button>
+                <button class="speed-preset-btn" data-rate="0.85">
+                    <span>0.85×</span><span>Chuẩn</span>
+                </button>
+                <button class="speed-preset-btn" data-rate="1.0">
+                    <span>1.0×</span><span>Bình thường</span>
+                </button>
+                <button class="speed-preset-btn" data-rate="1.15">
+                    <span>1.15×</span><span>Nhanh</span>
+                </button>
+                <button class="speed-preset-btn" data-rate="1.3">
+                    <span>1.3×</span><span>Rất nhanh</span>
+                </button>
+            </div>
+
+            <div class="speed-test-row">
+                <button class="speed-test-btn" id="speedTestBtn" type="button">
+                    <i class="fas fa-play"></i> Nghe thử
+                </button>
+                <button class="speed-reset-mini" id="speedResetBtn" type="button" title="Về mặc định 1.0×">
+                    <i class="fas fa-undo-alt"></i>
+                </button>
+            </div>
+
+            <div class="speed-hint">
+                <i class="fas fa-info-circle"></i> Áp dụng ngay cho tất cả nút loa
+            </div>
+        </div>
+    </div>
+</div>
 """
 
 
@@ -1208,13 +1588,11 @@ function pickVoice() {
     var voices = speechSynthesis.getVoices();
     if (!voices.length) return null;
 
-    // 1) Nếu user đã chọn voice cụ thể → dùng đúng voice đó
     if (voiceState && voiceState.voiceURI) {
         var chosen = voices.find(function(v) { return v.voiceURI === voiceState.voiceURI; });
         if (chosen) return chosen;
     }
 
-    // 2) Auto: ưu tiên Ting-Ting > Siri zh-CN > zh-CN local > zh-CN > zh-TW > zh-*
     var priorities = [
         function(v){ return v.lang === 'zh-CN' && /Ting-?Ting/i.test(v.name); },
         function(v){ return v.lang === 'zh-CN' && /Siri/i.test(v.name); },
@@ -1230,7 +1608,6 @@ function pickVoice() {
     return null;
 }
 
-/* Alias cũ để tương thích code cũ (nếu có) */
 function getChineseVoice() { return pickVoice(); }
 
 /* ============ TIER HELPERS ============ */
@@ -1511,6 +1888,7 @@ function initApp() {
     initWriter();
     initPracticeFull();
     initVoiceSettings();
+    initSpeedSettings();
 
     _lastWidthMode = window.innerWidth >= 769 ? 'desktop' : 'mobile';
     if (_lastWidthMode === 'desktop') moveTikTokBarToHeader();
@@ -1816,6 +2194,7 @@ document.addEventListener('click', function(e) {
         e.target.closest('.edit-modal') || e.target.closest('.zalo-btn') ||
         e.target.closest('.tiktok-float-wrap') || e.target.closest('.tiktok-bar') ||
         e.target.closest('.renewal-modal') || e.target.closest('.voice-modal') ||
+        e.target.closest('.speed-modal') ||
         e.target.closest('.toggle-check-btn')) return;
     clearFocus();
 }, true);
@@ -1863,7 +2242,6 @@ function populateVoiceSelect() {
     var zhVoices = voices.filter(function(v) {
         return v.lang && v.lang.toLowerCase().indexOf('zh') === 0;
     });
-    // Nếu chưa load xong voices thì để option mặc định
     if (!zhVoices.length) {
         sel.innerHTML = '<option value="">-- Đang tải giọng đọc... --</option>';
         return;
@@ -1875,6 +2253,40 @@ function populateVoiceSelect() {
     });
     sel.innerHTML = html;
     sel.value = voiceState.voiceURI || '';
+}
+
+function updateSpeedBadge() {
+    var badge = $('speedBadge');
+    if (!badge) return;
+    var r = voiceState.rate;
+    badge.textContent = r.toFixed(1) + '×';
+    if (r < 0.75) badge.style.background = '#dbeafe';
+    else if (r < 0.95) badge.style.background = '#fef3c7';
+    else if (r <= 1.05) badge.style.background = '#dcfce7';
+    else if (r <= 1.25) badge.style.background = '#fed7aa';
+    else badge.style.background = '#fecaca';
+}
+
+function updateSpeedUI() {
+    var v = voiceState.rate;
+    var vEl = $('speedCurrentValue');
+    var lEl = $('speedCurrentLabel');
+    var slider = $('speedSlider');
+    if (vEl) vEl.textContent = v.toFixed(2);
+    if (slider) slider.value = v;
+    if (lEl) {
+        if (v < 0.7) lEl.textContent = 'Rất chậm';
+        else if (v < 0.8) lEl.textContent = 'Chậm';
+        else if (v < 0.95) lEl.textContent = 'Chuẩn';
+        else if (v <= 1.05) lEl.textContent = 'Bình thường';
+        else if (v <= 1.25) lEl.textContent = 'Nhanh';
+        else lEl.textContent = 'Rất nhanh';
+    }
+    document.querySelectorAll('.speed-preset-btn').forEach(function(b) {
+        var r = parseFloat(b.dataset.rate);
+        b.classList.toggle('active', Math.abs(r - v) < 0.001);
+    });
+    updateSpeedBadge();
 }
 
 function updateVoiceUI() {
@@ -1895,6 +2307,9 @@ function updateVoiceUI() {
         var r = parseFloat(b.dataset.rate);
         b.classList.toggle('active', Math.abs(r - voiceState.rate) < 0.001);
     });
+
+    updateSpeedUI();
+    updateSpeedBadge();
 }
 
 function voiceTestSpeak() {
@@ -1931,13 +2346,14 @@ function initVoiceSettings() {
 
     updateVoiceUI();
 
-    // Sliders
     if (rateSlider) rateSlider.addEventListener('input', function() {
         voiceState.rate = parseFloat(this.value);
         $('voiceRateValue').textContent = voiceState.rate.toFixed(2) + '×';
         document.querySelectorAll('.voice-preset-btn').forEach(function(b) {
             b.classList.toggle('active', Math.abs(parseFloat(b.dataset.rate) - voiceState.rate) < 0.001);
         });
+        updateSpeedUI();
+        updateSpeedBadge();
         saveVoiceSettings();
     });
     if (pitchSlider) pitchSlider.addEventListener('input', function() {
@@ -1951,8 +2367,7 @@ function initVoiceSettings() {
         saveVoiceSettings();
     });
 
-    // Nút +/-
-    function adjust(key, delta, min, max, step) {
+    function adjust(key, delta, min, max) {
         voiceState[key] = Math.max(min, Math.min(max, +(voiceState[key] + delta).toFixed(2)));
         updateVoiceUI();
         saveVoiceSettings();
@@ -1964,7 +2379,6 @@ function initVoiceSettings() {
     if ($('voiceVolumeMinus'))$('voiceVolumeMinus').addEventListener('click',function(){ adjust('volume', -0.05, 0, 1); });
     if ($('voiceVolumePlus')) $('voiceVolumePlus').addEventListener('click', function(){ adjust('volume',  0.05, 0, 1); });
 
-    // Preset
     document.querySelectorAll('.voice-preset-btn').forEach(function(b) {
         b.addEventListener('click', function() {
             voiceState.rate = parseFloat(this.dataset.rate);
@@ -1973,17 +2387,14 @@ function initVoiceSettings() {
         });
     });
 
-    // Voice select
     var sel = $('voiceSelect');
     if (sel) sel.addEventListener('change', function() {
         voiceState.voiceURI = this.value;
         saveVoiceSettings();
     });
 
-    // Test
     if ($('voiceTestBtn')) $('voiceTestBtn').addEventListener('click', voiceTestSpeak);
 
-    // Reset
     if ($('voiceResetBtn')) $('voiceResetBtn').addEventListener('click', function() {
         voiceState.rate    = DEFAULT_VOICE.rate;
         voiceState.pitch   = DEFAULT_VOICE.pitch;
@@ -1994,7 +2405,17 @@ function initVoiceSettings() {
         saveVoiceSettings();
     });
 
-    // Open / Close
+    // Mở từ nút 🎧 trong thanh nav full màn hình
+    if ($('pfVoiceBtn')) {
+        $('pfVoiceBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            populateVoiceSelect();
+            updateVoiceUI();
+            modal.classList.add('show');
+        });
+    }
+    // Fallback: nút cũ trong FAB (nếu còn)
     if ($('toggleVoiceBtn')) {
         $('toggleVoiceBtn').addEventListener('click', function(e) {
             e.stopPropagation();
@@ -2005,6 +2426,97 @@ function initVoiceSettings() {
         });
     }
     if ($('voiceClose')) $('voiceClose').addEventListener('click', function() { modal.classList.remove('show'); });
+    modal.addEventListener('click', function(e) { if (e.target === this) modal.classList.remove('show'); });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('show')) modal.classList.remove('show');
+    });
+}
+
+/* ═══ POPUP NHANH CHỈNH TỐC ĐỘ ═══ */
+function initSpeedSettings() {
+    var modal = $('speedModal');
+    if (!modal) return;
+
+    updateSpeedUI();
+
+    var slider = $('speedSlider');
+    if (slider) slider.addEventListener('input', function() {
+        voiceState.rate = parseFloat(this.value);
+        updateSpeedUI();
+        // Đồng bộ slider trong popup voice nếu có
+        if ($('voiceRateSlider')) $('voiceRateSlider').value = voiceState.rate;
+        if ($('voiceRateValue')) $('voiceRateValue').textContent = voiceState.rate.toFixed(2) + '×';
+        document.querySelectorAll('.voice-preset-btn').forEach(function(b) {
+            b.classList.toggle('active', Math.abs(parseFloat(b.dataset.rate) - voiceState.rate) < 0.001);
+        });
+        saveVoiceSettings();
+    });
+
+    if ($('speedMinus')) $('speedMinus').addEventListener('click', function() {
+        voiceState.rate = Math.max(0.5, +(voiceState.rate - 0.05).toFixed(2));
+        updateSpeedUI();
+        if ($('voiceRateSlider')) $('voiceRateSlider').value = voiceState.rate;
+        if ($('voiceRateValue')) $('voiceRateValue').textContent = voiceState.rate.toFixed(2) + '×';
+        saveVoiceSettings();
+    });
+    if ($('speedPlus')) $('speedPlus').addEventListener('click', function() {
+        voiceState.rate = Math.min(1.5, +(voiceState.rate + 0.05).toFixed(2));
+        updateSpeedUI();
+        if ($('voiceRateSlider')) $('voiceRateSlider').value = voiceState.rate;
+        if ($('voiceRateValue')) $('voiceRateValue').textContent = voiceState.rate.toFixed(2) + '×';
+        saveVoiceSettings();
+    });
+
+    document.querySelectorAll('.speed-preset-btn').forEach(function(b) {
+        b.addEventListener('click', function() {
+            voiceState.rate = parseFloat(this.dataset.rate);
+            updateSpeedUI();
+            if ($('voiceRateSlider')) $('voiceRateSlider').value = voiceState.rate;
+            if ($('voiceRateValue')) $('voiceRateValue').textContent = voiceState.rate.toFixed(2) + '×';
+            document.querySelectorAll('.voice-preset-btn').forEach(function(vb) {
+                vb.classList.toggle('active', Math.abs(parseFloat(vb.dataset.rate) - voiceState.rate) < 0.001);
+            });
+            saveVoiceSettings();
+        });
+    });
+
+    if ($('speedTestBtn')) $('speedTestBtn').addEventListener('click', function() {
+        if (!('speechSynthesis' in window)) return;
+        speechSynthesis.cancel();
+        var btn = this;
+        btn.classList.add('speaking');
+        btn.innerHTML = '<i class="fas fa-stop"></i> Đang đọc...';
+        var u = new SpeechSynthesisUtterance('你好，欢迎学习中文。');
+        u.lang = 'zh-CN';
+        applyVoiceSettings(u);
+        var finish = function() {
+            btn.classList.remove('speaking');
+            btn.innerHTML = '<i class="fas fa-play"></i> Nghe thử';
+        };
+        u.onend = finish;
+        u.onerror = finish;
+        setTimeout(function(){ try { speechSynthesis.speak(u); } catch(e) { finish(); } }, 30);
+    });
+
+    if ($('speedResetBtn')) $('speedResetBtn').addEventListener('click', function() {
+        voiceState.rate = 1.0;
+        updateSpeedUI();
+        if ($('voiceRateSlider')) $('voiceRateSlider').value = 1.0;
+        if ($('voiceRateValue')) $('voiceRateValue').textContent = '1.00×';
+        document.querySelectorAll('.voice-preset-btn').forEach(function(b) {
+            b.classList.toggle('active', Math.abs(parseFloat(b.dataset.rate) - 1.0) < 0.001);
+        });
+        saveVoiceSettings();
+    });
+
+    if ($('pfSpeedBtn')) $('pfSpeedBtn').addEventListener('click', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        updateSpeedUI();
+        modal.classList.add('show');
+    });
+
+    if ($('speedClose')) $('speedClose').addEventListener('click', function() { modal.classList.remove('show'); });
     modal.addEventListener('click', function(e) { if (e.target === this) modal.classList.remove('show'); });
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && modal.classList.contains('show')) modal.classList.remove('show');
@@ -3246,7 +3758,6 @@ function _speakWithHighlightKaraoke(token) {
 
 /* ============================================================ */
 /* NÚT ĐỌC NHANH — TOGGLE đọc / dừng                            */
-/* Đọc CẢ CÂU liền mạch, KHÔNG highlight                        */
 /* ============================================================ */
 
 window._isQuickSpeaking = false;
