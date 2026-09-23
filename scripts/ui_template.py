@@ -78,6 +78,11 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 .ai-partial{color:var(--amber);font-weight:700}
 .ai-wrong{color:var(--danger);font-weight:700}
 .ai-reason{display:block;font-size:.68rem;color:var(--text-3);font-weight:400;margin-top:.2rem;font-style:italic;line-height:1.3}
+.answer-inline-display{display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.35rem;padding:.35rem .6rem;background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(37,99,235,.04));border:1px dashed rgba(37,99,235,.3);border-radius:8px;flex-wrap:wrap}
+[data-theme="dark"] .answer-inline-display{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(59,130,246,.08));border-color:rgba(59,130,246,.4)}
+.answer-inline-label{font-size:.7rem;font-weight:700;color:var(--primary-dark);text-transform:uppercase;display:inline-flex;align-items:center;gap:.25rem}
+[data-theme="dark"] .answer-inline-label{color:#93c5fd}
+.answer-inline-text{font-family:var(--font-zh);font-size:1.05rem;font-weight:600;color:var(--text);letter-spacing:.03em;word-break:break-all}
 .main{padding:clamp(.15rem,.5vh,.5rem) 0 clamp(2rem,5vh,3rem)}
 .demo-banner{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:var(--radius);padding:clamp(.7rem,1.5vw,.9rem) clamp(.8rem,1.5vw,1.1rem);margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
 [data-theme="dark"] .demo-banner{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.25));border-color:#f59e0b}
@@ -413,11 +418,41 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .practice-full-input:focus{border-color:var(--primary);box-shadow:0 0 0 4px rgba(37,99,235,.15),0 8px 24px rgba(37,99,235,.15);transform:scale(1.01)}
 @media(min-width:769px){.practice-full-input{font-size:clamp(1.35rem,2.6vw,1.6rem);padding:clamp(.85rem,1.8vh,1rem) clamp(1rem,2vw,1.3rem)}}
 @media(min-width:1400px){.practice-full-input{font-size:1.7rem;padding:1.05rem 1.4rem}}
-.practice-speak-btn{width:auto;min-width:clamp(44px,5vw,54px);padding:0 clamp(.6rem,1.2vw,.9rem);border-radius:14px;border:2px solid var(--primary);background:var(--primary-light);color:var(--primary-dark);font-size:clamp(1rem,1.6vw,1.25rem);cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* ============================================================ */
+/* Nút loa nhỏ cạnh ô nhập liệu */
+/* ============================================================ */
+.practice-speak-btn{
+    width:auto;
+    min-width:clamp(38px,4.5vw,46px);
+    padding:0 clamp(.45rem,.8vw,.65rem);
+    border-radius:14px;
+    border:2px solid var(--primary);
+    background:var(--primary-light);
+    color:var(--primary-dark);
+    font-size:clamp(.9rem,1.3vw,1.1rem);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    transition:transform .15s,background .2s,color .2s,border-color .2s;
+    position:relative;
+}
 .practice-speak-btn:hover,.practice-speak-btn:active{background:var(--primary);color:#fff;transform:scale(1.05)}
 .practice-speak-btn.speaking{background:var(--danger);color:#fff;border-color:var(--danger);animation:pulse 1s infinite}
+.practice-speak-btn.speaking::after{
+    content:'';
+    position:absolute;
+    inset:-2px;
+    border-radius:14px;
+    border:2px solid var(--danger);
+    animation:speakingRing 1s infinite;
+}
+@keyframes speakingRing{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
 .practice-speak-btn:disabled{opacity:.4;cursor:not-allowed}
 [data-theme="dark"] .practice-speak-btn{background:rgba(59,130,246,.22);color:#93c5fd;border-color:rgba(59,130,246,.5)}
+
 .char-preview{display:flex;justify-content:center;flex-wrap:wrap;gap:clamp(.3rem,.6vw,.45rem);min-height:clamp(1.75rem,3vh,2.25rem);padding:clamp(.4rem,.8vh,.65rem) clamp(.5rem,1.2vw,.9rem);background:var(--surface-2);border-radius:12px;border:1px dashed var(--border);user-select:none}
 .char-preview:empty{display:none}
 .char-slot{font-family:var(--font-zh);font-size:clamp(1.15rem,2vw,1.5rem);font-weight:500;display:inline-flex;align-items:center;justify-content:center;min-width:clamp(1.3rem,2.2vw,1.7rem);height:clamp(1.75rem,3vh,2.25rem);padding:0 .35rem;border-radius:8px;line-height:1}
@@ -458,57 +493,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .answer-actions button{padding:.55rem 1rem;border-radius:50px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:.4rem}
 .answer-actions button:hover{background:var(--surface-2);border-color:var(--primary);color:var(--primary)}
 .answer-actions button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
-
-/* ============================================================ */
-/* Nút đọc cả câu + dừng — nhỏ gọn bên cạnh ô nhập liệu */
-/* ============================================================ */
-.practice-speak-btn{
-    width:auto;
-    min-width:clamp(38px,4.5vw,46px);
-    padding:0 clamp(.45rem,.8vw,.65rem);
-    border-radius:14px;
-    border:2px solid var(--primary);
-    background:var(--primary-light);
-    color:var(--primary-dark);
-    font-size:clamp(.9rem,1.3vw,1.1rem);
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-shrink:0;
-    transition:transform .15s,background .2s,color .2s,border-color .2s;
-    position:relative;
-}
-.practice-speak-btn:hover,.practice-speak-btn:active{background:var(--primary);color:#fff;transform:scale(1.05)}
-.practice-speak-btn.speaking{background:var(--danger);color:#fff;border-color:var(--danger);animation:pulse 1s infinite}
-.practice-speak-btn.speaking::after{
-    content:'';
-    position:absolute;
-    inset:-2px;
-    border-radius:14px;
-    border:2px solid var(--danger);
-    animation:speakingRing 1s infinite;
-}
-@keyframes speakingRing{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
-.practice-speak-btn:disabled{opacity:.4;cursor:not-allowed}
-[data-theme="dark"] .practice-speak-btn{background:rgba(59,130,246,.22);color:#93c5fd;border-color:rgba(59,130,246,.5)}
-
-.practice-stop-btn{
-    width:clamp(34px,4vw,42px);
-    border-radius:14px;
-    border:2px solid var(--danger);
-    background:var(--danger-light);
-    color:var(--danger);
-    font-size:clamp(.85rem,1.2vw,1rem);
-    cursor:pointer;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    flex-shrink:0;
-    transition:transform .15s,background .2s,color .2s;
-}
-.practice-stop-btn:hover,.practice-stop-btn:active{background:var(--danger);color:#fff;transform:scale(1.05)}
-[data-theme="dark"] .practice-stop-btn{background:rgba(220,38,38,.22);color:#fca5a5;border-color:rgba(220,38,38,.5)}
 
 /* ============================================================ */
 /* HIGHLIGHT cụm đang đọc (karaoke) — VÀNG CAM */
@@ -567,7 +551,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     visibility:visible;
     transform:translateX(-50%) translateY(0) scale(1);
 }
-/* Cụm đang đọc nâng z-index để tooltip không bị che */
 .answer-phrase-wrap.active-wrap{
     z-index:100 !important;
     position:relative;
@@ -639,7 +622,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .pf-nav-btn{padding:.45rem .6rem;font-size:.75rem}
 }
 
-@media(max-width:768px){.container{padding:0 .7rem}.header-inner{gap:.5rem;margin-bottom:.4rem}.main{padding:.15rem 0 2rem}.practice-full-header{padding:.5rem .85rem;gap:.5rem}.pf-filters{padding:.4rem .85rem .3rem}.practice-full-body{padding:.85rem .7rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.85rem}.practice-full-vi{font-size:1.2rem;padding:.75rem .6rem}.practice-full-input{font-size:1.2rem;padding:.75rem .85rem}.practice-speak-btn{min-width:40px;padding:0 .5rem;font-size:.95rem;border-radius:12px}.practice-stop-btn{width:36px}.char-slot{font-size:1.2rem;min-width:1.4rem;height:1.85rem}.answer-phrase-btn{font-size:1.2rem;padding:.35rem .65rem}.pf-nav-btn{padding:.6rem .7rem;font-size:.78rem}.practice-full-nav{padding:.55rem .85rem;gap:.5rem}.reveal-actions button{padding:.6rem;font-size:.8rem}.reveal-actions{grid-template-columns:1fr 1fr;gap:.5rem}}
+@media(max-width:768px){.container{padding:0 .7rem}.header-inner{gap:.5rem;margin-bottom:.4rem}.main{padding:.15rem 0 2rem}.practice-full-header{padding:.5rem .85rem;gap:.5rem}.pf-filters{padding:.4rem .85rem .3rem}.practice-full-body{padding:.85rem .7rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.85rem}.practice-full-vi{font-size:1.2rem;padding:.75rem .6rem}.practice-full-input{font-size:1.2rem;padding:.75rem .85rem}.practice-speak-btn{min-width:40px;padding:0 .5rem;font-size:.95rem;border-radius:12px}.char-slot{font-size:1.2rem;min-width:1.4rem;height:1.85rem}.answer-phrase-btn{font-size:1.2rem;padding:.35rem .65rem}.pf-nav-btn{padding:.6rem .7rem;font-size:.78rem}.practice-full-nav{padding:.55rem .85rem;gap:.5rem}.reveal-actions button{padding:.6rem;font-size:.8rem}.reveal-actions{grid-template-columns:1fr 1fr;gap:.5rem}}
 @media(max-width:400px){.practice-full-body{padding:.7rem .5rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.7rem}.practice-full-vi{font-size:1.1rem;padding:.65rem .5rem}.practice-full-input{font-size:1.1rem;padding:.65rem .75rem}.practice-speak-btn{min-width:38px}.reveal-actions{grid-template-columns:1fr}.pf-nav-btn{padding:.5rem}.practice-full-nav{gap:.4rem}}
 .practice-full-header .card-tag{padding:.22rem .6rem;font-size:clamp(.6rem,.75vw,.7rem);font-weight:700;border-radius:50px;flex-shrink:0}
 .practice-full-header .card-tag.hsk{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff}
@@ -832,7 +815,6 @@ def build_ui_html():
 <div class="practice-input-row">
 <input type="text" class="practice-full-input" id="pfInput" placeholder="Gõ tiếng Trung..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 <button class="practice-speak-btn" id="pfSpeakBtn" type="button" title="Nghe câu này" aria-label="Nghe câu này"><i class="fas fa-volume-up"></i></button>
-<button class="practice-stop-btn" id="pfStopBtn" type="button" title="Dừng đọc" aria-label="Dừng đọc"><i class="fas fa-stop"></i></button>
 </div>
 <div class="char-preview" id="pfPreview"></div>
 <div class="practice-full-status" id="pfStatus"></div>
@@ -2551,23 +2533,42 @@ window.speakPhrase = function(phrase, btn) {
     setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
 };
 
-window.speakFullSentence = function() {
+/* ============================================================ */
+/* ĐỌC CẢ CÂU — 2 chế độ: bình thường / karaoke (highlight) */
+/* ============================================================ */
+
+// Chế độ BÌNH THƯỜNG — dùng khi CHƯA xem đáp án
+window.speakFullSentenceNormal = function() {
     if (!canUseFeature()) { showLimitMessage(); return; }
-    if (!('speechSynthesis' in window)) return;
-    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
+    if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
     speechSynthesis.cancel();
+
+    // Reset highlight/tooltip nếu có
+    var charsContainer = $('pfAnswerChars');
+    if (charsContainer) {
+        charsContainer.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
+            b.classList.remove('reading', 'speaking');
+        });
+        charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+            t.classList.remove('show');
+        });
+        charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
+            w.classList.remove('active-wrap');
+        });
+        _activeTooltipWrap = null;
+    }
+
     var utterance = new SpeechSynthesisUtterance(pfCurrentAnswer);
     utterance.lang = 'zh-CN';
     utterance.rate = 0.85;
+    utterance.pitch = 1.0;
+    utterance.volume = 1.0;
     var voice = getChineseVoice();
     if (voice) utterance.voice = voice;
     setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
 };
 
-/* ============================================================ */
-/* ĐỌC CẢ CÂU — HIGHLIGHT TỪNG CỤM (KARAOKE) */
-/* Nút loa nhỏ nằm cạnh ô nhập liệu, đọc cả câu + highlight */
-/* ============================================================ */
+// Chế độ KARAOKE — dùng khi ĐÃ xem đáp án
 window.speakFullSentenceWithHighlight = function() {
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
@@ -2746,6 +2747,7 @@ function initPracticeFull() {
             else pfPrev();
         }
     }, { passive: true });
+
     var speakBtn = $('pfSpeakBtn');
     if (speakBtn) {
         speakBtn.addEventListener('click', function(e) {
@@ -2757,14 +2759,14 @@ function initPracticeFull() {
                 alert('Trình duyệt không hỗ trợ phát âm.');
                 return;
             }
-            speakFullSentenceWithHighlight();
-        });
-    }
-    var stopBtn = $('pfStopBtn');
-    if (stopBtn) {
-        stopBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            stopSpeaking();
+            var answerVisible = $('pfAnswer').classList.contains('show');
+            if (answerVisible) {
+                // Đã xem đáp án → đọc chậm + highlight từng cụm (karaoke)
+                speakFullSentenceWithHighlight();
+            } else {
+                // Chưa xem đáp án → đọc cả câu giọng bình thường
+                speakFullSentenceNormal();
+            }
         });
     }
 }
