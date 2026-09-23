@@ -462,6 +462,9 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @keyframes speakingRing{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
 .practice-speak-btn:disabled{opacity:.4;cursor:not-allowed}
 [data-theme="dark"] .practice-speak-btn{background:rgba(59,130,246,.22);color:#93c5fd;border-color:rgba(59,130,246,.5)}
+/* Icon stop khi đang đọc — nhấp nháy */
+.practice-speak-btn.speaking i.fa-stop{animation:stopPulse .8s ease-in-out infinite}
+@keyframes stopPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 
 .char-preview{display:flex;justify-content:center;flex-wrap:wrap;gap:clamp(.3rem,.6vw,.45rem);min-height:clamp(1.75rem,3vh,2.25rem);padding:clamp(.4rem,.8vh,.65rem) clamp(.5rem,1.2vw,.9rem);background:var(--surface-2);border-radius:12px;border:1px dashed var(--border);user-select:none}
 .char-preview:empty{display:none}
@@ -4122,6 +4125,8 @@ window.openPracticeFull = function(stt, evt) {
     loadPracticeFull(stt);
 };
 window.closePracticeFull = function() {
+    // Dừng đọc nếu đang đọc
+    if (window._isSpeakingFull) stopSpeakFull();
     $('practiceFullModal').classList.remove('show');
     document.body.style.overflow = '';
     document.body.classList.remove('practice-full-open');
@@ -4179,6 +4184,14 @@ function loadPracticeFull(stt) {
     $('pfNextBtn').disabled = (idx === filtered.length - 1);
     var quickNav = $('pfQuickNav');
     if (quickNav && quickNav.value !== stt) quickNav.value = stt;
+
+    // Reset trạng thái nút loa khi đổi câu
+    if (window._isSpeakingFull) {
+        stopSpeakFull();
+    } else {
+        _setSpeakBtnState(false);
+    }
+
     setTimeout(function() {
         var active = document.activeElement;
         if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
@@ -4558,16 +4571,39 @@ window.speakPhrase = function(phrase, btn) {
 };
 
 /* ============================================================ */
-/* ĐỌC CẢ CÂU — 2 chế độ: bình thường / karaoke (highlight) */
+/* TOGGLE ĐỌC / DỪNG cho nút loa — chống đọc 2 lần             */
 /* ============================================================ */
 
-// Chế độ BÌNH THƯỜNG — dùng khi CHƯA xem đáp án
-window.speakFullSentenceNormal = function() {
-    if (!canUseFeature()) { showLimitMessage(); return; }
-    if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-    speechSynthesis.cancel();
+window._isSpeakingFull = false;
+window._speakToken = 0;
 
-    // Reset highlight/tooltip nếu có
+function _setSpeakBtnState(speaking) {
+    window._isSpeakingFull = speaking;
+    var btn = $('pfSpeakBtn');
+    if (!btn) return;
+    if (speaking) {
+        btn.classList.add('speaking');
+        btn.setAttribute('title', 'Nhấn để dừng');
+        btn.setAttribute('aria-label', 'Nhấn để dừng');
+        var i = btn.querySelector('i');
+        if (i) i.className = 'fas fa-stop';
+    } else {
+        btn.classList.remove('speaking');
+        btn.setAttribute('title', 'Nghe câu này');
+        btn.setAttribute('aria-label', 'Nghe câu này');
+        var i2 = btn.querySelector('i');
+        if (i2) i2.className = 'fas fa-volume-up';
+    }
+}
+
+window.stopSpeakFull = function() {
+    window._speakToken++;
+    window._isSpeakingFull = false;
+
+    if ('speechSynthesis' in window) {
+        try { speechSynthesis.cancel(); } catch(e) {}
+    }
+
     var charsContainer = $('pfAnswerChars');
     if (charsContainer) {
         charsContainer.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
@@ -4579,67 +4615,103 @@ window.speakFullSentenceNormal = function() {
         charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
             w.classList.remove('active-wrap');
         });
-        _activeTooltipWrap = null;
     }
-
-    var utterance = new SpeechSynthesisUtterance(pfCurrentAnswer);
-    utterance.lang = 'zh-CN';
-    utterance.rate = 0.85;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    var voice = getChineseVoice();
-    if (voice) utterance.voice = voice;
-    setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
-};
-
-// Chế độ KARAOKE — dùng khi ĐÃ xem đáp án
-window.speakFullSentenceWithHighlight = function() {
-    if (!canUseFeature()) { showLimitMessage(); return; }
-    if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
-
-    speechSynthesis.cancel();
-
-    document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
-        t.classList.remove('show');
-    });
-    document.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
-        w.classList.remove('active-wrap');
-    });
     _activeTooltipWrap = null;
 
+    _setSpeakBtnState(false);
+};
+
+window.toggleSpeakFull = function() {
+    if (!pfCurrentAnswer) return;
+
+    if (window._isSpeakingFull) {
+        stopSpeakFull();
+        return;
+    }
+
+    if (!canUseFeature()) { showLimitMessage(); return; }
+    if (!('speechSynthesis' in window)) {
+        alert('Trình duyệt không hỗ trợ phát âm.');
+        return;
+    }
+    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
+
+    if ('speechSynthesis' in window) {
+        try { speechSynthesis.cancel(); } catch(e) {}
+    }
+    var token = ++window._speakToken;
+    _setSpeakBtnState(true);
+
+    var answerVisible = $('pfAnswer').classList.contains('show');
+    if (answerVisible) {
+        _speakWithHighlightKaraoke(token);
+    } else {
+        _speakNormal(token);
+    }
+};
+
+function _speakNormal(token) {
+    var u = new SpeechSynthesisUtterance(pfCurrentAnswer);
+    u.lang = 'zh-CN';
+    u.rate = 0.85;
+    u.pitch = 1.0;
+    u.volume = 1.0;
+    var v = getChineseVoice();
+    if (v) u.voice = v;
+
+    var done = false;
+    function finish() {
+        if (done) return;
+        done = true;
+        if (token !== window._speakToken) return;
+        _setSpeakBtnState(false);
+    }
+    u.onend = finish;
+    u.onerror = finish;
+
+    setTimeout(function() {
+        if (token !== window._speakToken) return;
+        try { speechSynthesis.speak(u); } catch(e) { finish(); }
+    }, 30);
+}
+
+function _speakWithHighlightKaraoke(token) {
     var phrases = window._pfPhrases || [];
     var charsContainer = $('pfAnswerChars');
-    if (!charsContainer) return;
+    if (!charsContainer) { _setSpeakBtnState(false); return; }
+
     var wraps = charsContainer.querySelectorAll('.answer-phrase-wrap');
     var buttons = charsContainer.querySelectorAll('.answer-phrase-btn');
 
-    buttons.forEach(function(b) { b.classList.remove('reading', 'speaking'); });
-
     if (phrases.length === 0) {
-        var u = new SpeechSynthesisUtterance(pfCurrentAnswer);
-        u.lang = 'zh-CN';
-        u.rate = 0.85;
-        var v = getChineseVoice();
-        if (v) u.voice = v;
-        setTimeout(function(){ speechSynthesis.speak(u); }, 30);
+        _speakNormal(token);
         return;
     }
 
     var idx = 0;
 
+    function cleanupAll() {
+        buttons.forEach(function(b) { b.classList.remove('reading'); });
+        charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+            t.classList.remove('show');
+        });
+        charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
+            w.classList.remove('active-wrap');
+        });
+        _activeTooltipWrap = null;
+    }
+
     function speakNext() {
-        if (idx >= phrases.length) {
-            buttons.forEach(function(b) { b.classList.remove('reading'); });
-            document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
-                t.classList.remove('show');
-            });
-            document.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
-                w.classList.remove('active-wrap');
-            });
-            _activeTooltipWrap = null;
+        if (token !== window._speakToken) {
+            cleanupAll();
             return;
         }
+        if (idx >= phrases.length) {
+            cleanupAll();
+            _setSpeakBtnState(false);
+            return;
+        }
+
         var phrase = phrases[idx];
         var btn = buttons[idx];
         var wrap = wraps[idx];
@@ -4647,7 +4719,7 @@ window.speakFullSentenceWithHighlight = function() {
         if (btn) btn.classList.add('reading');
         if (wrap) {
             wrap.classList.add('active-wrap');
-            document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+            charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
                 t.classList.remove('show');
             });
             var tip = wrap.querySelector('.answer-phrase-tooltip');
@@ -4665,45 +4737,30 @@ window.speakFullSentenceWithHighlight = function() {
         var v = getChineseVoice();
         if (v) u.voice = v;
 
-        var hasEnded = false;
-
-        u.onend = function() {
-            if (hasEnded) return;
-            hasEnded = true;
+        var handled = false;
+        function next() {
+            if (handled) return;
+            handled = true;
             if (btn) btn.classList.remove('reading');
             if (wrap) wrap.classList.remove('active-wrap');
+            if (token !== window._speakToken) {
+                cleanupAll();
+                return;
+            }
             idx++;
-            setTimeout(speakNext, 150);
-        };
-        u.onerror = function() {
-            if (hasEnded) return;
-            hasEnded = true;
-            if (btn) btn.classList.remove('reading');
-            if (wrap) wrap.classList.remove('active-wrap');
-            idx++;
-            setTimeout(speakNext, 150);
-        };
+            setTimeout(speakNext, 120);
+        }
+        u.onend = next;
+        u.onerror = next;
 
-        setTimeout(function(){ speechSynthesis.speak(u); }, 30);
+        setTimeout(function() {
+            if (token !== window._speakToken) { next(); return; }
+            try { speechSynthesis.speak(u); } catch(e) { next(); }
+        }, 30);
     }
 
-    setTimeout(speakNext, 150);
-};
-
-window.stopSpeaking = function() {
-    if ('speechSynthesis' in window) speechSynthesis.cancel();
-    var charsContainer = $('pfAnswerChars') || document;
-    charsContainer.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
-        b.classList.remove('reading', 'speaking');
-    });
-    charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
-        t.classList.remove('show');
-    });
-    charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
-        w.classList.remove('active-wrap');
-    });
-    _activeTooltipWrap = null;
-};
+    setTimeout(speakNext, 100);
+}
 
 function initPracticeFull() {
     $('pfClose').addEventListener('click', closePracticeFull);
@@ -4772,26 +4829,17 @@ function initPracticeFull() {
         }
     }, { passive: true });
 
-    var speakBtn = $('pfSpeakBtn');
-    if (speakBtn) {
-        speakBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (!pfCurrentAnswer) return;
-            if (!canUseFeature()) { showLimitMessage(); return; }
-            if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
-            if (!('speechSynthesis' in window)) {
-                alert('Trình duyệt không hỗ trợ phát âm.');
-                return;
-            }
-            var answerVisible = $('pfAnswer').classList.contains('show');
-            if (answerVisible) {
-                // Đã xem đáp án → đọc chậm + highlight từng cụm (karaoke)
-                speakFullSentenceWithHighlight();
-            } else {
-                // Chưa xem đáp án → đọc cả câu giọng bình thường
-                speakFullSentenceNormal();
-            }
-        });
+    // Nút loa — CHỈ bind 1 lần duy nhất (tránh đọc 2 lần)
+    if (!window._pfSpeakBound) {
+        window._pfSpeakBound = true;
+        var speakBtn = $('pfSpeakBtn');
+        if (speakBtn) {
+            speakBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                toggleSpeakFull();
+            });
+        }
     }
 }
 
