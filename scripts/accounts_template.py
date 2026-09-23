@@ -1263,8 +1263,8 @@ function publishTierState() {
     if (!currentUser) {
         window.APP_TIER = 'demo';
         window.APP_LIMITS = {
-            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 1000,
-            maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 4,
+            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 200,
+            maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
             unlimitedWriting: false, isTrial: false, email: null
         };
         return;
@@ -1285,7 +1285,7 @@ function publishTierState() {
     } else if (tier === 'expired') {
         window.APP_TIER = 'expired';
         window.APP_LIMITS = {
-            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
+            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 200,
             maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
             unlimitedWriting: false, isTrial: false, email: currentUser.email
         };
