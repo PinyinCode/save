@@ -100,7 +100,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 @media(min-width:1800px){.mobile-view{grid-template-columns:1fr 1fr 1fr;gap:1.3rem}}
 
 /* ============================================================ */
-/* FLASHCARD UI — thiết kế mới */
+/* FLASHCARD UI */
 /* ============================================================ */
 .card{
     position:relative;
@@ -502,7 +502,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     opacity:0;
     visibility:hidden;
     transition:opacity .2s,transform .2s,visibility .2s;
-    z-index:100;
+    z-index:1000;
     letter-spacing:.02em;
     text-shadow:0 1px 2px rgba(0,0,0,.15);
 }
@@ -520,6 +520,15 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     opacity:1;
     visibility:visible;
     transform:translateX(-50%) translateY(0) scale(1);
+}
+/* Cụm đang đọc nâng z-index để tooltip không bị che */
+.answer-phrase-wrap.active-wrap{
+    z-index:100 !important;
+    position:relative;
+}
+.answer-phrase-btn.reading{
+    position:relative;
+    z-index:10;
 }
 @media (max-width:768px){
     .answer-phrase-btn.reading{
@@ -571,7 +580,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (min-width:1400px){.filters{grid-template-columns:180px 200px}}
 @media (min-width:769px) and (max-height:700px){.practice-full-body{padding:.75rem .85rem}.practice-full-content{gap:.75rem}.practice-full-vi{font-size:1.3rem;padding:.7rem .6rem}.practice-full-input{font-size:1.3rem;padding:.7rem .9rem}.practice-speak-btn{min-width:46px}.char-slot{font-size:1.3rem;min-width:1.5rem;height:1.9rem}.practice-full-nav{padding:.5rem .85rem}.pf-nav-btn{padding:.55rem .75rem;font-size:.8rem}}
 
-/* Chỉ áp dụng cho DESKTOP thực sự (có chuột) + màn hình thấp */
 @media (min-width:769px) and (max-height:550px) and (hover:hover) and (pointer:fine){
     .practice-full-header{padding:.3rem .85rem}
     .pf-filters{padding:.25rem .85rem .2rem}
@@ -601,7 +609,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (max-width:1024px){.header-inner .tiktok-bar{max-width:clamp(100px,15vw,160px)!important}.header-inner .tiktok-bar .tiktok-user{display:none}}
 @media (max-width:900px){.header-inner .tiktok-bar{max-width:130px!important}.header-inner .tiktok-bar .tiktok-bar-link span{display:none}}
 
-/* FIX: Counter + Tags trên header full màn hình */
 .practice-full-header .pf-counter{
     flex-shrink:0;
     max-width:46vw;
@@ -634,7 +641,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .pf-brand-sub{display:none}
 }
 
-/* Điện thoại xoay ngang */
 @media (max-width:1024px) and (max-height:550px) and (orientation:landscape){
     .practice-full-header{padding:.35rem .75rem;gap:.35rem;min-height:44px}
     .pf-brand-sub{display:none}
@@ -2463,12 +2469,13 @@ function revealFullAnswer() {
         })(item.text, item.pinyin, btn, wrap);
         wrap.appendChild(btn);
 
-        if (item.pinyin) {
-            var tip = document.createElement('span');
-            tip.className = 'answer-phrase-tooltip';
-            tip.textContent = item.pinyin;
-            wrap.appendChild(tip);
+        // Luôn tạo tooltip (kể cả pinyin rỗng) để karaoke hoạt động ổn định
+        var tip = document.createElement('span');
+        tip.className = 'answer-phrase-tooltip';
+        tip.textContent = item.pinyin || item.text;
+        wrap.appendChild(tip);
 
+        if (item.pinyin) {
             wrap.addEventListener('mouseenter', function() {
                 tip.classList.add('show');
             });
@@ -2515,6 +2522,10 @@ window.speakFullSentence = function() {
     setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
 };
 
+/* ============================================================ */
+/* ĐỌC CẢ CÂU — HIGHLIGHT TỪNG CỤM (KARAOKE) */
+/* Cụm 1 dùng CHUNG logic với các cụm khác, KHÔNG có ngoại lệ */
+/* ============================================================ */
 window.speakFullSentenceWithHighlight = function() {
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
@@ -2525,11 +2536,17 @@ window.speakFullSentenceWithHighlight = function() {
     document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
         t.classList.remove('show');
     });
+    document.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
+        w.classList.remove('active-wrap');
+    });
     _activeTooltipWrap = null;
 
     var phrases = window._pfPhrases || [];
-    var wraps = document.querySelectorAll('.answer-phrase-wrap');
-    var buttons = document.querySelectorAll('.answer-phrase-btn');
+    // Chỉ lấy wrap/button BÊN TRONG khung đáp án hiện tại
+    var charsContainer = $('pfAnswerChars');
+    if (!charsContainer) return;
+    var wraps = charsContainer.querySelectorAll('.answer-phrase-wrap');
+    var buttons = charsContainer.querySelectorAll('.answer-phrase-btn');
 
     buttons.forEach(function(b) { b.classList.remove('reading', 'speaking'); });
 
@@ -2544,11 +2561,15 @@ window.speakFullSentenceWithHighlight = function() {
     }
 
     var idx = 0;
+
     function speakNext() {
         if (idx >= phrases.length) {
             buttons.forEach(function(b) { b.classList.remove('reading'); });
             document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
                 t.classList.remove('show');
+            });
+            document.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
+                w.classList.remove('active-wrap');
             });
             _activeTooltipWrap = null;
             return;
@@ -2558,11 +2579,13 @@ window.speakFullSentenceWithHighlight = function() {
         var wrap = wraps[idx];
 
         if (btn) btn.classList.add('reading');
-
         if (wrap) {
+            wrap.classList.add('active-wrap');
+            // Đóng tooltip các cụm khác
             document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
                 t.classList.remove('show');
             });
+            // Hiện tooltip cụm hiện tại — CÙNG LOGIC CHO MỌI CỤM
             var tip = wrap.querySelector('.answer-phrase-tooltip');
             if (tip) {
                 tip.classList.add('show');
@@ -2573,31 +2596,48 @@ window.speakFullSentenceWithHighlight = function() {
         var u = new SpeechSynthesisUtterance(phrase.text);
         u.lang = 'zh-CN';
         u.rate = 0.75;
+        u.pitch = 1.0;
+        u.volume = 1.0;
         var v = getChineseVoice();
         if (v) u.voice = v;
 
+        var hasEnded = false;
+
         u.onend = function() {
+            if (hasEnded) return;
+            hasEnded = true;
             if (btn) btn.classList.remove('reading');
+            if (wrap) wrap.classList.remove('active-wrap');
             idx++;
-            setTimeout(speakNext, 100);
+            setTimeout(speakNext, 150);
         };
         u.onerror = function() {
+            if (hasEnded) return;
+            hasEnded = true;
             if (btn) btn.classList.remove('reading');
+            if (wrap) wrap.classList.remove('active-wrap');
             idx++;
-            setTimeout(speakNext, 100);
+            setTimeout(speakNext, 150);
         };
+
         setTimeout(function(){ speechSynthesis.speak(u); }, 30);
     }
-    speakNext();
+
+    // Delay nhỏ trước cụm 1 để tooltip kịp render
+    setTimeout(speakNext, 150);
 };
 
 window.stopSpeaking = function() {
     if ('speechSynthesis' in window) speechSynthesis.cancel();
-    document.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
+    var charsContainer = $('pfAnswerChars') || document;
+    charsContainer.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
         b.classList.remove('reading', 'speaking');
     });
-    document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+    charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
         t.classList.remove('show');
+    });
+    charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
+        w.classList.remove('active-wrap');
     });
     _activeTooltipWrap = null;
 };
