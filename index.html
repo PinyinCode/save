@@ -183,7 +183,16 @@ body{
 .chip-arrow{color:inherit;opacity:.5;font-size:.68rem;flex-shrink:0}
 .chip select{
     position:absolute;inset:0;opacity:0;cursor:pointer;font-size:1rem;
-    -webkit-appearance:none;appearance:none;width:100%;height:100%;
+    -webkit-appearance:none;appearance:none;
+    width:100%;height:100%;
+    z-index:5;
+}
+.chip > span,
+.chip > i{
+    pointer-events:none;
+}
+.chip > select{
+    pointer-events:auto;
 }
 .chip.demo-limited{border-color:var(--amber)}
 .chip.demo-limited::before{
@@ -522,7 +531,7 @@ body.show-practice .card-body{
 .no-data i{font-size:2.5rem;margin-bottom:.75rem;color:var(--border-strong);display:block}
 
 /* ═══════════════════════════════════════════════════════════════
-   ★★★ PRACTICE FULL MODAL — KHÔNG CHỒNG LẤN ★★★
+   ★★★ PRACTICE FULL MODAL ★★★
    ═══════════════════════════════════════════════════════════════ */
 .practice-full-modal{
     position:fixed;
@@ -544,23 +553,44 @@ body.practice-full-open .result-count { display: none !important; }
 body.practice-full-open .demo-banner,
 body.practice-full-open .expiry-banner { display: none !important; }
 
-/* ─── HEADER: cố định, layout ngang ─── */
+/* ─── HEADER: cố định, layout ngang — KHÔNG BỊ CẮT ─── */
 .practice-full-header{
-    display:flex;align-items:center;gap:.75rem;
+    display:flex;align-items:center;gap:clamp(.4rem,.8vw,.75rem);
     padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);
     background:var(--surface);
     border-bottom:1px solid var(--border);
     flex:0 0 auto;
-    min-height:clamp(42px,6vh,56px);
+    min-height:clamp(48px,7vh,60px);
     box-shadow:0 2px 8px rgba(15,23,42,.04);
+    overflow:visible;
+    flex-wrap:nowrap;
+    width:100%;
 }
 .practice-full-header .pf-counter{
-    font-size:clamp(.7rem,.9vw,.82rem);font-weight:700;color:var(--text-2);
-    background:var(--surface-2);padding:.3rem .7rem;border-radius:50px;
+    font-size:clamp(.68rem,.88vw,.8rem);font-weight:800;color:#fff;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    padding:.35rem .75rem;border-radius:50px;
     white-space:nowrap;flex-shrink:0;
+    box-shadow:0 2px 8px rgba(124,58,237,.35);
+    letter-spacing:.2px;
 }
 .practice-full-header .pf-tags{
-    display:flex;gap:.35rem;flex:1;min-width:0;flex-wrap:wrap;
+    display:flex;
+    gap:.3rem;
+    flex:1 1 auto;
+    min-width:0;
+    flex-wrap:nowrap;
+    overflow-x:auto;
+    overflow-y:hidden;
+    -webkit-overflow-scrolling:touch;
+    scrollbar-width:none;
+    padding:2px 0;
+    max-width:100%;
+}
+.practice-full-header .pf-tags::-webkit-scrollbar{display:none}
+.practice-full-header .pf-tags .card-tag{
+    flex-shrink:0;
+    font-weight:700;
 }
 .practice-full-header .pf-close{
     width:clamp(30px,3vw,36px);height:clamp(30px,3vw,36px);
@@ -575,7 +605,8 @@ body.practice-full-open .expiry-banner { display: none !important; }
 /* ─── Mini brand trong Practice Full ─── */
 .pf-brand{
     display:flex;align-items:center;gap:clamp(.4rem,.8vw,.65rem);
-    flex-shrink:0;min-width:0;
+    flex:0 0 auto;
+    min-width:0;
 }
 .pf-brand-icon{
     width:clamp(30px,2.8vw,38px);height:clamp(30px,2.8vw,38px);
@@ -595,7 +626,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     background:linear-gradient(135deg,#1e293b 0%,#4f46e5 50%,#7c3aed 100%);
     -webkit-background-clip:text;background-clip:text;
     -webkit-text-fill-color:transparent;color:transparent;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    white-space:nowrap;
 }
 [data-theme="dark"] .pf-brand-title{
     background:linear-gradient(135deg,#f1f5f9 0%,#a5b4fc 50%,#c4b5fd 100%);
@@ -620,7 +651,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 [data-theme="dark"] .pf-brand-sub{color:#ddd6fe;}
 [data-theme="dark"] .pf-brand-sub::before{color:#f0abfc;}
 
-/* ─── Responsive: thu nhỏ nhưng KHÔNG ẩn ─── */
 @media (max-width: 768px) {
     .pf-brand-title { font-size: .75rem; }
     .pf-brand-sub { font-size: .55rem; gap: .2rem; }
@@ -640,11 +670,11 @@ body.practice-full-open .expiry-banner { display: none !important; }
     }
 }
 
-/* ─── TIKTOK FLOATING PILL (avatar + tên) — GÓC DƯỚI BÊN TRÁI ─── */
+/* ─── TIKTOK FLOATING PILL ─── */
 .pf-tiktok-float{
     position:fixed;
-    left:clamp(14px,2vw,22px);              /* ★ GÓC DƯỚI BÊN TRÁI */
-    bottom:calc(clamp(72px,10vh,96px) + env(safe-area-inset-bottom));
+    left:clamp(14px,2vw,22px);
+    bottom:calc(8px + env(safe-area-inset-bottom));
     display:inline-flex;
     align-items:center;
     gap:clamp(.4rem,.6vw,.55rem);
@@ -686,11 +716,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
         0 0 0 3px rgba(37,244,238,.5),
         inset 0 1px 0 rgba(255,255,255,.3);
 }
-.pf-tiktok-float:active{
-    transform:scale(.97);
-}
-
-/* ─── Avatar ─── */
+.pf-tiktok-float:active{transform:scale(.97);}
 .pf-tiktok-avatar-wrap{
     position:relative;
     width:clamp(28px,3vw,36px);
@@ -698,67 +724,39 @@ body.practice-full-open .expiry-banner { display: none !important; }
     border-radius:50%;
     flex-shrink:0;
     background:linear-gradient(135deg,#25f4ee,#fe2c55);
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    display:flex;align-items:center;justify-content:center;
     padding:2px;
     box-shadow:0 0 0 2px rgba(255,255,255,.9);
 }
 .pf-tiktok-avatar{
-    width:100%;
-    height:100%;
-    border-radius:50%;
-    object-fit:cover;
-    display:block;
-    background:#fff;
+    width:100%;height:100%;
+    border-radius:50%;object-fit:cover;
+    display:block;background:#fff;
 }
 .pf-tiktok-fallback-icon{
-    position:absolute;
-    inset:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    color:#fff;
-    font-size:clamp(.9rem,1.1vw,1.1rem);
+    position:absolute;inset:0;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:clamp(.9rem,1.1vw,1.1rem);
     background:linear-gradient(135deg,#25f4ee,#000,#fe2c55);
-    border-radius:50%;
-    pointer-events:none;
-    z-index:-1;
+    border-radius:50%;pointer-events:none;z-index:-1;
 }
-.pf-tiktok-avatar[src]:not([src=""]) + .pf-tiktok-fallback-icon{
-    display:none;
-}
-
-/* ─── Content ─── */
+.pf-tiktok-avatar[src]:not([src=""]) + .pf-tiktok-fallback-icon{display:none;}
 .pf-tiktok-content{
-    display:flex;
-    flex-direction:column;
-    line-height:1.1;
-    min-width:0;
-    flex:1;
-    text-align:left;
+    display:flex;flex-direction:column;
+    line-height:1.1;min-width:0;flex:1;text-align:left;
 }
 .pf-tiktok-label{
     font-size:clamp(.5rem,.62vw,.6rem);
-    font-weight:600;
-    opacity:.8;
-    letter-spacing:.4px;
-    text-transform:uppercase;
-    white-space:nowrap;
+    font-weight:600;opacity:.8;letter-spacing:.4px;
+    text-transform:uppercase;white-space:nowrap;
 }
 .pf-tiktok-name{
     font-size:clamp(.7rem,.88vw,.82rem);
-    font-weight:800;
-    letter-spacing:-.01em;
-    color:#fff;
-    text-shadow:0 1px 2px rgba(0,0,0,.4);
-    white-space:nowrap;
-    overflow:hidden;
-    text-overflow:ellipsis;
+    font-weight:800;letter-spacing:-.01em;
+    color:#fff;text-shadow:0 1px 2px rgba(0,0,0,.4);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
     max-width:100%;
 }
-
-/* ─── Badge TikTok nhỏ ─── */
 .pf-tiktok-badge{
     font-size:clamp(.85rem,1.1vw,1rem);
     flex-shrink:0;
@@ -769,34 +767,20 @@ body.practice-full-open .expiry-banner { display: none !important; }
     0%,100%{transform:scale(1);}
     50%{transform:scale(1.15);}
 }
-
-/* ─── Responsive ─── */
 @media (max-width:500px){
     .pf-tiktok-float{
         min-width:110px;
         max-width:min(65vw,180px);
         padding:.3rem .6rem .3rem .3rem;
         left:12px;
-        bottom:calc(68px + env(safe-area-inset-bottom));
+        bottom:calc(8px + env(safe-area-inset-bottom));
     }
-    .pf-tiktok-avatar-wrap{
-        width:26px;height:26px;
-    }
-    .pf-tiktok-label{
-        font-size:.5rem;
-    }
-    .pf-tiktok-name{
-        font-size:.68rem;
-    }
-    .pf-tiktok-badge{
-        font-size:.8rem;
-    }
+    .pf-tiktok-avatar-wrap{width:26px;height:26px;}
+    .pf-tiktok-label{font-size:.5rem;}
+    .pf-tiktok-name{font-size:.68rem;}
+    .pf-tiktok-badge{font-size:.8rem;}
 }
-
-/* ─── Ẩn khi modal đóng ─── */
-.practice-full-modal:not(.show) .pf-tiktok-float{
-    display:none !important;
-}
+.practice-full-modal:not(.show) .pf-tiktok-float{display:none !important;}
 
 /* ─── FILTERS ─── */
 .pf-filters{
@@ -848,6 +832,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
 .pf-chip select{
     position:absolute;inset:0;opacity:0;cursor:pointer;font-size:1rem;
     -webkit-appearance:none;appearance:none;width:100%;height:100%;
+    z-index:5;
 }
 .pf-result-count{
     display:none;align-items:center;gap:.4rem;margin-top:.4rem;
@@ -887,7 +872,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     flex:1 1 auto;
     min-height:0;
     overflow-y:auto;
-    padding:clamp(.85rem,2vh,1.5rem) clamp(.75rem,2vw,1.25rem);
+    padding:clamp(.85rem,2vh,1.5rem) clamp(.75rem,2vw,1.25rem) calc(80px + env(safe-area-inset-bottom)) clamp(.75rem,2vw,1.25rem);
     display:flex;
     flex-direction:column;
     align-items:center;
@@ -918,11 +903,8 @@ body.practice-full-open .expiry-banner { display: none !important; }
 .practice-input-row{
     position:relative;display:flex;align-items:stretch;gap:.5rem;
 }
-.practice-input-row .practice-full-input{
-    flex:1;min-width:0;
-}
+.practice-input-row .practice-full-input{flex:1;min-width:0;}
 
-/* ═══ Ô ĐÁNH CHỮ: TRUNG TÂM LỚN NHẤT ═══ */
 .practice-full-input{
     width:100%;
     padding:clamp(.7rem,1.5vh,.9rem) clamp(.85rem,1.5vw,1.1rem);
@@ -948,10 +930,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     }
 }
 @media(min-width:1400px){
-    .practice-full-input{
-        font-size:1.7rem;
-        padding:1.05rem 1.4rem;
-    }
+    .practice-full-input{font-size:1.7rem;padding:1.05rem 1.4rem;}
 }
 
 .practice-speak-btn{
@@ -971,9 +950,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     background:var(--danger);color:#fff;border-color:var(--danger);
     animation:pulse 1s infinite;
 }
-.practice-speak-btn:disabled{
-    opacity:.4;cursor:not-allowed;transform:none;
-}
+.practice-speak-btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
 [data-theme="dark"] .practice-speak-btn{
     background:rgba(59,130,246,.22);color:#93c5fd;
     border-color:rgba(59,130,246,.5);
@@ -1004,26 +981,16 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 @media(min-width:769px){.char-slot{font-size:clamp(1.4rem,2.5vw,1.8rem);min-width:2rem;height:2.6rem;}}
 
-.char-slot.correct{
-    color:var(--text);font-weight:700;
-    background:rgba(22,163,74,.12);
-}
+.char-slot.correct{color:var(--text);font-weight:700;background:rgba(22,163,74,.12);}
 .char-slot.wrong{
     color:#fff;background:var(--danger);
     animation:shakeWrong .3s;
     box-shadow:0 2px 8px rgba(220,38,38,.35);
     cursor:pointer;position:relative;
 }
-.char-slot.wrong:hover{
-    transform:scale(1.15);
-    box-shadow:0 4px 12px rgba(220,38,38,.5);
-    z-index:5;
-}
+.char-slot.wrong:hover{transform:scale(1.15);box-shadow:0 4px 12px rgba(220,38,38,.5);z-index:5;}
 .char-slot.wrong:active{transform:scale(.95);}
-.char-slot.wrong.highlight{
-    animation:blinkHighlight 0.6s ease-in-out 2;
-    box-shadow:0 0 0 4px rgba(220,38,38,.4);
-}
+.char-slot.wrong.highlight{animation:blinkHighlight 0.6s ease-in-out 2;box-shadow:0 0 0 4px rgba(220,38,38,.4);}
 @keyframes blinkHighlight{
     0%,100%{transform:scale(1.15);background:var(--danger);}
     50%{transform:scale(1.25);background:#ef4444;box-shadow:0 0 0 8px rgba(220,38,38,.3);}
@@ -1039,11 +1006,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     box-shadow:0 2px 8px rgba(245,158,11,.35);
     cursor:pointer;transition:.15s;
 }
-.char-slot.extra:hover{
-    transform:scale(1.15);
-    box-shadow:0 4px 12px rgba(245,158,11,.5);
-    z-index:5;
-}
+.char-slot.extra:hover{transform:scale(1.15);box-shadow:0 4px 12px rgba(245,158,11,.5);z-index:5;}
 .char-slot.ghost-missing{
     color:var(--text-3);opacity:.5;background:transparent;
     border:1px dashed var(--border);
@@ -1053,9 +1016,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     opacity:.9;border-color:var(--primary);
     color:var(--primary);transform:scale(1.1);
 }
-.char-slot.ghost-missing.highlight{
-    animation:blinkHighlightMissing 0.6s ease-in-out 2;
-}
+.char-slot.ghost-missing.highlight{animation:blinkHighlightMissing 0.6s ease-in-out 2;}
 @keyframes blinkHighlightMissing{
     0%,100%{transform:scale(1.1);border-color:var(--primary);color:var(--primary);}
     50%{transform:scale(1.25);border-color:var(--primary);color:var(--primary);box-shadow:0 0 0 6px rgba(37,99,235,.2);}
@@ -1129,9 +1090,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;
     color:var(--text-3);font-weight:700;text-align:center;
 }
-.answer-chars{
-    display:flex;justify-content:center;flex-wrap:wrap;gap:.45rem;
-}
+.answer-chars{display:flex;justify-content:center;flex-wrap:wrap;gap:.45rem;}
 
 .answer-phrase-btn{
     font-family:var(--font-zh);
@@ -1175,9 +1134,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     font-style:italic;
     color:var(--primary-dark);font-weight:500;
 }
-.answer-actions{
-    display:flex;justify-content:center;gap:.5rem;flex-wrap:wrap;
-}
+.answer-actions{display:flex;justify-content:center;gap:.5rem;flex-wrap:wrap;}
 .answer-actions button{
     padding:.55rem 1rem;border-radius:50px;border:1.5px solid var(--border);
     background:var(--surface);color:var(--text);
@@ -1189,7 +1146,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
 .answer-actions button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 .answer-actions button.primary:hover{background:var(--primary-dark)}
 
-/* ─── NAV: cố định, mỏng ─── */
+/* ─── NAV ─── */
 .practice-full-nav{
     display:flex;gap:clamp(.4rem,1vw,.65rem);
     padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);
@@ -1397,7 +1354,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
 
     .practice-full-header{padding:.5rem .85rem;gap:.5rem}
     .pf-filters{padding:.4rem .85rem .3rem .85rem}
-    .practice-full-body{padding:.85rem .7rem}
+    .practice-full-body{padding:.85rem .7rem calc(80px + env(safe-area-inset-bottom)) .7rem}
     .practice-full-content{gap:.85rem}
     .practice-full-vi{font-size:1.2rem;padding:.75rem .6rem}
     .practice-full-input{font-size:1.2rem;padding:.75rem .85rem}
@@ -1410,7 +1367,7 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .reveal-actions{grid-template-columns:1fr 1fr;gap:.5rem;}
 }
 @media(max-width:400px){
-    .practice-full-body{padding:.7rem .5rem}
+    .practice-full-body{padding:.7rem .5rem calc(80px + env(safe-area-inset-bottom)) .5rem}
     .practice-full-content{gap:.7rem}
     .practice-full-vi{font-size:1.1rem;padding:.65rem .5rem}
     .practice-full-input{font-size:1.1rem;padding:.65rem .75rem}
@@ -1418,6 +1375,175 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .reveal-actions{grid-template-columns:1fr;gap:.45rem;}
     .pf-nav-btn{padding:.5rem .5rem;font-size:.75rem}
     .practice-full-nav{gap:.4rem}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ PRACTICE FULL HEADER: TAG RÕ RÀNG, KHÔNG BỊ CHE ★
+   ═══════════════════════════════════════════════════════════════ */
+.practice-full-header .card-tag{
+    padding:.22rem .6rem;
+    font-size:clamp(.6rem,.75vw,.7rem);
+    font-weight:700;
+    border-radius:50px;
+    flex-shrink:0;
+}
+.practice-full-header .card-tag.hsk{
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    box-shadow:0 2px 6px rgba(124,58,237,.3);
+}
+.practice-full-header .card-tag.topic{
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+    color:#fff;
+    box-shadow:0 2px 6px rgba(245,158,11,.3);
+}
+.practice-full-header .card-tag:not(.hsk):not(.topic){
+    background:var(--surface-2);
+    color:var(--text-2);
+    border:1px solid var(--border);
+}
+[data-theme="dark"] .practice-full-header .card-tag:not(.hsk):not(.topic){
+    background:var(--surface-2);
+    color:var(--text);
+}
+
+/* Chip pulse khi active */
+.chip.has-value{animation:chipPulse 2s ease-in-out infinite;}
+.pf-chip.has-value{animation:chipPulse 2s ease-in-out infinite;}
+@keyframes chipPulse{
+    0%,100%{box-shadow:0 4px 12px rgba(37,99,235,.3);}
+    50%{box-shadow:0 4px 18px rgba(37,99,235,.5);}
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ BADGE SỐ DÒNG EXCEL — để tra cứu vị trí ★
+   ═══════════════════════════════════════════════════════════════ */
+.card-excel-row{
+    display:inline-flex;
+    align-items:center;
+    gap:.25rem;
+    padding:.12rem .5rem;
+    border-radius:var(--radius-full);
+    background:linear-gradient(135deg, rgba(22,163,74,.12), rgba(22,163,74,.08));
+    color:#15803d;
+    font-size:clamp(.55rem,.7vw,.65rem);
+    font-weight:700;
+    white-space:nowrap;
+    border:1px solid rgba(22,163,74,.25);
+    letter-spacing:.02em;
+}
+.card-excel-row i{
+    font-size:.75em;
+    opacity:.85;
+}
+[data-theme="dark"] .card-excel-row{
+    background:linear-gradient(135deg, rgba(22,163,74,.2), rgba(22,163,74,.12));
+    color:#4ade80;
+    border-color:rgba(22,163,74,.4);
+}
+
+.practice-full-header .card-tag.excel-tag{
+    background:linear-gradient(135deg, rgba(22,163,74,.15), rgba(22,163,74,.1));
+    color:#15803d;
+    border:1px solid rgba(22,163,74,.3);
+    font-weight:700;
+    display:inline-flex;
+    align-items:center;
+    gap:.3rem;
+}
+.practice-full-header .card-tag.excel-tag i{
+    font-size:.85em;
+}
+[data-theme="dark"] .practice-full-header .card-tag.excel-tag{
+    background:linear-gradient(135deg, rgba(22,163,74,.25), rgba(22,163,74,.15));
+    color:#4ade80;
+    border-color:rgba(22,163,74,.5);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ TIKTOK BAR TRONG HEADER — CHỈ DESKTOP (JS tự di chuyển) ★
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width: 769px) {
+    .header-inner{
+        display:flex !important;
+        align-items:center !important;
+        gap:clamp(.4rem,.8vw,.75rem) !important;
+        flex-wrap:nowrap !important;
+        overflow:hidden;
+        width:100%;
+        position:relative;
+    }
+    .header-inner .logo{
+        flex:1 1 auto !important;
+        min-width:0 !important;
+        overflow:hidden;
+    }
+    .header-inner .tiktok-bar{
+        flex:0 1 auto !important;
+        min-width:0 !important;
+        max-width:clamp(140px,22vw,260px) !important;
+        margin:0 !important;
+        padding:clamp(.3rem,.5vw,.42rem) clamp(.55rem,.8vw,.75rem) !important;
+        gap:clamp(.35rem,.6vw,.5rem) !important;
+        font-size:clamp(.65rem,.8vw,.78rem) !important;
+        border-radius:50px !important;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        position:relative;
+        z-index:3;
+        align-self:center;
+    }
+    .header-inner .tiktok-bar .tiktok-bar-avatar{
+        width:clamp(24px,2.4vw,30px) !important;
+        height:clamp(24px,2.4vw,30px) !important;
+        flex-shrink:0;
+    }
+    .header-inner .tiktok-bar .tiktok-bar-info{
+        min-width:0;
+        overflow:hidden;
+    }
+    .header-inner .tiktok-bar .tiktok-nick{
+        font-size:clamp(.7rem,.85vw,.82rem) !important;
+        overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .header-inner .tiktok-bar .tiktok-user{
+        font-size:clamp(.6rem,.72vw,.7rem) !important;
+        overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    }
+    .header-inner .tiktok-bar .tiktok-bar-link{
+        padding:clamp(.28rem,.4vw,.38rem) clamp(.5rem,.7vw,.7rem) !important;
+        font-size:clamp(.62rem,.75vw,.72rem) !important;
+        flex-shrink:0;
+    }
+    .header-inner .tiktok-bar .tiktok-bar-link i{
+        font-size:clamp(.7rem,.85vw,.8rem) !important;
+    }
+    .header-inner .header-actions{
+        flex:0 0 auto !important;
+        margin-left:auto !important;
+        display:flex !important;
+        gap:.4rem !important;
+        align-items:center !important;
+        position:relative;
+        z-index:5;
+    }
+
+    @media (max-width:1200px){
+        .header-inner .tiktok-bar{ max-width:clamp(120px,18vw,200px) !important; }
+    }
+    @media (max-width:1024px){
+        .header-inner .tiktok-bar{ max-width:clamp(100px,15vw,160px) !important; }
+        .header-inner .tiktok-bar .tiktok-user{ display:none; }
+    }
+    @media (max-width:900px){
+        .header-inner .tiktok-bar{ max-width:130px !important; }
+        .header-inner .tiktok-bar .tiktok-bar-link span{ display:none; }
+        .header-inner .tiktok-bar .tiktok-bar-link{
+            padding:.3rem .5rem !important;
+            min-width:32px;
+            justify-content:center;
+        }
+    }
 }
 
 /* ==== SOCIAL CSS ==== */
@@ -3307,7 +3433,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
         </button>
     </div>
 
-    <!-- ★ TikTok floating pill (avatar + tên) — GÓC DƯỚI BÊN TRÁI -->
+    <!-- ★ TikTok floating pill — GÓC DƯỚI BÊN TRÁI -->
     <a class="pf-tiktok-float" id="pfTiktokFloat" href="#" target="_blank" rel="noopener noreferrer" title="Theo dõi TikTok">
         <span class="pf-tiktok-avatar-wrap">
             <img class="pf-tiktok-avatar" id="pfTiktokAvatar" src="" alt="TikTok" onerror="this.style.display='none'">
@@ -3898,6 +4024,151 @@ function formatTimeDiff(ms) {
     return mo + ' tháng trước';
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ★ DI CHUYỂN TIKTOK BAR VÀO HEADER — CHỈ DESKTOP (>= 769px)
+   ═══════════════════════════════════════════════════════════════ */
+function moveTikTokBarToHeader() {
+    try {
+        /* ★ CHỈ CHẠY TRÊN DESKTOP */
+        if (window.innerWidth < 769) {
+            console.log('ℹ️ Mobile: giữ TikTok bar dưới header');
+            return;
+        }
+
+        var headerInner = document.querySelector('.header-inner');
+        var headerActions = document.querySelector('.header-actions');
+        var tiktokBar = document.querySelector('.sticky-top .container > .tiktok-bar');
+
+        if (!headerInner || !headerActions) {
+            console.log('⚠️ Không tìm thấy .header-inner hoặc .header-actions');
+            return;
+        }
+        if (!tiktokBar) {
+            console.log('ℹ️ TikTok bar không tìm thấy hoặc đã ở trong header');
+            return;
+        }
+
+        /* Di chuyển: chèn trước .header-actions */
+        headerInner.insertBefore(tiktokBar, headerActions);
+
+        /* Kiểm tra không che actions sau khi render */
+        setTimeout(function() {
+            checkHeaderOverflow();
+        }, 100);
+
+        console.log('✅ Đã di chuyển TikTok bar vào header (desktop)');
+    } catch(e) {
+        console.warn('moveTikTokBarToHeader error:', e);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ HOÀN TÁC TIKTOK BAR VỀ DƯỚI HEADER — KHI CHUYỂN SANG MOBILE
+   ═══════════════════════════════════════════════════════════════ */
+function moveTikTokBarBelowHeader() {
+    try {
+        var headerInner = document.querySelector('.header-inner');
+        var tiktokBar = headerInner ? headerInner.querySelector('.tiktok-bar') : null;
+        var container = document.querySelector('.sticky-top .container');
+        var header = container ? container.querySelector('.header') : null;
+
+        if (!tiktokBar || !container || !header) return;
+
+        /* Di chuyển về sau .header (dưới header) */
+        if (header.nextSibling) {
+            container.insertBefore(tiktokBar, header.nextSibling);
+        } else {
+            container.appendChild(tiktokBar);
+        }
+
+        console.log('✅ Đã đưa TikTok bar về dưới header (mobile)');
+    } catch(e) {
+        console.warn('moveTikTokBarBelowHeader error:', e);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ KIỂM TRA HEADER KHÔNG BỊ TRÀN — LUÔN HIỂN THỊ TIKTOK
+   ═══════════════════════════════════════════════════════════════ */
+function checkHeaderOverflow() {
+    try {
+        if (window.innerWidth < 769) return;
+
+        var headerInner = document.querySelector('.header-inner');
+        if (!headerInner) return;
+        var tiktok = headerInner.querySelector('.tiktok-bar');
+        if (!tiktok) return;
+
+        /* ★ Đảm bảo TikTok luôn hiển thị */
+        tiktok.style.display = '';
+    } catch(e) {
+        console.warn('checkHeaderOverflow error:', e);
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ XỬ LÝ KHI RESIZE — TỰ ĐỘNG DI CHUYỂN
+   ═══════════════════════════════════════════════════════════════ */
+var _lastWidthMode = null;
+function handleResponsiveTikTok() {
+    var currentMode = window.innerWidth >= 769 ? 'desktop' : 'mobile';
+    if (currentMode === _lastWidthMode) return;
+    _lastWidthMode = currentMode;
+
+    if (currentMode === 'desktop') {
+        moveTikTokBarToHeader();
+    } else {
+        moveTikTokBarBelowHeader();
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ★ POPULATE TIKTOK PILL trong Practice Full ★
+   ═══════════════════════════════════════════════════════════════ */
+function populateTikTokFloat() {
+    try {
+        var pfTiktok = $('pfTiktokFloat');
+        if (!pfTiktok) return;
+
+        var tiktokUrl = (typeof TIKTOK_URL !== 'undefined' && TIKTOK_URL) ? TIKTOK_URL : '';
+        if (!tiktokUrl) {
+            pfTiktok.style.display = 'none';
+            return;
+        }
+
+        pfTiktok.href = tiktokUrl;
+
+        /* Avatar */
+        var avatarUrl = (typeof TIKTOK_AVATAR !== 'undefined' && TIKTOK_AVATAR) ? TIKTOK_AVATAR : '';
+        var avatarEl = $('pfTiktokAvatar');
+        if (avatarEl) {
+            if (avatarUrl) {
+                avatarEl.src = avatarUrl;
+                avatarEl.style.display = '';
+            } else {
+                avatarEl.style.display = 'none';
+            }
+        }
+
+        /* Tên: ưu tiên NICKNAME */
+        var displayName = '';
+        if (typeof TIKTOK_NICKNAME !== 'undefined' && TIKTOK_NICKNAME) {
+            displayName = TIKTOK_NICKNAME;
+        } else if (typeof TIKTOK_USERNAME !== 'undefined' && TIKTOK_USERNAME) {
+            displayName = TIKTOK_USERNAME;
+        } else {
+            displayName = 'TikTok';
+        }
+
+        var nameEl = $('pfTiktokName');
+        if (nameEl) nameEl.textContent = displayName;
+
+        pfTiktok.title = 'Theo dõi TikTok: ' + displayName;
+    } catch(e) {
+        console.warn('populateTikTokFloat error:', e);
+    }
+}
+
 function initApp() {
     mobileWrapper = $('mobileWrapper');
 
@@ -3916,6 +4187,25 @@ function initApp() {
     initSpeech();
     initWriter();
     initPracticeFull();
+
+    /* ★ Đặt width mode ban đầu + di chuyển TikTok bar (chỉ desktop) */
+    _lastWidthMode = window.innerWidth >= 769 ? 'desktop' : 'mobile';
+    if (_lastWidthMode === 'desktop') {
+        moveTikTokBarToHeader();
+    }
+
+    /* ★ Populate TikTok pill trong practice full */
+    populateTikTokFloat();
+
+    /* ★ Re-check khi resize (debounce) */
+    var _resizeTimer;
+    window.addEventListener('resize', function() {
+        clearTimeout(_resizeTimer);
+        _resizeTimer = setTimeout(function() {
+            handleResponsiveTikTok();
+            checkHeaderOverflow();
+        }, 200);
+    });
 
     $('searchInput').addEventListener('input', applyFilter);
     $('resetBtn').addEventListener('click', function() {
@@ -4395,6 +4685,45 @@ function updateResultCount() {
     }
 }
 
+function applyFilter() {
+    state.search = $('searchInput').value.trim().toLowerCase();
+    state.hsk = $('hskFilter').value;
+    state.subject = $('subjectFilter').value;
+    updateFilterUI();
+    var clearBtn = $('clearSearchBtn');
+    if (state.search) clearBtn.classList.add('show');
+    else clearBtn.classList.remove('show');
+
+    var baseData = getLimitedData();
+
+    filtered = baseData.filter(function(r) {
+        if (state.search) {
+            var s = state.search;
+            var inVi = (r.vi || '').toLowerCase().indexOf(s) !== -1;
+            var inZh = (r.zh || '').toLowerCase().indexOf(s) !== -1;
+            var inPinyin = (r.pinyin || '').toLowerCase().indexOf(s) !== -1;
+            var inTopic = (r.topic || '').toLowerCase().indexOf(s) !== -1;
+            var inSubject = (r.subject || '').toLowerCase().indexOf(s) !== -1;
+            if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
+        }
+        if (state.hsk && r.hsk !== state.hsk) return false;
+        if (state.subject && r.subject !== state.subject) return false;
+        return true;
+    });
+    updateResultCount();
+    render(true);
+
+    /* ★ Auto scroll xuống kết quả khi user chọn filter HSK/chủ đề */
+    if (state.hsk || state.subject) {
+        setTimeout(function() {
+            var mainEl = $('mainContent');
+            if (mainEl) {
+                var yOffset = mainEl.getBoundingClientRect().top + window.scrollY - 100;
+                window.scrollTo({ top: yOffset, behavior: 'smooth' });
+            }
+        }, 150);
+    }
+}
 function render(reset) {
     if (reset) { renderedCount = 0; focusedStt = null; }
     if (!filtered.length) {
@@ -4426,6 +4755,14 @@ function render(reset) {
         var practiceInput = '<input type="text" class="practice-input" placeholder="Gõ tiếng Trung..." data-answer="' + zhHtml + '" data-vi-hint="' + viHtml + '" data-stt="' + sttSafe + '" oninput="checkInput(this)" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">';
         var toggleCheckBtn = '<button class="toggle-check-btn" onclick="toggleInlineCheck(this, event)" title="Ẩn/hiện kết quả kiểm tra" data-visible="0"><i class="fas fa-eye"></i></button>';
 
+        /* ★ Badge số dòng Excel */
+        var excelBadge = '';
+        if (r.excelRow !== undefined && r.excelRow !== null && r.excelRow !== '') {
+            excelBadge = '<span class="card-excel-row" title="Dòng ' + escapeHtml(r.excelRow) + ' trong file Excel">' +
+                         '<i class="fas fa-file-excel"></i> ' + escapeHtml(r.excelRow) +
+                         '</span>';
+        }
+
         mobHtml += '<div class="card" onclick="toggleFocus(\'' + sttJs + '\', this)" data-stt="' + sttSafe + '">' +
             '<div class="card-header">' +
                 '<div class="card-stt">' + sttSafe + '</div>' +
@@ -4433,6 +4770,7 @@ function render(reset) {
                     (r.hsk ? '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>' : '') +
                     (r.topic ? '<span class="card-tag topic">' + escapeHtml(r.topic) + '</span>' : '') +
                     (r.subject ? '<span class="card-tag">' + escapeHtml(r.subject) + '</span>' : '') +
+                    excelBadge +
                 '</div>' +
                 '<div onclick="event.stopPropagation()" class="action-group">' + audio + writeBtn + fullBtn + '</div>' +
             '</div>' +
@@ -4828,35 +5166,9 @@ window.toggleInlineCheck = function(btn, evt) {
     }
 };
 
-function applyFilter() {
-    state.search = $('searchInput').value.trim().toLowerCase();
-    state.hsk = $('hskFilter').value;
-    state.subject = $('subjectFilter').value;
-    updateFilterUI();
-    var clearBtn = $('clearSearchBtn');
-    if (state.search) clearBtn.classList.add('show');
-    else clearBtn.classList.remove('show');
-
-    var baseData = getLimitedData();
-
-    filtered = baseData.filter(function(r) {
-        if (state.search) {
-            var s = state.search;
-            var inVi = (r.vi || '').toLowerCase().indexOf(s) !== -1;
-            var inZh = (r.zh || '').toLowerCase().indexOf(s) !== -1;
-            var inPinyin = (r.pinyin || '').toLowerCase().indexOf(s) !== -1;
-            var inTopic = (r.topic || '').toLowerCase().indexOf(s) !== -1;
-            var inSubject = (r.subject || '').toLowerCase().indexOf(s) !== -1;
-            if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
-        }
-        if (state.hsk && r.hsk !== state.hsk) return false;
-        if (state.subject && r.subject !== state.subject) return false;
-        return true;
-    });
-    updateResultCount();
-    render(true);
-}
-
+/* ═══════════════════════════════════════════════════════════════
+   ★ PRACTICE FULL MODAL ★
+   ═══════════════════════════════════════════════════════════════ */
 var pfCurrentStt = null;
 var pfCurrentAnswer = '';
 var pfCurrentVi = '';
@@ -4924,6 +5236,12 @@ function loadPracticeFull(stt) {
     if (r.hsk) tagsHtml += '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>';
     if (r.topic) tagsHtml += '<span class="card-tag topic">' + escapeHtml(r.topic) + '</span>';
     if (r.subject) tagsHtml += '<span class="card-tag">' + escapeHtml(r.subject) + '</span>';
+    /* ★ Thêm badge số dòng Excel */
+    if (r.excelRow !== undefined && r.excelRow !== null && r.excelRow !== '') {
+        tagsHtml += '<span class="card-tag excel-tag" title="Dòng ' + escapeHtml(r.excelRow) + ' trong file Excel">' +
+                    '<i class="fas fa-file-excel"></i> Excel: ' + escapeHtml(r.excelRow) +
+                    '</span>';
+    }
     $('pfTags').innerHTML = tagsHtml;
 
     $('pfVi').textContent = pfCurrentVi;
@@ -5135,6 +5453,16 @@ function pfApplyFilter() {
     pfBuildQuickNav();
     render(true);
 
+    /* ★ Auto scroll xuống content khi user chọn filter */
+    if (state.hsk || state.subject) {
+        setTimeout(function() {
+            var bodyEl = document.querySelector('.practice-full-body');
+            if (bodyEl) {
+                bodyEl.scrollTo({ top: 0, behavior: 'smooth' });
+            }
+        }, 100);
+    }
+
     var activeEl = document.activeElement;
     var isTypingInSearch = activeEl && activeEl.id === 'pfSearchInput';
 
@@ -5207,8 +5535,8 @@ function updateCharPreview() {
             }
         } else if (!userChar && answerChar) {
             if (pfHintEnabled) {
-                cls += ' ghost';
-                display = answerChar;
+ +                cls += ' ghost';
+                display =  answerChar;
             } else {
                 continue;
             }
@@ -5236,7 +5564,7 @@ window.fixCharAt = function(idx, el) {
     input.focus();
     setTimeout(function() {
         try {
-            input.setSelectionRange(idx, idx + 1);
+            input.setSelectionRange(idx, idx1);
         } catch(e) {
             input.selectionStart = idx;
             input.selectionEnd = idx + 1;
@@ -5355,46 +5683,6 @@ window.speakFullSentence = function() {
 };
 
 function initPracticeFull() {
-    /* ★ POPULATE TIKTOK FLOATING PILL */
-    try {
-        var pfTiktok = $('pfTiktokFloat');
-        if (pfTiktok) {
-            var tiktokUrl = (typeof TIKTOK_URL !== 'undefined' && TIKTOK_URL) ? TIKTOK_URL : '';
-            if (tiktokUrl) {
-                pfTiktok.href = tiktokUrl;
-
-                /* Avatar */
-                var avatarUrl = (typeof TIKTOK_AVATAR !== 'undefined' && TIKTOK_AVATAR) ? TIKTOK_AVATAR : '';
-                var avatarEl = $('pfTiktokAvatar');
-                if (avatarEl) {
-                    if (avatarUrl) {
-                        avatarEl.src = avatarUrl;
-                        avatarEl.style.display = '';
-                    } else {
-                        avatarEl.style.display = 'none';
-                    }
-                }
-
-                /* Tên: ưu tiên NICKNAME (VD: "Thảo Nói") */
-                var displayName = '';
-                if (typeof TIKTOK_NICKNAME !== 'undefined' && TIKTOK_NICKNAME) {
-                    displayName = TIKTOK_NICKNAME;
-                } else if (typeof TIKTOK_USERNAME !== 'undefined' && TIKTOK_USERNAME) {
-                    displayName = TIKTOK_USERNAME;
-                } else {
-                    displayName = 'TikTok';
-                }
-
-                var nameEl = $('pfTiktokName');
-                if (nameEl) nameEl.textContent = displayName;
-
-                pfTiktok.title = 'Theo dõi TikTok: ' + displayName;
-            } else {
-                pfTiktok.style.display = 'none';
-            }
-        }
-    } catch(e) { console.warn('TikTok float init:', e); }
-
     $('pfClose').addEventListener('click', closePracticeFull);
     $('pfPrevBtn').addEventListener('click', pfPrev);
     $('pfNextBtn').addEventListener('click', pfNext);
@@ -5520,6 +5808,9 @@ function initPracticeFull() {
     }
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   ★ WRITER MODAL ★
+   ═══════════════════════════════════════════════════════════════ */
 var writerInstance = null;
 var currentWriteZh = '';
 var currentWriteVi = '';
