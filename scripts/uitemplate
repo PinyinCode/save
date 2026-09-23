@@ -1601,66 +1601,107 @@ function smartCheck(userAnswer, correctAnswer) {
     return { status: 'wrong', reason: 'Không khớp' };
 }
 
+/* ================================================================
+   ĐẾM SỐ ÂM TIẾT TRONG 1 TỪ PINYIN
+   - Chuẩn hóa dấu thanh → chữ cái gốc
+   - Đếm số cụm nguyên âm liên tiếp (mỗi cụm = 1 âm tiết)
+   - VD: "Gōngsī" → "gongsi" → cụm "o" + "i" = 2 âm tiết
+   - VD: "xiǎo" → "xiao" → cụm "iao" = 1 âm tiết
+   ================================================================ */
 function countSyllables(pinyinWord) {
     if (!pinyinWord) return 0;
-    var cleaned = pinyinWord.replace(/[.,!?;:'"()\[\]{}\-~`@#$%^&*+=|\\/<>。，！？、；：]/g, '').toLowerCase();
+    // Loại bỏ ký tự đặc biệt, chỉ giữ chữ cái + dấu thanh
+    var cleaned = pinyinWord
+        .replace(/[.,!?;:'"()\[\]{}\-~`@#$%^&*+=|\\/<>。，！？、；：\s]/g, '')
+        .toLowerCase();
     if (!cleaned) return 0;
+
+    // Chuẩn hóa dấu thanh → chữ cái gốc để dễ xử lý
     var map = {
         'ā':'a','á':'a','ǎ':'a','à':'a','ē':'e','é':'e','ě':'e','è':'e',
         'ī':'i','í':'i','ǐ':'i','ì':'i','ō':'o','ó':'o','ǒ':'o','ò':'o',
         'ū':'u','ú':'u','ǔ':'u','ù':'u','ǖ':'v','ǘ':'v','ǚ':'v','ǜ':'v','ü':'v'
     };
     cleaned = cleaned.replace(/[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü]/g, function(c) { return map[c] || c; });
-    var vowels = 'aeiou';
+
+    // Đếm số "cụm nguyên âm liên tiếp" = số âm tiết
+    var vowels = 'aeiouv';
     var count = 0;
-    var prevIsVowel = false;
-    for (var i = 0; i < cleaned.length; i++) {
-        var c = cleaned[i];
-        var isVowel = vowels.indexOf(c) !== -1;
-        if (isVowel && !prevIsVowel) count++;
-        prevIsVowel = isVowel;
+    var i = 0;
+    while (i < cleaned.length) {
+        if (vowels.indexOf(cleaned[i]) !== -1) {
+            count++;
+            // Bỏ qua tất cả nguyên âm liên tiếp
+            while (i < cleaned.length && vowels.indexOf(cleaned[i]) !== -1) {
+                i++;
+            }
+        } else {
+            i++;
+        }
     }
     return count || 1;
 }
 
+/* ================================================================
+   GHÉP CỤM TỪ TIẾNG TRUNG DỰA THEO PINYIN
+   - Tách pinyin thành từ (theo dấu cách)
+   - Đếm số âm tiết mỗi từ
+   - Nếu tổng âm tiết = số chữ Hán → ghép cụm chính xác
+   - Nếu không khớp → fallback tách từng chữ Hán
+   ================================================================ */
 function splitByPinyin(zh, pinyin) {
     if (!zh) return [];
+    // Lấy tất cả chữ Hán (bỏ dấu câu, số, chữ Latin)
     var hanziChars = [];
     for (var i = 0; i < zh.length; i++) {
         var c = zh[i];
         if (/[\u4e00-\u9fa5]/.test(c)) hanziChars.push(c);
     }
     if (hanziChars.length === 0) return [];
+
+    // Nếu không có pinyin → tách từng chữ
     if (!pinyin || !pinyin.trim()) {
-        return hanziChars.map(function(c) { return { text: c, type: 'phrase' }; });
+        return hanziChars.map(function(c) { return { text: c, type: 'single' }; });
     }
-    var pinyinGroups = pinyin.trim()
-        .replace(/[.,!?;:'"()\[\]{}\-~`@#$%^&*+=|\\/<>。，！？、；：]/g, ' ')
-        .split(/\s+/)
-        .filter(function(w) { return w.length > 0; });
-    if (pinyinGroups.length === 0) {
-        return hanziChars.map(function(c) { return { text: c, type: 'phrase' }; });
-    }
-    var syllableCounts = pinyinGroups.map(function(w) { return countSyllables(w); });
+
+    // Chuẩn hóa pinyin: bỏ dấu câu, giữ dấu cách
+    var normalizedPinyin = pinyin
+        .replace(/[.,!?;:'"()\[\]{}\-~`@#$%^&*+=|\\/<>。，！？、；：""'']/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    // Tách thành các "từ"
+    // VD: "Gōngsī xūyào jiànlì" → ["Gōngsī", "xūyào", "jiànlì"]
+    var pinyinWords = normalizedPinyin.split(/\s+/).filter(function(w) { return w.length > 0; });
+
+    // Đếm số âm tiết trong mỗi từ
+    var syllableCounts = pinyinWords.map(function(w) { return countSyllables(w); });
     var totalSyllables = syllableCounts.reduce(function(a, b) { return a + b; }, 0);
-    if (totalSyllables !== hanziChars.length) {
-        return hanziChars.map(function(c) { return { text: c, type: 'phrase' }; });
+
+    // Nếu số âm tiết = số chữ Hán → ghép cụm theo từ pinyin
+    if (totalSyllables === hanziChars.length) {
+        var result = [];
+        var charIdx = 0;
+        for (var j = 0; j < syllableCounts.length; j++) {
+            var cnt = syllableCounts[j];
+            if (cnt <= 0) continue;
+            var phrase = hanziChars.slice(charIdx, charIdx + cnt).join('');
+            if (phrase) {
+                result.push({ text: phrase, type: 'phrase' });
+            }
+            charIdx += cnt;
+        }
+        // Nếu còn dư (do sai số), gộp vào cụm cuối
+        if (charIdx < hanziChars.length) {
+            var remaining = hanziChars.slice(charIdx).join('');
+            if (result.length > 0) result[result.length - 1].text += remaining;
+            else result.push({ text: remaining, type: 'phrase' });
+        }
+        return result;
     }
-    var result = [];
-    var idx = 0;
-    for (var j = 0; j < syllableCounts.length; j++) {
-        var cnt = syllableCounts[j];
-        if (cnt <= 0) continue;
-        var phrase = hanziChars.slice(idx, idx + cnt).join('');
-        if (phrase) result.push({ text: phrase, type: 'phrase' });
-        idx += cnt;
-    }
-    if (idx < hanziChars.length) {
-        var remaining = hanziChars.slice(idx).join('');
-        if (result.length > 0) result[result.length - 1].text += remaining;
-        else result.push({ text: remaining, type: 'phrase' });
-    }
-    return result;
+
+    // Fallback: nếu số âm tiết KHÁC số chữ Hán → tách từng chữ
+    return hanziChars.map(function(c) { return { text: c, type: 'single' }; });
 }
 
 function updateInlinePreview(input, answer) {
@@ -2069,13 +2110,11 @@ function pfApplyFilter() {
                 if (String(filtered[j].stt) === String(pfCurrentStt)) { idx = j; break; }
             }
             if (idx !== -1) {
-                // ==== CẬP NHẬT COUNTER VỚI STT GỐC EXCEL ====
                 var rNow = filtered[idx];
                 var sttNow = (rNow.stt !== undefined && rNow.stt !== null && String(rNow.stt).trim() !== '')
                              ? '#' + String(rNow.stt).trim() + '  ·  '
                              : '';
                 $('pfCounter').textContent = sttNow + 'Câu ' + (idx + 1) + ' / ' + filtered.length;
-                // ============================================
             }
             return;
         }
@@ -2189,7 +2228,7 @@ function revealFullAnswer() {
     var phrases = splitByPinyin(pfCurrentAnswer, pfCurrentPinyin);
     if (phrases.length === 0) {
         pfCurrentAnswer.split('').forEach(function(c) {
-            if (/[\u4e00-\u9fa5]/.test(c)) phrases.push({ text: c, type: 'phrase' });
+            if (/[\u4e00-\u9fa5]/.test(c)) phrases.push({ text: c, type: 'single' });
         });
     }
     phrases.forEach(function(item) {
