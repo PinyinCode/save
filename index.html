@@ -5789,6 +5789,11 @@ var BANK_CONFIG = {"bank_id": "970418", "bank_name": "BIDV", "account_no": "8897
 var PACKAGES = [{"id": "1m", "label": "1 tháng", "amount": 50000, "days": 30, "popular": false}, {"id": "3m", "label": "3 tháng", "amount": 120000, "days": 90, "popular": true, "save": "Tiết kiệm 33%"}, {"id": "1y", "label": "1 năm", "amount": 300000, "days": 365, "popular": false, "save": "Tiết kiệm 58%"}, {"id": "forever", "label": "Premium", "amount": 1000000, "days": 36500, "popular": false, "save": "Premium - Admin Hỗ trợ trực tiếp", "permanent": true}];
 var RENEWAL_SUPPORT_ZALO = "0922331886";
 
+/* ⬇⬇⬇ DEMO CONFIG (MỚI THÊM) ⬇⬇⬇ */
+var DEMO_LIMIT = 100;
+var DEMO_DAILY_LIMIT = 200;
+var DEMO_HSK_MAX = 3;
+
 /* ============ STATE ============ */
 var currentUser = null;
 var isDemo = true;
@@ -5874,7 +5879,7 @@ function publishTierState() {
     if (!currentUser) {
         window.APP_TIER = 'demo';
         window.APP_LIMITS = {
-            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
+            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 100,
             maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
             unlimitedWriting: false, isTrial: false, email: null
         };
@@ -5896,7 +5901,7 @@ function publishTierState() {
     } else if (tier === 'expired') {
         window.APP_TIER = 'expired';
         window.APP_LIMITS = {
-            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
+            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 100,
             maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
             unlimitedWriting: false, isTrial: false, email: currentUser.email
         };
@@ -5908,7 +5913,7 @@ function publishTierState() {
 
 window.getUserTier = function() { return window.APP_TIER || 'demo'; };
 window.getUserLimits = function() {
-    return window.APP_LIMITS || { maxQuestions: 25, maxHSK: 3, unlimitedWriting: false };
+    return window.APP_LIMITS || { maxQuestions: 100, maxHSK: 3, unlimitedWriting: false };
 };
 
 /* ============ FIREBASE INIT ============ */
@@ -7764,10 +7769,10 @@ function processImport(rows) {
         var r = rows[i].map(function(c) { return String(c || '').toLowerCase().trim(); });
         if (r.indexOf('email') !== -1) { headerRowIdx = i; break; }
     }
-    if (headerRowIdx === -1) return alert('❌ Không tìm thấy cột "email"!');
+    if (headerRowIdx === -1) return alert('❌ Không tìm thấy cột "email"!]');
 
-    var header = rows[headerRowIdx].map(function(c) { return String(c || '').toLowerCase().trim(); });
-    var emailCol = header.indexOf('email');
+    var header = rows(\[headerRowIdx].map(functiond(c) { return String(c ||{ '').toLowerCase().trim(); });
+   1 var emailCol = header.indexOf('email');
     var nameCol = header.indexOf('name');
     var expCol = header.indexOf('expiresat');
 
@@ -7807,7 +7812,7 @@ function processImport(rows) {
                 if (!isNaN(d.getTime())) { expDate = d; expStr = formatDate(d); }
             } else {
                 var s = String(raw).trim();
-                var m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+                var m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/,2})$/);
                 if (m) {
                     var d2 = new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]), 23, 59, 59);
                     if (!isNaN(d2.getTime())) { expDate = d2; expStr = formatDate(d2); }
