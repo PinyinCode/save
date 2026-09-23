@@ -452,6 +452,9 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @keyframes speakingRing{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
 .practice-speak-btn:disabled{opacity:.4;cursor:not-allowed}
 [data-theme="dark"] .practice-speak-btn{background:rgba(59,130,246,.22);color:#93c5fd;border-color:rgba(59,130,246,.5)}
+/* Icon stop khi đang đọc — nhấp nháy */
+.practice-speak-btn.speaking i.fa-stop{animation:stopPulse .8s ease-in-out infinite}
+@keyframes stopPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.2)}}
 
 .char-preview{display:flex;justify-content:center;flex-wrap:wrap;gap:clamp(.3rem,.6vw,.45rem);min-height:clamp(1.75rem,3vh,2.25rem);padding:clamp(.4rem,.8vh,.65rem) clamp(.5rem,1.2vw,.9rem);background:var(--surface-2);border-radius:12px;border:1px dashed var(--border);user-select:none}
 .char-preview:empty{display:none}
@@ -481,7 +484,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 #pfRevealBtn.revealed{background:var(--success);color:#fff;border-color:var(--success);border-style:solid}
 .answer-reveal{display:none;flex-direction:column;gap:.7rem;padding:clamp(.85rem,1.5vw,1.1rem);background:var(--surface-2);border-radius:14px;border:1px solid var(--border)}
 .answer-reveal.show{display:flex}
-.answer-reveal .ar-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-3);font-weight:700;text-align:center}
 .answer-chars{display:flex;justify-content:center;flex-wrap:wrap;gap:.45rem}
 .answer-phrase-btn{font-family:var(--font-zh);font-size:clamp(1.1rem,1.8vw,1.35rem);font-weight:500;padding:clamp(.35rem,.8vh,.45rem) clamp(.65rem,1.2vw,.85rem);border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:transform .25s cubic-bezier(.34,1.56,.64,1),background .2s,color .2s;display:inline-flex;align-items:center;justify-content:center}
 @media(hover:hover) and (pointer:fine){.answer-phrase-btn:hover{transform:scale(1.35);background:var(--primary);color:#fff;border-color:var(--primary);z-index:10}}
@@ -633,10 +635,81 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @keyframes chipPulse{0%,100%{box-shadow:0 4px 12px rgba(37,99,235,.3)}50%{box-shadow:0 4px 18px rgba(37,99,235,.5)}}
 .practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(22,163,74,.1));color:#15803d;border:1px solid rgba(22,163,74,.3);font-weight:700;display:inline-flex;align-items:center;gap:.3rem}
 [data-theme="dark"] .practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.25),rgba(22,163,74,.15));color:#4ade80;border-color:rgba(22,163,74,.5)}
-@media (min-width:769px){.header-inner{display:flex!important;align-items:center!important;gap:clamp(.4rem,.8vw,.75rem)!important;flex-wrap:nowrap!important;overflow:hidden;width:100%;position:relative}.header-inner .logo{flex:1 1 auto!important;min-width:0!important;overflow:hidden}.header-inner .tiktok-bar{flex:0 1 auto!important;min-width:0!important;max-width:clamp(140px,22vw,260px)!important;margin:0!important;padding:clamp(.3rem,.5vw,.42rem) clamp(.55rem,.8vw,.75rem)!important;gap:clamp(.35rem,.6vw,.5rem)!important;font-size:clamp(.65rem,.8vw,.78rem)!important;border-radius:50px!important;overflow:hidden;position:relative;z-index:3;align-self:center}.header-inner .tiktok-bar .tiktok-bar-avatar{width:clamp(24px,2.4vw,30px)!important;height:clamp(24px,2.4vw,30px)!important;flex-shrink:0}.header-inner .tiktok-bar .tiktok-bar-info{min-width:0;overflow:hidden}.header-inner .tiktok-bar .tiktok-nick{font-size:clamp(.7rem,.85vw,.82rem)!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.header-inner .tiktok-bar .tiktok-user{font-size:clamp(.6rem,.72vw,.7rem)!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.header-inner .tiktok-bar .tiktok-bar-link{padding:clamp(.28rem,.4vw,.38rem) clamp(.5rem,.7vw,.7rem)!important;font-size:clamp(.62rem,.75vw,.72rem)!important;flex-shrink:0}.header-inner .header-actions{flex:0 0 auto!important;margin-left:auto!important;display:flex!important;gap:.4rem!important;align-items:center!important;position:relative;z-index:5}}
-@media (max-width:1200px){.header-inner .tiktok-bar{max-width:clamp(120px,18vw,200px)!important}}
-@media (max-width:1024px){.header-inner .tiktok-bar{max-width:clamp(100px,15vw,160px)!important}.header-inner .tiktok-bar .tiktok-user{display:none}}
-@media (max-width:900px){.header-inner .tiktok-bar{max-width:130px!important}.header-inner .tiktok-bar .tiktok-bar-link span{display:none}}
+
+/* ============================================================ */
+/* HEADER DESKTOP — TikTok bar chiếm tối đa không gian còn thừa */
+/* ============================================================ */
+@media (min-width:769px){
+    .header-inner{
+        display:flex!important;
+        align-items:center!important;
+        gap:clamp(.4rem,.8vw,.75rem)!important;
+        flex-wrap:nowrap!important;
+        overflow:hidden;
+        width:100%;
+        position:relative;
+    }
+    .header-inner .logo{
+        flex:0 0 auto!important;
+        min-width:0!important;
+        overflow:hidden;
+    }
+    .header-inner .logo .logo-text{
+        max-width:100%;
+    }
+    .header-inner .tiktok-bar{
+        flex:1 1 auto!important;
+        min-width:0!important;
+        max-width:none!important;
+        width:auto!important;
+        margin:0!important;
+        padding:clamp(.3rem,.5vw,.42rem) clamp(.55rem,.8vw,.75rem)!important;
+        gap:clamp(.35rem,.6vw,.5rem)!important;
+        font-size:clamp(.65rem,.8vw,.78rem)!important;
+        border-radius:50px!important;
+        overflow:hidden;
+        position:relative;
+        z-index:3;
+        align-self:center;
+    }
+    .header-inner .tiktok-bar .tiktok-bar-avatar{
+        width:clamp(24px,2.4vw,30px)!important;
+        height:clamp(24px,2.4vw,30px)!important;
+        flex-shrink:0;
+    }
+    .header-inner .tiktok-bar .tiktok-bar-info{
+        min-width:0;
+        overflow:hidden;
+        flex:1 1 auto;
+    }
+    .header-inner .tiktok-bar .tiktok-nick{
+        font-size:clamp(.7rem,.85vw,.82rem)!important;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    .header-inner .tiktok-bar .tiktok-user{
+        font-size:clamp(.6rem,.72vw,.7rem)!important;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    .header-inner .tiktok-bar .tiktok-bar-link{
+        padding:clamp(.28rem,.4vw,.38rem) clamp(.5rem,.7vw,.7rem)!important;
+        font-size:clamp(.62rem,.75vw,.72rem)!important;
+        flex-shrink:0;
+        white-space:nowrap;
+    }
+    .header-inner .header-actions{
+        flex:0 0 auto!important;
+        margin-left:0!important;
+        display:flex!important;
+        gap:.4rem!important;
+        align-items:center!important;
+        position:relative;
+        z-index:5;
+    }
+}
 
 .practice-full-header .pf-counter{
     flex-shrink:0;
@@ -824,7 +897,6 @@ def build_ui_html():
 <button id="pfRevealBtn"><i class="fas fa-eye"></i> Xem đáp án</button>
 </div>
 <div class="answer-reveal" id="pfAnswer">
-<div class="ar-label">Đáp án</div>
 <div class="answer-chars" id="pfAnswerChars"></div>
 <div class="answer-pinyin" id="pfAnswerPinyin"></div>
 </div>
@@ -2098,6 +2170,8 @@ window.openPracticeFull = function(stt, evt) {
     loadPracticeFull(stt);
 };
 window.closePracticeFull = function() {
+    // Dừng đọc nếu đang đọc
+    if (window._isSpeakingFull) stopSpeakFull();
     $('practiceFullModal').classList.remove('show');
     document.body.style.overflow = '';
     document.body.classList.remove('practice-full-open');
@@ -2155,6 +2229,14 @@ function loadPracticeFull(stt) {
     $('pfNextBtn').disabled = (idx === filtered.length - 1);
     var quickNav = $('pfQuickNav');
     if (quickNav && quickNav.value !== stt) quickNav.value = stt;
+
+    // Reset trạng thái nút loa khi đổi câu
+    if (window._isSpeakingFull) {
+        stopSpeakFull();
+    } else {
+        _setSpeakBtnState(false);
+    }
+
     setTimeout(function() {
         var active = document.activeElement;
         if (active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT')) return;
@@ -2534,16 +2616,39 @@ window.speakPhrase = function(phrase, btn) {
 };
 
 /* ============================================================ */
-/* ĐỌC CẢ CÂU — 2 chế độ: bình thường / karaoke (highlight) */
+/* TOGGLE ĐỌC / DỪNG cho nút loa — chống đọc 2 lần             */
 /* ============================================================ */
 
-// Chế độ BÌNH THƯỜNG — dùng khi CHƯA xem đáp án
-window.speakFullSentenceNormal = function() {
-    if (!canUseFeature()) { showLimitMessage(); return; }
-    if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-    speechSynthesis.cancel();
+window._isSpeakingFull = false;
+window._speakToken = 0;
 
-    // Reset highlight/tooltip nếu có
+function _setSpeakBtnState(speaking) {
+    window._isSpeakingFull = speaking;
+    var btn = $('pfSpeakBtn');
+    if (!btn) return;
+    if (speaking) {
+        btn.classList.add('speaking');
+        btn.setAttribute('title', 'Nhấn để dừng');
+        btn.setAttribute('aria-label', 'Nhấn để dừng');
+        var i = btn.querySelector('i');
+        if (i) i.className = 'fas fa-stop';
+    } else {
+        btn.classList.remove('speaking');
+        btn.setAttribute('title', 'Nghe câu này');
+        btn.setAttribute('aria-label', 'Nghe câu này');
+        var i2 = btn.querySelector('i');
+        if (i2) i2.className = 'fas fa-volume-up';
+    }
+}
+
+window.stopSpeakFull = function() {
+    window._speakToken++;
+    window._isSpeakingFull = false;
+
+    if ('speechSynthesis' in window) {
+        try { speechSynthesis.cancel(); } catch(e) {}
+    }
+
     var charsContainer = $('pfAnswerChars');
     if (charsContainer) {
         charsContainer.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
@@ -2555,67 +2660,103 @@ window.speakFullSentenceNormal = function() {
         charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
             w.classList.remove('active-wrap');
         });
-        _activeTooltipWrap = null;
     }
-
-    var utterance = new SpeechSynthesisUtterance(pfCurrentAnswer);
-    utterance.lang = 'zh-CN';
-    utterance.rate = 0.85;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    var voice = getChineseVoice();
-    if (voice) utterance.voice = voice;
-    setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
-};
-
-// Chế độ KARAOKE — dùng khi ĐÃ xem đáp án
-window.speakFullSentenceWithHighlight = function() {
-    if (!canUseFeature()) { showLimitMessage(); return; }
-    if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
-    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
-
-    speechSynthesis.cancel();
-
-    document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
-        t.classList.remove('show');
-    });
-    document.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
-        w.classList.remove('active-wrap');
-    });
     _activeTooltipWrap = null;
 
+    _setSpeakBtnState(false);
+};
+
+window.toggleSpeakFull = function() {
+    if (!pfCurrentAnswer) return;
+
+    if (window._isSpeakingFull) {
+        stopSpeakFull();
+        return;
+    }
+
+    if (!canUseFeature()) { showLimitMessage(); return; }
+    if (!('speechSynthesis' in window)) {
+        alert('Trình duyệt không hỗ trợ phát âm.');
+        return;
+    }
+    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
+
+    if ('speechSynthesis' in window) {
+        try { speechSynthesis.cancel(); } catch(e) {}
+    }
+    var token = ++window._speakToken;
+    _setSpeakBtnState(true);
+
+    var answerVisible = $('pfAnswer').classList.contains('show');
+    if (answerVisible) {
+        _speakWithHighlightKaraoke(token);
+    } else {
+        _speakNormal(token);
+    }
+};
+
+function _speakNormal(token) {
+    var u = new SpeechSynthesisUtterance(pfCurrentAnswer);
+    u.lang = 'zh-CN';
+    u.rate = 0.85;
+    u.pitch = 1.0;
+    u.volume = 1.0;
+    var v = getChineseVoice();
+    if (v) u.voice = v;
+
+    var done = false;
+    function finish() {
+        if (done) return;
+        done = true;
+        if (token !== window._speakToken) return;
+        _setSpeakBtnState(false);
+    }
+    u.onend = finish;
+    u.onerror = finish;
+
+    setTimeout(function() {
+        if (token !== window._speakToken) return;
+        try { speechSynthesis.speak(u); } catch(e) { finish(); }
+    }, 30);
+}
+
+function _speakWithHighlightKaraoke(token) {
     var phrases = window._pfPhrases || [];
     var charsContainer = $('pfAnswerChars');
-    if (!charsContainer) return;
+    if (!charsContainer) { _setSpeakBtnState(false); return; }
+
     var wraps = charsContainer.querySelectorAll('.answer-phrase-wrap');
     var buttons = charsContainer.querySelectorAll('.answer-phrase-btn');
 
-    buttons.forEach(function(b) { b.classList.remove('reading', 'speaking'); });
-
     if (phrases.length === 0) {
-        var u = new SpeechSynthesisUtterance(pfCurrentAnswer);
-        u.lang = 'zh-CN';
-        u.rate = 0.85;
-        var v = getChineseVoice();
-        if (v) u.voice = v;
-        setTimeout(function(){ speechSynthesis.speak(u); }, 30);
+        _speakNormal(token);
         return;
     }
 
     var idx = 0;
 
+    function cleanupAll() {
+        buttons.forEach(function(b) { b.classList.remove('reading'); });
+        charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+            t.classList.remove('show');
+        });
+        charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
+            w.classList.remove('active-wrap');
+        });
+        _activeTooltipWrap = null;
+    }
+
     function speakNext() {
-        if (idx >= phrases.length) {
-            buttons.forEach(function(b) { b.classList.remove('reading'); });
-            document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
-                t.classList.remove('show');
-            });
-            document.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
-                w.classList.remove('active-wrap');
-            });
-            _activeTooltipWrap = null;
+        if (token !== window._speakToken) {
+            cleanupAll();
             return;
         }
+        if (idx >= phrases.length) {
+            cleanupAll();
+            _setSpeakBtnState(false);
+            return;
+        }
+
         var phrase = phrases[idx];
         var btn = buttons[idx];
         var wrap = wraps[idx];
@@ -2623,7 +2764,7 @@ window.speakFullSentenceWithHighlight = function() {
         if (btn) btn.classList.add('reading');
         if (wrap) {
             wrap.classList.add('active-wrap');
-            document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+            charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
                 t.classList.remove('show');
             });
             var tip = wrap.querySelector('.answer-phrase-tooltip');
@@ -2641,45 +2782,30 @@ window.speakFullSentenceWithHighlight = function() {
         var v = getChineseVoice();
         if (v) u.voice = v;
 
-        var hasEnded = false;
-
-        u.onend = function() {
-            if (hasEnded) return;
-            hasEnded = true;
+        var handled = false;
+        function next() {
+            if (handled) return;
+            handled = true;
             if (btn) btn.classList.remove('reading');
             if (wrap) wrap.classList.remove('active-wrap');
+            if (token !== window._speakToken) {
+                cleanupAll();
+                return;
+            }
             idx++;
-            setTimeout(speakNext, 150);
-        };
-        u.onerror = function() {
-            if (hasEnded) return;
-            hasEnded = true;
-            if (btn) btn.classList.remove('reading');
-            if (wrap) wrap.classList.remove('active-wrap');
-            idx++;
-            setTimeout(speakNext, 150);
-        };
+            setTimeout(speakNext, 120);
+        }
+        u.onend = next;
+        u.onerror = next;
 
-        setTimeout(function(){ speechSynthesis.speak(u); }, 30);
+        setTimeout(function() {
+            if (token !== window._speakToken) { next(); return; }
+            try { speechSynthesis.speak(u); } catch(e) { next(); }
+        }, 30);
     }
 
-    setTimeout(speakNext, 150);
-};
-
-window.stopSpeaking = function() {
-    if ('speechSynthesis' in window) speechSynthesis.cancel();
-    var charsContainer = $('pfAnswerChars') || document;
-    charsContainer.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
-        b.classList.remove('reading', 'speaking');
-    });
-    charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
-        t.classList.remove('show');
-    });
-    charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
-        w.classList.remove('active-wrap');
-    });
-    _activeTooltipWrap = null;
-};
+    setTimeout(speakNext, 100);
+}
 
 function initPracticeFull() {
     $('pfClose').addEventListener('click', closePracticeFull);
@@ -2748,26 +2874,17 @@ function initPracticeFull() {
         }
     }, { passive: true });
 
-    var speakBtn = $('pfSpeakBtn');
-    if (speakBtn) {
-        speakBtn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            if (!pfCurrentAnswer) return;
-            if (!canUseFeature()) { showLimitMessage(); return; }
-            if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
-            if (!('speechSynthesis' in window)) {
-                alert('Trình duyệt không hỗ trợ phát âm.');
-                return;
-            }
-            var answerVisible = $('pfAnswer').classList.contains('show');
-            if (answerVisible) {
-                // Đã xem đáp án → đọc chậm + highlight từng cụm (karaoke)
-                speakFullSentenceWithHighlight();
-            } else {
-                // Chưa xem đáp án → đọc cả câu giọng bình thường
-                speakFullSentenceNormal();
-            }
-        });
+    // Nút loa — CHỈ bind 1 lần duy nhất (tránh đọc 2 lần)
+    if (!window._pfSpeakBound) {
+        window._pfSpeakBound = true;
+        var speakBtn = $('pfSpeakBtn');
+        if (speakBtn) {
+            speakBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                toggleSpeakFull();
+            });
+        }
     }
 }
 
