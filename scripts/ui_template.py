@@ -481,7 +481,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 #pfRevealBtn.revealed{background:var(--success);color:#fff;border-color:var(--success);border-style:solid}
 .answer-reveal{display:none;flex-direction:column;gap:.7rem;padding:clamp(.85rem,1.5vw,1.1rem);background:var(--surface-2);border-radius:14px;border:1px solid var(--border)}
 .answer-reveal.show{display:flex}
-.answer-reveal .ar-label{font-size:.72rem;text-transform:uppercase;letter-spacing:.5px;color:var(--text-3);font-weight:700;text-align:center}
 .answer-chars{display:flex;justify-content:center;flex-wrap:wrap;gap:.45rem}
 .answer-phrase-btn{font-family:var(--font-zh);font-size:clamp(1.1rem,1.8vw,1.35rem);font-weight:500;padding:clamp(.35rem,.8vh,.45rem) clamp(.65rem,1.2vw,.85rem);border-radius:12px;border:2px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;transition:transform .25s cubic-bezier(.34,1.56,.64,1),background .2s,color .2s;display:inline-flex;align-items:center;justify-content:center}
 @media(hover:hover) and (pointer:fine){.answer-phrase-btn:hover{transform:scale(1.35);background:var(--primary);color:#fff;border-color:var(--primary);z-index:10}}
@@ -895,7 +894,6 @@ def build_ui_html():
 <button id="pfRevealBtn"><i class="fas fa-eye"></i> Xem đáp án</button>
 </div>
 <div class="answer-reveal" id="pfAnswer">
-<div class="ar-label">Đáp án</div>
 <div class="answer-chars" id="pfAnswerChars"></div>
 <div class="answer-pinyin" id="pfAnswerPinyin"></div>
 </div>
@@ -2785,7 +2783,7 @@ function initPracticeFull() {
     });
     $('pfSubjectFilter').addEventListener('change', function() {
         var val = this.value;
-        var allowed = getAllowedSubjectList {();
+        var allowed = getAllowedSubjectList();
         if (val && allowed.indexOf(val) === -1) {
             var info = getTierInfo();
             var msg = info.tier === 'trial'
@@ -2801,7 +2799,7 @@ function initPracticeFull() {
         if (!$('practiceFullModal').classList.contains('show')) return;
         var active = document.activeElement;
         var isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
-        if (e.key === 'Escape') closePracticeFull(); return; }
+        if (e.key === 'Escape') { closePracticeFull(); return; }
         if (isTyping) return;
         if (e.key === 'ArrowRight' && e.ctrlKey) pfNext();
         if (e.key === 'ArrowLeft' && e.ctrlKey) pfPrev();
