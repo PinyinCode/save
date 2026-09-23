@@ -105,20 +105,230 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 .demo-banner-text .desc b{color:#dc2626}
 .demo-banner-btn{padding:.5rem .9rem;border-radius:50px;border:none;background:var(--amber);color:#fff;font-size:.8rem;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;gap:.35rem;white-space:nowrap}
 .demo-banner-btn:hover{background:#d97706}
-.mobile-view{display:grid;grid-template-columns:1fr;gap:clamp(.6rem,1.5vw,.9rem);max-width:100%}
-@media(min-width:769px){.mobile-view{grid-template-columns:1fr 1fr;gap:clamp(.9rem,1.8vw,1.2rem)}}
-@media(min-width:1800px){.mobile-view{grid-template-columns:1fr 1fr 1fr;gap:1.2rem}}
-.card-header{display:flex;align-items:center;gap:.4rem;margin-bottom:.6rem;padding-bottom:.6rem;border-bottom:1px dashed var(--border)}
-.card-stt{width:clamp(22px,2.2vw,26px);height:clamp(22px,2.2vw,26px);border-radius:50%;background:var(--surface-2);color:var(--text-3);display:flex;align-items:center;justify-content:center;font-size:clamp(.6rem,.75vw,.7rem);font-weight:700;flex-shrink:0}
-.card-meta{display:flex;gap:.3rem;align-items:center;flex:1;min-width:0;flex-wrap:wrap}
-.card-tag{display:inline-block;padding:.12rem .45rem;border-radius:var(--radius-full);background:var(--surface-2);color:var(--text-2);font-size:clamp(.55rem,.7vw,.65rem);font-weight:600;white-space:nowrap}
-.card-tag.hsk{background:var(--primary-light);color:var(--primary-dark)}
-.card-tag.topic{background:var(--amber-light);color:#92400e}
-.card-body{margin-bottom:.6rem}
-.card-vi{font-size:clamp(.75rem,.9vw,.85rem);color:var(--text-2);margin-bottom:.35rem;line-height:1.4}
-.card-zh{font-size:clamp(1.05rem,1.5vw,1.2rem);font-weight:500;color:var(--text);margin-bottom:.4rem;line-height:1.5;font-family:var(--font-zh)}
-.card-pinyin{font-size:clamp(.68rem,.85vw,.78rem);font-style:italic;color:var(--primary-dark);background:var(--surface-2);padding:.2rem .45rem;border-radius:6px;display:inline-block}
-[data-theme="dark"] .card-pinyin{background:rgba(59,130,246,.18);color:#93c5fd}
+.mobile-view{display:grid;grid-template-columns:1fr;gap:clamp(.65rem,1.6vw,1rem);max-width:100%}
+@media(min-width:769px){.mobile-view{grid-template-columns:1fr 1fr;gap:clamp(1rem,2vw,1.3rem)}}
+@media(min-width:1800px){.mobile-view{grid-template-columns:1fr 1fr 1fr;gap:1.3rem}}
+
+/* ============================================================ */
+/* FLASHCARD UI — thiết kế mới */
+/* ============================================================ */
+.card{
+    position:relative;
+    background:var(--surface);
+    border-radius:18px;
+    border:1px solid var(--border);
+    padding:clamp(.85rem,1.5vw,1.05rem);
+    padding-left:clamp(1rem,1.8vw,1.25rem);
+    box-shadow:0 1px 3px rgba(15,23,42,.04),0 4px 12px rgba(15,23,42,.04);
+    transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s,border-color .25s;
+    cursor:pointer;
+    user-select:none;
+    overflow:hidden;
+}
+.card::before{
+    content:'';
+    position:absolute;
+    left:0;
+    top:0;
+    bottom:0;
+    width:5px;
+    background:linear-gradient(180deg,#94a3b8,#64748b);
+    border-radius:18px 0 0 18px;
+    transition:width .2s;
+}
+.card[data-hsk="HSK1"]::before{background:linear-gradient(180deg,#22c55e,#16a34a)}
+.card[data-hsk="HSK2"]::before{background:linear-gradient(180deg,#3b82f6,#2563eb)}
+.card[data-hsk="HSK3"]::before{background:linear-gradient(180deg,#8b5cf6,#7c3aed)}
+.card[data-hsk="HSK4"]::before{background:linear-gradient(180deg,#f59e0b,#d97706)}
+.card[data-hsk="HSK5"]::before{background:linear-gradient(180deg,#ef4444,#dc2626)}
+.card[data-hsk="HSK6"]::before{background:linear-gradient(180deg,#ec4899,#db2777)}
+
+.card.tapped{animation:tapPulse .6s}
+@keyframes tapPulse{0%{box-shadow:0 0 0 0 rgba(37,99,235,.4)}70%{box-shadow:0 0 0 14px rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
+
+.card:hover{
+    transform:translateY(-3px);
+    box-shadow:0 4px 8px rgba(15,23,42,.06),0 12px 32px rgba(15,23,42,.1);
+    border-color:var(--border-strong);
+}
+
+.card.focused{
+    transform:scale(1.02);
+    box-shadow:0 12px 40px rgba(37,99,235,.25);
+    border-color:var(--primary);
+    background:linear-gradient(135deg,var(--surface) 0%,rgba(37,99,235,.05) 100%);
+}
+.card.focused::before{width:6px}
+[data-theme="dark"] .card{
+    box-shadow:0 1px 3px rgba(0,0,0,.3),0 4px 12px rgba(0,0,0,.2);
+}
+[data-theme="dark"] .card:hover{
+    box-shadow:0 4px 8px rgba(0,0,0,.4),0 12px 32px rgba(0,0,0,.3);
+}
+[data-theme="dark"] .card.focused{
+    background:linear-gradient(135deg,var(--surface) 0%,rgba(59,130,246,.15) 100%);
+    box-shadow:0 12px 40px rgba(59,130,246,.35);
+}
+.card.focused .card-zh{
+    font-size:clamp(1.65rem,2.5vw,2rem);
+    font-weight:600;
+    line-height:1.5;
+    letter-spacing:.02em;
+}
+
+.card-header{
+    display:flex;
+    align-items:center;
+    gap:.5rem;
+    margin-bottom:.7rem;
+    padding-bottom:.65rem;
+    border-bottom:1px dashed var(--border);
+    position:relative;
+}
+.card-stt{
+    width:auto;
+    min-width:clamp(26px,2.5vw,30px);
+    height:clamp(26px,2.5vw,30px);
+    padding:0 .5rem;
+    border-radius:var(--radius-full);
+    background:linear-gradient(135deg,#6366f1,#8b5cf6);
+    color:#fff;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:clamp(.66rem,.8vw,.74rem);
+    font-weight:800;
+    flex-shrink:0;
+    box-shadow:0 2px 6px rgba(99,102,241,.35);
+    letter-spacing:.02em;
+}
+.card-meta{
+    display:flex;
+    gap:.3rem;
+    align-items:center;
+    flex:1;
+    min-width:0;
+    flex-wrap:wrap;
+}
+
+.card-tag{
+    display:inline-flex;
+    align-items:center;
+    padding:.18rem .55rem;
+    border-radius:var(--radius-full);
+    background:var(--surface-2);
+    color:var(--text-2);
+    font-size:clamp(.58rem,.72vw,.68rem);
+    font-weight:700;
+    white-space:nowrap;
+    border:1px solid var(--border);
+    letter-spacing:.01em;
+}
+.card-tag.hsk{
+    background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(139,92,246,.12));
+    color:#5b21b6;
+    border-color:rgba(139,92,246,.3);
+    font-weight:800;
+}
+[data-theme="dark"] .card-tag.hsk{
+    background:linear-gradient(135deg,rgba(139,92,246,.25),rgba(167,139,250,.15));
+    color:#c4b5fd;
+    border-color:rgba(167,139,250,.4);
+}
+.card-tag.topic{
+    background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(217,119,6,.12));
+    color:#92400e;
+    border-color:rgba(245,158,11,.3);
+    font-weight:800;
+}
+[data-theme="dark"] .card-tag.topic{
+    background:linear-gradient(135deg,rgba(245,158,11,.25),rgba(217,119,6,.15));
+    color:#fcd34d;
+    border-color:rgba(245,158,11,.4);
+}
+.card-tag.subject{
+    background:linear-gradient(135deg,rgba(22,163,74,.12),rgba(21,128,61,.08));
+    color:#15803d;
+    border-color:rgba(22,163,74,.25);
+}
+[data-theme="dark"] .card-tag.subject{
+    background:linear-gradient(135deg,rgba(22,163,74,.2),rgba(21,128,61,.12));
+    color:#4ade80;
+    border-color:rgba(22,163,74,.4);
+}
+
+.card-body{
+    margin-bottom:.7rem;
+    padding-left:.15rem;
+}
+.card-vi{
+    font-size:clamp(.78rem,.9vw,.88rem);
+    color:var(--text-2);
+    margin-bottom:.5rem;
+    line-height:1.5;
+    font-weight:500;
+    position:relative;
+    padding-left:.85rem;
+}
+.card-vi::before{
+    content:'';
+    position:absolute;
+    left:0;
+    top:.55em;
+    width:5px;
+    height:5px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+    box-shadow:0 0 0 2px rgba(245,158,11,.2);
+}
+.card-zh{
+    font-size:clamp(1.15rem,1.6vw,1.35rem);
+    font-weight:600;
+    color:var(--text);
+    margin-bottom:.5rem;
+    line-height:1.55;
+    font-family:var(--font-zh);
+    letter-spacing:.03em;
+}
+.card-pinyin{
+    font-size:clamp(.72rem,.88vw,.82rem);
+    font-style:italic;
+    color:var(--primary-dark);
+    background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(37,99,235,.04));
+    padding:.3rem .7rem;
+    border-radius:50px;
+    display:inline-block;
+    font-weight:500;
+    border:1px solid rgba(37,99,235,.15);
+    letter-spacing:.02em;
+}
+[data-theme="dark"] .card-pinyin{
+    background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(59,130,246,.1));
+    color:#93c5fd;
+    border-color:rgba(59,130,246,.3);
+}
+
+.card-excel-row{
+    display:inline-flex;
+    align-items:center;
+    gap:.3rem;
+    padding:.18rem .55rem;
+    border-radius:var(--radius-full);
+    background:linear-gradient(135deg,rgba(22,163,74,.12),rgba(22,163,74,.08));
+    color:#15803d;
+    font-size:clamp(.58rem,.72vw,.68rem);
+    font-weight:800;
+    white-space:nowrap;
+    border:1px solid rgba(22,163,74,.25);
+    letter-spacing:.02em;
+}
+.card-excel-row i{font-size:.75em;opacity:.85}
+[data-theme="dark"] .card-excel-row{
+    background:linear-gradient(135deg,rgba(22,163,74,.2),rgba(22,163,74,.12));
+    color:#4ade80;
+    border-color:rgba(22,163,74,.4);
+}
+
 .card-practice{display:flex;align-items:center;gap:.4rem;padding-top:.6rem;border-top:1px dashed var(--border);flex-wrap:wrap}
 .card-practice .practice-input{flex:1;min-width:120px}
 .card-check{font-size:.75rem;font-weight:700;min-width:55px;text-align:center;width:100%}
@@ -136,12 +346,6 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 .action-group{display:flex;gap:.3rem;justify-content:center;align-items:center}
 .practice-input{width:100%;min-width:120px;padding:clamp(.35rem,.6vh,.5rem) clamp(.55rem,.8vw,.8rem);border-radius:var(--radius-full);border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:clamp(.78rem,.9vw,.9rem);outline:none;transition:.15s;font-family:var(--font-zh)}
 .practice-input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-.card{background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);padding:clamp(.7rem,1.3vw,.9rem);box-shadow:var(--shadow-sm);transition:transform .25s,box-shadow .25s,border-color .25s;cursor:pointer;user-select:none}
-.card.tapped{animation:tapPulse .6s}
-@keyframes tapPulse{0%{box-shadow:0 0 0 0 rgba(37,99,235,.4)}70%{box-shadow:0 0 0 14px rgba(37,99,235,0)}100%{box-shadow:0 0 0 0 rgba(37,99,235,0)}}
-.card.focused{transform:scale(1.02);box-shadow:0 12px 32px rgba(37,99,235,.2);border-color:var(--primary);background:linear-gradient(135deg,var(--surface) 0%,rgba(37,99,235,.06) 100%)}
-[data-theme="dark"] .card.focused{background:linear-gradient(135deg,var(--surface) 0%,rgba(59,130,246,.15) 100%);box-shadow:0 12px 32px rgba(59,130,246,.3)}
-.card.focused .card-zh{font-size:clamp(1.6rem,2.5vw,2rem);font-weight:500;line-height:1.5}
 .practice-input,.audio-btn,.write-btn,.card-practice{cursor:auto}
 .load-more{grid-column:1 / -1;display:block;width:100%;padding:clamp(.6rem,1.2vh,.9rem);margin-top:.5rem;border-radius:var(--radius);border:1.5px dashed var(--border-strong);background:var(--surface);color:var(--primary);font-weight:700;font-size:clamp(.78rem,.9vw,.88rem);cursor:pointer;transition:.15s;font-family:inherit}
 .load-more:hover{background:var(--primary-light);border-color:var(--primary)}
@@ -176,7 +380,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (max-width:400px){.pf-brand-title{font-size:.7rem}.pf-brand-sub{font-size:.5rem}.pf-brand-icon{width:24px;height:24px;font-size:.65rem}}
 
 /* ============================================================ */
-/* TIKTOK FLOAT — đẩy lên trên nav, hạ z-index để không che nav */
+/* TIKTOK FLOAT */
 /* ============================================================ */
 .pf-tiktok-float{position:fixed;left:clamp(14px,2vw,22px);bottom:calc(80px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:clamp(.4rem,.6vw,.55rem);padding:clamp(.35rem,.55vw,.5rem) clamp(.7rem,1vw,.9rem) clamp(.35rem,.55vw,.5rem) clamp(.35rem,.55vw,.5rem);border-radius:999px;background:linear-gradient(135deg,#25f4ee 0%,#000 50%,#fe2c55 100%);color:#fff;text-decoration:none;font-family:inherit;min-width:clamp(120px,15vw,180px);max-width:clamp(160px,22vw,240px);box-shadow:0 10px 28px rgba(254,44,85,.4),0 4px 14px rgba(0,0,0,.35);z-index:2400;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s ease;overflow:hidden;cursor:pointer}
 .pf-tiktok-float:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 14px 36px rgba(254,44,85,.6),0 6px 20px rgba(0,0,0,.45),0 0 0 3px rgba(37,244,238,.5)}
@@ -271,7 +475,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .answer-actions button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 
 /* ============================================================ */
-/* HIGHLIGHT cụm đang đọc (karaoke) */
+/* HIGHLIGHT cụm đang đọc (karaoke) — VÀNG CAM */
 /* ============================================================ */
 .answer-phrase-btn.reading{
     background:linear-gradient(135deg,#f59e0b,#d97706) !important;
@@ -283,7 +487,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 
 /* ============================================================ */
-/* TOOLTIP PINYIN (hover PC + click mobile) */
+/* TOOLTIP PINYIN — VÀNG CAM khớp highlight */
 /* ============================================================ */
 .answer-phrase-wrap{
     position:relative;
@@ -291,23 +495,26 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 .answer-phrase-tooltip{
     position:absolute;
-    bottom:calc(100% + 8px);
+    bottom:calc(100% + 10px);
     left:50%;
-    transform:translateX(-50%) translateY(4px);
-    background:linear-gradient(135deg,#1e293b,#334155);
-    color:#93c5fd;
-    padding:.35rem .65rem;
-    border-radius:10px;
+    transform:translateX(-50%) translateY(6px) scale(.95);
+    background:linear-gradient(135deg,#f59e0b,#d97706);
+    color:#fff;
+    padding:.4rem .75rem;
+    border-radius:12px;
     font-size:.78rem;
     font-style:italic;
-    font-weight:600;
+    font-weight:700;
     white-space:nowrap;
-    box-shadow:0 8px 24px rgba(0,0,0,.25);
+    border:1px solid rgba(255,255,255,.3);
+    box-shadow:0 12px 32px rgba(245,158,11,.5),0 4px 12px rgba(0,0,0,.15);
     pointer-events:none;
     opacity:0;
     visibility:hidden;
-    transition:opacity .15s,transform .15s,visibility .15s;
+    transition:opacity .2s,transform .2s,visibility .2s;
     z-index:100;
+    letter-spacing:.02em;
+    text-shadow:0 1px 2px rgba(0,0,0,.15);
 }
 .answer-phrase-tooltip::after{
     content:'';
@@ -315,13 +522,14 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     top:100%;
     left:50%;
     transform:translateX(-50%);
-    border:6px solid transparent;
-    border-top-color:#1e293b;
+    border:7px solid transparent;
+    border-top-color:#d97706;
+    filter:drop-shadow(0 2px 2px rgba(245,158,11,.3));
 }
 .answer-phrase-tooltip.show{
     opacity:1;
     visibility:visible;
-    transform:translateX(-50%) translateY(0);
+    transform:translateX(-50%) translateY(0) scale(1);
 }
 @media (max-width:768px){
     .answer-phrase-btn.reading{
@@ -368,16 +576,12 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .writer-score.error{color:var(--danger);font-weight:600}
 .trial-badge{display:none;align-items:center;gap:.35rem;padding:clamp(.22rem,.5vw,.35rem) clamp(.45rem,.8vw,.7rem);border-radius:50px;background:linear-gradient(135deg,#fbbf24,#f59e0b);color:#1e1b4b;font-size:clamp(.58rem,.75vw,.68rem);font-weight:800;text-transform:uppercase;white-space:nowrap}
 .trial-badge.show{display:flex}
-[data-theme="dark"] .card-tag.hsk{background:rgba(59,130,246,.25);color:#93c5fd}
 [data-theme="dark"] .audio-btn{background:rgba(59,130,246,.22);color:#93c5fd;border:1px solid rgba(59,130,246,.35)}
 @media (min-width:1000px){.search-filter-row{display:grid;grid-template-columns:1fr auto;gap:.55rem;align-items:center}.search-bar{margin-bottom:0}.filters{display:grid;grid-template-columns:160px 180px;gap:.4rem;max-width:none;margin-bottom:0}}
 @media (min-width:1400px){.filters{grid-template-columns:180px 200px}}
 @media (min-width:769px) and (max-height:700px){.practice-full-body{padding:.75rem .85rem}.practice-full-content{gap:.75rem}.practice-full-vi{font-size:1.3rem;padding:.7rem .6rem}.practice-full-input{font-size:1.3rem;padding:.7rem .9rem}.practice-speak-btn{min-width:46px}.char-slot{font-size:1.3rem;min-width:1.5rem;height:1.9rem}.practice-full-nav{padding:.5rem .85rem}.pf-nav-btn{padding:.55rem .75rem;font-size:.8rem}}
 
-/* ============================================================ */
-/* CHỈ áp dụng cho DESKTOP thực sự (có chuột) + màn hình thấp */
-/* → Không ẩn ô search trên mobile xoay ngang nữa */
-/* ============================================================ */
+/* Chỉ áp dụng cho DESKTOP thực sự (có chuột) + màn hình thấp */
 @media (min-width:769px) and (max-height:550px) and (hover:hover) and (pointer:fine){
     .practice-full-header{padding:.3rem .85rem}
     .pf-filters{padding:.25rem .85rem .2rem}
@@ -400,9 +604,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .chip.has-value{animation:chipPulse 2s ease-in-out infinite}
 .pf-chip.has-value{animation:chipPulse 2s ease-in-out infinite}
 @keyframes chipPulse{0%,100%{box-shadow:0 4px 12px rgba(37,99,235,.3)}50%{box-shadow:0 4px 18px rgba(37,99,235,.5)}}
-.card-excel-row{display:inline-flex;align-items:center;gap:.25rem;padding:.12rem .5rem;border-radius:var(--radius-full);background:linear-gradient(135deg,rgba(22,163,74,.12),rgba(22,163,74,.08));color:#15803d;font-size:clamp(.55rem,.7vw,.65rem);font-weight:700;white-space:nowrap;border:1px solid rgba(22,163,74,.25)}
-.card-excel-row i{font-size:.75em;opacity:.85}
-[data-theme="dark"] .card-excel-row{background:linear-gradient(135deg,rgba(22,163,74,.2),rgba(22,163,74,.12));color:#4ade80;border-color:rgba(22,163,74,.4)}
 .practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(22,163,74,.1));color:#15803d;border:1px solid rgba(22,163,74,.3);font-weight:700;display:inline-flex;align-items:center;gap:.3rem}
 [data-theme="dark"] .practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.25),rgba(22,163,74,.15));color:#4ade80;border-color:rgba(22,163,74,.5)}
 @media (min-width:769px){.header-inner{display:flex!important;align-items:center!important;gap:clamp(.4rem,.8vw,.75rem)!important;flex-wrap:nowrap!important;overflow:hidden;width:100%;position:relative}.header-inner .logo{flex:1 1 auto!important;min-width:0!important;overflow:hidden}.header-inner .tiktok-bar{flex:0 1 auto!important;min-width:0!important;max-width:clamp(140px,22vw,260px)!important;margin:0!important;padding:clamp(.3rem,.5vw,.42rem) clamp(.55rem,.8vw,.75rem)!important;gap:clamp(.35rem,.6vw,.5rem)!important;font-size:clamp(.65rem,.8vw,.78rem)!important;border-radius:50px!important;overflow:hidden;position:relative;z-index:3;align-self:center}.header-inner .tiktok-bar .tiktok-bar-avatar{width:clamp(24px,2.4vw,30px)!important;height:clamp(24px,2.4vw,30px)!important;flex-shrink:0}.header-inner .tiktok-bar .tiktok-bar-info{min-width:0;overflow:hidden}.header-inner .tiktok-bar .tiktok-nick{font-size:clamp(.7rem,.85vw,.82rem)!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.header-inner .tiktok-bar .tiktok-user{font-size:clamp(.6rem,.72vw,.7rem)!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.header-inner .tiktok-bar .tiktok-bar-link{padding:clamp(.28rem,.4vw,.38rem) clamp(.5rem,.7vw,.7rem)!important;font-size:clamp(.62rem,.75vw,.72rem)!important;flex-shrink:0}.header-inner .header-actions{flex:0 0 auto!important;margin-left:auto!important;display:flex!important;gap:.4rem!important;align-items:center!important;position:relative;z-index:5}}
@@ -410,9 +611,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (max-width:1024px){.header-inner .tiktok-bar{max-width:clamp(100px,15vw,160px)!important}.header-inner .tiktok-bar .tiktok-user{display:none}}
 @media (max-width:900px){.header-inner .tiktok-bar{max-width:130px!important}.header-inner .tiktok-bar .tiktok-bar-link span{display:none}}
 
-/* ============================================================ */
 /* FIX: Counter + Tags trên header full màn hình */
-/* ============================================================ */
 .practice-full-header .pf-counter{
     flex-shrink:0;
     max-width:46vw;
@@ -445,101 +644,34 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .pf-brand-sub{display:none}
 }
 
-/* ============================================================ */
-/* Điện thoại xoay ngang: giữ search + filter, thu gọn vừa đủ */
-/* ============================================================ */
+/* Điện thoại xoay ngang */
 @media (max-width:1024px) and (max-height:550px) and (orientation:landscape){
-    .practice-full-header{
-        padding:.35rem .75rem;
-        gap:.35rem;
-        min-height:44px;
-    }
+    .practice-full-header{padding:.35rem .75rem;gap:.35rem;min-height:44px}
     .pf-brand-sub{display:none}
     .pf-brand-title{font-size:.72rem}
-    .pf-filters{
-        padding:.3rem .75rem .25rem;
-    }
-    .pf-search-wrap{
-        margin-bottom:.3rem;
-    }
-    .pf-search-wrap input{
-        padding:.28rem 2rem;
-        font-size:.72rem;
-    }
-    .pf-filter-row{
-        gap:.4rem;
-    }
-    .pf-chip{
-        padding:.2rem .5rem;
-        font-size:.68rem;
-    }
-    .pf-quick-nav{
-        margin-top:.25rem;
-    }
-    .pf-quick-nav-select{
-        padding:.22rem 1.8rem .22rem .5rem;
-        font-size:.68rem;
-    }
-    .practice-full-body{
-        padding:.5rem .7rem calc(70px + env(safe-area-inset-bottom));
-    }
-    .practice-full-content{
-        gap:.5rem;
-    }
-    .practice-full-vi{
-        font-size:1.05rem;
-        padding:.55rem .55rem;
-        line-height:1.35;
-    }
-    .practice-full-input{
-        font-size:1.1rem;
-        padding:.55rem .75rem;
-    }
-    .practice-speak-btn{
-        min-width:42px;
-        font-size:.95rem;
-    }
-    .char-slot{
-        font-size:1.05rem;
-        min-width:1.2rem;
-        height:1.55rem;
-    }
-    .reveal-actions button{
-        padding:.45rem .5rem;
-        font-size:.75rem;
-    }
-    .practice-full-nav{
-        padding:.4rem .7rem;
-        min-height:44px;
-    }
-    .pf-nav-btn{
-        padding:.45rem .6rem;
-        font-size:.75rem;
-    }
-    .pf-tiktok-float{
-        transform:scale(.85);
-        transform-origin:left bottom;
-        left:8px;
-        bottom:calc(4px + env(safe-area-inset-bottom));
-    }
+    .pf-filters{padding:.3rem .75rem .25rem}
+    .pf-search-wrap{margin-bottom:.3rem}
+    .pf-search-wrap input{padding:.28rem 2rem;font-size:.72rem}
+    .pf-filter-row{gap:.4rem}
+    .pf-chip{padding:.2rem .5rem;font-size:.68rem}
+    .pf-quick-nav{margin-top:.25rem}
+    .pf-quick-nav-select{padding:.22rem 1.8rem .22rem .5rem;font-size:.68rem}
+    .practice-full-body{padding:.5rem .7rem calc(70px + env(safe-area-inset-bottom))}
+    .practice-full-content{gap:.5rem}
+    .practice-full-vi{font-size:1.05rem;padding:.55rem .55rem;line-height:1.35}
+    .practice-full-input{font-size:1.1rem;padding:.55rem .75rem}
+    .practice-speak-btn{min-width:42px;font-size:.95rem}
+    .char-slot{font-size:1.05rem;min-width:1.2rem;height:1.55rem}
+    .reveal-actions button{padding:.45rem .5rem;font-size:.75rem}
+    .practice-full-nav{padding:.4rem .7rem;min-height:44px}
+    .pf-nav-btn{padding:.45rem .6rem;font-size:.75rem}
+    .pf-tiktok-float{transform:scale(.85);transform-origin:left bottom;left:8px;bottom:calc(4px + env(safe-area-inset-bottom))}
 }
-
-/* Điện thoại xoay ngang rất thấp (<420px) - ẩn bớt pf-quick-nav */
 @media (max-width:1024px) and (max-height:420px) and (orientation:landscape){
-    .pf-quick-nav{
-        display:none;
-    }
-    .practice-full-header .pf-tags{
-        overflow-x:auto;
-    }
-    .practice-full-vi{
-        font-size:.95rem;
-        padding:.45rem .5rem;
-    }
-    .practice-full-input{
-        font-size:1rem;
-        padding:.5rem .7rem;
-    }
+    .pf-quick-nav{display:none}
+    .practice-full-header .pf-tags{overflow-x:auto}
+    .practice-full-vi{font-size:.95rem;padding:.45rem .5rem}
+    .practice-full-input{font-size:1rem;padding:.5rem .7rem}
 }
 
 /* ==== SOCIAL CSS ==== */
@@ -3462,13 +3594,13 @@ function render(reset) {
                          '</span>';
         }
 
-        mobHtml += '<div class="card" onclick="toggleFocus(\'' + sttJs + '\', this)" data-stt="' + sttSafe + '">' +
+        mobHtml += '<div class="card" data-hsk="' + (r.hsk || '') + '" onclick="toggleFocus(\'' + sttJs + '\', this)" data-stt="' + sttSafe + '">' +
             '<div class="card-header">' +
                 '<div class="card-stt">' + sttSafe + '</div>' +
                 '<div class="card-meta">' +
                     (r.hsk ? '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>' : '') +
                     (r.topic ? '<span class="card-tag topic">' + escapeHtml(r.topic) + '</span>' : '') +
-                    (r.subject ? '<span class="card-tag">' + escapeHtml(r.subject) + '</span>' : '') +
+                    (r.subject ? '<span class="card-tag subject">' + escapeHtml(r.subject) + '</span>' : '') +
                     excelBadge +
                 '</div>' +
                 '<div onclick="event.stopPropagation()" class="action-group">' + audio + writeBtn + fullBtn + '</div>' +
@@ -3626,9 +3758,6 @@ function smartCheck(userAnswer, correctAnswer) {
     return { status: 'wrong', reason: 'Không khớp' };
 }
 
-/* ================================================================
-   ĐẾM SỐ ÂM TIẾT TRONG 1 TỪ PINYIN
-   ================================================================ */
 function countSyllables(pinyinWord) {
     if (!pinyinWord) return 0;
     var cleaned = pinyinWord
@@ -3657,10 +3786,6 @@ function countSyllables(pinyinWord) {
     return count || 1;
 }
 
-/* ================================================================
-   GHÉP CỤM TỪ TIẾNG TRUNG DỰA THEO PINYIN
-   Trả về mảng { text, type, pinyin }
-   ================================================================ */
 function splitByPinyin(zh, pinyin) {
     if (!zh) return [];
     var hanziChars = [];
@@ -3923,13 +4048,11 @@ function loadPracticeFull(stt) {
     pfCurrentVi = r.vi || '';
     pfCurrentPinyin = r.pinyin || '';
 
-    // ==== HIỂN THỊ STT GỐC TỪ EXCEL TRÊN HEADER ====
     var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
                  ? String(r.stt).trim()
                  : '';
     var sttLabel = sttRaw ? '#' + sttRaw + '  ·  ' : '';
     $('pfCounter').textContent = sttLabel + 'Câu ' + (idx + 1) + ' / ' + filtered.length;
-    // ==============================================
 
     var tagsHtml = '';
     if (r.hsk) tagsHtml += '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>';
@@ -4223,9 +4346,6 @@ function checkFullAnswer() {
     }
 }
 
-/* ============================================================ */
-/* TOOLTIP PINYIN CHO MOBILE — Click cụm → toggle tooltip */
-/* ============================================================ */
 var _activeTooltipWrap = null;
 
 function togglePhraseTooltip(wrapEl) {
@@ -4256,9 +4376,6 @@ document.addEventListener('click', function(e) {
     }
 });
 
-/* ============================================================ */
-/* HIỂN THỊ ĐÁP ÁN + GẮN TOOLTIP PINYIN + HOVER */
-/* ============================================================ */
 function revealFullAnswer() {
     var answerEl = $('pfAnswer');
     var revealBtn = $('pfRevealBtn');
@@ -4295,22 +4412,18 @@ function revealFullAnswer() {
                 e.stopPropagation();
                 el.classList.add('zoom-in');
                 setTimeout(function() { el.classList.remove('zoom-in'); }, 700);
-                // Mobile: toggle tooltip pinyin
                 togglePhraseTooltip(wrapEl);
-                // Đọc cụm
                 speakPhrase(text, el);
             };
         })(item.text, item.pinyin, btn, wrap);
         wrap.appendChild(btn);
 
-        // Tooltip pinyin
         if (item.pinyin) {
             var tip = document.createElement('span');
             tip.className = 'answer-phrase-tooltip';
             tip.textContent = item.pinyin;
             wrap.appendChild(tip);
 
-            // PC hover
             wrap.addEventListener('mouseenter', function() {
                 tip.classList.add('show');
             });
@@ -4357,16 +4470,20 @@ window.speakFullSentence = function() {
     setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
 };
 
-/* ============================================================ */
-/* ĐỌC CẢ CÂU — HIGHLIGHT TỪNG CỤM (KARAOKE) */
-/* ============================================================ */
 window.speakFullSentenceWithHighlight = function() {
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
     if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
 
     speechSynthesis.cancel();
+
+    document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+        t.classList.remove('show');
+    });
+    _activeTooltipWrap = null;
+
     var phrases = window._pfPhrases || [];
+    var wraps = document.querySelectorAll('.answer-phrase-wrap');
     var buttons = document.querySelectorAll('.answer-phrase-btn');
 
     buttons.forEach(function(b) { b.classList.remove('reading', 'speaking'); });
@@ -4385,11 +4502,28 @@ window.speakFullSentenceWithHighlight = function() {
     function speakNext() {
         if (idx >= phrases.length) {
             buttons.forEach(function(b) { b.classList.remove('reading'); });
+            document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+                t.classList.remove('show');
+            });
+            _activeTooltipWrap = null;
             return;
         }
         var phrase = phrases[idx];
         var btn = buttons[idx];
+        var wrap = wraps[idx];
+
         if (btn) btn.classList.add('reading');
+
+        if (wrap) {
+            document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+                t.classList.remove('show');
+            });
+            var tip = wrap.querySelector('.answer-phrase-tooltip');
+            if (tip) {
+                tip.classList.add('show');
+                _activeTooltipWrap = wrap;
+            }
+        }
 
         var u = new SpeechSynthesisUtterance(phrase.text);
         u.lang = 'zh-CN';
@@ -4417,6 +4551,10 @@ window.stopSpeaking = function() {
     document.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
         b.classList.remove('reading', 'speaking');
     });
+    document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+        t.classList.remove('show');
+    });
+    _activeTooltipWrap = null;
 };
 
 function initPracticeFull() {
