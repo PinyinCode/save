@@ -1,14 +1,21 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 """
 Chuyển file Excel → HTML tự chứa dữ liệu.
 Ghép 4 template: ui + social + accounts (gộp renewal) + data.
 
 ✅ HEADER: Subtitle "Văn phòng & Công xưởng" được thiết kế lại
    thành PILL nổi bật với icon ✦ lấp lánh — không còn mờ.
+
+✅ ĐA DATASET: Tự động quét thư mục `data/`, mỗi file Excel
+   → 1 mục "Chuyên ngành" trong dropdown. Thêm file mới = copy
+   vào `data/` + chạy lại `python main.py`, không cần sửa code.
 """
 import json
 import os
 import sys
+import glob
+import re
+import unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
@@ -28,7 +35,7 @@ from accounts_template import (
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  LOAD CONFIG + DATA
+#  LOAD CONFIG + DATA (đa dataset, tự động quét thư mục data/)
 # ═══════════════════════════════════════════════════════════════════
 CONFIG = load_config()
 print_banner(CONFIG)
@@ -36,14 +43,155 @@ print_banner(CONFIG)
 EXCEL_FILE = CONFIG["excel_file"]
 OUTPUT_HTML = CONFIG["output_html"]
 SHEET_INDEX = CONFIG["sheet_index"]
+DATA_DIR = CONFIG.get("data_dir", "data")
 
-data = read_excel(EXCEL_FILE, SHEET_INDEX)
+# ─── 1. Đọc dataset gốc (1700 câu) ───
+data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
+print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
 
-json_data = json.dumps(data, ensure_ascii=True, separators=(',', ':'))
-json_data = json_data.replace('</', '<\\/')
+# ─── 2. Map icon + màu cho các chuyên ngành phổ biến ───
+ICON_MAP = {
+    "nhân sự":           ("fa-users",          "#0891b2"),
+    "thu mua":           ("fa-shopping-cart",  "#f59e0b"),
+    "xuất nhập khẩu":    ("fa-ship",           "#0ea5e9"),
+    "kế toán":           ("fa-calculator",     "#16a34a"),
+    "chất lượng":        ("fa-award",          "#8b5cf6"),
+    "kế hoạch sản xuất": ("fa-calendar-alt",   "#d97706"),
+    "sản xuất":          ("fa-industry",       "#dc2626"),
+    "kho":               ("fa-warehouse",      "#65a30d"),
+    "it":                ("fa-laptop-code",    "#7c3aed"),
+    "kinh doanh":        ("fa-chart-line",     "#0ea5e9"),
+    "hành chính":        ("fa-briefcase",      "#6366f1"),
+    "kỹ thuật":          ("fa-tools",          "#f97316"),
+    "bảo trì":           ("fa-tools",          "#f97316"),
+    "qa":                ("fa-award",          "#8b5cf6"),
+    "qc":                ("fa-award",          "#8b5cf6"),
+    "r&d":               ("fa-flask",          "#8b5cf6"),
+    "marketing":         ("fa-bullhorn",       "#ec4899"),
+}
+DEFAULT_ICON = ("fa-folder", "#64748b")
+
+
+def auto_detect_icon_color(display_name):
+    """Chọn icon/màu dựa theo tên chuyên ngành (không phân biệt hoa thường)."""
+    key = display_name.strip().lower()
+    if key in ICON_MAP:
+        return ICON_MAP[key]
+    for k, v in ICON_MAP.items():
+        if k in key or key in k:
+            return v
+    return DEFAULT_ICON
+
+
+def slugify_dataset_id(filename):
+    """Tạo id slug từ tên file: 'Nhân_sự.xlsx' → 'nhan-su'."""
+    base = filename.rsplit(".", 1)[0]  # bỏ .xlsx
+    # Bỏ dấu tiếng Việt
+    base = unicodedata.normalize("NFD", base)
+    base = "".join(c for c in base if unicodedata.category(c) != "Mn")
+    base = base.replace("đ", "d").replace("Đ", "D")
+    base = re.sub(r"[^a-zA-Z0-9]+", "-", base).strip("-").lower()
+    return base or "dataset"
+
+
+# ─── 3. Khởi tạo DATASET_REGISTRY với dataset "tonghop" ───
+DATASET_REGISTRY = {
+    "tonghop": {
+        "id": "tonghop",
+        "name": f"{len(data_tonghop)} câu phản xạ tổng hợp VPCX",
+        "icon": "fa-book-open",
+        "color": "#4f46e5",
+        "data": data_tonghop,
+        "count": len(data_tonghop),
+        "source": EXCEL_FILE,
+    }
+}
+
+# ─── 4. Quét thư mục data/ để tự động phát hiện chuyên ngành ───
+_tonghop_abs = os.path.abspath(EXCEL_FILE)
+_chuyen_nganh_count = 0
+
+if os.path.isdir(DATA_DIR):
+    excel_files = []
+    for ext in ("*.xlsx", "*.xls", "*.csv"):
+        excel_files.extend(glob.glob(os.path.join(DATA_DIR, ext)))
+    excel_files.sort()  # Sắp xếp A→Z theo tên file
+
+    print(f"\n🔍 Quét thư mục '{DATA_DIR}/' — tìm thấy {len(excel_files)} file Excel")
+
+    for filepath in excel_files:
+        filename = os.path.basename(filepath)
+
+        # Bỏ qua file tạm của Excel (bắt đầu bằng ~$)
+        if filename.startswith("~$"):
+            continue
+
+        # Bỏ qua file tổng hợp (đã đọc ở trên)
+        if os.path.abspath(filepath) == _tonghop_abs:
+            print(f"⏭️  {filename} — bỏ qua (file tổng hợp)")
+            continue
+
+        try:
+            sub_data = read_excel(filepath, 0)
+            if not sub_data:
+                print(f"⚠️  {filename}: file rỗng, bỏ qua")
+                continue
+
+            # Tên hiển thị = tên file bỏ extension, thay _ bằng khoảng trắng
+            display_name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
+            # Title case nếu viết thường hoặc viết HOA toàn bộ
+            if display_name.islower() or display_name.isupper():
+                display_name = display_name.title()
+
+            # Sinh id slug, tránh trùng
+            dataset_id = slugify_dataset_id(filename)
+            base_id = dataset_id
+            counter = 2
+            while dataset_id in DATASET_REGISTRY:
+                dataset_id = f"{base_id}-{counter}"
+                counter += 1
+
+            # Tự động detect icon + màu theo tên
+            icon, color = auto_detect_icon_color(display_name)
+
+            DATASET_REGISTRY[dataset_id] = {
+                "id": dataset_id,
+                "name": display_name,
+                "icon": icon,
+                "color": color,
+                "data": sub_data,
+                "count": len(sub_data),
+                "source": filename,
+            }
+            _chuyen_nganh_count += 1
+            print(f"🏭 {display_name:25s} ({filename}) — {len(sub_data)} câu")
+        except Exception as e:
+            print(f"❌ Lỗi đọc {filename}: {e}")
+            continue
+
+    if _chuyen_nganh_count == 0:
+        print(f"ℹ️  Không có file chuyên ngành nào trong '{DATA_DIR}/'")
+        print(f"   (chỉ dùng dataset tổng hợp).")
+else:
+    print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
+    print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
+
+# ─── 5. Serialize DATASET_REGISTRY → JSON (bỏ field 'data' để nhẹ) ───
+# Nhưng chúng ta cần giữ 'data' vì toàn bộ app dùng client-side.
+# Serialize toàn bộ, không lược bỏ.
+dataset_registry_json = json.dumps(
+    DATASET_REGISTRY,
+    ensure_ascii=True,
+    separators=(",", ":"),
+).replace("</", "<\\/")
+
+# ─── 6. RAW_DATA = tổng hợp (backward compat với code cũ) ───
+json_data = json.dumps(data_tonghop, ensure_ascii=True, separators=(",", ":"))
+json_data = json_data.replace("</", "<\\/")
+
 firebase_config_json = json.dumps(CONFIG["firebase_config"], ensure_ascii=False)
-synonyms_json = json.dumps(CONFIG["synonyms"], ensure_ascii=True, separators=(',', ':'))
-fillers_json = json.dumps(CONFIG["filler_words"], ensure_ascii=True, separators=(',', ':'))
+synonyms_json = json.dumps(CONFIG["synonyms"], ensure_ascii=True, separators=(",", ":"))
+fillers_json = json.dumps(CONFIG["filler_words"], ensure_ascii=True, separators=(",", ":"))
 
 telegram_bot_token = CONFIG.get("telegram_bot_token", "")
 telegram_chat_id = CONFIG.get("telegram_chat_id", "")
@@ -320,8 +468,6 @@ FULLWIDTH_CSS = r"""
 
 /* ═══════════════════════════════════════════════════════════════════
    ★★ SUBTITLE: PILL NỔI BẬT VỚI ICON ✦ LẤP LÁNH ★★
-   Chữ "Văn phòng & Công xưởng" giờ là một chip nổi bật,
-   không còn bị mờ như trước.
    ═══════════════════════════════════════════════════════════════════ */
 .logo-text .subtitle {
     display: inline-flex !important;
@@ -330,7 +476,6 @@ FULLWIDTH_CSS = r"""
     padding: 0.25rem 0.7rem !important;
     border-radius: 999px !important;
 
-    /* Nền gradient tím nhạt */
     background: linear-gradient(
         135deg,
         rgba(99, 102, 241, 0.13) 0%,
@@ -339,7 +484,6 @@ FULLWIDTH_CSS = r"""
     ) !important;
     border: 1px solid rgba(139, 92, 246, 0.3) !important;
 
-    /* Chữ màu tím đậm, dễ đọc */
     color: #5b21b6 !important;
     font-size: clamp(.68rem, .85vw, .78rem) !important;
     font-weight: 700 !important;
@@ -367,7 +511,6 @@ FULLWIDTH_CSS = r"""
         inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
 }
 
-/* Icon ✦ lấp lánh phía trước */
 .logo-text .subtitle::before {
     content: '✦';
     display: inline-flex !important;
@@ -397,7 +540,6 @@ FULLWIDTH_CSS = r"""
     }
 }
 
-/* Dark mode */
 [data-theme="dark"] .logo-text .subtitle {
     background: linear-gradient(
         135deg,
@@ -524,7 +666,6 @@ FULLWIDTH_CSS = r"""
     }
 }
 
-/* ─── Mobile siêu nhỏ ─── */
 @media (max-width: 400px) {
     .logo-text .subtitle {
         display: none !important;
@@ -608,6 +749,9 @@ __BODY__
 <script>
 /* ============ DỮ LIỆU + CONFIG ============ */
 var RAW_DATA = __DATA__;
+var DATASET_REGISTRY = __DATASET_REGISTRY__;
+var CURRENT_DATASET = 'tonghop';
+
 var FIREBASE_CONFIG = __FIREBASE_CONFIG__;
 
 var DEMO_LIMIT = __DEMO_LIMIT__;
@@ -632,6 +776,14 @@ var FILLER_WORDS = __FILLER_WORDS__;
 var $ = function(id) { return document.getElementById(id); };
 
 __JS__
+
+/* ============ ĐỒNG BỘ RAW_DATA KHI ĐỔI DATASET ============ */
+window.__switchRawData = function(datasetId) {
+    if (!DATASET_REGISTRY || !DATASET_REGISTRY[datasetId]) return false;
+    RAW_DATA = DATASET_REGISTRY[datasetId].data || [];
+    CURRENT_DATASET = datasetId;
+    return true;
+};
 </script>
 
 <script>
@@ -721,6 +873,7 @@ html_output = (HTML_SHELL
     .replace("__BODY__", full_body)
     .replace("__JS__", full_js)
     .replace("__DATA__", json_data)
+    .replace("__DATASET_REGISTRY__", dataset_registry_json)
     .replace("__FIREBASE_CONFIG__", firebase_config_json)
     .replace("__DEMO_LIMIT__", str(CONFIG["demo_limit"]))
     .replace("__DEMO_DAILY_LIMIT__", str(CONFIG["demo_daily_limit"]))
@@ -747,7 +900,12 @@ with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
     f.write(html_output)
 
 size_kb = os.path.getsize(OUTPUT_HTML) / 1024
+total_datasets = len(DATASET_REGISTRY)
+total_questions = sum(ds["count"] for ds in DATASET_REGISTRY.values())
+
 print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
-print(f"📚 Tổng số câu: {len(data)}")
+print(f"📚 Tổng số bộ dữ liệu: {total_datasets} (1 tổng hợp + {_chuyen_nganh_count} chuyên ngành)")
+print(f"📝 Tổng số câu hỏi: {total_questions}")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
+print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
