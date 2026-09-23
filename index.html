@@ -771,7 +771,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
         align-items:center!important;
         gap:clamp(.4rem,.8vw,.75rem)!important;
         flex-wrap:nowrap!important;
-        overflow:hidden;
+        overflow:visible;
         width:100%;
         position:relative;
     }
@@ -897,6 +897,45 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .practice-full-vi{font-size:.95rem;padding:.45rem .5rem}
     .practice-full-input{font-size:1rem;padding:.5rem .7rem}
 }
+
+/* ============================================================ */
+/* VOICE SETTINGS MODAL */
+/* ============================================================ */
+.voice-modal{position:fixed;inset:0;background:rgba(15,23,42,.8);backdrop-filter:blur(6px);z-index:4000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s}
+.voice-modal.show{display:flex}
+.voice-box{background:var(--surface);border-radius:20px;width:100%;max-width:460px;max-height:calc(100vh - 2rem);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column;animation:voiceSlideUp .3s cubic-bezier(.34,1.56,.64,1)}
+@keyframes voiceSlideUp{from{transform:translateY(30px) scale(.95);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}
+.voice-header{padding:1.1rem 1.25rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:.75rem;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff}
+.voice-header h2{font-size:1.05rem;font-weight:800;display:flex;align-items:center;gap:.5rem;color:#fff;margin:0}
+.voice-header h2 i{color:#67e8f9}
+.voice-close{width:32px;height:32px;border-radius:50%;border:none;background:rgba(255,255,255,.2);color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.95rem;transition:.15s;flex-shrink:0}
+.voice-close:hover{background:rgba(255,255,255,.35)}
+.voice-body{padding:1.25rem;overflow-y:auto;display:flex;flex-direction:column;gap:1.1rem}
+.voice-group{display:flex;flex-direction:column;gap:.5rem}
+.voice-group-label{font-size:.72rem;font-weight:800;color:var(--text-3);text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;justify-content:space-between;gap:.5rem}
+.voice-group-label .voice-value{font-size:.85rem;font-weight:900;color:var(--primary);background:var(--primary-light);padding:.15rem .6rem;border-radius:50px;text-transform:none;letter-spacing:0}
+.voice-slider-row{display:flex;align-items:center;gap:.6rem}
+.voice-slider-row button{width:34px;height:34px;border-radius:50%;border:1.5px solid var(--border);background:var(--surface-2);color:var(--text);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.9rem;font-weight:800;transition:.15s;flex-shrink:0;font-family:inherit}
+.voice-slider-row button:hover{background:var(--primary-light);color:var(--primary-dark);border-color:var(--primary)}
+.voice-slider-row button:active{transform:scale(.94)}
+.voice-slider{flex:1;-webkit-appearance:none;appearance:none;height:6px;border-radius:50px;background:var(--border);outline:none;cursor:pointer}
+.voice-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);cursor:pointer;box-shadow:0 2px 8px rgba(124,58,237,.4);border:2px solid #fff}
+.voice-slider::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,#4f46e5,#7c3aed);cursor:pointer;box-shadow:0 2px 8px rgba(124,58,237,.4);border:2px solid #fff}
+.voice-slider::-moz-range-track{height:6px;border-radius:50px;background:var(--border)}
+.voice-preset-row{display:flex;gap:.35rem;flex-wrap:wrap}
+.voice-preset-btn{padding:.3rem .7rem;border-radius:50px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit;transition:.15s}
+.voice-preset-btn:hover{border-color:var(--primary);color:var(--primary)}
+.voice-preset-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.voice-select{width:100%;padding:.6rem .85rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:.85rem;font-family:inherit;outline:none;cursor:pointer}
+.voice-select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
+.voice-test-btn{padding:.75rem 1rem;border-radius:12px;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:.88rem;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:.5rem;transition:.15s;font-family:inherit;box-shadow:0 4px 12px rgba(124,58,237,.35)}
+.voice-test-btn:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(124,58,237,.5)}
+.voice-test-btn.speaking{background:var(--danger);box-shadow:0 4px 12px rgba(220,38,38,.5)}
+.voice-note{padding:.6rem .8rem;border-radius:10px;background:var(--surface-2);border:1px solid var(--border);font-size:.72rem;color:var(--text-3);line-height:1.5;display:flex;align-items:flex-start;gap:.4rem}
+.voice-note i{color:var(--primary);margin-top:.1rem;flex-shrink:0}
+.voice-reset{padding:.55rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:.15s}
+.voice-reset:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger)}
+[data-theme="dark"] .voice-slider{background:var(--surface-2)}
 
 /* ==== SOCIAL CSS ==== */
 
@@ -2513,6 +2552,7 @@ body.hide-floating .tiktok-bar { display: none !important; }
 <button class="fab-btn fab-sub" id="toggleViBtn" title="Ẩn/hiện Tiếng Việt"><i class="fas fa-language"></i></button>
 <button class="fab-btn fab-sub" id="togglePinyinBtn" title="Ẩn/hiện Pinyin"><i class="fas fa-spell-check"></i></button>
 <button class="fab-btn fab-sub" id="togglePracticeBtn" title="Ẩn/hiện Ô luyện dịch"><i class="fas fa-keyboard"></i></button>
+<button class="fab-btn fab-sub" id="toggleVoiceBtn" title="Cài đặt giọng đọc"><i class="fas fa-headphones"></i></button>
 <button class="fab-btn fab-sub fab-focus" id="toggleFocusBtn" title="Click để tắt Zalo/TikTok (Silent mode)"><i class="fas fa-bell"></i></button>
 <button class="fab-btn fab-main" id="fabMainBtn" title="Tùy chọn hiển thị"><i class="fas fa-sliders-h"></i></button>
 </div>
@@ -2650,6 +2690,82 @@ body.hide-floating .tiktok-bar { display: none !important; }
 </span>
 <i class="fab fa-tiktok pf-tiktok-badge"></i>
 </a>
+</div>
+<div class="voice-modal" id="voiceModal">
+    <div class="voice-box">
+        <div class="voice-header">
+            <h2><i class="fas fa-sliders-h"></i> Cài đặt giọng đọc</h2>
+            <button class="voice-close" id="voiceClose" aria-label="Đóng"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="voice-body">
+
+            <div class="voice-group">
+                <div class="voice-group-label">
+                    <span><i class="fas fa-tachometer-alt"></i> Tốc độ đọc</span>
+                    <span class="voice-value" id="voiceRateValue">1.00×</span>
+                </div>
+                <div class="voice-slider-row">
+                    <button type="button" id="voiceRateMinus" title="Chậm hơn">−</button>
+                    <input type="range" class="voice-slider" id="voiceRateSlider" min="0.5" max="1.5" step="0.05" value="1.0">
+                    <button type="button" id="voiceRatePlus" title="Nhanh hơn">+</button>
+                </div>
+                <div class="voice-preset-row">
+                    <button class="voice-preset-btn" data-rate="0.6">0.6× Rất chậm</button>
+                    <button class="voice-preset-btn" data-rate="0.75">0.75× Chậm</button>
+                    <button class="voice-preset-btn" data-rate="0.85">0.85× Chuẩn</button>
+                    <button class="voice-preset-btn" data-rate="1.0">1.0× Bình thường</button>
+                    <button class="voice-preset-btn" data-rate="1.15">1.15× Nhanh</button>
+                </div>
+            </div>
+
+            <div class="voice-group">
+                <div class="voice-group-label">
+                    <span><i class="fas fa-microphone"></i> Giọng đọc tiếng Trung</span>
+                </div>
+                <select class="voice-select" id="voiceSelect">
+                    <option value="">-- Tự động (mặc định) --</option>
+                </select>
+            </div>
+
+            <div class="voice-group">
+                <div class="voice-group-label">
+                    <span><i class="fas fa-music"></i> Cao độ (Pitch)</span>
+                    <span class="voice-value" id="voicePitchValue">1.00</span>
+                </div>
+                <div class="voice-slider-row">
+                    <button type="button" id="voicePitchMinus" title="Trầm hơn">−</button>
+                    <input type="range" class="voice-slider" id="voicePitchSlider" min="0.5" max="1.5" step="0.05" value="1.0">
+                    <button type="button" id="voicePitchPlus" title="Cao hơn">+</button>
+                </div>
+            </div>
+
+            <div class="voice-group">
+                <div class="voice-group-label">
+                    <span><i class="fas fa-volume-up"></i> Âm lượng</span>
+                    <span class="voice-value" id="voiceVolumeValue">100%</span>
+                </div>
+                <div class="voice-slider-row">
+                    <button type="button" id="voiceVolumeMinus" title="Nhỏ hơn">−</button>
+                    <input type="range" class="voice-slider" id="voiceVolumeSlider" min="0" max="1" step="0.05" value="1.0">
+                    <button type="button" id="voiceVolumePlus" title="To hơn">+</button>
+                </div>
+            </div>
+
+            <button class="voice-test-btn" id="voiceTestBtn" type="button">
+                <i class="fas fa-play"></i> Nghe thử
+            </button>
+
+            <button class="voice-reset" id="voiceResetBtn" type="button">
+                <i class="fas fa-undo-alt"></i> Khôi phục mặc định
+            </button>
+
+            <div class="voice-note">
+                <i class="fas fa-info-circle"></i>
+                <div>Cài đặt được <b>lưu tự động</b> và áp dụng cho tất cả nút loa. Danh sách giọng đọc phụ thuộc vào <b>trình duyệt và hệ điều hành</b> của bạn.</div>
+            </div>
+
+        </div>
+    </div>
 </div>
 
 
@@ -3033,6 +3149,74 @@ var currentBtn = null;
 
 var displayState = { vi: true, pinyin: false, practice: false };
 
+/* ============ VOICE SETTINGS ============ */
+var voiceState = {
+    rate: 1.0,
+    pitch: 1.0,
+    volume: 1.0,
+    voiceURI: ''
+};
+
+var DEFAULT_VOICE = { rate: 1.0, pitch: 1.0, volume: 1.0, voiceURI: '' };
+
+function loadVoiceSettings() {
+    try {
+        var saved = JSON.parse(localStorage.getItem('voiceSettings') || 'null');
+        if (saved && typeof saved === 'object') {
+            if (typeof saved.rate === 'number')   voiceState.rate   = Math.max(0.5, Math.min(1.5, saved.rate));
+            if (typeof saved.pitch === 'number')  voiceState.pitch  = Math.max(0.5, Math.min(1.5, saved.pitch));
+            if (typeof saved.volume === 'number') voiceState.volume = Math.max(0,   Math.min(1,   saved.volume));
+            if (typeof saved.voiceURI === 'string') voiceState.voiceURI = saved.voiceURI;
+        }
+    } catch(e) {}
+}
+
+function saveVoiceSettings() {
+    try { localStorage.setItem('voiceSettings', JSON.stringify(voiceState)); } catch(e) {}
+}
+
+/** Áp rate/pitch/volume/voice lên 1 SpeechSynthesisUtterance */
+function applyVoiceSettings(utterance) {
+    if (!utterance) return;
+    utterance.rate   = voiceState.rate;
+    utterance.pitch  = voiceState.pitch;
+    utterance.volume = voiceState.volume;
+    var v = pickVoice();
+    if (v) utterance.voice = v;
+}
+
+/** Chọn voice theo cài đặt hoặc tự động */
+function pickVoice() {
+    if (!('speechSynthesis' in window)) return null;
+    var voices = speechSynthesis.getVoices();
+    if (!voices.length) return null;
+
+    // 1) Nếu user đã chọn voice cụ thể → dùng đúng voice đó
+    if (voiceState && voiceState.voiceURI) {
+        var chosen = voices.find(function(v) { return v.voiceURI === voiceState.voiceURI; });
+        if (chosen) return chosen;
+    }
+
+    // 2) Auto: ưu tiên Ting-Ting > Siri zh-CN > zh-CN local > zh-CN > zh-TW > zh-*
+    var priorities = [
+        function(v){ return v.lang === 'zh-CN' && /Ting-?Ting/i.test(v.name); },
+        function(v){ return v.lang === 'zh-CN' && /Siri/i.test(v.name); },
+        function(v){ return v.lang === 'zh-CN' && v.localService; },
+        function(v){ return v.lang === 'zh-CN'; },
+        function(v){ return v.lang === 'zh-TW'; },
+        function(v){ return v.lang && v.lang.indexOf('zh') === 0; }
+    ];
+    for (var i = 0; i < priorities.length; i++) {
+        var found = voices.find(priorities[i]);
+        if (found) return found;
+    }
+    return null;
+}
+
+/* Alias cũ để tương thích code cũ (nếu có) */
+function getChineseVoice() { return pickVoice(); }
+
+/* ============ TIER HELPERS ============ */
 function getTierInfo() {
     if (typeof window.APP_TIER !== 'undefined' && window.APP_LIMITS) {
         return {
@@ -3297,6 +3481,8 @@ function initApp() {
     $('fabGroup').style.display = 'flex';
     $('mainContent').style.display = 'block';
 
+    loadVoiceSettings();
+
     if (typeof initSocial === 'function') initSocial();
     if (typeof updateFloatingLeftVisibility === 'function') updateFloatingLeftVisibility();
     if (typeof initAuthUI === 'function') initAuthUI();
@@ -3307,6 +3493,7 @@ function initApp() {
     initSpeech();
     initWriter();
     initPracticeFull();
+    initVoiceSettings();
 
     _lastWidthMode = window.innerWidth >= 769 ? 'desktop' : 'mobile';
     if (_lastWidthMode === 'desktop') moveTikTokBarToHeader();
@@ -3611,7 +3798,7 @@ document.addEventListener('click', function(e) {
         e.target.closest('.practice-full-modal') || e.target.closest('.import-modal') ||
         e.target.closest('.edit-modal') || e.target.closest('.zalo-btn') ||
         e.target.closest('.tiktok-float-wrap') || e.target.closest('.tiktok-bar') ||
-        e.target.closest('.renewal-modal') ||
+        e.target.closest('.renewal-modal') || e.target.closest('.voice-modal') ||
         e.target.closest('.toggle-check-btn')) return;
     clearFocus();
 }, true);
@@ -3620,27 +3807,11 @@ function initSpeech() {
     if ('speechSynthesis' in window) {
         speechSynthesis.getVoices();
         if (speechSynthesis.onvoiceschanged !== undefined) {
-            speechSynthesis.onvoiceschanged = function(){ getChineseVoice(); };
+            speechSynthesis.onvoiceschanged = function(){
+                populateVoiceSelect();
+            };
         }
     }
-}
-function getChineseVoice() {
-    if (!('speechSynthesis' in window)) return null;
-    var voices = speechSynthesis.getVoices();
-    if (!voices.length) return null;
-    var priorities = [
-        function(v){ return v.lang === 'zh-CN' && /Ting-?Ting/i.test(v.name); },
-        function(v){ return v.lang === 'zh-CN' && /Siri/i.test(v.name); },
-        function(v){ return v.lang === 'zh-CN' && v.localService; },
-        function(v){ return v.lang === 'zh-CN'; },
-        function(v){ return v.lang === 'zh-TW'; },
-        function(v){ return v.lang && v.lang.indexOf('zh') === 0; }
-    ];
-    for (var i = 0; i < priorities.length; i++) {
-        var found = voices.find(priorities[i]);
-        if (found) return found;
-    }
-    return null;
 }
 
 window.speakText = function(text, btn, evt) {
@@ -3653,11 +3824,7 @@ window.speakText = function(text, btn, evt) {
     if (btn) { btn.classList.add('speaking'); currentBtn = btn; }
     var utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'zh-CN';
-    utterance.rate = 0.85;
-    utterance.pitch = 1.0;
-    utterance.volume = 1.0;
-    var voice = getChineseVoice();
-    if (voice) utterance.voice = voice;
+    applyVoiceSettings(utterance);
     utterance.onend = utterance.onerror = function() {
         if (currentBtn) { currentBtn.classList.remove('speaking'); currentBtn = null; }
     };
@@ -3669,6 +3836,163 @@ document.addEventListener('visibilitychange', function() {
         if (currentBtn) { currentBtn.classList.remove('speaking'); currentBtn = null; }
     }
 });
+
+/* ============ VOICE SETTINGS UI ============ */
+function populateVoiceSelect() {
+    if (!('speechSynthesis' in window)) return;
+    var sel = $('voiceSelect');
+    if (!sel) return;
+    var voices = speechSynthesis.getVoices();
+    var zhVoices = voices.filter(function(v) {
+        return v.lang && v.lang.toLowerCase().indexOf('zh') === 0;
+    });
+    // Nếu chưa load xong voices thì để option mặc định
+    if (!zhVoices.length) {
+        sel.innerHTML = '<option value="">-- Đang tải giọng đọc... --</option>';
+        return;
+    }
+    var html = '<option value="">-- Tự động (mặc định) --</option>';
+    zhVoices.forEach(function(v) {
+        var label = v.name + ' (' + v.lang + ')' + (v.localService ? '' : ' • online');
+        html += '<option value="' + escapeHtml(v.voiceURI) + '">' + escapeHtml(label) + '</option>';
+    });
+    sel.innerHTML = html;
+    sel.value = voiceState.voiceURI || '';
+}
+
+function updateVoiceUI() {
+    var rateSlider = $('voiceRateSlider');
+    var rateVal    = $('voiceRateValue');
+    var pitchSlider = $('voicePitchSlider');
+    var pitchVal   = $('voicePitchValue');
+    var volSlider  = $('voiceVolumeSlider');
+    var volVal     = $('voiceVolumeValue');
+    if (rateSlider)  rateSlider.value  = voiceState.rate;
+    if (rateVal)     rateVal.textContent = voiceState.rate.toFixed(2) + '×';
+    if (pitchSlider) pitchSlider.value = voiceState.pitch;
+    if (pitchVal)    pitchVal.textContent = voiceState.pitch.toFixed(2);
+    if (volSlider)   volSlider.value   = voiceState.volume;
+    if (volVal)      volVal.textContent = Math.round(voiceState.volume * 100) + '%';
+
+    document.querySelectorAll('.voice-preset-btn').forEach(function(b) {
+        var r = parseFloat(b.dataset.rate);
+        b.classList.toggle('active', Math.abs(r - voiceState.rate) < 0.001);
+    });
+}
+
+function voiceTestSpeak() {
+    if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
+    speechSynthesis.cancel();
+    var btn = $('voiceTestBtn');
+    if (btn) {
+        btn.classList.add('speaking');
+        btn.innerHTML = '<i class="fas fa-stop"></i> Đang đọc...';
+    }
+    var u = new SpeechSynthesisUtterance('你好，欢迎学习中文。');
+    u.lang = 'zh-CN';
+    applyVoiceSettings(u);
+    var finish = function() {
+        if (btn) {
+            btn.classList.remove('speaking');
+            btn.innerHTML = '<i class="fas fa-play"></i> Nghe thử';
+        }
+    };
+    u.onend = finish;
+    u.onerror = finish;
+    setTimeout(function(){ try { speechSynthesis.speak(u); } catch(e) { finish(); } }, 30);
+}
+
+function initVoiceSettings() {
+    var modal = $('voiceModal');
+    if (!modal) return;
+
+    populateVoiceSelect();
+
+    var rateSlider = $('voiceRateSlider');
+    var pitchSlider = $('voicePitchSlider');
+    var volSlider = $('voiceVolumeSlider');
+
+    updateVoiceUI();
+
+    // Sliders
+    if (rateSlider) rateSlider.addEventListener('input', function() {
+        voiceState.rate = parseFloat(this.value);
+        $('voiceRateValue').textContent = voiceState.rate.toFixed(2) + '×';
+        document.querySelectorAll('.voice-preset-btn').forEach(function(b) {
+            b.classList.toggle('active', Math.abs(parseFloat(b.dataset.rate) - voiceState.rate) < 0.001);
+        });
+        saveVoiceSettings();
+    });
+    if (pitchSlider) pitchSlider.addEventListener('input', function() {
+        voiceState.pitch = parseFloat(this.value);
+        $('voicePitchValue').textContent = voiceState.pitch.toFixed(2);
+        saveVoiceSettings();
+    });
+    if (volSlider) volSlider.addEventListener('input', function() {
+        voiceState.volume = parseFloat(this.value);
+        $('voiceVolumeValue').textContent = Math.round(voiceState.volume * 100) + '%';
+        saveVoiceSettings();
+    });
+
+    // Nút +/-
+    function adjust(key, delta, min, max, step) {
+        voiceState[key] = Math.max(min, Math.min(max, +(voiceState[key] + delta).toFixed(2)));
+        updateVoiceUI();
+        saveVoiceSettings();
+    }
+    if ($('voiceRateMinus'))  $('voiceRateMinus').addEventListener('click',  function(){ adjust('rate',   -0.05, 0.5, 1.5); });
+    if ($('voiceRatePlus'))   $('voiceRatePlus').addEventListener('click',   function(){ adjust('rate',    0.05, 0.5, 1.5); });
+    if ($('voicePitchMinus')) $('voicePitchMinus').addEventListener('click', function(){ adjust('pitch',  -0.05, 0.5, 1.5); });
+    if ($('voicePitchPlus'))  $('voicePitchPlus').addEventListener('click',  function(){ adjust('pitch',   0.05, 0.5, 1.5); });
+    if ($('voiceVolumeMinus'))$('voiceVolumeMinus').addEventListener('click',function(){ adjust('volume', -0.05, 0, 1); });
+    if ($('voiceVolumePlus')) $('voiceVolumePlus').addEventListener('click', function(){ adjust('volume',  0.05, 0, 1); });
+
+    // Preset
+    document.querySelectorAll('.voice-preset-btn').forEach(function(b) {
+        b.addEventListener('click', function() {
+            voiceState.rate = parseFloat(this.dataset.rate);
+            updateVoiceUI();
+            saveVoiceSettings();
+        });
+    });
+
+    // Voice select
+    var sel = $('voiceSelect');
+    if (sel) sel.addEventListener('change', function() {
+        voiceState.voiceURI = this.value;
+        saveVoiceSettings();
+    });
+
+    // Test
+    if ($('voiceTestBtn')) $('voiceTestBtn').addEventListener('click', voiceTestSpeak);
+
+    // Reset
+    if ($('voiceResetBtn')) $('voiceResetBtn').addEventListener('click', function() {
+        voiceState.rate    = DEFAULT_VOICE.rate;
+        voiceState.pitch   = DEFAULT_VOICE.pitch;
+        voiceState.volume  = DEFAULT_VOICE.volume;
+        voiceState.voiceURI = DEFAULT_VOICE.voiceURI;
+        if ($('voiceSelect')) $('voiceSelect').value = '';
+        updateVoiceUI();
+        saveVoiceSettings();
+    });
+
+    // Open / Close
+    if ($('toggleVoiceBtn')) {
+        $('toggleVoiceBtn').addEventListener('click', function(e) {
+            e.stopPropagation();
+            populateVoiceSelect();
+            updateVoiceUI();
+            modal.classList.add('show');
+            if ($('fabGroup')) $('fabGroup').classList.remove('open');
+        });
+    }
+    if ($('voiceClose')) $('voiceClose').addEventListener('click', function() { modal.classList.remove('show'); });
+    modal.addEventListener('click', function(e) { if (e.target === this) modal.classList.remove('show'); });
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && modal.classList.contains('show')) modal.classList.remove('show');
+    });
+}
 
 function buildFilters() {
     var hskSelect = $('hskFilter');
@@ -4712,9 +5036,7 @@ window.speakPhrase = function(phrase, btn) {
     btn.classList.add('speaking');
     var utterance = new SpeechSynthesisUtterance(phrase);
     utterance.lang = 'zh-CN';
-    utterance.rate = 0.75;
-    var voice = getChineseVoice();
-    if (voice) utterance.voice = voice;
+    applyVoiceSettings(utterance);
     utterance.onend = utterance.onerror = function() { btn.classList.remove('speaking'); };
     setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
 };
@@ -4804,11 +5126,7 @@ window.toggleSpeakFull = function() {
 function _speakNormal(token) {
     var u = new SpeechSynthesisUtterance(pfCurrentAnswer);
     u.lang = 'zh-CN';
-    u.rate = 0.85;
-    u.pitch = 1.0;
-    u.volume = 1.0;
-    var v = getChineseVoice();
-    if (v) u.voice = v;
+    applyVoiceSettings(u);
 
     var done = false;
     function finish() {
@@ -4882,11 +5200,7 @@ function _speakWithHighlightKaraoke(token) {
 
         var u = new SpeechSynthesisUtterance(phrase.text);
         u.lang = 'zh-CN';
-        u.rate = 0.75;
-        u.pitch = 1.0;
-        u.volume = 1.0;
-        var v = getChineseVoice();
-        if (v) u.voice = v;
+        applyVoiceSettings(u);
 
         var handled = false;
         function next() {
@@ -4959,7 +5273,6 @@ window.toggleQuickSpeakFull = function() {
         return;
     }
 
-    // Nếu nút loa cạnh input đang đọc → dừng trước
     if (window._isSpeakingFull) stopSpeakFull();
 
     if (!canUseFeature()) { showLimitMessage(); return; }
@@ -4975,18 +5288,13 @@ window.toggleQuickSpeakFull = function() {
     var token = ++window._quickSpeakToken;
     _setQuickSpeakBtnState(true);
 
-    // Luôn đọc cả câu liền mạch — không highlight, ngữ điệu tự nhiên
     _quickSpeakNormal(token);
 };
 
 function _quickSpeakNormal(token) {
     var u = new SpeechSynthesisUtterance(pfCurrentAnswer);
     u.lang = 'zh-CN';
-    u.rate = 1.15;
-    u.pitch = 1.0;
-    u.volume = 1.0;
-    var v = getChineseVoice();
-    if (v) u.voice = v;
+    applyVoiceSettings(u);
 
     var done = false;
     function finish() {
@@ -5071,7 +5379,6 @@ function initPracticeFull() {
         }
     }, { passive: true });
 
-    // Bind nút loa cạnh input — CHỈ 1 lần duy nhất
     if (!window._pfSpeakBound) {
         window._pfSpeakBound = true;
         var speakBtn = $('pfSpeakBtn');
@@ -5083,7 +5390,6 @@ function initPracticeFull() {
             });
         }
     }
-    // Bind nút đọc nhanh — CHỈ 1 lần duy nhất
     if (!window._pfQuickSpeakBound) {
         window._pfQuickSpeakBound = true;
         var quickBtn = $('pfQuickSpeakBtn');
