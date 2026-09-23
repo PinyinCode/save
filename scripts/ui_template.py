@@ -259,6 +259,73 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .answer-actions button{padding:.55rem 1rem;border-radius:50px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:.82rem;font-weight:600;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;gap:.4rem}
 .answer-actions button:hover{background:var(--surface-2);border-color:var(--primary);color:var(--primary)}
 .answer-actions button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+
+/* ============================================================ */
+/* HIGHLIGHT cụm đang đọc (karaoke) */
+/* ============================================================ */
+.answer-phrase-btn.reading{
+    background:linear-gradient(135deg,#f59e0b,#d97706) !important;
+    color:#fff !important;
+    border-color:#f59e0b !important;
+    transform:scale(1.2) !important;
+    box-shadow:0 8px 20px rgba(245,158,11,.5) !important;
+    transition:all .15s ease-out;
+}
+
+/* ============================================================ */
+/* TOOLTIP PINYIN (hover PC + click mobile) */
+/* ============================================================ */
+.answer-phrase-wrap{
+    position:relative;
+    display:inline-flex;
+}
+.answer-phrase-tooltip{
+    position:absolute;
+    bottom:calc(100% + 8px);
+    left:50%;
+    transform:translateX(-50%) translateY(4px);
+    background:linear-gradient(135deg,#1e293b,#334155);
+    color:#93c5fd;
+    padding:.35rem .65rem;
+    border-radius:10px;
+    font-size:.78rem;
+    font-style:italic;
+    font-weight:600;
+    white-space:nowrap;
+    box-shadow:0 8px 24px rgba(0,0,0,.25);
+    pointer-events:none;
+    opacity:0;
+    visibility:hidden;
+    transition:opacity .15s,transform .15s,visibility .15s;
+    z-index:100;
+}
+.answer-phrase-tooltip::after{
+    content:'';
+    position:absolute;
+    top:100%;
+    left:50%;
+    transform:translateX(-50%);
+    border:6px solid transparent;
+    border-top-color:#1e293b;
+}
+.answer-phrase-tooltip.show{
+    opacity:1;
+    visibility:visible;
+    transform:translateX(-50%) translateY(0);
+}
+@media (max-width:768px){
+    .answer-phrase-btn.reading{
+        transform:scale(1.15) !important;
+    }
+    .answer-phrase-tooltip{
+        font-size:.72rem;
+        padding:.3rem .55rem;
+        max-width:80vw;
+        white-space:normal;
+        text-align:center;
+    }
+}
+
 .practice-full-nav{display:flex;gap:clamp(.4rem,1vw,.65rem);padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);background:var(--surface);border-top:1px solid var(--border);flex:0 0 auto;justify-content:center;min-height:clamp(44px,6vh,58px)}
 .pf-nav-btn{flex:1;max-width:240px;padding:clamp(.55rem,1.2vh,.75rem) clamp(.65rem,1.2vw,.9rem);border-radius:14px;border:1.5px solid var(--border);background:var(--surface);color:var(--text);font-size:clamp(.75rem,.9vw,.85rem);font-weight:700;cursor:pointer;font-family:inherit;display:inline-flex;align-items:center;justify-content:center;gap:.5rem}
 .pf-nav-btn:hover:not(:disabled){background:var(--primary-light);border-color:var(--primary);color:var(--primary-dark)}
@@ -593,7 +660,10 @@ def build_ui_html():
 <div class="ar-label">Đáp án</div>
 <div class="answer-chars" id="pfAnswerChars"></div>
 <div class="answer-pinyin" id="pfAnswerPinyin"></div>
-<div class="answer-actions"><button class="primary" onclick="speakFullSentence()"><i class="fas fa-volume-up"></i> Đọc cả câu</button></div>
+<div class="answer-actions">
+<button class="primary" onclick="speakFullSentenceWithHighlight()"><i class="fas fa-volume-up"></i> Đọc cả câu</button>
+<button onclick="stopSpeaking()"><i class="fas fa-stop"></i> Dừng</button>
+</div>
 </div>
 </div>
 </div>
@@ -1603,35 +1673,25 @@ function smartCheck(userAnswer, correctAnswer) {
 
 /* ================================================================
    ĐẾM SỐ ÂM TIẾT TRONG 1 TỪ PINYIN
-   - Chuẩn hóa dấu thanh → chữ cái gốc
-   - Đếm số cụm nguyên âm liên tiếp (mỗi cụm = 1 âm tiết)
-   - VD: "Gōngsī" → "gongsi" → cụm "o" + "i" = 2 âm tiết
-   - VD: "xiǎo" → "xiao" → cụm "iao" = 1 âm tiết
    ================================================================ */
 function countSyllables(pinyinWord) {
     if (!pinyinWord) return 0;
-    // Loại bỏ ký tự đặc biệt, chỉ giữ chữ cái + dấu thanh
     var cleaned = pinyinWord
         .replace(/[.,!?;:'"()\[\]{}\-~`@#$%^&*+=|\\/<>。，！？、；：\s]/g, '')
         .toLowerCase();
     if (!cleaned) return 0;
-
-    // Chuẩn hóa dấu thanh → chữ cái gốc để dễ xử lý
     var map = {
         'ā':'a','á':'a','ǎ':'a','à':'a','ē':'e','é':'e','ě':'e','è':'e',
         'ī':'i','í':'i','ǐ':'i','ì':'i','ō':'o','ó':'o','ǒ':'o','ò':'o',
         'ū':'u','ú':'u','ǔ':'u','ù':'u','ǖ':'v','ǘ':'v','ǚ':'v','ǜ':'v','ü':'v'
     };
     cleaned = cleaned.replace(/[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü]/g, function(c) { return map[c] || c; });
-
-    // Đếm số "cụm nguyên âm liên tiếp" = số âm tiết
     var vowels = 'aeiouv';
     var count = 0;
     var i = 0;
     while (i < cleaned.length) {
         if (vowels.indexOf(cleaned[i]) !== -1) {
             count++;
-            // Bỏ qua tất cả nguyên âm liên tiếp
             while (i < cleaned.length && vowels.indexOf(cleaned[i]) !== -1) {
                 i++;
             }
@@ -1644,14 +1704,10 @@ function countSyllables(pinyinWord) {
 
 /* ================================================================
    GHÉP CỤM TỪ TIẾNG TRUNG DỰA THEO PINYIN
-   - Tách pinyin thành từ (theo dấu cách)
-   - Đếm số âm tiết mỗi từ
-   - Nếu tổng âm tiết = số chữ Hán → ghép cụm chính xác
-   - Nếu không khớp → fallback tách từng chữ Hán
+   Trả về mảng { text, type, pinyin }
    ================================================================ */
 function splitByPinyin(zh, pinyin) {
     if (!zh) return [];
-    // Lấy tất cả chữ Hán (bỏ dấu câu, số, chữ Latin)
     var hanziChars = [];
     for (var i = 0; i < zh.length; i++) {
         var c = zh[i];
@@ -1659,26 +1715,19 @@ function splitByPinyin(zh, pinyin) {
     }
     if (hanziChars.length === 0) return [];
 
-    // Nếu không có pinyin → tách từng chữ
     if (!pinyin || !pinyin.trim()) {
-        return hanziChars.map(function(c) { return { text: c, type: 'single' }; });
+        return hanziChars.map(function(c) { return { text: c, type: 'single', pinyin: '' }; });
     }
 
-    // Chuẩn hóa pinyin: bỏ dấu câu, giữ dấu cách
     var normalizedPinyin = pinyin
         .replace(/[.,!?;:'"()\[\]{}\-~`@#$%^&*+=|\\/<>。，！？、；：""'']/g, ' ')
         .replace(/\s+/g, ' ')
         .trim();
 
-    // Tách thành các "từ"
-    // VD: "Gōngsī xūyào jiànlì" → ["Gōngsī", "xūyào", "jiànlì"]
     var pinyinWords = normalizedPinyin.split(/\s+/).filter(function(w) { return w.length > 0; });
-
-    // Đếm số âm tiết trong mỗi từ
     var syllableCounts = pinyinWords.map(function(w) { return countSyllables(w); });
     var totalSyllables = syllableCounts.reduce(function(a, b) { return a + b; }, 0);
 
-    // Nếu số âm tiết = số chữ Hán → ghép cụm theo từ pinyin
     if (totalSyllables === hanziChars.length) {
         var result = [];
         var charIdx = 0;
@@ -1687,21 +1736,29 @@ function splitByPinyin(zh, pinyin) {
             if (cnt <= 0) continue;
             var phrase = hanziChars.slice(charIdx, charIdx + cnt).join('');
             if (phrase) {
-                result.push({ text: phrase, type: 'phrase' });
+                result.push({
+                    text: phrase,
+                    type: 'phrase',
+                    pinyin: pinyinWords[j] || ''
+                });
             }
             charIdx += cnt;
         }
-        // Nếu còn dư (do sai số), gộp vào cụm cuối
         if (charIdx < hanziChars.length) {
             var remaining = hanziChars.slice(charIdx).join('');
-            if (result.length > 0) result[result.length - 1].text += remaining;
-            else result.push({ text: remaining, type: 'phrase' });
+            if (result.length > 0) {
+                result[result.length - 1].text += remaining;
+                if (charIdx < pinyinWords.length) {
+                    result[result.length - 1].pinyin += ' ' + pinyinWords.slice(charIdx).join(' ');
+                }
+            } else {
+                result.push({ text: remaining, type: 'single', pinyin: '' });
+            }
         }
         return result;
     }
 
-    // Fallback: nếu số âm tiết KHÁC số chữ Hán → tách từng chữ
-    return hanziChars.map(function(c) { return { text: c, type: 'single' }; });
+    return hanziChars.map(function(c) { return { text: c, type: 'single', pinyin: '' }; });
 }
 
 function updateInlinePreview(input, answer) {
@@ -1977,12 +2034,10 @@ function pfBuildQuickNav() {
     var html = '<option value="">-- Chọn câu (' + filtered.length + ') --</option>';
     filtered.forEach(function(r, i) {
         var vi = (r.vi || '').substring(0, 45);
-        // ==== HIỂN THỊ STT GỐC TỪ EXCEL TRONG DROPDOWN ====
         var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
                      ? '#' + String(r.stt).trim() + ' · '
                      : '';
         var label = sttRaw + 'Câu ' + (i + 1) + ': ' + vi;
-        // ===================================================
         html += '<option value="' + escapeHtml(r.stt) + '">' + escapeHtml(label) + '</option>';
     });
     sel.innerHTML = html;
@@ -2213,6 +2268,42 @@ function checkFullAnswer() {
     }
 }
 
+/* ============================================================ */
+/* TOOLTIP PINYIN CHO MOBILE — Click cụm → toggle tooltip */
+/* ============================================================ */
+var _activeTooltipWrap = null;
+
+function togglePhraseTooltip(wrapEl) {
+    if (!wrapEl) return;
+    var tip = wrapEl.querySelector('.answer-phrase-tooltip');
+    if (!tip) return;
+
+    if (_activeTooltipWrap && _activeTooltipWrap !== wrapEl) {
+        var oldTip = _activeTooltipWrap.querySelector('.answer-phrase-tooltip');
+        if (oldTip) oldTip.classList.remove('show');
+    }
+
+    if (tip.classList.contains('show')) {
+        tip.classList.remove('show');
+        _activeTooltipWrap = null;
+    } else {
+        tip.classList.add('show');
+        _activeTooltipWrap = wrapEl;
+    }
+}
+
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.answer-phrase-wrap')) {
+        document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
+            t.classList.remove('show');
+        });
+        _activeTooltipWrap = null;
+    }
+});
+
+/* ============================================================ */
+/* HIỂN THỊ ĐÁP ÁN + GẮN TOOLTIP PINYIN + HOVER */
+/* ============================================================ */
 function revealFullAnswer() {
     var answerEl = $('pfAnswer');
     var revealBtn = $('pfRevealBtn');
@@ -2228,24 +2319,54 @@ function revealFullAnswer() {
     var phrases = splitByPinyin(pfCurrentAnswer, pfCurrentPinyin);
     if (phrases.length === 0) {
         pfCurrentAnswer.split('').forEach(function(c) {
-            if (/[\u4e00-\u9fa5]/.test(c)) phrases.push({ text: c, type: 'single' });
+            if (/[\u4e00-\u9fa5]/.test(c)) phrases.push({ text: c, type: 'single', pinyin: '' });
         });
     }
-    phrases.forEach(function(item) {
+    window._pfPhrases = phrases;
+
+    phrases.forEach(function(item, idx) {
+        var wrap = document.createElement('span');
+        wrap.className = 'answer-phrase-wrap';
+        wrap.dataset.idx = idx;
+        wrap.dataset.text = item.text;
+        wrap.dataset.pinyin = item.pinyin || '';
+
         var btn = document.createElement('button');
         btn.className = 'answer-phrase-btn';
         btn.textContent = item.text;
-        btn.title = 'Nhấn để đọc: ' + item.text;
-        btn.onclick = (function(text, el) {
+        btn.title = item.pinyin ? (item.text + ' — ' + item.pinyin) : item.text;
+        btn.onclick = (function(text, pinyin, el, wrapEl) {
             return function(e) {
                 e.stopPropagation();
                 el.classList.add('zoom-in');
                 setTimeout(function() { el.classList.remove('zoom-in'); }, 700);
+                // Mobile: toggle tooltip pinyin
+                togglePhraseTooltip(wrapEl);
+                // Đọc cụm
                 speakPhrase(text, el);
             };
-        })(item.text, btn);
-        charsEl.appendChild(btn);
+        })(item.text, item.pinyin, btn, wrap);
+        wrap.appendChild(btn);
+
+        // Tooltip pinyin
+        if (item.pinyin) {
+            var tip = document.createElement('span');
+            tip.className = 'answer-phrase-tooltip';
+            tip.textContent = item.pinyin;
+            wrap.appendChild(tip);
+
+            // PC hover
+            wrap.addEventListener('mouseenter', function() {
+                tip.classList.add('show');
+            });
+            wrap.addEventListener('mouseleave', function() {
+                tip.classList.remove('show');
+            });
+        }
+
+        charsEl.appendChild(wrap);
     });
+
     pinyinEl.textContent = pfCurrentPinyin;
     answerEl.classList.add('show');
     revealBtn.classList.add('revealed');
@@ -2279,6 +2400,68 @@ window.speakFullSentence = function() {
     var voice = getChineseVoice();
     if (voice) utterance.voice = voice;
     setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
+};
+
+/* ============================================================ */
+/* ĐỌC CẢ CÂU — HIGHLIGHT TỪNG CỤM (KARAOKE) */
+/* ============================================================ */
+window.speakFullSentenceWithHighlight = function() {
+    if (!canUseFeature()) { showLimitMessage(); return; }
+    if (!('speechSynthesis' in window)) { alert('Trình duyệt không hỗ trợ phát âm.'); return; }
+    if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
+
+    speechSynthesis.cancel();
+    var phrases = window._pfPhrases || [];
+    var buttons = document.querySelectorAll('.answer-phrase-btn');
+
+    buttons.forEach(function(b) { b.classList.remove('reading', 'speaking'); });
+
+    if (phrases.length === 0) {
+        var u = new SpeechSynthesisUtterance(pfCurrentAnswer);
+        u.lang = 'zh-CN';
+        u.rate = 0.85;
+        var v = getChineseVoice();
+        if (v) u.voice = v;
+        setTimeout(function(){ speechSynthesis.speak(u); }, 30);
+        return;
+    }
+
+    var idx = 0;
+    function speakNext() {
+        if (idx >= phrases.length) {
+            buttons.forEach(function(b) { b.classList.remove('reading'); });
+            return;
+        }
+        var phrase = phrases[idx];
+        var btn = buttons[idx];
+        if (btn) btn.classList.add('reading');
+
+        var u = new SpeechSynthesisUtterance(phrase.text);
+        u.lang = 'zh-CN';
+        u.rate = 0.75;
+        var v = getChineseVoice();
+        if (v) u.voice = v;
+
+        u.onend = function() {
+            if (btn) btn.classList.remove('reading');
+            idx++;
+            setTimeout(speakNext, 100);
+        };
+        u.onerror = function() {
+            if (btn) btn.classList.remove('reading');
+            idx++;
+            setTimeout(speakNext, 100);
+        };
+        setTimeout(function(){ speechSynthesis.speak(u); }, 30);
+    }
+    speakNext();
+};
+
+window.stopSpeaking = function() {
+    if ('speechSynthesis' in window) speechSynthesis.cancel();
+    document.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
+        b.classList.remove('reading', 'speaking');
+    });
 };
 
 function initPracticeFull() {
