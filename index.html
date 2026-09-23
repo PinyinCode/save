@@ -643,10 +643,81 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @keyframes chipPulse{0%,100%{box-shadow:0 4px 12px rgba(37,99,235,.3)}50%{box-shadow:0 4px 18px rgba(37,99,235,.5)}}
 .practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(22,163,74,.1));color:#15803d;border:1px solid rgba(22,163,74,.3);font-weight:700;display:inline-flex;align-items:center;gap:.3rem}
 [data-theme="dark"] .practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.25),rgba(22,163,74,.15));color:#4ade80;border-color:rgba(22,163,74,.5)}
-@media (min-width:769px){.header-inner{display:flex!important;align-items:center!important;gap:clamp(.4rem,.8vw,.75rem)!important;flex-wrap:nowrap!important;overflow:hidden;width:100%;position:relative}.header-inner .logo{flex:1 1 auto!important;min-width:0!important;overflow:hidden}.header-inner .tiktok-bar{flex:0 1 auto!important;min-width:0!important;max-width:clamp(140px,22vw,260px)!important;margin:0!important;padding:clamp(.3rem,.5vw,.42rem) clamp(.55rem,.8vw,.75rem)!important;gap:clamp(.35rem,.6vw,.5rem)!important;font-size:clamp(.65rem,.8vw,.78rem)!important;border-radius:50px!important;overflow:hidden;position:relative;z-index:3;align-self:center}.header-inner .tiktok-bar .tiktok-bar-avatar{width:clamp(24px,2.4vw,30px)!important;height:clamp(24px,2.4vw,30px)!important;flex-shrink:0}.header-inner .tiktok-bar .tiktok-bar-info{min-width:0;overflow:hidden}.header-inner .tiktok-bar .tiktok-nick{font-size:clamp(.7rem,.85vw,.82rem)!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.header-inner .tiktok-bar .tiktok-user{font-size:clamp(.6rem,.72vw,.7rem)!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.header-inner .tiktok-bar .tiktok-bar-link{padding:clamp(.28rem,.4vw,.38rem) clamp(.5rem,.7vw,.7rem)!important;font-size:clamp(.62rem,.75vw,.72rem)!important;flex-shrink:0}.header-inner .header-actions{flex:0 0 auto!important;margin-left:auto!important;display:flex!important;gap:.4rem!important;align-items:center!important;position:relative;z-index:5}}
-@media (max-width:1200px){.header-inner .tiktok-bar{max-width:clamp(120px,18vw,200px)!important}}
-@media (max-width:1024px){.header-inner .tiktok-bar{max-width:clamp(100px,15vw,160px)!important}.header-inner .tiktok-bar .tiktok-user{display:none}}
-@media (max-width:900px){.header-inner .tiktok-bar{max-width:130px!important}.header-inner .tiktok-bar .tiktok-bar-link span{display:none}}
+
+/* ============================================================ */
+/* HEADER DESKTOP — TikTok bar chiếm tối đa không gian còn thừa */
+/* ============================================================ */
+@media (min-width:769px){
+    .header-inner{
+        display:flex!important;
+        align-items:center!important;
+        gap:clamp(.4rem,.8vw,.75rem)!important;
+        flex-wrap:nowrap!important;
+        overflow:hidden;
+        width:100%;
+        position:relative;
+    }
+    .header-inner .logo{
+        flex:0 0 auto!important;
+        min-width:0!important;
+        overflow:hidden;
+    }
+    .header-inner .logo .logo-text{
+        max-width:100%;
+    }
+    .header-inner .tiktok-bar{
+        flex:1 1 auto!important;
+        min-width:0!important;
+        max-width:none!important;
+        width:auto!important;
+        margin:0!important;
+        padding:clamp(.3rem,.5vw,.42rem) clamp(.55rem,.8vw,.75rem)!important;
+        gap:clamp(.35rem,.6vw,.5rem)!important;
+        font-size:clamp(.65rem,.8vw,.78rem)!important;
+        border-radius:50px!important;
+        overflow:hidden;
+        position:relative;
+        z-index:3;
+        align-self:center;
+    }
+    .header-inner .tiktok-bar .tiktok-bar-avatar{
+        width:clamp(24px,2.4vw,30px)!important;
+        height:clamp(24px,2.4vw,30px)!important;
+        flex-shrink:0;
+    }
+    .header-inner .tiktok-bar .tiktok-bar-info{
+        min-width:0;
+        overflow:hidden;
+        flex:1 1 auto;
+    }
+    .header-inner .tiktok-bar .tiktok-nick{
+        font-size:clamp(.7rem,.85vw,.82rem)!important;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    .header-inner .tiktok-bar .tiktok-user{
+        font-size:clamp(.6rem,.72vw,.7rem)!important;
+        overflow:hidden;
+        text-overflow:ellipsis;
+        white-space:nowrap;
+    }
+    .header-inner .tiktok-bar .tiktok-bar-link{
+        padding:clamp(.28rem,.4vw,.38rem) clamp(.5rem,.7vw,.7rem)!important;
+        font-size:clamp(.62rem,.75vw,.72rem)!important;
+        flex-shrink:0;
+        white-space:nowrap;
+    }
+    .header-inner .header-actions{
+        flex:0 0 auto!important;
+        margin-left:0!important;
+        display:flex!important;
+        gap:.4rem!important;
+        align-items:center!important;
+        position:relative;
+        z-index:5;
+    }
+}
 
 .practice-full-header .pf-counter{
     flex-shrink:0;
@@ -4669,7 +4740,7 @@ function initPracticeFull() {
     });
     $('pfSubjectFilter').addEventListener('change', function() {
         var val = this.value;
-        var allowed = getAllowedSubjectList();
+        var allowed = getAllowedSubjectList {();
         if (val && allowed.indexOf(val) === -1) {
             var info = getTierInfo();
             var msg = info.tier === 'trial'
@@ -4685,7 +4756,7 @@ function initPracticeFull() {
         if (!$('practiceFullModal').classList.contains('show')) return;
         var active = document.activeElement;
         var isTyping = active && (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA' || active.tagName === 'SELECT');
-        if (e.key === 'Escape') { closePracticeFull(); return; }
+        if (e.key === 'Escape') closePracticeFull(); return; }
         if (isTyping) return;
         if (e.key === 'ArrowRight' && e.ctrlKey) pfNext();
         if (e.key === 'ArrowLeft' && e.ctrlKey) pfPrev();
