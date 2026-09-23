@@ -164,7 +164,11 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 [data-theme="dark"] .pf-brand-sub::before{color:#f0abfc}
 @media (max-width:768px){.pf-brand-title{font-size:.75rem}.pf-brand-sub{font-size:.55rem;gap:.2rem}.pf-brand-icon{width:28px;height:28px;font-size:.72rem;border-radius:8px}.pf-brand{gap:.4rem}}
 @media (max-width:400px){.pf-brand-title{font-size:.7rem}.pf-brand-sub{font-size:.5rem}.pf-brand-icon{width:24px;height:24px;font-size:.65rem}}
-.pf-tiktok-float{position:fixed;left:clamp(14px,2vw,22px);bottom:calc(8px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:clamp(.4rem,.6vw,.55rem);padding:clamp(.35rem,.55vw,.5rem) clamp(.7rem,1vw,.9rem) clamp(.35rem,.55vw,.5rem) clamp(.35rem,.55vw,.5rem);border-radius:999px;background:linear-gradient(135deg,#25f4ee 0%,#000 50%,#fe2c55 100%);color:#fff;text-decoration:none;font-family:inherit;min-width:clamp(120px,15vw,180px);max-width:clamp(160px,22vw,240px);box-shadow:0 10px 28px rgba(254,44,85,.4),0 4px 14px rgba(0,0,0,.35);z-index:2600;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s ease;overflow:hidden;cursor:pointer}
+
+/* ============================================================ */
+/* TIKTOK FLOAT — đẩy lên trên nav, hạ z-index để không che nav */
+/* ============================================================ */
+.pf-tiktok-float{position:fixed;left:clamp(14px,2vw,22px);bottom:calc(80px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:clamp(.4rem,.6vw,.55rem);padding:clamp(.35rem,.55vw,.5rem) clamp(.7rem,1vw,.9rem) clamp(.35rem,.55vw,.5rem) clamp(.35rem,.55vw,.5rem);border-radius:999px;background:linear-gradient(135deg,#25f4ee 0%,#000 50%,#fe2c55 100%);color:#fff;text-decoration:none;font-family:inherit;min-width:clamp(120px,15vw,180px);max-width:clamp(160px,22vw,240px);box-shadow:0 10px 28px rgba(254,44,85,.4),0 4px 14px rgba(0,0,0,.35);z-index:2400;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s ease;overflow:hidden;cursor:pointer}
 .pf-tiktok-float:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 14px 36px rgba(254,44,85,.6),0 6px 20px rgba(0,0,0,.45),0 0 0 3px rgba(37,244,238,.5)}
 .pf-tiktok-avatar-wrap{position:relative;width:clamp(28px,3vw,36px);height:clamp(28px,3vw,36px);border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#25f4ee,#fe2c55);display:flex;align-items:center;justify-content:center;padding:2px;box-shadow:0 0 0 2px rgba(255,255,255,.9)}
 .pf-tiktok-avatar{width:100%;height:100%;border-radius:50%;object-fit:cover;display:block;background:#fff}
@@ -175,8 +179,12 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .pf-tiktok-name{font-size:clamp(.7rem,.88vw,.82rem);font-weight:800;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .pf-tiktok-badge{font-size:clamp(.85rem,1.1vw,1rem);flex-shrink:0;animation:tiktokPulse 2s ease-in-out infinite}
 @keyframes tiktokPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
-@media (max-width:500px){.pf-tiktok-float{min-width:110px;max-width:min(65vw,180px);padding:.3rem .6rem .3rem .3rem;left:12px}.pf-tiktok-avatar-wrap{width:26px;height:26px}.pf-tiktok-label{font-size:.5rem}.pf-tiktok-name{font-size:.68rem}.pf-tiktok-badge{font-size:.8rem}}
+@media (max-width:500px){.pf-tiktok-float{min-width:110px;max-width:min(65vw,180px);padding:.3rem .6rem .3rem .3rem;left:12px;bottom:calc(78px + env(safe-area-inset-bottom))}.pf-tiktok-avatar-wrap{width:26px;height:26px}.pf-tiktok-label{font-size:.5rem}.pf-tiktok-name{font-size:.68rem}.pf-tiktok-badge{font-size:.8rem}}
+@media (max-width:500px) and (max-height:700px){.pf-tiktok-float{bottom:calc(72px + env(safe-area-inset-bottom))}}
+@media (max-height:550px) and (orientation:landscape){.pf-tiktok-float{bottom:calc(64px + env(safe-area-inset-bottom))}}
+@media (max-height:420px) and (orientation:landscape){.pf-tiktok-float{bottom:calc(56px + env(safe-area-inset-bottom));transform:scale(.85);transform-origin:left bottom}}
 .practice-full-modal:not(.show) .pf-tiktok-float{display:none!important}
+
 .pf-filters{padding:clamp(.4rem,1vh,.55rem) clamp(.85rem,2vw,1.25rem) clamp(.35rem,.8vh,.45rem);background:var(--surface);border-bottom:1px solid var(--border);flex:0 0 auto;overflow-y:auto}
 .pf-search-wrap{position:relative;margin-bottom:.45rem}
 .pf-search-wrap i.fa-search{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none}
@@ -288,7 +296,24 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (min-width:1000px){.search-filter-row{display:grid;grid-template-columns:1fr auto;gap:.55rem;align-items:center}.search-bar{margin-bottom:0}.filters{display:grid;grid-template-columns:160px 180px;gap:.4rem;max-width:none;margin-bottom:0}}
 @media (min-width:1400px){.filters{grid-template-columns:180px 200px}}
 @media (min-width:769px) and (max-height:700px){.practice-full-body{padding:.75rem .85rem}.practice-full-content{gap:.75rem}.practice-full-vi{font-size:1.3rem;padding:.7rem .6rem}.practice-full-input{font-size:1.3rem;padding:.7rem .9rem}.practice-speak-btn{min-width:46px}.char-slot{font-size:1.3rem;min-width:1.5rem;height:1.9rem}.practice-full-nav{padding:.5rem .85rem}.pf-nav-btn{padding:.55rem .75rem;font-size:.8rem}}
-@media (min-width:769px) and (max-height:550px){.practice-full-header{padding:.3rem .85rem}.pf-filters{padding:.25rem .85rem .2rem}.pf-search-wrap{display:none}.pf-quick-nav{margin-top:0}.practice-full-body{padding:.5rem .6rem}.practice-full-content{gap:.5rem}.practice-full-vi{font-size:1.1rem;padding:.55rem .5rem}.practice-full-input{font-size:1.15rem;padding:.55rem .8rem}.char-slot{font-size:1.1rem;min-width:1.25rem;height:1.6rem}.practice-full-nav{padding:.4rem .65rem}.pf-nav-btn{padding:.45rem .6rem;font-size:.75rem}}
+
+/* ============================================================ */
+/* CHỈ áp dụng cho DESKTOP thực sự (có chuột) + màn hình thấp */
+/* → Không ẩn ô search trên mobile xoay ngang nữa */
+/* ============================================================ */
+@media (min-width:769px) and (max-height:550px) and (hover:hover) and (pointer:fine){
+    .practice-full-header{padding:.3rem .85rem}
+    .pf-filters{padding:.25rem .85rem .2rem}
+    .pf-quick-nav{margin-top:0}
+    .practice-full-body{padding:.5rem .6rem}
+    .practice-full-content{gap:.5rem}
+    .practice-full-vi{font-size:1.1rem;padding:.55rem .5rem}
+    .practice-full-input{font-size:1.15rem;padding:.55rem .8rem}
+    .char-slot{font-size:1.1rem;min-width:1.25rem;height:1.6rem}
+    .practice-full-nav{padding:.4rem .65rem}
+    .pf-nav-btn{padding:.45rem .6rem;font-size:.75rem}
+}
+
 @media(max-width:768px){.container{padding:0 .7rem}.header-inner{gap:.5rem;margin-bottom:.4rem}.main{padding:.15rem 0 2rem}.practice-full-header{padding:.5rem .85rem;gap:.5rem}.pf-filters{padding:.4rem .85rem .3rem}.practice-full-body{padding:.85rem .7rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.85rem}.practice-full-vi{font-size:1.2rem;padding:.75rem .6rem}.practice-full-input{font-size:1.2rem;padding:.75rem .85rem}.practice-speak-btn{min-width:44px;padding:0 .6rem;font-size:1.05rem;border-radius:12px}.char-slot{font-size:1.2rem;min-width:1.4rem;height:1.85rem}.answer-phrase-btn{font-size:1.2rem;padding:.35rem .65rem}.pf-nav-btn{padding:.6rem .7rem;font-size:.78rem}.practice-full-nav{padding:.55rem .85rem;gap:.5rem}.reveal-actions button{padding:.6rem;font-size:.8rem}.reveal-actions{grid-template-columns:1fr 1fr;gap:.5rem}}
 @media(max-width:400px){.practice-full-body{padding:.7rem .5rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.7rem}.practice-full-vi{font-size:1.1rem;padding:.65rem .5rem}.practice-full-input{font-size:1.1rem;padding:.65rem .75rem}.practice-speak-btn{min-width:40px}.reveal-actions{grid-template-columns:1fr}.pf-nav-btn{padding:.5rem}.practice-full-nav{gap:.4rem}}
 .practice-full-header .card-tag{padding:.22rem .6rem;font-size:clamp(.6rem,.75vw,.7rem);font-weight:700;border-radius:50px;flex-shrink:0}
@@ -309,9 +334,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (max-width:900px){.header-inner .tiktok-bar{max-width:130px!important}.header-inner .tiktok-bar .tiktok-bar-link span{display:none}}
 
 /* ============================================================ */
-/* ==== FIX: Counter + Tags trên header full màn hình ==== */
-/* Đảm bảo pf-counter luôn hiển thị STT Excel gọn gàng, */
-/* pf-tags không bị ẩn trên màn hình thấp và có thể scroll ngang. */
+/* FIX: Counter + Tags trên header full màn hình */
 /* ============================================================ */
 .practice-full-header .pf-counter{
     flex-shrink:0;
@@ -344,7 +367,103 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     }
     .pf-brand-sub{display:none}
 }
+
 /* ============================================================ */
+/* Điện thoại xoay ngang: giữ search + filter, thu gọn vừa đủ */
+/* ============================================================ */
+@media (max-width:1024px) and (max-height:550px) and (orientation:landscape){
+    .practice-full-header{
+        padding:.35rem .75rem;
+        gap:.35rem;
+        min-height:44px;
+    }
+    .pf-brand-sub{display:none}
+    .pf-brand-title{font-size:.72rem}
+    .pf-filters{
+        padding:.3rem .75rem .25rem;
+    }
+    .pf-search-wrap{
+        margin-bottom:.3rem;
+    }
+    .pf-search-wrap input{
+        padding:.28rem 2rem;
+        font-size:.72rem;
+    }
+    .pf-filter-row{
+        gap:.4rem;
+    }
+    .pf-chip{
+        padding:.2rem .5rem;
+        font-size:.68rem;
+    }
+    .pf-quick-nav{
+        margin-top:.25rem;
+    }
+    .pf-quick-nav-select{
+        padding:.22rem 1.8rem .22rem .5rem;
+        font-size:.68rem;
+    }
+    .practice-full-body{
+        padding:.5rem .7rem calc(70px + env(safe-area-inset-bottom));
+    }
+    .practice-full-content{
+        gap:.5rem;
+    }
+    .practice-full-vi{
+        font-size:1.05rem;
+        padding:.55rem .55rem;
+        line-height:1.35;
+    }
+    .practice-full-input{
+        font-size:1.1rem;
+        padding:.55rem .75rem;
+    }
+    .practice-speak-btn{
+        min-width:42px;
+        font-size:.95rem;
+    }
+    .char-slot{
+        font-size:1.05rem;
+        min-width:1.2rem;
+        height:1.55rem;
+    }
+    .reveal-actions button{
+        padding:.45rem .5rem;
+        font-size:.75rem;
+    }
+    .practice-full-nav{
+        padding:.4rem .7rem;
+        min-height:44px;
+    }
+    .pf-nav-btn{
+        padding:.45rem .6rem;
+        font-size:.75rem;
+    }
+    .pf-tiktok-float{
+        transform:scale(.85);
+        transform-origin:left bottom;
+        left:8px;
+        bottom:calc(4px + env(safe-area-inset-bottom));
+    }
+}
+
+/* Điện thoại xoay ngang rất thấp (<420px) - ẩn bớt pf-quick-nav */
+@media (max-width:1024px) and (max-height:420px) and (orientation:landscape){
+    .pf-quick-nav{
+        display:none;
+    }
+    .practice-full-header .pf-tags{
+        overflow-x:auto;
+    }
+    .practice-full-vi{
+        font-size:.95rem;
+        padding:.45rem .5rem;
+    }
+    .practice-full-input{
+        font-size:1rem;
+        padding:.5rem .7rem;
+    }
+}
 """
 
 
