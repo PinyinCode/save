@@ -78,11 +78,6 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 .ai-partial{color:var(--amber);font-weight:700}
 .ai-wrong{color:var(--danger);font-weight:700}
 .ai-reason{display:block;font-size:.68rem;color:var(--text-3);font-weight:400;margin-top:.2rem;font-style:italic;line-height:1.3}
-.answer-inline-display{display:flex;align-items:center;justify-content:center;gap:.4rem;margin-top:.35rem;padding:.35rem .6rem;background:linear-gradient(135deg,rgba(37,99,235,.08),rgba(37,99,235,.04));border:1px dashed rgba(37,99,235,.3);border-radius:8px;flex-wrap:wrap}
-[data-theme="dark"] .answer-inline-display{background:linear-gradient(135deg,rgba(59,130,246,.15),rgba(59,130,246,.08));border-color:rgba(59,130,246,.4)}
-.answer-inline-label{font-size:.7rem;font-weight:700;color:var(--primary-dark);text-transform:uppercase;display:inline-flex;align-items:center;gap:.25rem}
-[data-theme="dark"] .answer-inline-label{color:#93c5fd}
-.answer-inline-text{font-family:var(--font-zh);font-size:1.05rem;font-weight:600;color:var(--text);letter-spacing:.03em;word-break:break-all}
 .main{padding:clamp(.15rem,.5vh,.5rem) 0 clamp(2rem,5vh,3rem)}
 .demo-banner{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid #f59e0b;border-radius:var(--radius);padding:clamp(.7rem,1.5vw,.9rem) clamp(.8rem,1.5vw,1.1rem);margin-bottom:1rem;display:flex;align-items:center;gap:.75rem;flex-wrap:wrap}
 [data-theme="dark"] .demo-banner{background:linear-gradient(135deg,rgba(245,158,11,.15),rgba(245,158,11,.25));border-color:#f59e0b}
@@ -465,6 +460,57 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .answer-actions button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 
 /* ============================================================ */
+/* Nút đọc cả câu + dừng — nhỏ gọn bên cạnh ô nhập liệu */
+/* ============================================================ */
+.practice-speak-btn{
+    width:auto;
+    min-width:clamp(38px,4.5vw,46px);
+    padding:0 clamp(.45rem,.8vw,.65rem);
+    border-radius:14px;
+    border:2px solid var(--primary);
+    background:var(--primary-light);
+    color:var(--primary-dark);
+    font-size:clamp(.9rem,1.3vw,1.1rem);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    transition:transform .15s,background .2s,color .2s,border-color .2s;
+    position:relative;
+}
+.practice-speak-btn:hover,.practice-speak-btn:active{background:var(--primary);color:#fff;transform:scale(1.05)}
+.practice-speak-btn.speaking{background:var(--danger);color:#fff;border-color:var(--danger);animation:pulse 1s infinite}
+.practice-speak-btn.speaking::after{
+    content:'';
+    position:absolute;
+    inset:-2px;
+    border-radius:14px;
+    border:2px solid var(--danger);
+    animation:speakingRing 1s infinite;
+}
+@keyframes speakingRing{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.15)}}
+.practice-speak-btn:disabled{opacity:.4;cursor:not-allowed}
+[data-theme="dark"] .practice-speak-btn{background:rgba(59,130,246,.22);color:#93c5fd;border-color:rgba(59,130,246,.5)}
+
+.practice-stop-btn{
+    width:clamp(34px,4vw,42px);
+    border-radius:14px;
+    border:2px solid var(--danger);
+    background:var(--danger-light);
+    color:var(--danger);
+    font-size:clamp(.85rem,1.2vw,1rem);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+    transition:transform .15s,background .2s,color .2s;
+}
+.practice-stop-btn:hover,.practice-stop-btn:active{background:var(--danger);color:#fff;transform:scale(1.05)}
+[data-theme="dark"] .practice-stop-btn{background:rgba(220,38,38,.22);color:#fca5a5;border-color:rgba(220,38,38,.5)}
+
+/* ============================================================ */
 /* HIGHLIGHT cụm đang đọc (karaoke) — VÀNG CAM */
 /* ============================================================ */
 .answer-phrase-btn.reading{
@@ -578,7 +624,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 [data-theme="dark"] .audio-btn{background:rgba(59,130,246,.22);color:#93c5fd;border:1px solid rgba(59,130,246,.35)}
 @media (min-width:1000px){.search-filter-row{display:grid;grid-template-columns:1fr auto;gap:.55rem;align-items:center}.search-bar{margin-bottom:0}.filters{display:grid;grid-template-columns:160px 180px;gap:.4rem;max-width:none;margin-bottom:0}}
 @media (min-width:1400px){.filters{grid-template-columns:180px 200px}}
-@media (min-width:769px) and (max-height:700px){.practice-full-body{padding:.75rem .85rem}.practice-full-content{gap:.75rem}.practice-full-vi{font-size:1.3rem;padding:.7rem .6rem}.practice-full-input{font-size:1.3rem;padding:.7rem .9rem}.practice-speak-btn{min-width:46px}.char-slot{font-size:1.3rem;min-width:1.5rem;height:1.9rem}.practice-full-nav{padding:.5rem .85rem}.pf-nav-btn{padding:.55rem .75rem;font-size:.8rem}}
+@media (min-width:769px) and (max-height:700px){.practice-full-body{padding:.75rem .85rem}.practice-full-content{gap:.75rem}.practice-full-vi{font-size:1.3rem;padding:.7rem .6rem}.practice-full-input{font-size:1.3rem;padding:.7rem .9rem}.practice-speak-btn{min-width:42px}.char-slot{font-size:1.3rem;min-width:1.5rem;height:1.9rem}.practice-full-nav{padding:.5rem .85rem}.pf-nav-btn{padding:.55rem .75rem;font-size:.8rem}}
 
 @media (min-width:769px) and (max-height:550px) and (hover:hover) and (pointer:fine){
     .practice-full-header{padding:.3rem .85rem}
@@ -593,8 +639,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .pf-nav-btn{padding:.45rem .6rem;font-size:.75rem}
 }
 
-@media(max-width:768px){.container{padding:0 .7rem}.header-inner{gap:.5rem;margin-bottom:.4rem}.main{padding:.15rem 0 2rem}.practice-full-header{padding:.5rem .85rem;gap:.5rem}.pf-filters{padding:.4rem .85rem .3rem}.practice-full-body{padding:.85rem .7rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.85rem}.practice-full-vi{font-size:1.2rem;padding:.75rem .6rem}.practice-full-input{font-size:1.2rem;padding:.75rem .85rem}.practice-speak-btn{min-width:44px;padding:0 .6rem;font-size:1.05rem;border-radius:12px}.char-slot{font-size:1.2rem;min-width:1.4rem;height:1.85rem}.answer-phrase-btn{font-size:1.2rem;padding:.35rem .65rem}.pf-nav-btn{padding:.6rem .7rem;font-size:.78rem}.practice-full-nav{padding:.55rem .85rem;gap:.5rem}.reveal-actions button{padding:.6rem;font-size:.8rem}.reveal-actions{grid-template-columns:1fr 1fr;gap:.5rem}}
-@media(max-width:400px){.practice-full-body{padding:.7rem .5rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.7rem}.practice-full-vi{font-size:1.1rem;padding:.65rem .5rem}.practice-full-input{font-size:1.1rem;padding:.65rem .75rem}.practice-speak-btn{min-width:40px}.reveal-actions{grid-template-columns:1fr}.pf-nav-btn{padding:.5rem}.practice-full-nav{gap:.4rem}}
+@media(max-width:768px){.container{padding:0 .7rem}.header-inner{gap:.5rem;margin-bottom:.4rem}.main{padding:.15rem 0 2rem}.practice-full-header{padding:.5rem .85rem;gap:.5rem}.pf-filters{padding:.4rem .85rem .3rem}.practice-full-body{padding:.85rem .7rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.85rem}.practice-full-vi{font-size:1.2rem;padding:.75rem .6rem}.practice-full-input{font-size:1.2rem;padding:.75rem .85rem}.practice-speak-btn{min-width:40px;padding:0 .5rem;font-size:.95rem;border-radius:12px}.practice-stop-btn{width:36px}.char-slot{font-size:1.2rem;min-width:1.4rem;height:1.85rem}.answer-phrase-btn{font-size:1.2rem;padding:.35rem .65rem}.pf-nav-btn{padding:.6rem .7rem;font-size:.78rem}.practice-full-nav{padding:.55rem .85rem;gap:.5rem}.reveal-actions button{padding:.6rem;font-size:.8rem}.reveal-actions{grid-template-columns:1fr 1fr;gap:.5rem}}
+@media(max-width:400px){.practice-full-body{padding:.7rem .5rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.7rem}.practice-full-vi{font-size:1.1rem;padding:.65rem .5rem}.practice-full-input{font-size:1.1rem;padding:.65rem .75rem}.practice-speak-btn{min-width:38px}.reveal-actions{grid-template-columns:1fr}.pf-nav-btn{padding:.5rem}.practice-full-nav{gap:.4rem}}
 .practice-full-header .card-tag{padding:.22rem .6rem;font-size:clamp(.6rem,.75vw,.7rem);font-weight:700;border-radius:50px;flex-shrink:0}
 .practice-full-header .card-tag.hsk{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff}
 .practice-full-header .card-tag.topic{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
@@ -656,7 +702,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .practice-full-content{gap:.5rem}
     .practice-full-vi{font-size:1.05rem;padding:.55rem .55rem;line-height:1.35}
     .practice-full-input{font-size:1.1rem;padding:.55rem .75rem}
-    .practice-speak-btn{min-width:42px;font-size:.95rem}
+    .practice-speak-btn{min-width:38px;font-size:.9rem}
     .char-slot{font-size:1.05rem;min-width:1.2rem;height:1.55rem}
     .reveal-actions button{padding:.45rem .5rem;font-size:.75rem}
     .practice-full-nav{padding:.4rem .7rem;min-height:44px}
@@ -785,7 +831,8 @@ def build_ui_html():
 <div class="practice-full-input-wrap">
 <div class="practice-input-row">
 <input type="text" class="practice-full-input" id="pfInput" placeholder="Gõ tiếng Trung..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-<button class="practice-speak-btn" id="pfSpeakBtn" type="button" title="Nghe câu này bằng tiếng Trung" aria-label="Nghe câu này"><i class="fas fa-volume-up"></i></button>
+<button class="practice-speak-btn" id="pfSpeakBtn" type="button" title="Nghe câu này" aria-label="Nghe câu này"><i class="fas fa-volume-up"></i></button>
+<button class="practice-stop-btn" id="pfStopBtn" type="button" title="Dừng đọc" aria-label="Dừng đọc"><i class="fas fa-stop"></i></button>
 </div>
 <div class="char-preview" id="pfPreview"></div>
 <div class="practice-full-status" id="pfStatus"></div>
@@ -798,10 +845,6 @@ def build_ui_html():
 <div class="ar-label">Đáp án</div>
 <div class="answer-chars" id="pfAnswerChars"></div>
 <div class="answer-pinyin" id="pfAnswerPinyin"></div>
-<div class="answer-actions">
-<button class="primary" onclick="speakFullSentenceWithHighlight()"><i class="fas fa-volume-up"></i> Đọc cả câu</button>
-<button onclick="stopSpeaking()"><i class="fas fa-stop"></i> Dừng</button>
-</div>
 </div>
 </div>
 </div>
@@ -2469,7 +2512,6 @@ function revealFullAnswer() {
         })(item.text, item.pinyin, btn, wrap);
         wrap.appendChild(btn);
 
-        // Luôn tạo tooltip (kể cả pinyin rỗng) để karaoke hoạt động ổn định
         var tip = document.createElement('span');
         tip.className = 'answer-phrase-tooltip';
         tip.textContent = item.pinyin || item.text;
@@ -2524,7 +2566,7 @@ window.speakFullSentence = function() {
 
 /* ============================================================ */
 /* ĐỌC CẢ CÂU — HIGHLIGHT TỪNG CỤM (KARAOKE) */
-/* Cụm 1 dùng CHUNG logic với các cụm khác, KHÔNG có ngoại lệ */
+/* Nút loa nhỏ nằm cạnh ô nhập liệu, đọc cả câu + highlight */
 /* ============================================================ */
 window.speakFullSentenceWithHighlight = function() {
     if (!canUseFeature()) { showLimitMessage(); return; }
@@ -2542,7 +2584,6 @@ window.speakFullSentenceWithHighlight = function() {
     _activeTooltipWrap = null;
 
     var phrases = window._pfPhrases || [];
-    // Chỉ lấy wrap/button BÊN TRONG khung đáp án hiện tại
     var charsContainer = $('pfAnswerChars');
     if (!charsContainer) return;
     var wraps = charsContainer.querySelectorAll('.answer-phrase-wrap');
@@ -2581,11 +2622,9 @@ window.speakFullSentenceWithHighlight = function() {
         if (btn) btn.classList.add('reading');
         if (wrap) {
             wrap.classList.add('active-wrap');
-            // Đóng tooltip các cụm khác
             document.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
                 t.classList.remove('show');
             });
-            // Hiện tooltip cụm hiện tại — CÙNG LOGIC CHO MỌI CỤM
             var tip = wrap.querySelector('.answer-phrase-tooltip');
             if (tip) {
                 tip.classList.add('show');
@@ -2623,7 +2662,6 @@ window.speakFullSentenceWithHighlight = function() {
         setTimeout(function(){ speechSynthesis.speak(u); }, 30);
     }
 
-    // Delay nhỏ trước cụm 1 để tooltip kịp render
     setTimeout(speakNext, 150);
 };
 
@@ -2719,24 +2757,14 @@ function initPracticeFull() {
                 alert('Trình duyệt không hỗ trợ phát âm.');
                 return;
             }
-            speechSynthesis.cancel();
-            document.querySelectorAll('.practice-speak-btn.speaking').forEach(function(b) { b.classList.remove('speaking'); });
-            speakBtn.classList.add('speaking');
-            speakBtn.disabled = true;
-            var utterance = new SpeechSynthesisUtterance(pfCurrentAnswer);
-            utterance.lang = 'zh-CN';
-            utterance.rate = 0.85;
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
-            var voice = getChineseVoice();
-            if (voice) utterance.voice = voice;
-            var resetBtn = function() {
-                speakBtn.classList.remove('speaking');
-                speakBtn.disabled = false;
-            };
-            utterance.onend = resetBtn;
-            utterance.onerror = resetBtn;
-            setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
+            speakFullSentenceWithHighlight();
+        });
+    }
+    var stopBtn = $('pfStopBtn');
+    if (stopBtn) {
+        stopBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            stopSpeaking();
         });
     }
 }
