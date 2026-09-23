@@ -110,6 +110,271 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 @media(min-width:1800px){.mobile-view{grid-template-columns:1fr 1fr 1fr;gap:1.3rem}}
 
 /* ============================================================ */
+/* DATASET SELECTOR — 2 CẤP (Bộ dữ liệu + Chuyên ngành)        */
+/* ============================================================ */
+.dataset-selector{
+    margin-bottom:.75rem;
+    padding:.75rem .9rem;
+    background:linear-gradient(135deg,var(--surface),var(--surface-2));
+    border:1.5px solid var(--border);
+    border-radius:14px;
+    box-shadow:var(--shadow-sm);
+}
+.ds-label{
+    display:flex;align-items:center;gap:.4rem;
+    font-size:.7rem;font-weight:800;
+    color:var(--text-3);text-transform:uppercase;
+    letter-spacing:.5px;margin-bottom:.5rem;
+}
+.ds-label i{color:var(--primary);font-size:.85rem}
+.ds-main-row{
+    display:grid;grid-template-columns:1fr 1fr;gap:.5rem;
+}
+@media(max-width:500px){
+    .ds-main-row{grid-template-columns:1fr}
+}
+.ds-btn{
+    display:flex;align-items:center;gap:.5rem;
+    padding:.65rem .85rem;
+    border-radius:11px;
+    border:1.5px solid var(--border);
+    background:var(--surface);
+    color:var(--text);
+    font-size:.82rem;font-weight:700;
+    font-family:inherit;cursor:pointer;
+    transition:.2s;text-align:left;
+    position:relative;
+}
+.ds-btn:hover{
+    border-color:var(--primary);
+    background:var(--primary-light);
+    transform:translateY(-1px);
+}
+.ds-btn.active{
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;border-color:transparent;
+    box-shadow:0 4px 12px rgba(124,58,237,.35);
+}
+.ds-btn i:first-child{
+    font-size:1rem;flex-shrink:0;
+}
+.ds-btn span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.ds-arrow{
+    font-size:.7rem;opacity:.7;transition:transform .25s;
+}
+.ds-btn.active .ds-arrow{transform:rotate(180deg)}
+
+/* ═══ Badge NEW cho nút "Chuyên ngành" ═══ */
+.ds-btn[data-dataset-group="chuyen-nganh"]{
+    overflow:visible;
+}
+.ds-btn[data-dataset-group="chuyen-nganh"] .ds-new-badge{
+    position:absolute;
+    top:-10px;
+    right:-8px;
+    padding:.18rem .5rem;
+    border-radius:50px;
+    background:linear-gradient(135deg,#ef4444,#dc2626 50%,#b91c1c);
+    color:#fff;
+    font-size:.6rem;
+    font-weight:900;
+    letter-spacing:.5px;
+    text-transform:uppercase;
+    box-shadow:
+        0 2px 8px rgba(220,38,38,.5),
+        0 0 0 2px var(--surface);
+    animation:dsNewPulse 1.6s ease-in-out infinite;
+    z-index:10;
+    pointer-events:none;
+    line-height:1.2;
+    white-space:nowrap;
+}
+.ds-btn[data-dataset-group="chuyen-nganh"] .ds-new-badge::before{
+    content:'';
+    position:absolute;
+    inset:-4px;
+    border-radius:50px;
+    background:radial-gradient(circle,rgba(220,38,38,.4),transparent 70%);
+    animation:dsNewGlow 1.6s ease-in-out infinite;
+    z-index:-1;
+}
+@keyframes dsNewPulse{
+    0%,100%{
+        transform:scale(1);
+        box-shadow:
+            0 2px 8px rgba(220,38,38,.5),
+            0 0 0 2px var(--surface);
+    }
+    50%{
+        transform:scale(1.12);
+        box-shadow:
+            0 4px 14px rgba(220,38,38,.8),
+            0 0 0 2px var(--surface);
+    }
+}
+@keyframes dsNewGlow{
+    0%,100%{opacity:.4;transform:scale(1)}
+    50%{opacity:.9;transform:scale(1.4)}
+}
+.ds-btn[data-dataset-group="chuyen-nganh"].active .ds-new-badge{
+    display:none;
+}
+[data-theme="dark"] .ds-btn[data-dataset-group="chuyen-nganh"] .ds-new-badge{
+    box-shadow:
+        0 2px 8px rgba(220,38,38,.7),
+        0 0 0 2px var(--surface-2);
+}
+
+.ds-sub-wrap{
+    margin-top:.65rem;padding-top:.65rem;
+    border-top:1.5px dashed var(--border);
+    animation:dsFadeIn .25s ease-out;
+}
+@keyframes dsFadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.ds-sub-label{
+    display:flex;align-items:center;gap:.35rem;
+    font-size:.68rem;font-weight:800;
+    color:var(--text-3);text-transform:uppercase;
+    letter-spacing:.4px;margin-bottom:.5rem;
+}
+.ds-sub-label i{color:var(--amber);font-size:.8rem}
+
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ SUB-BUTTONS CHUYÊN NGÀNH — NỔI BẬT HƠN ⭐
+   ═══════════════════════════════════════════════════════════════ */
+.ds-sub-grid{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.5rem;
+}
+.ds-sub-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:.45rem;
+    padding:.5rem .95rem;
+    border-radius:50px;
+    background:linear-gradient(135deg,
+        color-mix(in srgb, var(--ds-color, #2563eb) 12%, var(--surface)),
+        color-mix(in srgb, var(--ds-color, #2563eb) 4%, var(--surface)));
+    border:2px solid color-mix(in srgb, var(--ds-color, #2563eb) 40%, var(--border));
+    color:var(--text);
+    font-size:.76rem;
+    font-weight:800;
+    font-family:inherit;
+    cursor:pointer;
+    transition:all .2s ease;
+    text-align:left;
+    position:relative;
+    line-height:1;
+    white-space:nowrap;
+    box-shadow:0 2px 6px color-mix(in srgb, var(--ds-color, #2563eb) 18%, transparent);
+    letter-spacing:.01em;
+}
+.ds-sub-btn i:first-child{
+    font-size:.9rem;
+    color:var(--ds-color, var(--primary));
+    transition:.2s;
+    flex-shrink:0;
+}
+.ds-sub-btn span{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    max-width:180px;
+}
+.ds-sub-btn:hover{
+    border-color:var(--ds-color, var(--primary));
+    background:linear-gradient(135deg,
+        color-mix(in srgb, var(--ds-color, #2563eb) 20%, var(--surface)),
+        color-mix(in srgb, var(--ds-color, #2563eb) 8%, var(--surface)));
+    transform:translateY(-2px);
+    box-shadow:0 6px 16px color-mix(in srgb, var(--ds-color, #2563eb) 30%, transparent);
+}
+.ds-sub-btn.active{
+    background:linear-gradient(135deg,
+        var(--ds-color, var(--primary)),
+        color-mix(in srgb, var(--ds-color, #2563eb) 72%, #000));
+    color:#fff;
+    border-color:var(--ds-color, var(--primary));
+    box-shadow:0 6px 18px color-mix(in srgb, var(--ds-color, #2563eb) 55%, transparent);
+    transform:translateY(-1px);
+}
+.ds-sub-btn.active i:first-child{
+    color:#fff;
+}
+@media(max-width:500px){
+    .ds-sub-btn{
+        padding:.42rem .75rem;
+        font-size:.72rem;
+    }
+    .ds-sub-btn i:first-child{ font-size:.82rem; }
+    .ds-sub-btn span{ max-width:140px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   🔒 KHOÁ CHUYÊN NGÀNH — Demo/Trial chưa gia hạn
+   ═══════════════════════════════════════════════════════════════ */
+.ds-sub-btn.locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+    filter: grayscale(0.4);
+    padding-right: 1.7rem;
+}
+.ds-sub-btn.locked:hover {
+    transform: none;
+    background: var(--surface);
+    border-color: var(--border);
+    box-shadow: 0 1px 2px rgba(15,23,42,.04);
+}
+.ds-sub-btn.locked i:first-child {
+    color: var(--text-3) !important;
+}
+.ds-sub-lock {
+    position: absolute;
+    top: 50%;
+    right: 6px;
+    transform: translateY(-50%);
+    font-size: 0.58rem;
+    color: #dc2626;
+    background: rgba(220, 38, 38, 0.14);
+    padding: 2px 4px;
+    border-radius: 5px;
+    line-height: 1;
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(220, 38, 38, 0.2);
+}
+[data-theme="dark"] .ds-sub-lock {
+    color: #fca5a5;
+    background: rgba(220, 38, 38, 0.3);
+}
+.ds-main-lock {
+    font-size: 0.7rem;
+    color: #dc2626;
+    margin-left: 0.35rem;
+    padding: 2px 5px;
+    background: rgba(220, 38, 38, 0.12);
+    border-radius: 5px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+[data-theme="dark"] .ds-main-lock {
+    color: #fca5a5;
+    background: rgba(220, 38, 38, 0.28);
+}
+.ds-btn[data-dataset-group="chuyen-nganh"].has-lock {
+    border-color: rgba(220, 38, 38, 0.35);
+}
+.ds-btn[data-dataset-group="chuyen-nganh"].has-lock:hover {
+    border-color: #dc2626;
+    background: rgba(220, 38, 38, 0.06);
+}
+.ds-btn[data-dataset-group="chuyen-nganh"].has-lock.active {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-color: transparent;
+}
+
+/* ============================================================ */
 /* FLASHCARD UI */
 /* ============================================================ */
 .card{
@@ -399,13 +664,10 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (max-height:420px) and (orientation:landscape){.pf-tiktok-float{bottom:calc(56px + env(safe-area-inset-bottom));transform:scale(.85);transform-origin:left bottom}}
 .practice-full-modal:not(.show) .pf-tiktok-float{display:none!important}
 
-.pf-filters{padding:clamp(.4rem,1vh,.55rem) clamp(.85rem,2vw,1.25rem) clamp(.35rem,.8vh,.45rem);background:var(--surface);border-bottom:1px solid var(--border);flex:0 0 auto;overflow-y:auto}
-.pf-search-wrap{position:relative;margin-bottom:.45rem}
-.pf-search-wrap i.fa-search{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-3);pointer-events:none}
-.pf-search-wrap input{width:100%;padding:clamp(.35rem,.6vh,.55rem) 2.3rem;border-radius:var(--radius-full);border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:clamp(.72rem,.9vw,.85rem);outline:none;font-family:inherit}
-.pf-search-wrap input:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15)}
-.pf-search-clear{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:50%;border:none;background:var(--surface-2);color:var(--text-2);cursor:pointer;display:none;align-items:center;justify-content:center}
-.pf-search-clear.show{display:flex}
+/* ============================================================ */
+/* FILTERS trong Practice Full                                    */
+/* ============================================================ */
+.pf-filters{padding:clamp(.4rem,1vh,.55rem) clamp(.85rem,2vw,1.25rem) clamp(.35rem,.8vh,.45rem);background:var(--surface);border-bottom:1px solid var(--border);flex:0 0 auto;overflow:visible}
 .pf-filter-row{display:grid;grid-template-columns:1fr 1fr;gap:.5rem}
 .pf-chip{display:flex;align-items:center;gap:.4rem;padding:clamp(.25rem,.5vh,.4rem) clamp(.5rem,.8vw,.75rem);border-radius:var(--radius-full);border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:clamp(.68rem,.85vw,.78rem);cursor:pointer;min-width:0;position:relative;overflow:hidden}
 .pf-chip.has-value{background:var(--primary);color:#fff;border-color:var(--primary)}
@@ -414,9 +676,205 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .pf-chip-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
 .pf-chip-arrow{opacity:.5;font-size:.62rem;flex-shrink:0}
 .pf-chip select{position:absolute;inset:0;opacity:0;cursor:pointer;appearance:none;width:100%;height:100%;z-index:5}
-.pf-quick-nav{margin-top:.4rem;display:flex;align-items:center;gap:.5rem}
-.pf-quick-nav-label{font-size:clamp(.55rem,.72vw,.68rem);font-weight:700;color:var(--text-3);text-transform:uppercase;white-space:nowrap}
-.pf-quick-nav-select{flex:1;min-width:0;padding:clamp(.25rem,.5vh,.45rem) 2rem;border-radius:var(--radius-full);border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-size:clamp(.68rem,.85vw,.78rem);font-family:inherit;outline:none;cursor:pointer;appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%2394a3b8' d='M6 9L1 4h10z'/></svg>");background-repeat:no-repeat;background-position:right 12px center;background-size:10px}
+
+/* ============================================================ */
+/* 📚 KHỐI GỘP: BỘ DỮ LIỆU + TÌM KIẾM + CHỌN CÂU                 */
+/* 3 tầng rõ ràng: dataset + search (hàng 1) → quick-nav (hàng 2) */
+/* Ô chọn câu LUÔN hiển thị, kể cả màn hình thấp                  */
+/* ============================================================ */
+.pf-dataset-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-top: .45rem;
+    padding: .5rem .65rem;
+    background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.08),
+        rgba(139, 92, 246, 0.06));
+    border: 1.5px solid rgba(139, 92, 246, 0.25);
+    border-radius: 12px;
+    position: relative;
+    transition: .2s;
+    flex-wrap: wrap;
+}
+[data-theme="dark"] .pf-dataset-row {
+    background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.15),
+        rgba(139, 92, 246, 0.12));
+    border-color: rgba(165, 180, 252, 0.3);
+}
+.pf-dataset-row.has-locked-options {
+    border-color: rgba(139, 92, 246, 0.25);
+}
+.pf-dataset-label {
+    font-size: clamp(.6rem, .72vw, .68rem);
+    font-weight: 800;
+    color: #5b21b6;
+    text-transform: uppercase;
+    letter-spacing: .4px;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: .3rem;
+    flex-shrink: 0;
+}
+[data-theme="dark"] .pf-dataset-label {
+    color: #c4b5fd;
+}
+.pf-dataset-label i {
+    color: #d946ef;
+    font-size: .9em;
+}
+.pf-dataset-select {
+    flex: 1 1 160px;
+    min-width: 0;
+    padding: clamp(.32rem, .55vh, .45rem) 2rem clamp(.32rem, .55vh, .45rem) .75rem;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: clamp(.72rem, .85vw, .82rem);
+    font-weight: 700;
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%2394a3b8' d='M6 9L1 4h10z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 10px;
+    transition: .15s;
+}
+.pf-dataset-select:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+.pf-dataset-select option.locked-opt {
+    color: #94a3b8;
+}
+
+/* ═══ Ô TÌM KIẾM cùng hàng với Bộ dữ liệu ═══ */
+.pf-dataset-search {
+    flex: 1 1 100%;
+    min-width: 0;
+    position: relative;
+}
+.pf-dataset-search i.fa-search {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-3);
+    font-size: .78rem;
+    pointer-events: none;
+}
+.pf-dataset-search input {
+    width: 100%;
+    padding: clamp(.32rem, .55vh, .45rem) 2rem clamp(.32rem, .55vh, .45rem) 2rem;
+    border-radius: 999px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: clamp(.72rem, .85vw, .82rem);
+    font-family: inherit;
+    outline: none;
+    transition: .15s;
+}
+.pf-dataset-search input:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+.pf-dataset-search .pf-search-clear {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface-2);
+    color: var(--text-2);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    font-size: .7rem;
+}
+.pf-dataset-search .pf-search-clear.show { display: flex; }
+
+/* Từ 600px: search cùng hàng với select dataset */
+@media (min-width: 600px) {
+    .pf-dataset-search {
+        flex: 1 1 auto;
+        max-width: 45%;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   📌 Ô "CHỌN CÂU" GỘP VÀO KHỐI BỘ DỮ LIỆU — LUÔN HIỂN THỊ
+   - flex: 1 1 100% → ép xuống hàng riêng, chiếm full chiều ngang
+   - Không có media query nào ẩn nó, kể cả màn hình thấp
+   ═══════════════════════════════════════════════════════════════ */
+.pf-dataset-row .pf-quick-nav {
+    flex: 1 1 100%;      /* ép xuống hàng riêng, chiếm full chiều ngang */
+    width: 100%;
+    margin-top: .25rem;
+    padding-top: .5rem;
+    border-top: 1px dashed rgba(139, 92, 246, 0.25);
+    display: flex !important;   /* LUÔN hiển thị dạng flex */
+    align-items: center;
+    gap: .5rem;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+[data-theme="dark"] .pf-dataset-row .pf-quick-nav {
+    border-top-color: rgba(165, 180, 252, 0.25);
+}
+.pf-quick-nav-label {
+    font-size: clamp(.55rem, .72vw, .68rem);
+    font-weight: 700;
+    color: var(--text-3);
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.pf-quick-nav-select {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: clamp(.25rem, .5vh, .45rem) 2rem;
+    border-radius: var(--radius-full);
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: clamp(.68rem, .85vw, .78rem);
+    font-family: inherit;
+    outline: none;
+    cursor: pointer;
+    appearance: none;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'><path fill='%2394a3b8' d='M6 9L1 4h10z'/></svg>");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 10px;
+    transition: .15s;
+}
+.pf-quick-nav-select:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.15);
+}
+
+@media (max-width: 500px) {
+    .pf-dataset-label {
+        font-size: .58rem;
+        gap: .2rem;
+    }
+    .pf-dataset-label i { display: none; }
+    .pf-dataset-select {
+        font-size: .7rem;
+        padding-left: .6rem;
+    }
+}
+
 .practice-full-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:clamp(.85rem,2vh,1.5rem) clamp(.75rem,2vw,1.25rem) calc(80px + env(safe-area-inset-bottom));display:flex;flex-direction:column;align-items:center;justify-content:flex-start;scrollbar-width:thin}
 .practice-full-content{width:100%;max-width:clamp(320px,60vw,700px);display:flex;flex-direction:column;gap:clamp(.65rem,1.5vh,1.25rem);margin-top:auto;margin-bottom:auto}
 .practice-full-vi{font-size:clamp(1.15rem,2.2vw,1.65rem);font-weight:600;color:var(--text);text-align:center;line-height:1.45;padding:clamp(.7rem,1.5vh,1.1rem) clamp(.6rem,1.5vw,.9rem);background:linear-gradient(135deg,var(--surface-2),rgba(37,99,235,.06));border-radius:16px;border-left:4px solid var(--primary)}
@@ -429,9 +887,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media(min-width:769px){.practice-full-input{font-size:clamp(1.35rem,2.6vw,1.6rem);padding:clamp(.85rem,1.8vh,1rem) clamp(1rem,2vw,1.3rem)}}
 @media(min-width:1400px){.practice-full-input{font-size:1.7rem;padding:1.05rem 1.4rem}}
 
-/* ============================================================ */
-/* Nút loa nhỏ cạnh ô nhập liệu */
-/* ============================================================ */
 .practice-speak-btn{
     width:auto;
     min-width:clamp(38px,4.5vw,46px);
@@ -505,9 +960,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .answer-actions button:hover{background:var(--surface-2);border-color:var(--primary);color:var(--primary)}
 .answer-actions button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 
-/* ============================================================ */
-/* HIGHLIGHT cụm đang đọc (karaoke) — VÀNG CAM */
-/* ============================================================ */
 .answer-phrase-btn.reading{
     background:linear-gradient(135deg,#f59e0b,#d97706) !important;
     color:#fff !important;
@@ -516,10 +968,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     box-shadow:0 8px 20px rgba(245,158,11,.5) !important;
     transition:all .15s ease-out;
 }
-
-/* ============================================================ */
-/* TOOLTIP PINYIN — VÀNG CAM khớp highlight */
-/* ============================================================ */
 .answer-phrase-wrap{
     position:relative;
     display:inline-flex;
@@ -584,7 +1032,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 
 /* ============================================================ */
-/* NAV — 3 NÚT TO ĐỀU NHAU + 1 NÚT NHỎ */
+/* NAV — 3 NÚT TO ĐỀU NHAU + MINI GROUP                         */
 /* ============================================================ */
 .practice-full-nav{
     display:flex;
@@ -598,7 +1046,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     min-height:72px;
 }
 
-/* Nút cơ bản */
 .pf-nav-icon{
     width:clamp(42px,5vw,50px);
     height:clamp(42px,5vw,50px);
@@ -623,14 +1070,12 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     cursor:not-allowed;
 }
 
-/* ═══ NÚT CHÍNH (◀ ▶ 🔊) — TO, NỔI BẬT ═══ */
 .pf-nav-icon.main-nav{
     width:clamp(56px,7vw,68px);
     height:clamp(56px,7vw,68px);
     font-size:clamp(1.3rem,1.8vw,1.6rem);
     border-width:2px;
 }
-/* Nút ◀ (không primary, không speak) */
 .pf-nav-icon.main-nav:not(.primary):not(.speak){
     background:var(--surface);
     color:var(--text);
@@ -646,7 +1091,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .pf-nav-icon.main-nav:not(.primary):not(.speak):active:not(:disabled){
     transform:scale(1.02);
 }
-/* Nút ▶ (primary) */
 .pf-nav-icon.main-nav.primary{
     background:linear-gradient(135deg,#4f46e5,#7c3aed);
     color:#fff;
@@ -662,7 +1106,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .pf-nav-icon.main-nav.primary:active:not(:disabled){
     transform:scale(1.05);
 }
-/* Nút 🔊 (speak) — TO bằng ◀ ▶, style xanh dương */
 .pf-nav-icon.main-nav.speak{
     background:linear-gradient(135deg,#3b82f6,#2563eb);
     color:#fff;
@@ -692,7 +1135,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     animation:stopPulse .8s ease-in-out infinite;
 }
 
-/* ═══ NÚT PHỤ (🎧) — NHỎ HƠN ═══ */
 .pf-nav-icon.mini-nav{
     width:clamp(44px,5vw,52px);
     height:clamp(44px,5vw,52px);
@@ -716,7 +1158,53 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     box-shadow:0 6px 16px rgba(6,182,212,.4);
 }
 
-/* Nhóm nút phụ — ngăn cách bằng đường kẻ dọc */
+/* ═══ NÚT RANDOM — toggle: khi bật, nút Next sẽ nhảy ngẫu nhiên ═══ */
+.pf-nav-icon.mini-nav.random{
+    background:var(--surface);
+    color:var(--text-2);
+    border-color:var(--border);
+}
+.pf-nav-icon.mini-nav.random:hover:not(:disabled){
+    transform:scale(1.08);
+    border-color:#f59e0b;
+    color:#d97706;
+    background:rgba(245,158,11,.1);
+}
+.pf-nav-icon.mini-nav.random.active{
+    background:linear-gradient(135deg, #f59e0b, #d97706);
+    color:#fff;
+    border-color:transparent;
+    box-shadow:0 4px 12px rgba(245,158,11,.5);
+    opacity:1;
+    animation:randomPulse 2s ease-in-out infinite;
+}
+.pf-nav-icon.mini-nav.random.active:hover:not(:disabled){
+    transform:scale(1.12);
+    box-shadow:0 6px 18px rgba(245,158,11,.7);
+    border-color:transparent;
+}
+.pf-nav-icon.mini-nav.random.active i{
+    animation:diceShake 0.6s ease-in-out;
+}
+@keyframes randomPulse{
+    0%,100%{ box-shadow:0 4px 12px rgba(245,158,11,.5); }
+    50%{ box-shadow:0 4px 18px rgba(245,158,11,.85); }
+}
+@keyframes diceShake{
+    0%,100%{ transform:rotate(0deg); }
+    25%{ transform:rotate(-15deg); }
+    75%{ transform:rotate(15deg); }
+}
+[data-theme="dark"] .pf-nav-icon.mini-nav.random{
+    background:var(--surface-2);
+    color:var(--text-2);
+    border-color:var(--border);
+}
+[data-theme="dark"] .pf-nav-icon.mini-nav.random.active{
+    background:linear-gradient(135deg, #fbbf24, #f59e0b);
+    color:#1e1b4b;
+}
+
 .practice-full-nav .mini-group{
     display:flex;
     gap:.35rem;
@@ -725,7 +1213,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     border-left:1.5px solid var(--border);
 }
 
-/* Dark mode cho nút ◀ */
 [data-theme="dark"] .pf-nav-icon.main-nav:not(.primary):not(.speak){
     background:var(--surface-2);
     color:var(--text);
@@ -737,7 +1224,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     color:#93c5fd;
 }
 
-/* Responsive */
 @media(max-width:768px){
     .practice-full-nav{
         gap:.5rem;
@@ -811,7 +1297,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (min-width:769px) and (max-height:550px) and (hover:hover) and (pointer:fine){
     .practice-full-header{padding:.3rem .85rem}
     .pf-filters{padding:.25rem .85rem .2rem}
-    .pf-quick-nav{margin-top:0}
     .practice-full-body{padding:.5rem .6rem}
     .practice-full-content{gap:.5rem}
     .practice-full-vi{font-size:1.1rem;padding:.55rem .5rem}
@@ -833,9 +1318,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(22,163,74,.1));color:#15803d;border:1px solid rgba(22,163,74,.3);font-weight:700;display:inline-flex;align-items:center;gap:.3rem}
 [data-theme="dark"] .practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.25),rgba(22,163,74,.15));color:#4ade80;border-color:rgba(22,163,74,.5)}
 
-/* ============================================================ */
-/* HEADER DESKTOP — TikTok bar chiếm tối đa không gian còn thừa */
-/* ============================================================ */
 @media (min-width:769px){
     .header-inner{
         display:flex!important;
@@ -940,17 +1422,26 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .pf-brand-sub{display:none}
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   📱 LANDSCAPE MÀN HÌNH THẤP — KHÔNG ẨN Ô CHỌN CÂU
+   Chỉ thu gọn để vẫn vừa trong viewport
+   ═══════════════════════════════════════════════════════════════ */
 @media (max-width:1024px) and (max-height:550px) and (orientation:landscape){
     .practice-full-header{padding:.35rem .75rem;gap:.35rem;min-height:44px}
     .pf-brand-sub{display:none}
     .pf-brand-title{font-size:.72rem}
     .pf-filters{padding:.3rem .75rem .25rem}
-    .pf-search-wrap{margin-bottom:.3rem}
-    .pf-search-wrap input{padding:.28rem 2rem;font-size:.72rem}
+    .pf-dataset-row{padding:.3rem .5rem;gap:.4rem;margin-top:.3rem}
+    .pf-dataset-search input{padding:.28rem 2rem;font-size:.72rem}
+    .pf-dataset-select{padding:.28rem 1.8rem .28rem .6rem;font-size:.72rem}
+    /* ✅ Ô chọn câu: vẫn HIỂN THỊ, chỉ thu gọn khoảng cách */
+    .pf-dataset-row .pf-quick-nav{
+        padding-top:.3rem;
+        margin-top:.15rem;
+    }
+    .pf-quick-nav-select{padding:.22rem 1.8rem .22rem .5rem;font-size:.68rem}
     .pf-filter-row{gap:.4rem}
     .pf-chip{padding:.2rem .5rem;font-size:.68rem}
-    .pf-quick-nav{margin-top:.25rem}
-    .pf-quick-nav-select{padding:.22rem 1.8rem .22rem .5rem;font-size:.68rem}
     .practice-full-body{padding:.5rem .7rem calc(70px + env(safe-area-inset-bottom))}
     .practice-full-content{gap:.5rem}
     .practice-full-vi{font-size:1.05rem;padding:.55rem .55rem;line-height:1.35}
@@ -962,16 +1453,74 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .pf-nav-icon{width:38px;height:38px;font-size:.9rem}
     .pf-tiktok-float{transform:scale(.85);transform-origin:left bottom;left:8px;bottom:calc(4px + env(safe-area-inset-bottom))}
 }
+
+/* Màn hình RẤT thấp (≤420px) — vẫn KHÔNG ẩn, chỉ thu nhỏ hơn nữa */
 @media (max-width:1024px) and (max-height:420px) and (orientation:landscape){
-    .pf-quick-nav{display:none}
+    .pf-dataset-row{
+        padding:.25rem .45rem;
+        gap:.3rem;
+        margin-top:.2rem;
+    }
+    .pf-dataset-row .pf-quick-nav{
+        display:flex !important;
+        padding-top:.25rem;
+        margin-top:.1rem;
+        gap:.35rem;
+    }
+    .pf-quick-nav-label{
+        font-size:.55rem;
+    }
+    .pf-quick-nav-select{
+        padding:.18rem 1.6rem .18rem .45rem;
+        font-size:.62rem;
+    }
+    .pf-dataset-label{
+        font-size:.55rem;
+    }
+    .pf-dataset-label i{display:none}
+    .pf-dataset-select{
+        padding:.2rem 1.6rem .2rem .5rem;
+        font-size:.65rem;
+    }
+    .pf-dataset-search input{
+        padding:.2rem 1.8rem .2rem 1.8rem;
+        font-size:.65rem;
+    }
     .practice-full-header .pf-tags{overflow-x:auto}
     .practice-full-vi{font-size:.95rem;padding:.45rem .5rem}
     .practice-full-input{font-size:1rem;padding:.5rem .7rem}
 }
 
-/* ============================================================ */
-/* VOICE SETTINGS MODAL */
-/* ============================================================ */
+/* ═══════════════════════════════════════════════════════════════
+   📱 Mobile dọc màn hình THẤP (không phải landscape)
+   → vẫn giữ ô chọn câu, chỉ thu gọn chiều cao
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width:768px) and (max-height:700px){
+    .pf-dataset-row{
+        padding:.4rem .55rem;
+        gap:.4rem;
+    }
+    .pf-dataset-row .pf-quick-nav{
+        display:flex !important;
+        padding-top:.35rem;
+        margin-top:.15rem;
+    }
+    .pf-quick-nav-select{
+        padding:.22rem 1.8rem .22rem .5rem;
+        font-size:.7rem;
+    }
+    .pf-dataset-select{
+        font-size:.72rem;
+        padding-top:.25rem;
+        padding-bottom:.25rem;
+    }
+    .pf-dataset-search input{
+        font-size:.72rem;
+        padding-top:.25rem;
+        padding-bottom:.25rem;
+    }
+}
+
 .voice-modal{position:fixed;inset:0;background:rgba(15,23,42,.8);backdrop-filter:blur(6px);z-index:4000;display:none;align-items:center;justify-content:center;padding:1rem;animation:fadeIn .2s}
 .voice-modal.show{display:flex}
 .voice-box{background:var(--surface);border-radius:20px;width:100%;max-width:460px;max-height:calc(100vh - 2rem);overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.4);display:flex;flex-direction:column;animation:voiceSlideUp .3s cubic-bezier(.34,1.56,.64,1)}
@@ -2602,6 +3151,34 @@ body.hide-floating .tiktok-bar { display: none !important; }
     </span>
 </a>
 
+
+<!-- ═══ DATASET SELECTOR ═══ -->
+<div class="dataset-selector" id="datasetSelector">
+    <div class="ds-label">
+        <i class="fas fa-layer-group"></i>
+        <span>Bộ dữ liệu</span>
+    </div>
+    <div class="ds-main-row">
+        <button class="ds-btn ds-btn-primary active" data-dataset="tonghop">
+            <i class="fas fa-book-open"></i>
+            <span id="dsTonghopLabel">1700 câu phản xạ tổng hợp VPCX</span>
+        </button>
+        <button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">
+            <i class="fas fa-industry"></i>
+            <span>Chuyên ngành</span>
+            <i class="fas fa-chevron-down ds-arrow"></i>
+            <span class="ds-new-badge" id="dsNewBadge">NEW</span>
+        </button>
+    </div>
+    <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
+        <div class="ds-sub-label">
+            <i class="fas fa-tags"></i>
+            <span>Chọn ngành</span>
+        </div>
+        <div class="ds-sub-grid" id="dsSubGrid"></div>
+    </div>
+</div>
+
 <div class="search-filter-row">
 <div class="search-bar"><i class="fas fa-search"></i>
 <input type="text" id="searchInput" placeholder="Tìm kiếm..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
@@ -2707,10 +3284,8 @@ body.hide-floating .tiktok-bar { display: none !important; }
 <button class="pf-close" id="pfClose" aria-label="Đóng"><i class="fas fa-times"></i></button>
 </div>
 <div class="pf-filters">
-<div class="pf-search-wrap"><i class="fas fa-search"></i>
-<input type="text" id="pfSearchInput" placeholder="Tìm kiếm..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-<button class="pf-search-clear" id="pfClearSearchBtn" aria-label="Xóa"><i class="fas fa-times"></i></button>
-</div>
+
+<!-- ═══ HSK + CHỦ ĐỀ ═══ -->
 <div class="pf-filter-row">
 <div class="pf-chip" id="pfHskChip"><span class="pf-chip-label">HSK</span><span class="pf-chip-value" id="pfHskValue">Tất cả</span><i class="fas fa-chevron-down pf-chip-arrow"></i>
 <select id="pfHskFilter"><option value="">Tất cả</option><option value="HSK1">HSK1</option><option value="HSK2">HSK2</option><option value="HSK3">HSK3</option><option value="HSK4">HSK4</option><option value="HSK5">HSK5</option><option value="HSK6">HSK6</option></select>
@@ -2719,9 +3294,26 @@ body.hide-floating .tiktok-bar { display: none !important; }
 <select id="pfSubjectFilter"><option value="">Tất cả chủ đề</option></select>
 </div>
 </div>
-<div class="pf-quick-nav"><span class="pf-quick-nav-label">Câu:</span>
-<select class="pf-quick-nav-select" id="pfQuickNav"><option value="">-- Chọn câu --</option></select>
+
+<!-- ═══ KHỐI GỘP: BỘ DỮ LIỆU + TÌM KIẾM + CHỌN CÂU ═══ -->
+<div class="pf-dataset-row" id="pfDatasetRow">
+    <!-- Hàng 1: Bộ dữ liệu + Ô tìm kiếm -->
+    <span class="pf-dataset-label"><i class="fas fa-layer-group"></i> Bộ dữ liệu</span>
+    <select class="pf-dataset-select" id="pfDatasetSelect"></select>
+
+    <div class="pf-dataset-search">
+        <i class="fas fa-search"></i>
+        <input type="text" id="pfSearchInput" placeholder="Tìm kiếm..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+        <button class="pf-search-clear" id="pfClearSearchBtn" aria-label="Xóa"><i class="fas fa-times"></i></button>
+    </div>
+
+    <!-- Hàng 2: Ô chọn câu — nằm bên dưới ô bộ dữ liệu, LUÔN hiển thị -->
+    <div class="pf-quick-nav" id="pfQuickNavWrap">
+        <span class="pf-quick-nav-label">Câu:</span>
+        <select class="pf-quick-nav-select" id="pfQuickNav"><option value="">-- Chọn câu --</option></select>
+    </div>
 </div>
+
 </div>
 <div class="practice-full-body">
 <div class="practice-full-content">
@@ -2755,6 +3347,9 @@ body.hide-floating .tiktok-bar { display: none !important; }
         <i class="fas fa-volume-up"></i>
     </button>
     <div class="mini-group">
+        <button class="pf-nav-icon mini-nav random" id="pfRandomToggleBtn" type="button" title="Bật/tắt chế độ nhảy câu ngẫu nhiên" aria-label="Chế độ ngẫu nhiên">
+            <i class="fas fa-dice"></i>
+        </button>
         <button class="pf-nav-icon mini-nav voice" id="pfVoiceBtn" type="button" title="Cài đặt giọng đọc" aria-label="Cài đặt giọng đọc">
             <i class="fas fa-headphones"></i>
         </button>
@@ -3230,6 +3825,223 @@ var currentBtn = null;
 
 var displayState = { vi: true, pinyin: false, practice: false };
 
+/* ============================================================ */
+/* ✅ HELPER: TIER HIỆN TẠI CÓ ĐƯỢC MỞ CHUYÊN NGÀNH KHÔNG?       */
+/* ============================================================ */
+function canAccessChuyenNganh() {
+    return (typeof window.APP_TIER !== 'undefined' && window.APP_TIER === 'active');
+}
+
+/* ============================================================ */
+/* ✅ THÔNG BÁO KHOÁ CHUYÊN NGÀNH (DEMO/TRIAL CHƯA GIA HẠN)      */
+/* ============================================================ */
+function showChuyenNganhLockMessage() {
+    if (typeof currentUser === 'undefined' || !currentUser) {
+        // Chưa đăng nhập (demo)
+        if (confirm('🔒 Bộ dữ liệu Chuyên ngành\n\n' +
+                    'Bạn cần ĐĂNG NHẬP và GIA HẠN để mở khoá.\n\n' +
+                    'Đăng nhập ngay?')) {
+            if (typeof showLoginModal === 'function') showLoginModal();
+        }
+    } else {
+        // Đã đăng nhập nhưng chưa gia hạn (trial/expired)
+        if (confirm('🔒 Bộ dữ liệu Chuyên ngành\n\n' +
+                    'Chỉ tài khoản ĐÃ GIA HẠN mới mở được.\n\n' +
+                    'Gia hạn ngay?')) {
+            if (typeof openRenewalModal === 'function') openRenewalModal();
+        }
+    }
+}
+
+function showPracticeFullLockMessage() {
+    if (typeof currentUser === 'undefined' || !currentUser) {
+        if (confirm('🔒 Chế độ luyện tập Chuyên ngành\n\n' +
+                    'Bạn cần ĐĂNG NHẬP và GIA HẠN để mở khoá.\n\n' +
+                    'Đăng nhập ngay?')) {
+            if (typeof showLoginModal === 'function') showLoginModal();
+        }
+    } else {
+        if (confirm('🔒 Chế độ luyện tập Chuyên ngành\n\n' +
+                    'Chỉ tài khoản ĐÃ GIA HẠN mới mở được.\n\n' +
+                    'Gia hạn ngay?')) {
+            if (typeof openRenewalModal === 'function') openRenewalModal();
+        }
+    }
+}
+
+/* ============ DATASET SWITCHING (TỰ ĐỘNG) ============ */
+function initDatasetSelector() {
+    if (typeof DATASET_REGISTRY === 'undefined' || !DATASET_REGISTRY) return;
+    if (!DATASET_REGISTRY.tonghop) return;
+
+    // Cập nhật label "1700 câu"
+    var labelEl = $('dsTonghopLabel');
+    if (labelEl) {
+        var count = DATASET_REGISTRY.tonghop.count
+                 || (DATASET_REGISTRY.tonghop.data || []).length;
+        labelEl.textContent = count + ' câu phản xạ tổng hợp VPCX';
+    }
+
+    // Liệt kê tất cả dataset khác 'tonghop'
+    var chuyenNganhKeys = Object.keys(DATASET_REGISTRY).filter(function(id) {
+        return id !== 'tonghop';
+    });
+
+    // Không có file Excel nào trong data/ → ẩn nút "Chuyên ngành"
+    var cnBtn = $('dsChuyenNganhBtn');
+    if (chuyenNganhKeys.length === 0) {
+        if (cnBtn) cnBtn.style.display = 'none';
+        return;
+    }
+
+    // ✅ Kiểm tra quyền: chỉ tier 'active' (đã gia hạn) mới mở được chuyên ngành.
+    // Admin tự động có tier = 'active' → full quyền.
+    var canAccess = canAccessChuyenNganh();
+
+    // Render sub-buttons dạng PILL NGANG (có khoá nhỏ nếu không đủ quyền)
+    // Mỗi ngành có --ds-color riêng → viền + nền + shadow cùng tông màu
+    var subGrid = $('dsSubGrid');
+    if (subGrid) {
+        var subHtml = '';
+        chuyenNganhKeys.forEach(function(id) {
+            var ds = DATASET_REGISTRY[id];
+            var lockIcon = canAccess
+                ? ''
+                : '<i class="fas fa-lock ds-sub-lock"></i>';
+            var lockCls = canAccess ? '' : ' locked';
+            subHtml += '<button class="ds-sub-btn' + lockCls + '" ' +
+                       'data-dataset="' + ds.id + '" ' +
+                       'data-locked="' + (canAccess ? '0' : '1') + '" ' +
+                       'style="--ds-color:' + (ds.color || '#64748b') + '" ' +
+                       'title="' + escapeHtml(ds.name) + ' (' + ds.count + ' câu)' +
+                       (canAccess ? '' : ' — Cần gia hạn để mở khoá') + '">' +
+                       '<i class="fas ' + (ds.icon || 'fa-folder') + '"></i>' +
+                       '<span>' + escapeHtml(ds.name) + '</span>' +
+                       lockIcon +
+                       '</button>';
+        });
+        subGrid.innerHTML = subHtml;
+    }
+
+    // ✅ Nút "Chuyên ngành" chính: vẫn mở dropdown bình thường,
+    // chỉ thêm icon 🔒 nhỏ cạnh chữ khi bị khoá
+    if (cnBtn) {
+        var oldLock = cnBtn.querySelector('.ds-main-lock');
+        if (oldLock) oldLock.remove();
+
+        if (!canAccess) {
+            var span = cnBtn.querySelector('span');
+            if (span) {
+                span.insertAdjacentHTML('afterend',
+                    '<i class="fas fa-lock ds-main-lock"></i>');
+            }
+            cnBtn.classList.add('has-lock');
+            cnBtn.title = 'Cần đăng nhập + gia hạn để mở khoá chuyên ngành';
+        } else {
+            cnBtn.classList.remove('has-lock');
+            cnBtn.title = 'Chọn chuyên ngành';
+        }
+    }
+
+    // Bind nút "1700 câu"
+    document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(btn) {
+        if (btn.__boundDataset) return;
+        btn.__boundDataset = true;
+        btn.addEventListener('click', function() {
+            switchDataset('tonghop');
+            var sub = $('dsSubWrap');
+            if (sub) sub.style.display = 'none';
+            document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
+            btn.classList.add('active');
+            if (cnBtn) cnBtn.classList.remove('active');
+        });
+    });
+
+    // Bind nút "Chuyên ngành" — VẪN MỞ DROPDOWN BÌNH THƯỜNG
+    if (cnBtn && !cnBtn.__boundToggle) {
+        cnBtn.__boundToggle = true;
+        cnBtn.addEventListener('click', function() {
+            var sub = $('dsSubWrap');
+            if (!sub) return;
+            var isOpen = sub.style.display !== 'none';
+            if (isOpen) {
+                sub.style.display = 'none';
+                cnBtn.classList.remove('active');
+            } else {
+                sub.style.display = 'block';
+                cnBtn.classList.add('active');
+                document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
+                    b.classList.remove('active');
+                });
+            }
+        });
+    }
+
+    // Bind sub buttons (check khoá)
+    document.querySelectorAll('.ds-sub-btn').forEach(function(btn) {
+        if (btn.__boundSub) return;
+        btn.__boundSub = true;
+        btn.addEventListener('click', function(e) {
+            if (this.dataset.locked === '1') {
+                e.preventDefault();
+                e.stopPropagation();
+                showChuyenNganhLockMessage();
+                return;
+            }
+            var id = this.dataset.dataset;
+            document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
+            this.classList.add('active');
+            switchDataset(id);
+            if (cnBtn) cnBtn.classList.add('active');
+        });
+    });
+
+    markCurrentDatasetActive();
+}
+
+function markCurrentDatasetActive() {
+    var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
+    document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.dataset === current);
+    });
+    document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
+        b.classList.toggle('active', current === 'tonghop');
+    });
+    if (current !== 'tonghop') {
+        var wrap = $('dsSubWrap');
+        if (wrap) wrap.style.display = 'block';
+        document.querySelectorAll('.ds-btn[data-dataset-group="chuyen-nganh"]').forEach(function(b) {
+            b.classList.add('active');
+        });
+    }
+}
+
+function switchDataset(datasetId) {
+    if (!DATASET_REGISTRY[datasetId]) return;
+
+    // ✅ Guard: chuyên ngành yêu cầu tier 'active'
+    if (datasetId !== 'tonghop' && !canAccessChuyenNganh()) {
+        showChuyenNganhLockMessage();
+        return;
+    }
+
+    if (typeof window.__switchRawData === 'function') {
+        window.__switchRawData(datasetId);
+    }
+
+    // Reset filter
+    state = { search:'', hsk:'', subject:'' };
+    if ($('searchInput')) $('searchInput').value = '';
+    if ($('hskFilter')) $('hskFilter').value = '';
+    if ($('subjectFilter')) $('subjectFilter').value = '';
+
+    buildFilters();
+    applyFilter();
+    updateResultCount();
+
+    if ($('fabGroup')) $('fabGroup').classList.remove('open');
+}
+
 /* ============ VOICE SETTINGS ============ */
 var voiceState = {
     rate: 1.0,
@@ -3558,6 +4370,7 @@ function initApp() {
     $('mainContent').style.display = 'block';
 
     loadVoiceSettings();
+    initDatasetSelector();
 
     if (typeof initSocial === 'function') initSocial();
     if (typeof updateFloatingLeftVisibility === 'function') updateFloatingLeftVisibility();
@@ -3875,6 +4688,7 @@ document.addEventListener('click', function(e) {
         e.target.closest('.edit-modal') || e.target.closest('.zalo-btn') ||
         e.target.closest('.tiktok-float-wrap') || e.target.closest('.tiktok-bar') ||
         e.target.closest('.renewal-modal') || e.target.closest('.voice-modal') ||
+        e.target.closest('.dataset-selector') ||
         e.target.closest('.toggle-check-btn')) return;
     clearFocus();
 }, true);
@@ -4652,10 +5466,12 @@ var pfCurrentAnswer = '';
 var pfCurrentVi = '';
 var pfCurrentPinyin = '';
 var pfHintEnabled = false;
+var pfRandomMode = false;
 
 window.openPracticeFull = function(stt, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
     if (isExpiredTier()) { showLimitMessage(); return; }
+    if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
     pfBuildFilterOptions();
     pfBuildQuickNav();
     var idx = -1;
@@ -4750,13 +5566,50 @@ function loadPracticeFull(stt) {
 }
 
 window.pfNext = function() {
-    if (!pfCurrentStt) return;
+    if (!pfCurrentStt || filtered.length === 0) return;
+
     var idx = -1;
     for (var i = 0; i < filtered.length; i++) {
         if (String(filtered[i].stt) === String(pfCurrentStt)) { idx = i; break; }
     }
-    if (idx === -1 || idx >= filtered.length - 1) return;
+    if (idx === -1) return;
+
+    if (pfRandomMode && filtered.length > 1) {
+        var newIdx = idx;
+        var tries = 0;
+        while (newIdx === idx && tries < 20) {
+            newIdx = Math.floor(Math.random() * filtered.length);
+            tries++;
+        }
+        if (newIdx === idx) newIdx = (idx + 1) % filtered.length;
+
+        var rndBtn = $('pfRandomToggleBtn');
+        if (rndBtn) {
+            var icon = rndBtn.querySelector('i');
+            if (icon) {
+                icon.style.animation = 'none';
+                void icon.offsetWidth;
+                icon.style.animation = 'diceShake 0.6s ease-in-out';
+            }
+        }
+        loadPracticeFull(filtered[newIdx].stt);
+        return;
+    }
+
+    if (idx >= filtered.length - 1) return;
     loadPracticeFull(filtered[idx + 1].stt);
+};
+
+window.pfToggleRandom = function() {
+    pfRandomMode = !pfRandomMode;
+    var btn = $('pfRandomToggleBtn');
+    if (btn) {
+        btn.classList.toggle('active', pfRandomMode);
+        btn.title = pfRandomMode
+            ? 'ĐANG BẬT: Nút Next sẽ nhảy câu ngẫu nhiên'
+            : 'Bật/tắt chế độ nhảy câu ngẫu nhiên';
+    }
+    try { localStorage.setItem('pfRandomMode', pfRandomMode ? '1' : '0'); } catch(e) {}
 };
 
 window.pfPrev = function() {
@@ -5118,10 +5971,6 @@ window.speakPhrase = function(phrase, btn) {
     setTimeout(function(){ speechSynthesis.speak(utterance); }, 30);
 };
 
-/* ============================================================ */
-/* NÚT LOA CẠNH INPUT — TOGGLE đọc / dừng                       */
-/* ============================================================ */
-
 window._isSpeakingFull = false;
 window._speakToken = 0;
 
@@ -5304,10 +6153,6 @@ function _speakWithHighlightKaraoke(token) {
     setTimeout(speakNext, 100);
 }
 
-/* ============================================================ */
-/* NÚT ĐỌC NHANH — TOGGLE đọc / dừng                            */
-/* ============================================================ */
-
 window._isQuickSpeaking = false;
 window._quickSpeakToken = 0;
 
@@ -5389,6 +6234,27 @@ function _quickSpeakNormal(token) {
 }
 
 function initPracticeFull() {
+    try {
+        var savedRandom = localStorage.getItem('pfRandomMode') === '1';
+        if (savedRandom) {
+            pfRandomMode = true;
+            var rBtnInit = $('pfRandomToggleBtn');
+            if (rBtnInit) {
+                rBtnInit.classList.add('active');
+                rBtnInit.title = 'ĐANG BẬT: Nút Next sẽ nhảy câu ngẫu nhiên';
+            }
+        }
+    } catch(e) {}
+
+    var randomToggleBtn = $('pfRandomToggleBtn');
+    if (randomToggleBtn) {
+        randomToggleBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            pfToggleRandom();
+        });
+    }
+
     $('pfClose').addEventListener('click', closePracticeFull);
     $('pfPrevBtn').addEventListener('click', pfPrev);
     $('pfNextBtn').addEventListener('click', pfNext);
@@ -5441,6 +6307,7 @@ function initPracticeFull() {
         if (isTyping) return;
         if (e.key === 'ArrowRight' && e.ctrlKey) pfNext();
         if (e.key === 'ArrowLeft' && e.ctrlKey) pfPrev();
+        if (e.key === 'r' || e.key === 'R') pfToggleRandom();
     });
     var modal = $('practiceFullModal');
     var touchStartX = 0;
@@ -5478,6 +6345,104 @@ function initPracticeFull() {
         }
     }
 }
+
+/* ============================================================ */
+/* 📚 DATASET SELECTOR trong Practice Full                       */
+/* ============================================================ */
+
+function pfBuildDatasetSelect() {
+    var sel = $('pfDatasetSelect');
+    var row = $('pfDatasetRow');
+    if (!sel || typeof DATASET_REGISTRY === 'undefined') return;
+
+    var canAccessAll = canAccessChuyenNganh();
+
+    var html = '';
+    var keys = Object.keys(DATASET_REGISTRY);
+    keys.forEach(function(id) {
+        var ds = DATASET_REGISTRY[id];
+        var isTonghop = (id === 'tonghop');
+        var isLocked = !isTonghop && !canAccessAll;
+
+        var label;
+        if (isTonghop) {
+            label = '📚 ' + (ds.count || 0) + ' câu — Tổng hợp VPCX';
+        } else {
+            label = (isLocked ? '🔒 ' : '🏭 ') + ds.name +
+                    ' (' + (ds.count || 0) + ' câu)';
+        }
+
+        html += '<option value="' + id + '"' +
+                (isLocked ? ' data-locked="1" class="locked-opt"' : '') + '>' +
+                escapeHtml(label) + '</option>';
+    });
+    sel.innerHTML = html;
+
+    var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
+    sel.value = current;
+
+    if (current !== 'tonghop' && !canAccessAll) {
+        sel.value = 'tonghop';
+    }
+
+    if (row) {
+        var hasLock = !canAccessAll && keys.length > 1;
+        row.classList.toggle('has-locked-options', hasLock);
+    }
+}
+
+document.addEventListener('change', function(e) {
+    if (!e.target || e.target.id !== 'pfDatasetSelect') return;
+
+    var sel = e.target;
+    var val = sel.value;
+    var opt = sel.options[sel.selectedIndex];
+    var currentDataset = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
+
+    if (opt && opt.dataset.locked === '1') {
+        sel.value = currentDataset;
+        showPracticeFullLockMessage();
+        return;
+    }
+
+    if (val !== 'tonghop' && !canAccessChuyenNganh()) {
+        sel.value = currentDataset;
+        showPracticeFullLockMessage();
+        return;
+    }
+
+    var ok = (typeof window.__switchRawData === 'function')
+             ? window.__switchRawData(val)
+             : false;
+    if (!ok) {
+        sel.value = currentDataset;
+        return;
+    }
+
+    state = { search:'', hsk:'', subject:'' };
+    if ($('pfSearchInput')) $('pfSearchInput').value = '';
+    if ($('pfHskFilter')) $('pfHskFilter').value = '';
+    if ($('pfSubjectFilter')) $('pfSubjectFilter').value = '';
+    if ($('searchInput')) $('searchInput').value = '';
+    if ($('hskFilter')) $('hskFilter').value = '';
+    if ($('subjectFilter')) $('subjectFilter').value = '';
+
+    if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
+
+    if (typeof pfApplyFilter === 'function') {
+        pfApplyFilter();
+    } else if (typeof applyFilter === 'function') {
+        applyFilter();
+    }
+
+    if (typeof filtered !== 'undefined' && filtered.length > 0) {
+        if (typeof loadPracticeFull === 'function') {
+            loadPracticeFull(filtered[0].stt);
+        }
+    }
+
+    pfBuildDatasetSelect();
+});
 
 var writerInstance = null;
 var currentWriteZh = '';
