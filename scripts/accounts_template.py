@@ -15,6 +15,12 @@ FIX (2026-09):
   do .header-inner có overflow:hidden trong @media (min-width:769px).
 - Đổi overflow:hidden → overflow:visible và nâng z-index cho
   .header-actions / .user-menu / .user-dropdown.
+
+FIX (2026-09) — DEMO CONFIG:
+- Inject DEMO_LIMIT / DEMO_DAILY_LIMIT / DEMO_HSK_MAX từ config.json
+  vào JS thay vì hard-code fallback 25/50/3.
+- Trước đây các biến này không được inject nên luôn dùng giá trị
+  mặc định (25/50/3) bất kể config.json ghi gì.
 """
 
 import json
@@ -1165,7 +1171,7 @@ def build_renewal_html():
 
 
 # ═══════════════════════════════════════════════════════════════
-# JS  (giữ nguyên — không thay đổi gì)
+# JS
 # ═══════════════════════════════════════════════════════════════
 def build_accounts_js(config):
     js = r"""
@@ -1177,6 +1183,11 @@ var TRIAL_UNLIMITED_WRITING = __TRIAL_UNLIMITED_WRITING__;
 var BANK_CONFIG = __BANK_CONFIG__;
 var PACKAGES = __PACKAGES__;
 var RENEWAL_SUPPORT_ZALO = "__RENEWAL_SUPPORT_ZALO__";
+
+/* ⬇⬇⬇ DEMO CONFIG (MỚI THÊM) ⬇⬇⬇ */
+var DEMO_LIMIT = __DEMO_LIMIT__;
+var DEMO_DAILY_LIMIT = __DEMO_DAILY_LIMIT__;
+var DEMO_HSK_MAX = __DEMO_HSK_MAX__;
 
 /* ============ STATE ============ */
 var currentUser = null;
@@ -1263,7 +1274,7 @@ function publishTierState() {
     if (!currentUser) {
         window.APP_TIER = 'demo';
         window.APP_LIMITS = {
-            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
+            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 100,
             maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
             unlimitedWriting: false, isTrial: false, email: null
         };
@@ -1285,7 +1296,7 @@ function publishTierState() {
     } else if (tier === 'expired') {
         window.APP_TIER = 'expired';
         window.APP_LIMITS = {
-            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 25,
+            maxQuestions: (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 100,
             maxHSK: (typeof DEMO_HSK_MAX === 'number') ? DEMO_HSK_MAX : 3,
             unlimitedWriting: false, isTrial: false, email: currentUser.email
         };
@@ -1297,7 +1308,7 @@ function publishTierState() {
 
 window.getUserTier = function() { return window.APP_TIER || 'demo'; };
 window.getUserLimits = function() {
-    return window.APP_LIMITS || { maxQuestions: 25, maxHSK: 3, unlimitedWriting: false };
+    return window.APP_LIMITS || { maxQuestions: 100, maxHSK: 3, unlimitedWriting: false };
 };
 
 /* ============ FIREBASE INIT ============ */
@@ -3153,10 +3164,10 @@ function processImport(rows) {
         var r = rows[i].map(function(c) { return String(c || '').toLowerCase().trim(); });
         if (r.indexOf('email') !== -1) { headerRowIdx = i; break; }
     }
-    if (headerRowIdx === -1) return alert('❌ Không tìm thấy cột "email"!');
+    if (headerRowIdx === -1) return alert('❌ Không tìm thấy cột "email"!]');
 
-    var header = rows[headerRowIdx].map(function(c) { return String(c || '').toLowerCase().trim(); });
-    var emailCol = header.indexOf('email');
+    var header = rows(\[headerRowIdx].map(functiond(c) { return String(c ||{ '').toLowerCase().trim(); });
+   1 var emailCol = header.indexOf('email');
     var nameCol = header.indexOf('name');
     var expCol = header.indexOf('expiresat');
 
@@ -3196,7 +3207,7 @@ function processImport(rows) {
                 if (!isNaN(d.getTime())) { expDate = d; expStr = formatDate(d); }
             } else {
                 var s = String(raw).trim();
-                var m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+                var m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/,2})$/);
                 if (m) {
                     var d2 = new Date(parseInt(m[1]), parseInt(m[2]) - 1, parseInt(m[3]), 23, 59, 59);
                     if (!isNaN(d2.getTime())) { expDate = d2; expStr = formatDate(d2); }
@@ -3428,6 +3439,11 @@ setTimeout(function() {
     js = js.replace("__BANK_CONFIG__", json.dumps(config.get("bank_config", {}), ensure_ascii=False))
     js = js.replace("__PACKAGES__", json.dumps(config.get("packages", []), ensure_ascii=False))
     js = js.replace("__RENEWAL_SUPPORT_ZALO__", config.get("renewal_support_zalo", ""))
+
+    # ⬇⬇⬇ INJECT DEMO CONFIG (MỚI THÊM) ⬇⬇⬇
+    js = js.replace("__DEMO_LIMIT__", str(config.get("demo_limit", 100)))
+    js = js.replace("__DEMO_DAILY_LIMIT__", str(config.get("demo_daily_limit", 200)))
+    js = js.replace("__DEMO_HSK_MAX__", str(config.get("demo_hsk_max", 3)))
 
     return js
 
