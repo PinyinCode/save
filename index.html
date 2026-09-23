@@ -1938,6 +1938,34 @@ body.hide-floating .tiktok-bar { display: none !important; }
     .admin-toggle-btn{width:32px;height:32px;}
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   FIX: Dropdown user menu không bấm được trên desktop
+   Nguyên nhân: .header-inner có overflow:hidden trong @media (min-width:769px)
+   → dropdown bị CLIP khi tràn ra ngoài header.
+   Giải pháp: overflow:visible + nâng z-index cho các lớp liên quan.
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width:769px){
+    /* Cho phép dropdown tràn ra ngoài header */
+    .header-inner{
+        overflow:visible !important;
+    }
+    /* .sticky-top cũng phải visible để dropdown không bị cắt */
+    .sticky-top{
+        overflow:visible !important;
+    }
+    /* Nâng z-index để dropdown nổi trên mọi thứ trong header */
+    .header-actions{
+        z-index:500 !important;
+    }
+    .user-menu{
+        position:relative;
+        z-index:501 !important;
+    }
+    .user-dropdown{
+        z-index:1000 !important;
+    }
+}
+
 /* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */
 
 
@@ -6576,10 +6604,6 @@ function initAdminPanel() {
 
     /* ═══════════════════════════════════════════════════════
        TOGGLE ẨN/HIỆN SECTION THÔNG MINH
-       - Nút mắt nằm ngoài body → luôn bấm được
-       - Grid-template-rows animate mượt (không giật)
-       - Tự đồng bộ icon + tooltip theo trạng thái
-       - Lịch sử gia hạn mặc định ẩn (class "collapsed" trong HTML)
        ═══════════════════════════════════════════════════════ */
     function bindSectionToggle(btnId, sectionId, label) {
         var btn = $(btnId);
