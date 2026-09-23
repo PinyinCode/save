@@ -4302,7 +4302,6 @@ function loadPracticeFull(stt) {
     var quickNav = $('pfQuickNav');
     if (quickNav && quickNav.value !== stt) quickNav.value = stt;
 
-    // Reset trạng thái nút loa khi đổi câu
     if (window._isSpeakingFull) {
         stopSpeakFull();
     } else {
@@ -4751,7 +4750,6 @@ window.toggleSpeakFull = function() {
         return;
     }
 
-    // Nếu nút đọc nhanh đang chạy → dừng trước
     if (window._isQuickSpeaking) stopQuickSpeak();
 
     if (!canUseFeature()) { showLimitMessage(); return; }
@@ -4889,6 +4887,7 @@ function _speakWithHighlightKaraoke(token) {
 
 /* ============================================================ */
 /* NÚT ĐỌC NHANH — TOGGLE đọc / dừng                            */
+/* Đọc CẢ CÂU liền mạch, KHÔNG highlight                        */
 /* ============================================================ */
 
 window._isQuickSpeaking = false;
@@ -4921,20 +4920,6 @@ window.stopQuickSpeak = function() {
         try { speechSynthesis.cancel(); } catch(e) {}
     }
 
-    var charsContainer = $('pfAnswerChars');
-    if (charsContainer) {
-        charsContainer.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
-            b.classList.remove('reading', 'speaking');
-        });
-        charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
-            t.classList.remove('show');
-        });
-        charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
-            w.classList.remove('active-wrap');
-        });
-    }
-    _activeTooltipWrap = null;
-
     _setQuickSpeakBtnState(false);
 };
 
@@ -4962,18 +4947,14 @@ window.toggleQuickSpeakFull = function() {
     var token = ++window._quickSpeakToken;
     _setQuickSpeakBtnState(true);
 
-    var answerVisible = $('pfAnswer').classList.contains('show');
-    if (answerVisible) {
-        _quickSpeakWithKaraoke(token);
-    } else {
-        _quickSpeakNormal(token);
-    }
+    // Luôn đọc cả câu liền mạch — không highlight, ngữ điệu tự nhiên
+    _quickSpeakNormal(token);
 };
 
 function _quickSpeakNormal(token) {
     var u = new SpeechSynthesisUtterance(pfCurrentAnswer);
     u.lang = 'zh-CN';
-    u.rate = 0.85;
+    u.rate = 1.15;
     u.pitch = 1.0;
     u.volume = 1.0;
     var v = getChineseVoice();
@@ -4993,91 +4974,6 @@ function _quickSpeakNormal(token) {
         if (token !== window._quickSpeakToken) return;
         try { speechSynthesis.speak(u); } catch(e) { finish(); }
     }, 30);
-}
-
-function _quickSpeakWithKaraoke(token) {
-    var phrases = window._pfPhrases || [];
-    var charsContainer = $('pfAnswerChars');
-    if (!charsContainer || phrases.length === 0) {
-        _quickSpeakNormal(token);
-        return;
-    }
-
-    var wraps = charsContainer.querySelectorAll('.answer-phrase-wrap');
-    var buttons = charsContainer.querySelectorAll('.answer-phrase-btn');
-
-    var idx = 0;
-
-    function cleanupAll() {
-        buttons.forEach(function(b) { b.classList.remove('reading'); });
-        charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
-            t.classList.remove('show');
-        });
-        charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
-            w.classList.remove('active-wrap');
-        });
-        _activeTooltipWrap = null;
-    }
-
-    function speakNext() {
-        if (token !== window._quickSpeakToken) {
-            cleanupAll();
-            return;
-        }
-        if (idx >= phrases.length) {
-            cleanupAll();
-            _setQuickSpeakBtnState(false);
-            return;
-        }
-
-        var phrase = phrases[idx];
-        var btn = buttons[idx];
-        var wrap = wraps[idx];
-
-        if (btn) btn.classList.add('reading');
-        if (wrap) {
-            wrap.classList.add('active-wrap');
-            charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
-                t.classList.remove('show');
-            });
-            var tip = wrap.querySelector('.answer-phrase-tooltip');
-            if (tip) {
-                tip.classList.add('show');
-                _activeTooltipWrap = wrap;
-            }
-        }
-
-        var u = new SpeechSynthesisUtterance(phrase.text);
-        u.lang = 'zh-CN';
-        u.rate = 0.75;
-        u.pitch = 1.0;
-        u.volume = 1.0;
-        var v = getChineseVoice();
-        if (v) u.voice = v;
-
-        var handled = false;
-        function next() {
-            if (handled) return;
-            handled = true;
-            if (btn) btn.classList.remove('reading');
-            if (wrap) wrap.classList.remove('active-wrap');
-            if (token !== window._quickSpeakToken) {
-                cleanupAll();
-                return;
-            }
-            idx++;
-            setTimeout(speakNext, 120);
-        }
-        u.onend = next;
-        u.onerror = next;
-
-        setTimeout(function() {
-            if (token !== window._quickSpeakToken) { next(); return; }
-            try { speechSynthesis.speak(u); } catch(e) { next(); }
-        }, 30);
-    }
-
-    setTimeout(speakNext, 100);
 }
 
 function initPracticeFull() {
@@ -5147,7 +5043,7 @@ function initPracticeFull() {
         }
     }, { passive: true });
 
-    // Bind các nút loa — CHỈ 1 lần duy nhất (tránh đọc 2 lần)
+    // Bind nút loa cạnh input — CHỈ 1 lần duy nhất
     if (!window._pfSpeakBound) {
         window._pfSpeakBound = true;
         var speakBtn = $('pfSpeakBtn');
@@ -5159,6 +5055,7 @@ function initPracticeFull() {
             });
         }
     }
+    // Bind nút đọc nhanh — CHỈ 1 lần duy nhất
     if (!window._pfQuickSpeakBound) {
         window._pfQuickSpeakBound = true;
         var quickBtn = $('pfQuickSpeakBtn');
