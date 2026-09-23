@@ -26,7 +26,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .logo-text{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;flex-direction:column;line-height:1.15;min-width:0}
 .logo-text .title{font-size:clamp(1.1rem,2vw,1.75rem);font-weight:900;letter-spacing:-.02em;color:var(--text)}
 .logo-text .subtitle{font-size:clamp(.62rem,1vw,.85rem);color:var(--text-3);font-weight:700;margin-top:2px}
-.header-actions{display:flex;gap:.4rem;align-items:center;flex-shrink:0}
+.header-actions{display:flex;gap:.4rem;align-items:center;flex-shrink:0;position:relative;z-index:100}
 .icon-btn{width:clamp(30px,3vw,36px);height:clamp(30px,3vw,36px);border-radius:10px;border:1px solid var(--border);background:var(--surface);color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:clamp(.72rem,.9vw,.88rem);transition:.15s;position:relative;flex-shrink:0}
 .icon-btn:hover,.icon-btn:active{background:var(--surface-2);color:var(--primary);border-color:var(--primary)}
 .icon-btn.hidden{display:none}
@@ -35,6 +35,58 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .icon-btn:not(.has-badge) .badge{display:none}
 .demo-badge{display:flex;align-items:center;gap:.35rem;padding:clamp(.25rem,.5vw,.35rem) clamp(.45rem,.8vw,.7rem);border-radius:50px;background:var(--amber-light);color:#92400e;font-size:clamp(.58rem,.75vw,.7rem);font-weight:700;text-transform:uppercase;border:1px solid rgba(245,158,11,.4)}
 [data-theme="dark"] .demo-badge{color:#fcd34d}
+
+/* ============================================================ */
+/* USER MENU — dropdown tài khoản                               */
+/* ============================================================ */
+.user-menu{position:relative;display:inline-flex;align-items:center;cursor:pointer;z-index:101}
+.user-avatar{width:clamp(30px,3vw,36px);height:clamp(30px,3vw,36px);border-radius:50%;object-fit:cover;border:2px solid var(--border);cursor:pointer;transition:.15s;background:var(--surface-2)}
+.user-avatar:hover{border-color:var(--primary);transform:scale(1.05)}
+.user-dropdown{position:absolute;top:calc(100% + 8px);right:0;min-width:240px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 40px rgba(15,23,42,.18);padding:.55rem;display:none;z-index:9999;opacity:0;transform:translateY(-6px);transition:opacity .18s,transform .18s;pointer-events:none}
+[data-theme="dark"] .user-dropdown{box-shadow:0 12px 40px rgba(0,0,0,.6)}
+.user-menu.open .user-dropdown,
+.user-dropdown.show{display:block;opacity:1;visibility:visible;transform:translateY(0);pointer-events:auto}
+.user-info{padding:.6rem .75rem;border-bottom:1px solid var(--border);margin-bottom:.35rem}
+.user-info .name{font-weight:700;font-size:.92rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-info .email{font-size:.75rem;color:var(--text-3);margin-top:.15rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.user-info .role{display:inline-flex;padding:.15rem .55rem;border-radius:50px;background:var(--primary-light);color:var(--primary-dark);font-size:.65rem;font-weight:800;text-transform:uppercase;margin-top:.35rem}
+[data-theme="dark"] .user-info .role{background:rgba(59,130,246,.25);color:#93c5fd}
+.user-details{padding:.35rem .55rem;border-bottom:1px solid var(--border);margin-bottom:.35rem}
+.detail-row{display:flex;align-items:center;gap:.5rem;padding:.35rem 0}
+.detail-icon{width:32px;height:32px;border-radius:50%;background:var(--primary-light);color:var(--primary-dark);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:.85rem}
+.detail-content{flex:1;min-width:0}
+.detail-label{font-size:.62rem;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.03em}
+.detail-value{font-size:.82rem;font-weight:700;color:var(--text);margin-top:.1rem}
+.detail-sub{font-size:.68rem;color:var(--text-3);margin-top:.15rem}
+.detail-progress{margin-top:.4rem}
+.progress-track{height:6px;background:var(--surface-2);border-radius:50px;overflow:hidden}
+.progress-bar{height:100%;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:50px;transition:width .3s}
+.dropdown-item{display:flex;align-items:center;gap:.65rem;width:100%;padding:.6rem .75rem;border-radius:10px;border:none;background:transparent;color:var(--text);font-size:.85rem;font-weight:600;cursor:pointer;text-align:left;font-family:inherit;transition:.15s}
+.dropdown-item:hover{background:var(--surface-2);color:var(--primary)}
+.dropdown-item i{width:18px;text-align:center;color:var(--text-3);font-size:.9rem}
+.dropdown-item:hover i{color:var(--primary)}
+.dropdown-item.danger{color:var(--danger)}
+.dropdown-item.danger i{color:var(--danger)}
+.dropdown-item.danger:hover{background:var(--danger-light)}
+.dropdown-renew{display:flex;align-items:center;gap:.65rem;width:100%;padding:.7rem .75rem;border-radius:10px;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:.85rem;font-weight:800;cursor:pointer;text-align:left;font-family:inherit;transition:.15s;margin-top:.35rem;position:relative}
+.dropdown-renew:hover{background:linear-gradient(135deg,#4338ca,#6d28d9);transform:translateY(-1px);box-shadow:0 6px 18px rgba(124,58,237,.4)}
+.dropdown-renew i{color:#fbbf24;font-size:.95rem}
+.dropdown-renew span{flex:1}
+.renew-badge{padding:.15rem .5rem;border-radius:50px;background:#fbbf24;color:#1e1b4b;font-size:.6rem;font-weight:900;letter-spacing:.03em}
+.btn-login-header{padding:clamp(.32rem,.6vw,.45rem) clamp(.55rem,1vw,.85rem);border-radius:50px;border:none;background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;font-size:clamp(.7rem,.85vw,.8rem);font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:.35rem;font-family:inherit;white-space:nowrap;box-shadow:0 4px 12px rgba(124,58,237,.35)}
+.btn-login-header:hover{transform:translateY(-1px);box-shadow:0 6px 18px rgba(124,58,237,.5)}
+
+/* Fix desktop: cho phép dropdown tràn ra ngoài header */
+@media (min-width:769px){
+    .header-inner{overflow:visible!important}
+    .header-actions{overflow:visible!important;z-index:100!important}
+    .user-menu{overflow:visible!important;z-index:101!important}
+    .user-dropdown{z-index:9999!important}
+}
+
+/* ============================================================ */
+/* SEARCH + FILTER */
+/* ============================================================ */
 .search-filter-row{display:flex;flex-direction:column;gap:.45rem}
 .search-bar{position:relative}
 .search-bar i.fa-search{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--text-3);font-size:.88rem;pointer-events:none}
@@ -761,7 +813,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
         align-items:center!important;
         gap:clamp(.4rem,.8vw,.75rem)!important;
         flex-wrap:nowrap!important;
-        overflow:hidden;
+        overflow:visible!important;
         width:100%;
         position:relative;
     }
@@ -823,7 +875,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
         gap:.4rem!important;
         align-items:center!important;
         position:relative;
-        z-index:5;
+        z-index:100!important;
+        overflow:visible!important;
     }
 }
 
@@ -1307,6 +1360,60 @@ function populateTikTokFloat() {
     } catch(e) {}
 }
 
+/* ============================================================ */
+/* USER MENU — toggle dropdown (fix desktop không bấm được)     */
+/* ============================================================ */
+function initUserMenu() {
+    var userMenu = document.getElementById('userMenu');
+    var userAvatar = document.getElementById('userAvatar');
+    var userDropdown = document.getElementById('userDropdown');
+    if (!userMenu || !userAvatar || !userDropdown) return;
+    if (userMenu.dataset.bound === '1') return;
+    userMenu.dataset.bound = '1';
+
+    function openDropdown() {
+        userMenu.classList.add('open');
+        userDropdown.classList.add('show');
+    }
+    function closeDropdown() {
+        userMenu.classList.remove('open');
+        userDropdown.classList.remove('show');
+    }
+    function toggleDropdown(e) {
+        if (e) { e.stopPropagation(); if (e.preventDefault) e.preventDefault(); }
+        if (userMenu.classList.contains('open')) closeDropdown();
+        else openDropdown();
+    }
+
+    // Click + touchstart đều chạy — fix cả desktop lẫn mobile
+    userAvatar.addEventListener('click', toggleDropdown);
+    userAvatar.addEventListener('touchstart', function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        toggleDropdown();
+    }, { passive: false });
+
+    // Click ra ngoài → đóng
+    document.addEventListener('click', function(e) {
+        if (!userMenu.contains(e.target)) closeDropdown();
+    });
+    document.addEventListener('touchstart', function(e) {
+        if (!userMenu.contains(e.target)) closeDropdown();
+    }, { passive: true });
+
+    // Click item → tự đóng
+    userDropdown.addEventListener('click', function(e) {
+        if (e.target.closest('.dropdown-item') || e.target.closest('.dropdown-renew')) {
+            setTimeout(closeDropdown, 100);
+        }
+    });
+
+    // Escape → đóng
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeDropdown();
+    });
+}
+
 function initApp() {
     mobileWrapper = $('mobileWrapper');
     $('loadingScreen').classList.add('hidden');
@@ -1317,6 +1424,7 @@ function initApp() {
     if (typeof initSocial === 'function') initSocial();
     if (typeof updateFloatingLeftVisibility === 'function') updateFloatingLeftVisibility();
     if (typeof initAuthUI === 'function') initAuthUI();
+    initUserMenu();
     initScrollDetection();
     initFabGroup();
     initTheme();
@@ -2866,18 +2974,18 @@ function _speakWithHighlightKaraoke(token) {
         charsContainer.querySelectorAll('.answer-phrase-wrap.active-wrap').forEach(function(w) {
             w.classList.remove('active-wrap');
         });
-        _activeTooltipWrap = null;
+        _activeTooltip =Wrap = null;
     }
 
     function speakNext() {
-        if (token !== window._speakToken) {
-            cleanupAll();
+        if ( wraptoken !== window._speakToken) {
+.querySelector            cleanupAll();
             return;
         }
-        if (idx >= phrases.length) {
-            cleanupAll();
+       ('. if (idx >= phrases.length) {
+            cleanupAllanswer();
             _setSpeakBtnState(false);
-            return;
+-ph            return;
         }
 
         var phrase = phrases[idx];
@@ -2890,7 +2998,7 @@ function _speakWithHighlightKaraoke(token) {
             charsContainer.querySelectorAll('.answer-phrase-tooltip.show').forEach(function(t) {
                 t.classList.remove('show');
             });
-            var tip = wrap.querySelector('.answer-phrase-tooltip');
+            var tiprase-tooltip');
             if (tip) {
                 tip.classList.add('show');
                 _activeTooltipWrap = wrap;
@@ -2976,7 +3084,6 @@ window.toggleQuickSpeakFull = function() {
         return;
     }
 
-    // Nếu nút loa cạnh input đang đọc → dừng trước
     if (window._isSpeakingFull) stopSpeakFull();
 
     if (!canUseFeature()) { showLimitMessage(); return; }
@@ -2992,7 +3099,6 @@ window.toggleQuickSpeakFull = function() {
     var token = ++window._quickSpeakToken;
     _setQuickSpeakBtnState(true);
 
-    // Luôn đọc cả câu liền mạch — không highlight, ngữ điệu tự nhiên
     _quickSpeakNormal(token);
 };
 
@@ -3088,7 +3194,6 @@ function initPracticeFull() {
         }
     }, { passive: true });
 
-    // Bind nút loa cạnh input — CHỈ 1 lần duy nhất
     if (!window._pfSpeakBound) {
         window._pfSpeakBound = true;
         var speakBtn = $('pfSpeakBtn');
@@ -3100,7 +3205,6 @@ function initPracticeFull() {
             });
         }
     }
-    // Bind nút đọc nhanh — CHỈ 1 lần duy nhất
     if (!window._pfQuickSpeakBound) {
         window._pfQuickSpeakBound = true;
         var quickBtn = $('pfQuickSpeakBtn');
