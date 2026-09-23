@@ -11,18 +11,10 @@ KHÔNG chứa login/admin/social/renewal (đã tách sang file khác).
    - Tự scale theo độ phân giải (clamp, vh, media queries).
    - Chế độ Full không chồng lấn.
 
-✅ MINI BRAND trong Practice Full Header:
-   - [🎨] Học tiếng Trung / ✦ Văn phòng & Công xưởng
-   - Mobile GIỐNG PC: subtitle KHÔNG ẩn
-
-✅ TIKTOK BAR:
-   - DESKTOP (>= 769px): JS di chuyển .tiktok-bar vào .header-inner
-   - MOBILE (<= 768px): giữ nguyên .tiktok-bar DƯỚI header
-
+✅ MINI BRAND trong Practice Full Header
+✅ TIKTOK BAR: Desktop → trong header, Mobile → dưới header
 ✅ BADGE EXCEL: hiển thị số dòng Excel trong card + Practice Full
-
-✅ TIKTOK FLOATING PILL trong Practice Full:
-   - Góc dưới bên trái, đẩy xuống đáy (không đè nút)
+✅ TIKTOK FLOATING PILL: đẩy xuống đáy (không đè nút)
 """
 
 
@@ -570,7 +562,6 @@ body.practice-full-open .result-count { display: none !important; }
 body.practice-full-open .demo-banner,
 body.practice-full-open .expiry-banner { display: none !important; }
 
-/* ─── HEADER: cố định, layout ngang — KHÔNG BỊ CẮT ─── */
 .practice-full-header{
     display:flex;align-items:center;gap:clamp(.4rem,.8vw,.75rem);
     padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);
@@ -619,7 +610,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 .practice-full-header .pf-close:hover{background:var(--danger-light);color:var(--danger)}
 
-/* ─── Mini brand trong Practice Full ─── */
 .pf-brand{
     display:flex;align-items:center;gap:clamp(.4rem,.8vw,.65rem);
     flex:0 0 auto;
@@ -687,7 +677,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     }
 }
 
-/* ─── TIKTOK FLOATING PILL ─── */
 .pf-tiktok-float{
     position:fixed;
     left:clamp(14px,2vw,22px);
@@ -799,7 +788,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 }
 .practice-full-modal:not(.show) .pf-tiktok-float{display:none !important;}
 
-/* ─── FILTERS ─── */
 .pf-filters{
     padding:clamp(.4rem,1vh,.55rem) clamp(.85rem,2vw,1.25rem) clamp(.35rem,.8vh,.45rem) clamp(.85rem,2vw,1.25rem);
     background:var(--surface);
@@ -884,7 +872,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     border-color:var(--primary);box-shadow:0 0 0 3px rgba(37,99,235,.15);
 }
 
-/* ─── BODY ─── */
 .practice-full-body{
     flex:1 1 auto;
     min-height:0;
@@ -1163,7 +1150,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 .answer-actions button.primary{background:var(--primary);color:#fff;border-color:var(--primary)}
 .answer-actions button.primary:hover{background:var(--primary-dark)}
 
-/* ─── NAV ─── */
 .practice-full-nav{
     display:flex;gap:clamp(.4rem,1vw,.65rem);
     padding:clamp(.45rem,1vh,.7rem) clamp(.85rem,2vw,1.25rem);
@@ -1198,7 +1184,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     to{transform:translateY(0) scale(1);opacity:1}
 }
 
-/* ============ WRITER MODAL ============ */
 .writer-modal{
     position:fixed;inset:0;background:rgba(15,23,42,.7);
     backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);
@@ -1270,7 +1255,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 .writer-score.success{color:var(--success);font-weight:600}
 .writer-score.error{color:var(--danger);font-weight:600}
 
-/* ============ TIER BADGE ============ */
 .trial-badge{
     display:none;align-items:center;gap:.35rem;
     padding:clamp(.22rem,.5vw,.35rem) clamp(.45rem,.8vw,.7rem);
@@ -1286,7 +1270,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 .trial-badge.show{display:flex}
 .trial-badge i{font-size:.72rem}
 
-/* ============ DARK MODE OVERRIDES ============ */
 [data-theme="dark"] .hsk-badge{
     background:rgba(59,130,246,.25);color:#93c5fd;font-weight:800;
     border:1px solid rgba(59,130,246,.4);
@@ -1302,9 +1285,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
 [data-theme="dark"] .audio-btn:hover,
 [data-theme="dark"] .audio-btn:active{background:#3b82f6;color:#fff;border-color:#3b82f6;}
 
-/* ═══════════════════════════════════════════════════════════════
-   ★ PC: SEARCH + FILTER XẾP CÙNG HÀNG ★
-   ═══════════════════════════════════════════════════════════════ */
 @media (min-width: 1000px) {
     .search-filter-row {
         display: grid;
@@ -1328,9 +1308,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .filters { grid-template-columns: 200px 220px; }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ★ FIX MÀN HÌNH THẤP ★
-   ═══════════════════════════════════════════════════════════════ */
 @media (min-width: 769px) and (max-height: 700px) {
     .practice-full-body{ padding: .75rem .85rem; }
     .practice-full-content{ gap: .75rem; }
@@ -1361,9 +1338,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .pf-nav-btn{ padding: .45rem .6rem; font-size: .75rem; }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ★ MOBILE ★
-   ═══════════════════════════════════════════════════════════════ */
 @media(max-width:768px){
     .container{padding:0 .7rem}
     .header-inner{gap:.5rem;margin-bottom:.4rem}
@@ -1394,9 +1368,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     .practice-full-nav{gap:.4rem}
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ★ PRACTICE FULL HEADER: TAG RÕ RÀNG, KHÔNG BỊ CHE ★
-   ═══════════════════════════════════════════════════════════════ */
 .practice-full-header .card-tag{
     padding:.22rem .6rem;
     font-size:clamp(.6rem,.75vw,.7rem);
@@ -1424,7 +1395,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     color:var(--text);
 }
 
-/* Chip pulse khi active */
 .chip.has-value{animation:chipPulse 2s ease-in-out infinite;}
 .pf-chip.has-value{animation:chipPulse 2s ease-in-out infinite;}
 @keyframes chipPulse{
@@ -1432,9 +1402,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     50%{box-shadow:0 4px 18px rgba(37,99,235,.5);}
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ★ BADGE SỐ DÒNG EXCEL — để tra cứu vị trí ★
-   ═══════════════════════════════════════════════════════════════ */
 .card-excel-row{
     display:inline-flex;
     align-items:center;
@@ -1477,9 +1444,6 @@ body.practice-full-open .expiry-banner { display: none !important; }
     border-color:rgba(22,163,74,.5);
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   ★ TIKTOK BAR TRONG HEADER — CHỈ DESKTOP (JS tự di chuyển) ★
-   ═══════════════════════════════════════════════════════════════ */
 @media (min-width: 769px) {
     .header-inner{
         display:flex !important;
@@ -1563,7 +1527,9 @@ body.practice-full-open .expiry-banner { display: none !important; }
     }
 }
 """
-   # ═══════════════════════════════════════════════════════════════════
+
+
+# ═══════════════════════════════════════════════════════════════════
 #  HTML
 # ═══════════════════════════════════════════════════════════════════
 def build_ui_html():
@@ -1873,7 +1839,6 @@ def build_ui_html():
         </button>
     </div>
 
-    <!-- ★ TikTok floating pill — GÓC DƯỚI BÊN TRÁI -->
     <a class="pf-tiktok-float" id="pfTiktokFloat" href="#" target="_blank" rel="noopener noreferrer" title="Theo dõi TikTok">
         <span class="pf-tiktok-avatar-wrap">
             <img class="pf-tiktok-avatar" id="pfTiktokAvatar" src="" alt="TikTok" onerror="this.style.display='none'">
@@ -1887,7 +1852,9 @@ def build_ui_html():
     </a>
 </div>
 """
-   # ═══════════════════════════════════════════════════════════════════
+
+
+# ═══════════════════════════════════════════════════════════════════
 #  JS
 # ═══════════════════════════════════════════════════════════════════
 def build_ui_js():
@@ -2197,7 +2164,7 @@ function handleResponsiveTikTok() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ POPULATE TIKTOK PILL trong Practice Full ★
+   ★ POPULATE TIKTOK PILL trong Practice Full
    ═══════════════════════════════════════════════════════════════ */
 function populateTikTokFloat() {
     try {
@@ -2798,6 +2765,8 @@ function applyFilter() {
         }, 150);
     }
 }
+"""
+
 function render(reset) {
     if (reset) { renderedCount = 0; focusedStt = null; }
     if (!filtered.length) {
@@ -3241,7 +3210,7 @@ window.toggleInlineCheck = function(btn, evt) {
 };
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ PRACTICE FULL MODAL ★
+   ★ PRACTICE FULL MODAL
    ═══════════════════════════════════════════════════════════════ */
 var pfCurrentStt = null;
 var pfCurrentAnswer = '';
@@ -3609,8 +3578,8 @@ function updateCharPreview() {
             }
         } else if (!userChar && answerChar) {
             if (pfHintEnabled) {
- +                cls += ' ghost';
-                display =  answerChar;
+                cls += ' ghost';
+                display = answerChar;
             } else {
                 continue;
             }
@@ -3638,7 +3607,7 @@ window.fixCharAt = function(idx, el) {
     input.focus();
     setTimeout(function() {
         try {
-            input.setSelectionRange(idx, idx1);
+            input.setSelectionRange(idx, idx + 1);
         } catch(e) {
             input.selectionStart = idx;
             input.selectionEnd = idx + 1;
@@ -3664,7 +3633,7 @@ function checkFullAnswer() {
     var val = input.value.trim();
     if (!val) {
         statusEl.textContent = '';
-        statusEl.className = 'practice-full-status';
+        statusEl.className =rases 'practice-full-status';
         return;
     }
     var result = smartCheck(val, pfCurrentAnswer);
@@ -3697,7 +3666,7 @@ function revealFullAnswer() {
     charsEl.innerHTML = '';
     var phrases = splitByPinyin(pfCurrentAnswer, pfCurrentPinyin);
 
-    if (phrases.length === 0) {
+    if (ph.length === 0) {
         pfCurrentAnswer.split('').forEach(function(c) {
             if (/[\u4e00-\u9fa5]/.test(c)) phrases.push({ text: c, type: 'phrase' });
         });
@@ -3883,7 +3852,7 @@ function initPracticeFull() {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   ★ WRITER MODAL ★
+   ★ WRITER MODAL
    ═══════════════════════════════════════════════════════════════ */
 var writerInstance = null;
 var currentWriteZh = '';
