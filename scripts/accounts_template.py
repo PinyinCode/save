@@ -9,6 +9,12 @@ UI Admin Panel tối ưu:
 - Lịch sử gia hạn mặc định ẩn
 - Card header với icon + chip trạng thái
 - Animation grid-template-rows mượt
+
+FIX (2026-09):
+- Sửa lỗi dropdown user menu không bấm được trên desktop
+  do .header-inner có overflow:hidden trong @media (min-width:769px).
+- Đổi overflow:hidden → overflow:visible và nâng z-index cho
+  .header-actions / .user-menu / .user-dropdown.
 """
 
 import json
@@ -724,6 +730,34 @@ def build_accounts_css():
     .admin-section-body > .admin-section-inner{padding:.75rem;}
     .admin-toggle-btn{width:32px;height:32px;}
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   FIX: Dropdown user menu không bấm được trên desktop
+   Nguyên nhân: .header-inner có overflow:hidden trong @media (min-width:769px)
+   → dropdown bị CLIP khi tràn ra ngoài header.
+   Giải pháp: overflow:visible + nâng z-index cho các lớp liên quan.
+   ═══════════════════════════════════════════════════════════════ */
+@media (min-width:769px){
+    /* Cho phép dropdown tràn ra ngoài header */
+    .header-inner{
+        overflow:visible !important;
+    }
+    /* .sticky-top cũng phải visible để dropdown không bị cắt */
+    .sticky-top{
+        overflow:visible !important;
+    }
+    /* Nâng z-index để dropdown nổi trên mọi thứ trong header */
+    .header-actions{
+        z-index:500 !important;
+    }
+    .user-menu{
+        position:relative;
+        z-index:501 !important;
+    }
+    .user-dropdown{
+        z-index:1000 !important;
+    }
+}
 """
 
 
@@ -1131,7 +1165,7 @@ def build_renewal_html():
 
 
 # ═══════════════════════════════════════════════════════════════
-# JS
+# JS  (giữ nguyên — không thay đổi gì)
 # ═══════════════════════════════════════════════════════════════
 def build_accounts_js(config):
     js = r"""
@@ -2341,10 +2375,6 @@ function initAdminPanel() {
 
     /* ═══════════════════════════════════════════════════════
        TOGGLE ẨN/HIỆN SECTION THÔNG MINH
-       - Nút mắt nằm ngoài body → luôn bấm được
-       - Grid-template-rows animate mượt (không giật)
-       - Tự đồng bộ icon + tooltip theo trạng thái
-       - Lịch sử gia hạn mặc định ẩn (class "collapsed" trong HTML)
        ═══════════════════════════════════════════════════════ */
     function bindSectionToggle(btnId, sectionId, label) {
         var btn = $(btnId);
