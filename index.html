@@ -298,7 +298,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (min-width:1000px){.search-filter-row{display:grid;grid-template-columns:1fr auto;gap:.55rem;align-items:center}.search-bar{margin-bottom:0}.filters{display:grid;grid-template-columns:160px 180px;gap:.4rem;max-width:none;margin-bottom:0}}
 @media (min-width:1400px){.filters{grid-template-columns:180px 200px}}
 @media (min-width:769px) and (max-height:700px){.practice-full-body{padding:.75rem .85rem}.practice-full-content{gap:.75rem}.practice-full-vi{font-size:1.3rem;padding:.7rem .6rem}.practice-full-input{font-size:1.3rem;padding:.7rem .9rem}.practice-speak-btn{min-width:46px}.char-slot{font-size:1.3rem;min-width:1.5rem;height:1.9rem}.practice-full-nav{padding:.5rem .85rem}.pf-nav-btn{padding:.55rem .75rem;font-size:.8rem}}
-@media (min-width:769px) and (max-height:550px){.practice-full-header{padding:.3rem .85rem}.practice-full-header .pf-tags{display:none}.pf-filters{padding:.25rem .85rem .2rem}.pf-search-wrap{display:none}.pf-quick-nav{margin-top:0}.practice-full-body{padding:.5rem .6rem}.practice-full-content{gap:.5rem}.practice-full-vi{font-size:1.1rem;padding:.55rem .5rem}.practice-full-input{font-size:1.15rem;padding:.55rem .8rem}.char-slot{font-size:1.1rem;min-width:1.25rem;height:1.6rem}.practice-full-nav{padding:.4rem .65rem}.pf-nav-btn{padding:.45rem .6rem;font-size:.75rem}}
+@media (min-width:769px) and (max-height:550px){.practice-full-header{padding:.3rem .85rem}.pf-filters{padding:.25rem .85rem .2rem}.pf-search-wrap{display:none}.pf-quick-nav{margin-top:0}.practice-full-body{padding:.5rem .6rem}.practice-full-content{gap:.5rem}.practice-full-vi{font-size:1.1rem;padding:.55rem .5rem}.practice-full-input{font-size:1.15rem;padding:.55rem .8rem}.char-slot{font-size:1.1rem;min-width:1.25rem;height:1.6rem}.practice-full-nav{padding:.4rem .65rem}.pf-nav-btn{padding:.45rem .6rem;font-size:.75rem}}
 @media(max-width:768px){.container{padding:0 .7rem}.header-inner{gap:.5rem;margin-bottom:.4rem}.main{padding:.15rem 0 2rem}.practice-full-header{padding:.5rem .85rem;gap:.5rem}.pf-filters{padding:.4rem .85rem .3rem}.practice-full-body{padding:.85rem .7rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.85rem}.practice-full-vi{font-size:1.2rem;padding:.75rem .6rem}.practice-full-input{font-size:1.2rem;padding:.75rem .85rem}.practice-speak-btn{min-width:44px;padding:0 .6rem;font-size:1.05rem;border-radius:12px}.char-slot{font-size:1.2rem;min-width:1.4rem;height:1.85rem}.answer-phrase-btn{font-size:1.2rem;padding:.35rem .65rem}.pf-nav-btn{padding:.6rem .7rem;font-size:.78rem}.practice-full-nav{padding:.55rem .85rem;gap:.5rem}.reveal-actions button{padding:.6rem;font-size:.8rem}.reveal-actions{grid-template-columns:1fr 1fr;gap:.5rem}}
 @media(max-width:400px){.practice-full-body{padding:.7rem .5rem calc(80px + env(safe-area-inset-bottom))}.practice-full-content{gap:.7rem}.practice-full-vi{font-size:1.1rem;padding:.65rem .5rem}.practice-full-input{font-size:1.1rem;padding:.65rem .75rem}.practice-speak-btn{min-width:40px}.reveal-actions{grid-template-columns:1fr}.pf-nav-btn{padding:.5rem}.practice-full-nav{gap:.4rem}}
 .practice-full-header .card-tag{padding:.22rem .6rem;font-size:clamp(.6rem,.75vw,.7rem);font-weight:700;border-radius:50px;flex-shrink:0}
@@ -317,6 +317,44 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (max-width:1200px){.header-inner .tiktok-bar{max-width:clamp(120px,18vw,200px)!important}}
 @media (max-width:1024px){.header-inner .tiktok-bar{max-width:clamp(100px,15vw,160px)!important}.header-inner .tiktok-bar .tiktok-user{display:none}}
 @media (max-width:900px){.header-inner .tiktok-bar{max-width:130px!important}.header-inner .tiktok-bar .tiktok-bar-link span{display:none}}
+
+/* ============================================================ */
+/* ==== FIX: Counter + Tags trên header full màn hình ==== */
+/* Đảm bảo pf-counter luôn hiển thị STT Excel gọn gàng, */
+/* pf-tags không bị ẩn trên màn hình thấp và có thể scroll ngang. */
+/* ============================================================ */
+.practice-full-header .pf-counter{
+    flex-shrink:0;
+    max-width:46vw;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    letter-spacing:.02em;
+}
+.practice-full-header .pf-tags{
+    flex:1 1 auto;
+    min-width:0;
+    display:flex;
+    gap:.3rem;
+    overflow-x:auto;
+    overflow-y:hidden;
+    scrollbar-width:thin;
+    padding-bottom:2px;
+}
+.practice-full-header .pf-tags::-webkit-scrollbar{height:4px}
+.practice-full-header .pf-tags::-webkit-scrollbar-thumb{
+    background:var(--border-strong);
+    border-radius:4px;
+}
+@media (max-width:520px){
+    .practice-full-header .pf-counter{
+        font-size:.66rem;
+        padding:.3rem .55rem;
+        max-width:56vw;
+    }
+    .pf-brand-sub{display:none}
+}
+/* ============================================================ */
 
 /* ==== SOCIAL CSS ==== */
 
@@ -3667,7 +3705,14 @@ function loadPracticeFull(stt) {
     pfCurrentAnswer = r.zh || '';
     pfCurrentVi = r.vi || '';
     pfCurrentPinyin = r.pinyin || '';
-    $('pfCounter').textContent = 'Câu ' + (idx + 1) + ' / ' + filtered.length;
+
+    // ==== HIỂN THỊ STT GỐC TỪ EXCEL TRÊN HEADER ====
+    var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
+                 ? String(r.stt).trim()
+                 : '';
+    var sttLabel = sttRaw ? '#' + sttRaw + '  ·  ' : '';
+    $('pfCounter').textContent = sttLabel + 'Câu ' + (idx + 1) + ' / ' + filtered.length;
+    // ==============================================
 
     var tagsHtml = '';
     if (r.hsk) tagsHtml += '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>';
@@ -3727,7 +3772,12 @@ function pfBuildQuickNav() {
     var html = '<option value="">-- Chọn câu (' + filtered.length + ') --</option>';
     filtered.forEach(function(r, i) {
         var vi = (r.vi || '').substring(0, 45);
-        var label = 'Câu ' + (i + 1) + ': ' + vi;
+        // ==== HIỂN THỊ STT GỐC TỪ EXCEL TRONG DROPDOWN ====
+        var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
+                     ? '#' + String(r.stt).trim() + ' · '
+                     : '';
+        var label = sttRaw + 'Câu ' + (i + 1) + ': ' + vi;
+        // ===================================================
         html += '<option value="' + escapeHtml(r.stt) + '">' + escapeHtml(label) + '</option>';
     });
     sel.innerHTML = html;
@@ -3854,7 +3904,15 @@ function pfApplyFilter() {
             for (var j = 0; j < filtered.length; j++) {
                 if (String(filtered[j].stt) === String(pfCurrentStt)) { idx = j; break; }
             }
-            if (idx !== -1) $('pfCounter').textContent = 'Câu ' + (idx + 1) + ' / ' + filtered.length;
+            if (idx !== -1) {
+                // ==== CẬP NHẬT COUNTER VỚI STT GỐC EXCEL ====
+                var rNow = filtered[idx];
+                var sttNow = (rNow.stt !== undefined && rNow.stt !== null && String(rNow.stt).trim() !== '')
+                             ? '#' + String(rNow.stt).trim() + '  ·  '
+                             : '';
+                $('pfCounter').textContent = sttNow + 'Câu ' + (idx + 1) + ' / ' + filtered.length;
+                // ============================================
+            }
             return;
         }
         loadPracticeFull(filtered[0].stt);
