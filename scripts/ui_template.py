@@ -665,8 +665,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 
 /* ============================================================ */
 /* 📚 KHỐI GỘP: BỘ DỮ LIỆU + TÌM KIẾM + CHỌN CÂU                 */
-/* 3 tầng rõ ràng: dataset + search (hàng 1) → quick-nav (hàng 2) */
-/* Ô chọn câu LUÔN hiển thị, kể cả màn hình thấp                  */
 /* ============================================================ */
 .pf-dataset-row {
     display: flex;
@@ -739,7 +737,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     color: #94a3b8;
 }
 
-/* ═══ Ô TÌM KIẾM cùng hàng với Bộ dữ liệu ═══ */
 .pf-dataset-search {
     flex: 1 1 100%;
     min-width: 0;
@@ -789,7 +786,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 .pf-dataset-search .pf-search-clear.show { display: flex; }
 
-/* Từ 600px: search cùng hàng với select dataset */
 @media (min-width: 600px) {
     .pf-dataset-search {
         flex: 1 1 auto;
@@ -797,18 +793,13 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   📌 Ô "CHỌN CÂU" GỘP VÀO KHỐI BỘ DỮ LIỆU — LUÔN HIỂN THỊ
-   - flex: 1 1 100% → ép xuống hàng riêng, chiếm full chiều ngang
-   - Không có media query nào ẩn nó, kể cả màn hình thấp
-   ═══════════════════════════════════════════════════════════════ */
 .pf-dataset-row .pf-quick-nav {
-    flex: 1 1 100%;      /* ép xuống hàng riêng, chiếm full chiều ngang */
+    flex: 1 1 100%;
     width: 100%;
     margin-top: .25rem;
     padding-top: .5rem;
     border-top: 1px dashed rgba(139, 92, 246, 0.25);
-    display: flex !important;   /* LUÔN hiển thị dạng flex */
+    display: flex !important;
     align-items: center;
     gap: .5rem;
     visibility: visible !important;
@@ -1408,10 +1399,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .pf-brand-sub{display:none}
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   📱 LANDSCAPE MÀN HÌNH THẤP — KHÔNG ẨN Ô CHỌN CÂU
-   Chỉ thu gọn để vẫn vừa trong viewport
-   ═══════════════════════════════════════════════════════════════ */
 @media (max-width:1024px) and (max-height:550px) and (orientation:landscape){
     .practice-full-header{padding:.35rem .75rem;gap:.35rem;min-height:44px}
     .pf-brand-sub{display:none}
@@ -1420,7 +1407,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .pf-dataset-row{padding:.3rem .5rem;gap:.4rem;margin-top:.3rem}
     .pf-dataset-search input{padding:.28rem 2rem;font-size:.72rem}
     .pf-dataset-select{padding:.28rem 1.8rem .28rem .6rem;font-size:.72rem}
-    /* ✅ Ô chọn câu: vẫn HIỂN THỊ, chỉ thu gọn khoảng cách */
     .pf-dataset-row .pf-quick-nav{
         padding-top:.3rem;
         margin-top:.15rem;
@@ -1440,7 +1426,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .pf-tiktok-float{transform:scale(.85);transform-origin:left bottom;left:8px;bottom:calc(4px + env(safe-area-inset-bottom))}
 }
 
-/* Màn hình RẤT thấp (≤420px) — vẫn KHÔNG ẩn, chỉ thu nhỏ hơn nữa */
 @media (max-width:1024px) and (max-height:420px) and (orientation:landscape){
     .pf-dataset-row{
         padding:.25rem .45rem;
@@ -1477,10 +1462,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     .practice-full-input{font-size:1rem;padding:.5rem .7rem}
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   📱 Mobile dọc màn hình THẤP (không phải landscape)
-   → vẫn giữ ô chọn câu, chỉ thu gọn chiều cao
-   ═══════════════════════════════════════════════════════════════ */
 @media (max-width:768px) and (max-height:700px){
     .pf-dataset-row{
         padding:.4rem .55rem;
@@ -1560,7 +1541,7 @@ def build_ui_html():
 <button class="icon-btn" id="themeToggle" title="Đổi giao diện"><i class="fas fa-moon"></i></button>
 <div class="user-menu" id="userMenu" style="display:none">
 <img class="user-avatar" id="userAvatar" src="" alt="Avatar">
-<div class="user-dropdown" id="userDropdown">
+<div class="user-dropdown show" id="userDropdown">
 <div class="user-info"><div class="name" id="userName">-</div><div class="email" id="userEmail">-</div><span class="role" id="userRole">user</span></div>
 <div class="user-details" id="userDetails" style="display:none">
 <div class="detail-row" id="expiryRow"><div class="detail-icon" id="expiryIconWrap"><i class="fas fa-calendar-check" id="expiryIcon"></i></div><div class="detail-content"><div class="detail-label">Hạn sử dụng</div><div class="detail-value" id="expiryValue">-</div><div class="detail-sub" id="expirySub"></div></div></div>
@@ -1621,7 +1602,7 @@ def build_ui_html():
 <div class="result-count" id="resultCount"><i class="fas fa-list-ul"></i><span>Tìm thấy <b id="resultCountNum">0</b> kết quả</span></div>
 </div>
 </div>
-<div class="fab-group" id="fabGroup" style="display:none">
+<div class="fab-group open" id="fabGroup" style="display:none">
 <button class="fab-btn fab-sub" id="toggleViBtn" title="Ẩn/hiện Tiếng Việt"><i class="fas fa-language"></i></button>
 <button class="fab-btn fab-sub" id="togglePinyinBtn" title="Ẩn/hiện Pinyin"><i class="fas fa-spell-check"></i></button>
 <button class="fab-btn fab-sub" id="togglePracticeBtn" title="Ẩn/hiện Ô luyện dịch"><i class="fas fa-keyboard"></i></button>
@@ -1633,10 +1614,21 @@ def build_ui_html():
 <div class="demo-banner" id="demoBanner" style="display:none">
 <div class="demo-banner-icon"><i class="fas fa-gift"></i></div>
 <div class="demo-banner-text"><div class="title" id="demoBannerTitle">Bạn đang dùng bản Demo</div>
-<div class="desc" id="demoBannerDesc">Xem <b id="demoLimitText">100</b> câu đầu (HSK1-<span id="demoHskMaxText">3</span>). Nghe + Luyện viết giới hạn <b id="demoDailyText">200</b> lượt/ngày (còn lại: <b id="demoRemainingText">50</b> lượt). Đăng nhập để mở khóa toàn bộ!</div></div>
+<div class="desc" id="demoBannerDesc">Xem <b id="demoLimitText">100</b> câu đầu (HSK1-<span id="demoHskMaxText">3</span>). Nghe + Luyện viết giới hạn <b id="demoDailyText">100</b> lượt/ngày (còn lại: <b id="demoRemainingText">50</b> lượt). Đăng nhập để mở khóa toàn bộ!</div></div>
 <button class="demo-banner-btn" id="demoBannerBtn" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> <span id="demoBannerBtnText">Đăng nhập ngay</span></button>
 </div>
-<div class="expiry-banner" id="expiryBanner" style="display:none"></div>
+<div class="expiry-banner" id="expiryBanner" style="display:none">
+    <div class="expiry-banner-icon" id="expiryBannerIcon">
+        <i class="fas fa-hourglass-half"></i>
+    </div>
+    <div class="expiry-banner-text">
+        <div class="title" id="expiryBannerTitle">Tài khoản sắp hết hạn</div>
+        <div class="desc" id="expiryBannerDesc">Đang cập nhật...</div>
+    </div>
+    <button class="expiry-banner-btn" id="expiryContactBtn" type="button">
+        <i class="fas fa-gem"></i> Gia hạn ngay
+    </button>
+</div>
 <div class="mobile-view" id="mobileWrapper"><div class="no-data"><i class="fas fa-spinner fa-pulse"></i>Đang tải...</div></div>
 </div>
 </main>
@@ -1677,7 +1669,6 @@ def build_ui_html():
 
 <!-- ═══ KHỐI GỘP: BỘ DỮ LIỆU + TÌM KIẾM + CHỌN CÂU ═══ -->
 <div class="pf-dataset-row" id="pfDatasetRow">
-    <!-- Hàng 1: Bộ dữ liệu + Ô tìm kiếm -->
     <span class="pf-dataset-label"><i class="fas fa-layer-group"></i> Bộ dữ liệu</span>
     <select class="pf-dataset-select" id="pfDatasetSelect"></select>
 
@@ -1687,7 +1678,6 @@ def build_ui_html():
         <button class="pf-search-clear" id="pfClearSearchBtn" aria-label="Xóa"><i class="fas fa-times"></i></button>
     </div>
 
-    <!-- Hàng 2: Ô chọn câu — nằm bên dưới ô bộ dữ liệu, LUÔN hiển thị -->
     <div class="pf-quick-nav" id="pfQuickNavWrap">
         <span class="pf-quick-nav-label">Câu:</span>
         <select class="pf-quick-nav-select" id="pfQuickNav"><option value="">-- Chọn câu --</option></select>
@@ -1850,14 +1840,12 @@ function canAccessChuyenNganh() {
 /* ============================================================ */
 function showChuyenNganhLockMessage() {
     if (typeof currentUser === 'undefined' || !currentUser) {
-        // Chưa đăng nhập (demo)
         if (confirm('🔒 Bộ dữ liệu Chuyên ngành\n\n' +
                     'Bạn cần ĐĂNG NHẬP và GIA HẠN để mở khoá.\n\n' +
                     'Đăng nhập ngay?')) {
             if (typeof showLoginModal === 'function') showLoginModal();
         }
     } else {
-        // Đã đăng nhập nhưng chưa gia hạn (trial/expired)
         if (confirm('🔒 Bộ dữ liệu Chuyên ngành\n\n' +
                     'Chỉ tài khoản ĐÃ GIA HẠN mới mở được.\n\n' +
                     'Gia hạn ngay?')) {
@@ -1887,7 +1875,6 @@ function initDatasetSelector() {
     if (typeof DATASET_REGISTRY === 'undefined' || !DATASET_REGISTRY) return;
     if (!DATASET_REGISTRY.tonghop) return;
 
-    // Cập nhật label "1700 câu"
     var labelEl = $('dsTonghopLabel');
     if (labelEl) {
         var count = DATASET_REGISTRY.tonghop.count
@@ -1895,24 +1882,18 @@ function initDatasetSelector() {
         labelEl.textContent = count + ' câu phản xạ tổng hợp VPCX';
     }
 
-    // Liệt kê tất cả dataset khác 'tonghop'
     var chuyenNganhKeys = Object.keys(DATASET_REGISTRY).filter(function(id) {
         return id !== 'tonghop';
     });
 
-    // Không có file Excel nào trong data/ → ẩn nút "Chuyên ngành"
     var cnBtn = $('dsChuyenNganhBtn');
     if (chuyenNganhKeys.length === 0) {
         if (cnBtn) cnBtn.style.display = 'none';
         return;
     }
 
-    // ✅ Kiểm tra quyền: chỉ tier 'active' (đã gia hạn) mới mở được chuyên ngành.
-    // Admin tự động có tier = 'active' → full quyền.
     var canAccess = canAccessChuyenNganh();
 
-    // Render sub-buttons dạng PILL NGANG (có khoá nhỏ nếu không đủ quyền)
-    // Mỗi ngành có --ds-color riêng → viền + nền + shadow cùng tông màu
     var subGrid = $('dsSubGrid');
     if (subGrid) {
         var subHtml = '';
@@ -1936,8 +1917,6 @@ function initDatasetSelector() {
         subGrid.innerHTML = subHtml;
     }
 
-    // ✅ Nút "Chuyên ngành" chính: vẫn mở dropdown bình thường,
-    // chỉ thêm icon 🔒 nhỏ cạnh chữ khi bị khoá
     if (cnBtn) {
         var oldLock = cnBtn.querySelector('.ds-main-lock');
         if (oldLock) oldLock.remove();
@@ -1956,7 +1935,6 @@ function initDatasetSelector() {
         }
     }
 
-    // Bind nút "1700 câu"
     document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(btn) {
         if (btn.__boundDataset) return;
         btn.__boundDataset = true;
@@ -1970,7 +1948,6 @@ function initDatasetSelector() {
         });
     });
 
-    // Bind nút "Chuyên ngành" — VẪN MỞ DROPDOWN BÌNH THƯỜNG
     if (cnBtn && !cnBtn.__boundToggle) {
         cnBtn.__boundToggle = true;
         cnBtn.addEventListener('click', function() {
@@ -1990,7 +1967,6 @@ function initDatasetSelector() {
         });
     }
 
-    // Bind sub buttons (check khoá)
     document.querySelectorAll('.ds-sub-btn').forEach(function(btn) {
         if (btn.__boundSub) return;
         btn.__boundSub = true;
@@ -2032,7 +2008,6 @@ function markCurrentDatasetActive() {
 function switchDataset(datasetId) {
     if (!DATASET_REGISTRY[datasetId]) return;
 
-    // ✅ Guard: chuyên ngành yêu cầu tier 'active'
     if (datasetId !== 'tonghop' && !canAccessChuyenNganh()) {
         showChuyenNganhLockMessage();
         return;
@@ -2042,7 +2017,6 @@ function switchDataset(datasetId) {
         window.__switchRawData(datasetId);
     }
 
-    // Reset filter
     state = { search:'', hsk:'', subject:'' };
     if ($('searchInput')) $('searchInput').value = '';
     if ($('hskFilter')) $('hskFilter').value = '';
@@ -2551,22 +2525,35 @@ function initScrollDetection() {
     update();
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   FAB GROUP — Mặc định MỞ khi vào trang (F5)
+   • Lần đầu vào trang: FAB mở sẵn (HTML đã có class "open")
+   • User đóng trong session: nhớ qua sessionStorage (cùng tab)
+   • F5 / mở tab mới: reset về mặc định (mở)
+   ═══════════════════════════════════════════════════════════════ */
 function initFabGroup() {
     var fabGroup = $('fabGroup');
     var fabMainBtn = $('fabMainBtn');
-    var fabOpen = false;
-    try { var savedFab = localStorage.getItem('fabOpen'); if (savedFab === 'true') fabOpen = true; } catch(e) {}
-    if (fabOpen) fabGroup.classList.add('open');
+    if (!fabGroup || !fabMainBtn) return;
+
+    var closedFlag = null;
+    try { closedFlag = sessionStorage.getItem('fabClosed'); } catch(_e) {}
+
+    var fabOpen = (closedFlag !== '1');
+    fabGroup.classList.toggle('open', fabOpen);
+
     fabMainBtn.addEventListener('click', function(e) {
         e.stopPropagation();
         fabOpen = !fabOpen;
         fabGroup.classList.toggle('open', fabOpen);
-        try { localStorage.setItem('fabOpen', fabOpen ? 'true' : 'false'); } catch(e) {}
+        try { sessionStorage.setItem('fabClosed', fabOpen ? '0' : '1'); } catch(_e) {}
     });
+
     document.addEventListener('click', function(e) {
         if (!fabGroup.contains(e.target) && fabOpen && window.innerWidth > 768) {
             fabOpen = false;
             fabGroup.classList.remove('open');
+            try { sessionStorage.setItem('fabClosed', '1'); } catch(_e) {}
         }
     });
 }
