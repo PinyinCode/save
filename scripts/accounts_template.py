@@ -11,15 +11,14 @@ UI Admin Panel tối ưu:
 - Animation grid-template-rows mượt
 
 FIX (2026-09):
-- Sửa lỗi dropdown user menu không bấm được trên desktop.
-- Thêm banner cảnh báo gia hạn 3 mức: warning (≤30 ngày) / urgent (≤7 ngày)
-  / expired (đã hết hạn).
+- Sửa lỗi dropdown user menu không bấm được trên desktop
+  do .header-inner có overflow:hidden trong @media (min-width:769px).
+- Đổi overflow:hidden → overflow:visible và nâng z-index cho
+  .header-actions / .user-menu / .user-dropdown.
+- Thêm banner cảnh báo gia hạn 3 mức: warning (≤7 ngày) / urgent (≤3 ngày)
+  / expired (đã hết hạn) — với icon + text + nút điều hướng đầy đủ.
 - Dropdown user menu MẶC ĐỊNH MỞ khi vào trang, chỉ nhớ trạng thái
   đóng trong sessionStorage (reset khi F5 / mở tab mới).
-- FIX login mobile: tự động dùng signInWithRedirect trên mobile
-  thay vì signInWithPopup → tránh lỗi auth/cancelled-popup-request.
-- FIX redirect result: KHÔNG hiện lỗi khi user vào trang lần đầu.
-  Chỉ dùng onAuthStateChanged để xử lý user sau redirect.
 """
 
 import json
@@ -157,7 +156,6 @@ def build_accounts_css():
 .btn-google{display:flex;align-items:center;justify-content:center;gap:.75rem;width:100%;padding:.9rem 1.5rem;border-radius:50px;border:2px solid #e2e8f0;background:#fff;color:#0f172a;font-size:1rem;font-weight:600;cursor:pointer;transition:.15s;font-family:inherit;}
 .btn-google:hover{border-color:#7c3aed;background:#faf5ff;transform:translateY(-1px);box-shadow:0 4px 12px rgba(124,58,237,.15)}
 .btn-google img{width:22px;height:22px}
-.btn-google:disabled{opacity:.6;cursor:not-allowed;}
 .login-error{background:#fee2e2;color:#dc2626;padding:.85rem 1rem;border-radius:10px;font-size:.85rem;margin-top:1rem;display:none;text-align:left;line-height:1.4;}
 .login-error.show{display:block}
 .login-footer{margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid #e2e8f0;font-size:.78rem;color:#94a3b8;line-height:1.5}
@@ -213,6 +211,7 @@ def build_accounts_css():
 
 /* ═══════════════════════════════════════════════════════════
    COLLAPSIBLE SECTIONS — UI THÔNG MINH
+   Dùng grid-template-rows để animate mượt (không giật như max-height)
    ═══════════════════════════════════════════════════════════ */
 .admin-section{
     margin-top:1.5rem;
@@ -563,8 +562,8 @@ def build_accounts_css():
 
 /* ═══════════════════════════════════════════════════════════════
    ⏰ EXPIRY BANNER — Cảnh báo gia hạn 3 mức
-   • .expiry-banner              → Vàng (còn ≤30 ngày)
-   • .expiry-banner.urgent       → Cam đậm (còn ≤7 ngày)
+   • .expiry-banner              → Vàng (còn ≤7 ngày)
+   • .expiry-banner.urgent       → Cam đậm (còn ≤3 ngày)
    • .expiry-banner.expired      → Đỏ (đã hết hạn)
    ═══════════════════════════════════════════════════════════════ */
 .expiry-banner{
@@ -898,6 +897,9 @@ def build_accounts_css():
 
 /* ═══════════════════════════════════════════════════════════════
    FIX: Dropdown user menu không bấm được trên desktop
+   Nguyên nhân: .header-inner có overflow:hidden trong @media (min-width:769px)
+   → dropdown bị CLIP khi tràn ra ngoài header.
+   Giải pháp: overflow:visible + nâng z-index cho các lớp liên quan.
    ═══════════════════════════════════════════════════════════════ */
 @media (min-width:769px){
     .header-inner{
@@ -1410,15 +1412,6 @@ function hasPermission(permKey) {
     return perms[permKey] === true;
 }
 
-/* ✅ PHÁT HIỆN MÔI TRƯỜNG */
-function isMobileOrInAppBrowser() {
-    var ua = navigator.userAgent || '';
-    var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-    var isInApp = /Zalo|FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|TikTok/i.test(ua);
-    var isSmallScreen = window.innerWidth <= 768;
-    return isMobile || isInApp || isSmallScreen;
-}
-
 /* ============ TIER STATE ============ */
 function publishTierState() {
     if (!currentUser) {
@@ -1487,19 +1480,6 @@ try {
     firebase.initializeApp(FIREBASE_CONFIG);
     auth = firebase.auth();
     db = firebase.firestore();
-
-    /* ═══════════════════════════════════════════════════════════
-       ✅ XỬ LÝ REDIRECT RESULT
-       - Gọi TRƯỚC onAuthStateChanged
-       - CHỈ catch để log, KHÔNG hiện lỗi cho user
-       - onAuthStateChanged sẽ tự bắt user sau khi redirect xong
-       ═══════════════════════════════════════════════════════════ */
-    auth.getRedirectResult().catch(function(err) {
-        // Chỉ log — không hiện lỗi cho user vì lỗi này xảy ra
-        // bình thường khi user vào trang lần đầu (không qua redirect)
-        console.log('📌 Redirect check:', err && err.code ? err.code : 'ok');
-    });
-
     auth.onAuthStateChanged(handleAuthChange);
 } catch(e) {
     console.error('Firebase init error:', e);
@@ -1681,10 +1661,10 @@ function enterDemoMode() {
 /* ═══════════════════════════════════════════════════════════════
    ⏰ RENDER BANNER CẢNH BÁO GIA HẠN
    Hiện 3 mức:
-     • Warning (vàng)   : còn ≤ 30 ngày
-     • Urgent  (cam đậm): còn ≤ 7 ngày
+     • Warning (vàng)   : còn ≤ 7 ngày
+     • Urgent  (cam đậm): còn ≤ 3 ngày
      • Expired (đỏ)     : đã hết hạn (daysLeft ≤ 0)
-   Ẩn khi: chưa đăng nhập / admin / vĩnh viễn / còn > 30 ngày
+   Ẩn khi: chưa đăng nhập / admin / vĩnh viễn / còn > 7 ngày
    ═══════════════════════════════════════════════════════════════ */
 function renderExpiryBanner() {
     var banner = $('expiryBanner');
@@ -1714,13 +1694,13 @@ function renderExpiryBanner() {
     var expDateStr = expDate.toLocaleDateString('vi-VN');
     var tier = currentUser.tier || 'active';
 
-    if (daysLeft > 30) {
+    if (daysLeft > 7) {
         banner.style.display = 'none';
         return;
     }
 
     var isExpired = daysLeft <= 0;
-    var isUrgent  = !isExpired && daysLeft <= 7;
+    var isUrgent  = !isExpired && daysLeft <= 3;
 
     banner.classList.remove('urgent', 'expired');
     if (isExpired) {
@@ -1791,6 +1771,9 @@ function renderExpiryBanner() {
 
 /* ═══════════════════════════════════════════════════════════════
    ✅ ĐỒNG BỘ TRẠNG THÁI DROPDOWN USER MENU
+   • sessionStorage bị xoá khi đóng tab
+   • Trong cùng session: giữ nguyên trạng thái user đã chọn
+   • Mặc định MỞ khi vào trang (F5)
    ═══════════════════════════════════════════════════════════════ */
 function applyUserDropdownState() {
     var dd = $('userDropdown');
@@ -1825,12 +1808,12 @@ function applyUserUI() {
         renewBtn.style.display = showRenew ? 'flex' : 'none';
         if (showRenew) {
             var rDaysLeft = getDaysRemaining(currentUser);
-            var isUrgent = (rDaysLeft !== null && rDaysLeft <= 7);
+            var isUrgent = (rDaysLeft !== null && rDaysLeft <= 3);
             renewBtn.classList.toggle('urgent', isUrgent);
             var rBadge = renewBtn.querySelector('.renew-badge');
             if (rBadge) {
                 if (rDaysLeft !== null && rDaysLeft <= 0) rBadge.textContent = 'HẾT HẠN';
-                else if (rDaysLeft !== null && rDaysLeft <= 7) rBadge.textContent = 'GẤP';
+                else if (rDaysLeft !== null && rDaysLeft <= 3) rBadge.textContent = 'GẤP';
                 else rBadge.textContent = 'VIP';
             }
         }
@@ -1881,6 +1864,8 @@ function applyUserUI() {
             }
         }
         updateUserDetails();
+
+        /* ✅ Đồng bộ trạng thái dropdown user menu */
         applyUserDropdownState();
     }
 
@@ -1951,14 +1936,14 @@ function updateUserDetails() {
         if (expiryIcon) expiryIcon.className = 'fas fa-calendar-times';
         if (expiryIconWrap) expiryIconWrap.classList.add('expired');
         if (progressWrap) progressWrap.style.display = 'none';
-    } else if (daysLeft <= 7) {
+    } else if (daysLeft <= 3) {
         expiryValue.textContent = 'Còn ' + daysLeft + ' ngày';
         expiryValue.classList.add('urgent');
         expirySub.innerHTML = (tier === 'trial' ? '🎁 Trial: ' : '') + 'Hạn: <b>' + dateStr + '</b>';
         if (expiryIcon) expiryIcon.className = 'fas fa-exclamation-circle';
         if (expiryIconWrap) expiryIconWrap.classList.add('urgent');
         if (progressWrap) { progressWrap.style.display = 'block'; progressBar.className = 'progress-bar urgent'; progressBar.style.width = '90%'; }
-    } else if (daysLeft <= 30) {
+    } else if (daysLeft <= 7) {
         expiryValue.textContent = 'Còn ' + daysLeft + ' ngày';
         expiryValue.classList.add('warn');
         expirySub.innerHTML = (tier === 'trial' ? '🎁 Trial: ' : '') + 'Hạn: <b>' + dateStr + '</b>';
@@ -2021,7 +2006,7 @@ function filterUsers(items) {
             var d = getExpiryDate(u.expiresAt);
             if (!d || isNaN(d.getTime())) return false;
             var daysLeft = Math.ceil((d.getTime() - now) / 86400000);
-            return daysLeft >= 0 && daysLeft <= 30;
+            return daysLeft >= 0 && daysLeft <= 7;
         }
         if (filter === 'expired') {
             if (u.role === 'admin' || u.isPermanent || !u.expiresAt) return false;
@@ -2094,7 +2079,7 @@ function updateFilterCounts(items) {
                 if (d && !isNaN(d.getTime())) {
                     var daysLeft = Math.ceil((d.getTime() - now) / 86400000);
                     if (daysLeft < 0) counts.expired++;
-                    else if (daysLeft <= 30) counts.expiring++;
+                    else if (daysLeft <= 7) counts.expiring++;
                 }
             }
         }
@@ -2135,7 +2120,7 @@ window.closeRenewalModal = function() {
 function renderRenewalStep1() {
     var daysLeft = getDaysRemaining(currentUser);
     var isExpired = daysLeft !== null && daysLeft <= 0;
-    var isWarn = daysLeft !== null && daysLeft > 0 && daysLeft <= 30;
+    var isWarn = daysLeft !== null && daysLeft > 0 && daysLeft <= 7;
     var tier = currentUser.tier || 'active';
     var currentCls = isExpired ? 'expired' : (isWarn ? 'warn' : '');
     var currentIcon = isExpired ? 'fa-exclamation-triangle' : (isWarn ? 'fa-hourglass-half' : 'fa-gem');
@@ -2897,7 +2882,7 @@ function renderUsers(items) {
                 if (d && !isNaN(d.getTime())) {
                     var daysLeftExp = Math.ceil((d.getTime() - Date.now()) / (24 * 60 * 60 * 1000));
                     tooltip = 'Chỉnh hạn (còn ' + Math.max(0, daysLeftExp) + ' ngày)';
-                    if (daysLeftExp <= 30) btnCls += ' urgent';
+                    if (daysLeftExp <= 7) btnCls += ' urgent';
                 }
             } else tooltip = 'Chỉnh hạn (Vĩnh viễn)';
             expiryBtn = '<button class="' + btnCls + '" onclick="openEditExpiry(\'' + escapeJs(u.email) + '\')" title="' + escapeHtml(tooltip) + '"><i class="fas fa-calendar-alt"></i></button>';
@@ -2924,8 +2909,8 @@ function renderUsers(items) {
                 var expCls = 'ok', expIcon = 'fa-calendar-check', expText = 'Còn ' + daysLeft + ' ngày';
                 if (daysLeft < 0) { expCls = 'expired'; expIcon = 'fa-calendar-times'; expText = 'Hết hạn ' + Math.abs(daysLeft) + ' ngày'; }
                 else if (daysLeft === 0) { expCls = 'urgent'; expIcon = 'fa-exclamation-circle'; expText = 'Hết hạn hôm nay'; }
-                else if (daysLeft <= 7) { expCls = 'urgent'; expIcon = 'fa-exclamation-circle'; }
-                else if (daysLeft <= 30) { expCls = 'warn'; expIcon = 'fa-clock'; }
+                else if (daysLeft <= 3) { expCls = 'urgent'; expIcon = 'fa-exclamation-circle'; }
+                else if (daysLeft <= 7) { expCls = 'warn'; expIcon = 'fa-clock'; }
                 var tierPrefix = (u.tier === 'trial' || u.isTrial) ? '🎁 ' : '';
                 expiryHtml = '<div class="u-expiry ' + expCls + '" onclick="openEditExpiry(\'' + escapeJs(u.email) + '\')"><i class="fas ' + expIcon + '"></i> ' + tierPrefix + expText + ' • ' + expDate.toLocaleDateString('vi-VN') + '</div>';
             }
@@ -3381,8 +3366,8 @@ function doExportExcel() {
                 var daysLeft = Math.ceil((expDate.getTime() - now) / (24 * 60 * 60 * 1000));
                 var prefix = (u.tier === 'trial' || u.isTrial) ? '🎁 Trial ' : '';
                 if (daysLeft < 0) statusStr = '❌ Hết hạn ' + Math.abs(daysLeft) + ' ngày';
-                else if (daysLeft <= 7) statusStr = prefix + '🔴 Còn ' + daysLeft + ' ngày';
-                else if (daysLeft <= 30) statusStr = prefix + '🟡 Còn ' + daysLeft + ' ngày';
+                else if (daysLeft <= 3) statusStr = prefix + '🔴 Còn ' + daysLeft + ' ngày';
+                else if (daysLeft <= 7) statusStr = prefix + '🟡 Còn ' + daysLeft + ' ngày';
                 else statusStr = prefix + '🟢 Còn ' + daysLeft + ' ngày';
             }
             aoa.push(['', u.email || '', u.name || '', expStr, statusStr]);
@@ -3538,9 +3523,8 @@ async function doImport() {
 
     var success = 0, failed = 0;
     var BATCH_SIZE = 400;
-    for (var i = 0; btn i < toImport.length; i +=.dis BATCH_SIZE) {
-       abled var chunk = toImport =.slice(i, i + false;
- BATCH_SIZE);
+    for (var i = 0; i < toImport.length; i += BATCH_SIZE) {
+        var chunk = toImport.slice(i, i + BATCH_SIZE);
         var batch = db.batch();
         chunk.forEach(function(r) {
             var ref = db.collection('allowed_users').doc(r.email);
@@ -3562,7 +3546,8 @@ async function doImport() {
         catch(err) { failed += chunk.length; console.error(err); }
     }
 
-       btn.innerHTML = originalHTML;
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
     importRows = [];
     try { localStorage.removeItem('admin_users_cache'); } catch(e) {}
     toImport.forEach(function(r) { try { localStorage.removeItem('user_cache_' + r.email); } catch(e) {} });
@@ -3598,65 +3583,19 @@ function initAuthUI() {
     if ($('headerLoginBtn')) $('headerLoginBtn').addEventListener('click', showLoginModal);
     if ($('loginClose')) $('loginClose').addEventListener('click', hideLoginModal);
     if ($('loginModal')) $('loginModal').addEventListener('click', function(e) { if (e.target === this) hideLoginModal(); });
-
-    /* ═══════════════════════════════════════════════════════════
-       ✅ GOOGLE LOGIN — TỰ ĐỘNG PHÁT HIỆN MOBILE → REDIRECT
-       ═══════════════════════════════════════════════════════════ */
     if ($('googleLoginBtn')) {
         $('googleLoginBtn').addEventListener('click', async function() {
             var provider = new firebase.auth.GoogleAuthProvider();
             provider.setCustomParameters({ prompt: 'select_account' });
-
-            var btn = $('googleLoginBtn');
-            var originalHTML = btn.innerHTML;
-            btn.disabled = true;
-            btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang xử lý...';
-
-            // Mobile / in-app browser → REDIRECT
-            if (isMobileOrInAppBrowser()) {
-                try {
-                    console.log('📱 Mobile detected → signInWithRedirect');
-                    await auth.signInWithRedirect(provider);
-                } catch(e) {
-                    console.error('❌ Redirect error:', e);
-                    btn.disabled = false;
-                    btn.innerHTML = originalHTML;
-                    showLoginError('Lỗi đăng nhập: ' + e.message);
-                }
-                return;
-            }
-
-            // Desktop → POPUP
             try {
-                console.log('💻 Desktop detected → signInWithPopup');
                 await auth.signInWithPopup(provider);
                 hideLoginModal();
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
             } catch(e) {
-                console.warn('⚠️ Popup failed:', e.code, e.message);
-                if (e.code === 'auth/popup-blocked' ||
-                    e.code === 'auth/cancelled-popup-request' ||
-                    e.code === 'auth/popup-closed-by-user' ||
-                    e.code === 'auth/operation-not-supported-in-this-environment') {
-                    try {
-                        console.log('🔄 Fallback → signInWithRedirect');
-                        await auth.signInWithRedirect(provider);
-                    } catch(e2) {
-                        console.error('❌ Fallback redirect failed:', e2);
-                        btn.disabled = false;
-                        btn.innerHTML = originalHTML;
-                        showLoginError('Lỗi đăng nhập: ' + e2.message);
-                    }
-                } else {
-                    btn.disabled = false;
-                    btn.innerHTML = originalHTML;
-                    showLoginError('Lỗi: ' + e.message);
-                }
+                if (e.code === 'auth/popup-blocked') await auth.signInWithRedirect(provider);
+                else if (e.code !== 'auth/popup-closed-by-user') showLoginError('Lỗi: ' + e.message);
             }
         });
     }
-
     if ($('logoutBtn')) {
         $('logoutBtn').addEventListener('click', function() {
             if (confirm('Đăng xuất?')) {
@@ -3671,6 +3610,12 @@ function initAuthUI() {
         });
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       USER DROPDOWN — Mặc định MỞ khi vào trang (F5)
+       • Lần đầu vào trang: dropdown mở sẵn (HTML có class "show")
+       • User đóng trong session: nhớ trong sessionStorage
+       • F5 / mở tab mới: reset về mặc định (mở)
+       ═══════════════════════════════════════════════════════════ */
     if ($('userAvatar')) {
         $('userAvatar').addEventListener('click', function(e) {
             e.stopPropagation();
