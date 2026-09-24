@@ -3,15 +3,8 @@ name: Convert Excel to HTML
 on:
   push:
     paths:
-      - 'data/input.xlsx'
-      - 'scripts/convert.py'
-      - 'scripts/config_loader.py'
-      - 'scripts/data_reader.py'
-      - 'scripts/ui_template.py'
-      - 'scripts/social_template.py'
-      - 'scripts/accounts_template.py'
-      - 'scripts/renewal_template.py'
-      - 'scripts/check.py'
+      - 'scripts/data/**'                # ✅ File Excel nằm trong scripts/data/
+      - 'scripts/**/*.py'                # ✅ Mọi file Python trong scripts/
       - 'scripts/config.json'
       - '.github/workflows/convert.yml'
   workflow_dispatch:
@@ -50,8 +43,8 @@ jobs:
           echo "=== scripts/ ==="
           ls -la scripts/
           echo ""
-          echo "=== data/ ==="
-          ls -la data/ || echo "No data folder"
+          echo "=== scripts/data/ ==="
+          ls -la scripts/data/ || echo "No scripts/data folder"
 
       - name: Pre-flight check
         run: python scripts/check.py
