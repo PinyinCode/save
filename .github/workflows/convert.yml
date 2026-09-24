@@ -22,8 +22,8 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: true
+  group: "pages-${{ github.ref }}"
+  cancel-in-progress: false
 
 jobs:
   convert:
@@ -31,6 +31,8 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0            # ✅ Cần cho rebase
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -81,10 +83,12 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add index.html
           if git diff --quiet && git diff --staged --quiet; then
-            echo "No changes"
+            echo "✅ Không có thay đổi để commit"
           else
             git commit -m "🤖 Auto convert Excel to HTML"
-            git push
+            # ✅ FIX: pull --rebase trước khi push để tránh rejected
+            git pull --rebase origin ${{ github.ref_name }}
+            git push origin HEAD:${{ github.ref_name }}
           fi
 
       - name: Upload artifact
