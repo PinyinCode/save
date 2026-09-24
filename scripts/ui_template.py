@@ -96,7 +96,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 @media(min-width:1800px){.mobile-view{grid-template-columns:1fr 1fr 1fr;gap:1.3rem}}
 
 /* ============================================================ */
-/* DATASET SELECTOR — 2 CẤP (Bộ dữ liệu + Chuyên ngành)        */
+/* DATASET SELECTOR - 2 CAP (Bo du lieu + Chuyen nganh)          */
 /* ============================================================ */
 .dataset-selector{
     margin-bottom:.75rem;
@@ -150,7 +150,7 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-btn.active .ds-arrow{transform:rotate(180deg)}
 
-/* ═══ Badge NEW cho nút "Chuyên ngành" ═══ */
+/* Badge NEW cho nut Chuyen nganh */
 .ds-btn[data-dataset-group="chuyen-nganh"]{
     overflow:visible;
 }
@@ -225,9 +225,9 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-sub-label i{color:var(--amber);font-size:.8rem}
 
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ SUB-BUTTONS CHUYÊN NGÀNH — NỔI BẬT HƠN ⭐
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════ */
+/* SUB-BUTTONS CHUYÊN NGÀNH - FIX HIỂN THỊ ĐẦY ĐỦ DẤU TIẾNG VIỆT */
+/* ═══════════════════════════════════════════════════════════ */
 .ds-sub-grid{
     display:flex;
     flex-wrap:wrap;
@@ -236,36 +236,51 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 .ds-sub-btn{
     display:inline-flex;
     align-items:center;
+    justify-content:flex-start;
     gap:.45rem;
-    padding:.5rem .95rem;
+    padding:.62rem 1.05rem .65rem;
     border-radius:50px;
     background:linear-gradient(135deg,
         color-mix(in srgb, var(--ds-color, #2563eb) 12%, var(--surface)),
         color-mix(in srgb, var(--ds-color, #2563eb) 4%, var(--surface)));
     border:2px solid color-mix(in srgb, var(--ds-color, #2563eb) 40%, var(--border));
     color:var(--text);
-    font-size:.76rem;
+    font-size:.78rem;
     font-weight:800;
     font-family:inherit;
     cursor:pointer;
     transition:all .2s ease;
     text-align:left;
     position:relative;
-    line-height:1;
     white-space:nowrap;
     box-shadow:0 2px 6px color-mix(in srgb, var(--ds-color, #2563eb) 18%, transparent);
-    letter-spacing:.01em;
+    letter-spacing:0;
+    line-height:1.5;
+    overflow:visible;
+    text-rendering:optimizeLegibility;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    font-feature-settings:"kern" 1,"liga" 1;
+    -webkit-text-size-adjust:100%;
+    text-size-adjust:100%;
 }
 .ds-sub-btn i:first-child{
-    font-size:.9rem;
+    font-size:.95rem;
     color:var(--ds-color, var(--primary));
     transition:.2s;
     flex-shrink:0;
+    line-height:1;
 }
 .ds-sub-btn span{
-    overflow:hidden;
-    text-overflow:ellipsis;
-    max-width:180px;
+    flex:1 1 auto;
+    min-width:0;
+    display:inline-block;
+    line-height:1.5;
+    padding:.06em 0 .1em;
+    text-rendering:optimizeLegibility;
+    overflow-wrap:break-word;
+    word-break:normal;
+    white-space:nowrap;
 }
 .ds-sub-btn:hover{
     border-color:var(--ds-color, var(--primary));
@@ -289,21 +304,23 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 @media(max-width:500px){
     .ds-sub-btn{
-        padding:.42rem .75rem;
-        font-size:.72rem;
+        padding:.55rem .85rem .58rem;
+        font-size:.74rem;
+        line-height:1.5;
     }
-    .ds-sub-btn i:first-child{ font-size:.82rem; }
-    .ds-sub-btn span{ max-width:140px; }
+    .ds-sub-btn i:first-child{ font-size:.85rem; }
+    .ds-sub-btn span{
+        line-height:1.5;
+        padding:.05em 0 .08em;
+    }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   🔒 KHOÁ CHUYÊN NGÀNH — Demo/Trial chưa gia hạn
-   ═══════════════════════════════════════════════════════════════ */
+/* KHOA CHUYEN NGANH - Demo/Trial chua gia han */
 .ds-sub-btn.locked {
     opacity: 0.6;
     cursor: not-allowed;
     filter: grayscale(0.4);
-    padding-right: 1.7rem;
+    padding-right: 1.9rem;
 }
 .ds-sub-btn.locked:hover {
     transform: none;
@@ -508,6 +525,45 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     border-color:rgba(22,163,74,.4);
 }
 
+.card-tag.tag-clickable {
+    cursor: pointer;
+    user-select: none;
+    transition: transform .15s cubic-bezier(.34,1.56,.64,1),
+                box-shadow .2s ease,
+                filter .2s ease;
+    position: relative;
+}
+.card-tag.tag-clickable::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: currentColor;
+    opacity: 0;
+    transition: opacity .15s ease;
+    pointer-events: none;
+}
+.card-tag.tag-clickable:hover {
+    transform: translateY(-1px) scale(1.05);
+    filter: brightness(1.1);
+    box-shadow: 0 4px 10px rgba(0,0,0,.15);
+}
+.card-tag.tag-clickable:hover::after {
+    opacity: 0.08;
+}
+.card-tag.tag-clickable:active {
+    transform: translateY(0) scale(.98);
+}
+[data-theme="dark"] .card-tag.tag-clickable:hover {
+    filter: brightness(1.3);
+}
+@media (hover: none) {
+    .card-tag.tag-clickable:active {
+        transform: scale(.95);
+        box-shadow: 0 2px 6px rgba(0,0,0,.2);
+    }
+}
+
 .card-body{
     margin-bottom:.7rem;
     padding-left:.15rem;
@@ -630,9 +686,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (max-width:768px){.pf-brand-title{font-size:.75rem}.pf-brand-sub{font-size:.55rem;gap:.2rem}.pf-brand-icon{width:28px;height:28px;font-size:.72rem;border-radius:8px}.pf-brand{gap:.4rem}}
 @media (max-width:400px){.pf-brand-title{font-size:.7rem}.pf-brand-sub{font-size:.5rem}.pf-brand-icon{width:24px;height:24px;font-size:.65rem}}
 
-/* ============================================================ */
 /* TIKTOK FLOAT */
-/* ============================================================ */
 .pf-tiktok-float{position:fixed;left:clamp(14px,2vw,22px);bottom:calc(80px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:clamp(.4rem,.6vw,.55rem);padding:clamp(.35rem,.55vw,.5rem) clamp(.7rem,1vw,.9rem) clamp(.35rem,.55vw,.5rem) clamp(.35rem,.55vw,.5rem);border-radius:999px;background:linear-gradient(135deg,#25f4ee 0%,#000 50%,#fe2c55 100%);color:#fff;text-decoration:none;font-family:inherit;min-width:clamp(120px,15vw,180px);max-width:clamp(160px,22vw,240px);box-shadow:0 10px 28px rgba(254,44,85,.4),0 4px 14px rgba(0,0,0,.35);z-index:2400;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s ease;overflow:hidden;cursor:pointer}
 .pf-tiktok-float:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 14px 36px rgba(254,44,85,.6),0 6px 20px rgba(0,0,0,.45),0 0 0 3px rgba(37,244,238,.5)}
 .pf-tiktok-avatar-wrap{position:relative;width:clamp(28px,3vw,36px);height:clamp(28px,3vw,36px);border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,#25f4ee,#fe2c55);display:flex;align-items:center;justify-content:center;padding:2px;box-shadow:0 0 0 2px rgba(255,255,255,.9)}
@@ -664,7 +718,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .pf-chip select{position:absolute;inset:0;opacity:0;cursor:pointer;appearance:none;width:100%;height:100%;z-index:5}
 
 /* ============================================================ */
-/* 📚 KHỐI GỘP: BỘ DỮ LIỆU + TÌM KIẾM + CHỌN CÂU                 */
+/* KHOI GOP: BO DU LIEU + TIM KIEM + CHON CAU                    */
 /* ============================================================ */
 .pf-dataset-row {
     display: flex;
@@ -1009,7 +1063,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 }
 
 /* ============================================================ */
-/* NAV — 3 NÚT TO ĐỀU NHAU + MINI GROUP                         */
+/* NAV - 3 NUT TO DEU NHAU + MINI GROUP                          */
 /* ============================================================ */
 .practice-full-nav{
     display:flex;
@@ -1135,7 +1189,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
     box-shadow:0 6px 16px rgba(6,182,212,.4);
 }
 
-/* ═══ NÚT RANDOM — toggle: khi bật, nút Next sẽ nhảy ngẫu nhiên ═══ */
 .pf-nav-icon.mini-nav.random{
     background:var(--surface);
     color:var(--text-2);
@@ -1289,11 +1342,26 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .practice-full-header .card-tag.hsk{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff}
 .practice-full-header .card-tag.topic{background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff}
 .practice-full-header .card-tag:not(.hsk):not(.topic){background:var(--surface-2);color:var(--text-2);border:1px solid var(--border)}
+
 .chip.has-value{animation:chipPulse 2s ease-in-out infinite}
 .pf-chip.has-value{animation:chipPulse 2s ease-in-out infinite}
-@keyframes chipPulse{0%,100%{box-shadow:0 4px 12px rgba(37,99,235,.3)}50%{box-shadow:0 4px 18px rgba(37,99,235,.5)}}
-.practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(22,163,74,.1));color:#15803d;border:1px solid rgba(22,163,74,.3);font-weight:700;display:inline-flex;align-items:center;gap:.3rem}
-[data-theme="dark"] .practice-full-header .card-tag.excel-tag{background:linear-gradient(135deg,rgba(22,163,74,.25),rgba(22,163,74,.15));color:#4ade80;border-color:rgba(22,163,74,.5)}
+@keyframes chipPulse{
+    0%,100%{box-shadow:0 4px 12px rgba(139,92,235,.3)}
+    50%{box-shadow:0 4px 18px rgba(37,99,235,.5)}
+}
+.practice-full-header .card-tag.excel-tag{
+    background:linear-gradient(135deg,rgba(22,163,74,.15),rgba(22,163,74,.1));
+    color:#15803d;
+    border:1px solid rgba(22,163,74,.3);
+    display:inline-flex;
+    align-items:center;
+    gap:.3rem;
+}
+[data-theme="dark"] .practice-full-header .card-tag.excel-tag{
+    background:linear-gradient(135deg,rgba(22,163,74,.25),rgba(22,163,74,.15));
+    color:#4ade80;
+    border-color:rgba(22,163,74,.5);
+}
 
 @media (min-width:769px){
     .header-inner{
@@ -1310,7 +1378,7 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
         min-width:0!important;
         overflow:hidden;
     }
-    .header-inner .logo .logo-text{
+    .header-inner .logo-text{
         max-width:100%;
     }
     .header-inner .tiktok-bar{
@@ -1323,7 +1391,6 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
         gap:clamp(.35rem,.6vw,.5rem)!important;
         font-size:clamp(.65rem,.8vw,.78rem)!important;
         border-radius:50px!important;
-        overflow:hidden;
         position:relative;
         z-index:3;
         align-self:center;
@@ -1523,9 +1590,799 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 .voice-reset{padding:.55rem;border-radius:10px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-2);font-size:.78rem;font-weight:600;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:.4rem;transition:.15s}
 .voice-reset:hover{background:var(--danger-light);color:var(--danger);border-color:var(--danger)}
 [data-theme="dark"] .voice-slider{background:var(--surface-2)}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* ONBOARDING MODAL - CHỌN CHỦ ĐỀ QUAN TÂM                     */
+/* ĐÃ SỬA: gọn gàng, không tràn màn hình, header/footer cố định */
+/* ═══════════════════════════════════════════════════════════ */
+.onboarding-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 5000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    animation: obFadeIn .3s ease;
+}
+.onboarding-modal.show { display: flex; }
+@keyframes obFadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+.onboarding-box {
+    background: var(--surface);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 560px;
+    max-height: min(85vh, 640px);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.4),
+                0 0 0 1px rgba(139, 92, 246, 0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: obSlideUp .4s cubic-bezier(.34, 1.56, .64, 1);
+    position: relative;
+}
+@keyframes obSlideUp {
+    from { transform: translateY(40px) scale(.95); opacity: 0; }
+    to   { transform: translateY(0) scale(1);      opacity: 1; }
+}
+
+/* Nút X đóng góc trên phải */
+.onboarding-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: var(--surface-2);
+    color: var(--text-2);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .85rem;
+    z-index: 5;
+    transition: .15s;
+    font-family: inherit;
+}
+.onboarding-close:hover {
+    background: var(--danger-light);
+    color: var(--danger);
+    transform: scale(1.08);
+}
+.onboarding-close:active {
+    transform: scale(.95);
+}
+
+.onboarding-header {
+    padding: 1.5rem 1.5rem 1rem;
+    background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.08),
+        rgba(217, 70, 239, 0.08));
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    position: relative;
+    flex-shrink: 0;
+}
+.onboarding-icon {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto .75rem;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #6366f1, #a855f7, #d946ef);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    font-size: 1.6rem;
+    box-shadow: 0 10px 24px rgba(139, 92, 246, 0.45);
+    animation: obIconFloat 3s ease-in-out infinite;
+}
+@keyframes obIconFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-4px) rotate(-3deg); }
+}
+.onboarding-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: var(--text);
+    margin-bottom: .3rem;
+    letter-spacing: -0.02em;
+}
+.onboarding-subtitle {
+    font-size: .84rem;
+    color: var(--text-2);
+    line-height: 1.5;
+    max-width: 440px;
+    margin: 0 auto;
+}
+
+.onboarding-counter {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    margin-top: .75rem;
+    padding: .35rem .85rem;
+    border-radius: 50px;
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    font-size: .78rem;
+    font-weight: 800;
+    color: var(--text-2);
+    transition: all .2s ease;
+}
+.onboarding-counter.ok {
+    background: linear-gradient(135deg, rgba(22,163,74,.12), rgba(34,197,94,.08));
+    border-color: rgba(22,163,74,.4);
+    color: #15803d;
+}
+.onboarding-counter.full {
+    background: linear-gradient(135deg, rgba(245,158,11,.15), rgba(251,191,36,.1));
+    border-color: rgba(245,158,11,.5);
+    color: #92400e;
+}
+[data-theme="dark"] .onboarding-counter.ok { color: #4ade80; }
+[data-theme="dark"] .onboarding-counter.full { color: #fcd34d; }
+
+/* Body: CHỈ phần này scroll */
+.onboarding-body {
+    padding: 1.15rem 1.5rem;
+    overflow-y: auto;
+    flex: 1 1 auto;
+    min-height: 0;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    overscroll-behavior: contain;
+}
+.onboarding-body::-webkit-scrollbar {
+    width: 6px;
+}
+.onboarding-body::-webkit-scrollbar-track {
+    background: transparent;
+}
+.onboarding-body::-webkit-scrollbar-thumb {
+    background: var(--border-strong);
+    border-radius: 3px;
+}
+.onboarding-body::-webkit-scrollbar-thumb:hover {
+    background: var(--text-3);
+}
+
+.onboarding-section-label {
+    font-size: .7rem;
+    font-weight: 800;
+    color: var(--text-3);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    margin-bottom: .6rem;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+.onboarding-section-label i { color: var(--primary); }
+
+.onboarding-topics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+    margin-bottom: .5rem;
+}
+.onboarding-topic {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .5rem .95rem;
+    border-radius: 50px;
+    border: 2px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: .8rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all .2s ease;
+    position: relative;
+    user-select: none;
+    line-height: 1.5;
+}
+.onboarding-topic:hover {
+    border-color: var(--primary);
+    background: var(--primary-light);
+    transform: translateY(-1px);
+}
+.onboarding-topic.selected {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+.onboarding-topic.selected::before {
+    content: '\2713';
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    font-size: .7rem;
+    font-weight: 900;
+    flex-shrink: 0;
+}
+.onboarding-topic .count {
+    font-size: .68rem;
+    font-weight: 700;
+    padding: .1rem .45rem;
+    border-radius: 50px;
+    background: var(--surface-2);
+    color: var(--text-3);
+    margin-left: .15rem;
+}
+.onboarding-topic.selected .count {
+    background: rgba(255, 255, 255, 0.25);
+    color: #fff;
+}
+.onboarding-topic.disabled {
+    opacity: .4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+.onboarding-empty {
+    padding: 1.5rem;
+    text-align: center;
+    color: var(--text-3);
+    font-size: .85rem;
+}
+
+.onboarding-footer {
+    padding: 1rem 1.5rem 1.15rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: .6rem;
+    justify-content: flex-end;
+    align-items: center;
+    background: var(--surface);
+    flex-wrap: wrap;
+    flex-shrink: 0;
+    box-shadow: 0 -4px 12px -8px rgba(15, 23, 42, 0.15);
+}
+[data-theme="dark"] .onboarding-footer {
+    box-shadow: 0 -4px 12px -8px rgba(0, 0, 0, 0.4);
+}
+.onboarding-btn {
+    padding: .75rem 1.4rem;
+    border-radius: 12px;
+    border: 1.5px solid var(--border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: .88rem;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+    transition: all .2s ease;
+}
+.onboarding-btn:hover {
+    background: var(--surface-2);
+    border-color: var(--primary);
+    color: var(--primary);
+}
+.onboarding-btn.primary {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    color: #fff;
+    border-color: transparent;
+    box-shadow: 0 6px 16px rgba(124, 58, 237, 0.35);
+}
+.onboarding-btn.primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 24px rgba(124, 58, 237, 0.5);
+}
+.onboarding-btn.primary:disabled {
+    opacity: .5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+    background: linear-gradient(135deg, #94a3b8, #64748b);
+}
+.onboarding-btn.ghost {
+    background: transparent;
+    border-color: transparent;
+    color: var(--text-3);
+    font-weight: 600;
+    font-size: .82rem;
+    padding: .5rem .8rem;
+}
+.onboarding-btn.ghost:hover {
+    color: var(--text-2);
+    background: var(--surface-2);
+}
+
+/* Icon fallback — đảm bảo icon luôn hiện dù FA chưa load */
+.onboarding-btn.primary i.fa-check::before {
+    content: '\2713';
+    font-family: inherit;
+    font-weight: 900;
+    font-style: normal;
+}
+.onboarding-btn.primary i.fa-rocket::before {
+    content: '\2713';
+    font-family: inherit;
+    font-weight: 900;
+    font-style: normal;
+}
+.onboarding-btn.ghost i.fa-forward::before {
+    content: '\00BB';
+    font-family: inherit;
+    font-weight: 900;
+    font-style: normal;
+}
+
+/* ══════════════════════════════════════════════════════════════ */
+/* BANNER "CHỦ ĐỀ GỢI Ý" - REDESIGN                              */
+/* ══════════════════════════════════════════════════════════════ */
+.onboarding-active-banner {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    padding: .8rem 1rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg,
+        rgba(99,102,241,.08),
+        rgba(139,92,246,.08));
+    border: 1.5px solid rgba(139,92,246,.3);
+    border-radius: 14px;
+    font-size: .85rem;
+    color: var(--text);
+    animation: obBannerIn .35s cubic-bezier(.34,1.56,.64,1);
+    flex-wrap: wrap;
+    position: relative;
+    overflow: visible;
+}
+@keyframes obBannerIn {
+    from { opacity: 0; transform: translateY(-6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.onboarding-active-banner .ob-icon {
+    font-size: 1.1rem;
+    color: #d946ef;
+    flex-shrink: 0;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: linear-gradient(135deg, rgba(217,70,239,.15), rgba(139,92,246,.15));
+    border-radius: 50%;
+    animation: obIconSpin 3s ease-in-out infinite;
+}
+@keyframes obIconSpin {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    50%      { transform: rotate(8deg) scale(1.08); }
+}
+
+.onboarding-active-banner .ob-label {
+    font-weight: 800;
+    font-size: .84rem;
+    color: var(--text);
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.onboarding-active-banner .ob-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .35rem;
+    align-items: center;
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: visible;
+}
+
+.onboarding-active-banner .ob-chip {
+    padding: .3rem .75rem;
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: #fff;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: .76rem;
+    box-shadow: 0 2px 6px rgba(139,92,246,.3);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: .25rem;
+    transition: transform .18s ease, box-shadow .18s ease;
+    cursor: default;
+    line-height: 1.4;
+}
+.onboarding-active-banner .ob-chip:hover {
+    transform: translateY(-1px) scale(1.03);
+    box-shadow: 0 4px 12px rgba(139,92,246,.5);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* CHIP "+N CHỦ ĐỀ KHÁC" - Giới hạn hiển thị khi chọn nhiều    */
+/* ═══════════════════════════════════════════════════════════ */
+.onboarding-active-banner .ob-chip-more {
+    background: linear-gradient(135deg, #94a3b8, #64748b) !important;
+    position: relative;
+    font-style: italic;
+    letter-spacing: .2px;
+    cursor: help;
+}
+.onboarding-active-banner .ob-chip-more:hover {
+    background: linear-gradient(135deg, #64748b, #475569) !important;
+    transform: translateY(-1px) scale(1.05);
+    box-shadow: 0 4px 12px rgba(100, 116, 139, .5);
+}
+
+/* Tooltip cho chip "+N" khi hover */
+.onboarding-active-banner .ob-chip-more::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    background: #0f172a;
+    color: #fff;
+    padding: .5rem .75rem;
+    border-radius: 8px;
+    font-size: .72rem;
+    font-weight: 500;
+    font-style: normal;
+    white-space: normal;
+    width: max-content;
+    max-width: min(320px, 80vw);
+    line-height: 1.4;
+    text-align: left;
+    box-shadow: 0 8px 24px rgba(0,0,0,.25);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .2s, transform .2s, visibility .2s;
+    z-index: 100;
+    pointer-events: none;
+    letter-spacing: 0;
+}
+.onboarding-active-banner .ob-chip-more:hover::after {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+/* Mũi tên nhỏ cho tooltip */
+.onboarding-active-banner .ob-chip-more::before {
+    content: '';
+    position: absolute;
+    bottom: calc(100% + 2px);
+    left: 50%;
+    transform: translateX(-50%) translateY(4px);
+    border: 6px solid transparent;
+    border-top-color: #0f172a;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .2s, transform .2s, visibility .2s;
+    z-index: 101;
+    pointer-events: none;
+}
+.onboarding-active-banner .ob-chip-more:hover::before {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%) translateY(0);
+}
+
+[data-theme="dark"] .onboarding-active-banner .ob-chip-more::after {
+    background: #1e293b;
+    border: 1px solid #334155;
+}
+[data-theme="dark"] .onboarding-active-banner .ob-chip-more::before {
+    border-top-color: #1e293b;
+}
+
+.onboarding-active-banner .ob-count {
+    color: var(--text-3);
+    font-size: .75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.onboarding-active-banner .ob-change-btn {
+    padding: .38rem .85rem;
+    border-radius: 50px;
+    border: 1.5px solid var(--primary);
+    background: var(--surface);
+    color: var(--primary);
+    font-weight: 700;
+    font-size: .76rem;
+    cursor: pointer;
+    font-family: inherit;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    transition: all .18s ease;
+    box-shadow: 0 1px 3px rgba(37,99,235,.15);
+}
+.onboarding-active-banner .ob-change-btn i {
+    font-size: .8rem;
+    transition: transform .35s ease;
+}
+.onboarding-active-banner .ob-change-btn:hover {
+    background: var(--primary);
+    color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(37,99,235,.35);
+}
+.onboarding-active-banner .ob-change-btn:hover i {
+    transform: rotate(180deg);
+}
+.onboarding-active-banner .ob-change-btn:active {
+    transform: translateY(0) scale(.97);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* THỐNG KÊ KHOÁ - DÒNG 2 CỦA BANNER CHỦ ĐỀ                     */
+/* ═══════════════════════════════════════════════════════════ */
+.onboarding-active-banner .ob-stats-bar {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    flex-wrap: wrap;
+    width: 100%;
+    padding-top: .65rem;
+    margin-top: .35rem;
+    border-top: 1px dashed rgba(139,92,246,.35);
+}
+
+.onboarding-active-banner .ob-stat-item {
+    display: inline-flex;
+    align-items: center;
+    gap: .45rem;
+    padding: .4rem .75rem;
+    background: rgba(255,255,255,.6);
+    border: 1.5px solid rgba(245,158,11,.4);
+    border-radius: 50px;
+    font-size: .78rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.35;
+    box-shadow: 0 1px 3px rgba(245,158,11,.1);
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-item {
+    background: rgba(30,41,59,.7);
+    border-color: rgba(245,158,11,.5);
+}
+
+.onboarding-active-banner .ob-stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    color: #b45309;
+    font-size: .75rem;
+    flex-shrink: 0;
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-icon {
+    background: linear-gradient(135deg, rgba(245,158,11,.25), rgba(217,119,6,.2));
+    color: #fcd34d;
+}
+
+.onboarding-active-banner .ob-stat-industry .ob-stat-icon {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+    color: #1d4ed8;
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-industry .ob-stat-icon {
+    background: linear-gradient(135deg, rgba(59,130,246,.25), rgba(37,99,235,.2));
+    color: #93c5fd;
+}
+.onboarding-active-banner .ob-stat-industry {
+    border-color: rgba(59,130,246,.4);
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-industry {
+    border-color: rgba(59,130,246,.5);
+}
+
+.onboarding-active-banner .ob-stat-text {
+    white-space: nowrap;
+    font-weight: 600;
+    color: var(--text-2);
+}
+.onboarding-active-banner .ob-stat-text b {
+    color: #dc2626;
+    font-weight: 900;
+    font-size: 1.1em;
+    margin: 0 .1em;
+}
+[data-theme="dark"] .onboarding-active-banner .ob-stat-text b {
+    color: #fca5a5;
+}
+
+.onboarding-active-banner .ob-cta-btn {
+    margin-left: auto;
+    padding: .5rem 1rem;
+    border-radius: 50px;
+    border: none;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed 50%, #a855f7);
+    color: #fff;
+    font-weight: 800;
+    font-size: .78rem;
+    cursor: pointer;
+    font-family: inherit;
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    white-space: nowrap;
+    box-shadow: 0 4px 14px rgba(124,58,237,.4);
+    transition: transform .15s ease, box-shadow .2s ease;
+    text-transform: uppercase;
+    letter-spacing: .3px;
+    animation: obCtaPulse 2.5s ease-in-out infinite;
+}
+.onboarding-active-banner .ob-cta-btn:hover {
+    transform: translateY(-2px) scale(1.03);
+    box-shadow: 0 8px 22px rgba(124,58,237,.65);
+}
+.onboarding-active-banner .ob-cta-btn:active {
+    transform: translateY(0) scale(.98);
+}
+@keyframes obCtaPulse {
+    0%, 100% { box-shadow: 0 4px 14px rgba(124,58,237,.4); }
+    50%      { box-shadow: 0 4px 20px rgba(124,58,237,.7); }
+}
+
+[data-theme="dark"] .onboarding-active-banner {
+    background: linear-gradient(135deg,
+        rgba(99,102,241,.15),
+        rgba(139,92,246,.15));
+    border-color: rgba(165,180,252,.35);
+}
+[data-theme="dark"] .onboarding-active-banner .ob-icon {
+    background: linear-gradient(135deg, rgba(217,70,239,.25), rgba(139,92,246,.2));
+}
+[data-theme="dark"] .onboarding-active-banner .ob-change-btn {
+    background: var(--surface-2);
+}
+
+@media (max-width: 500px) {
+    .onboarding-active-banner {
+        padding: .7rem .8rem;
+        gap: .5rem;
+    }
+    .onboarding-active-banner .ob-icon {
+        width: 24px;
+        height: 24px;
+        font-size: .95rem;
+    }
+    .onboarding-active-banner .ob-label {
+        font-size: .76rem;
+    }
+    .onboarding-active-banner .ob-chip {
+        font-size: .7rem;
+        padding: .24rem .6rem;
+    }
+    .onboarding-active-banner .ob-chip-more {
+        font-size: .68rem;
+        padding: .22rem .55rem;
+    }
+    .onboarding-active-banner .ob-chip-more::after {
+        font-size: .68rem;
+        max-width: 90vw;
+        padding: .4rem .6rem;
+    }
+    .onboarding-active-banner .ob-count {
+        font-size: .7rem;
+    }
+    .onboarding-active-banner .ob-change-btn {
+        padding: .32rem .7rem;
+        font-size: .72rem;
+    }
+    .onboarding-active-banner .ob-stats-bar {
+        gap: .5rem;
+        padding-top: .55rem;
+    }
+    .onboarding-active-banner .ob-stat-item {
+        font-size: .72rem;
+        padding: .35rem .65rem;
+    }
+    .onboarding-active-banner .ob-stat-icon {
+        width: 20px;
+        height: 20px;
+        font-size: .68rem;
+    }
+    .onboarding-active-banner .ob-cta-btn {
+        margin-left: 0;
+        width: 100%;
+        justify-content: center;
+        padding: .55rem .85rem;
+        font-size: .75rem;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* ONBOARDING MODAL - MOBILE (bottom sheet)                    */
+/* ═══════════════════════════════════════════════════════════ */
+@media (max-width: 500px) {
+    .onboarding-modal {
+        padding: .5rem;
+        align-items: flex-end;
+    }
+    .onboarding-box {
+        max-width: 100%;
+        max-height: 88vh;
+        border-radius: 20px 20px 16px 16px;
+        animation: obSlideUpMobile .35s cubic-bezier(.34, 1.56, .64, 1);
+    }
+    @keyframes obSlideUpMobile {
+        from { transform: translateY(100%); opacity: 0; }
+        to   { transform: translateY(0);    opacity: 1; }
+    }
+    .onboarding-close {
+        top: 10px;
+        right: 10px;
+        width: 28px;
+        height: 28px;
+        font-size: .78rem;
+    }
+    .onboarding-header {
+        padding: 1.1rem 1.1rem .85rem;
+    }
+    .onboarding-icon {
+        width: 48px;
+        height: 48px;
+        font-size: 1.25rem;
+        margin-bottom: .5rem;
+        border-radius: 14px;
+    }
+    .onboarding-title {
+        font-size: 1.05rem;
+    }
+    .onboarding-subtitle {
+        font-size: .76rem;
+    }
+    .onboarding-counter {
+        font-size: .72rem;
+        padding: .3rem .7rem;
+        margin-top: .6rem;
+    }
+    .onboarding-body {
+        padding: .9rem 1.1rem;
+    }
+    .onboarding-topic {
+        padding: .45rem .85rem;
+        font-size: .76rem;
+    }
+    .onboarding-topic .count {
+        font-size: .64rem;
+    }
+    .onboarding-footer {
+        padding: .85rem 1.1rem 1rem;
+        gap: .5rem;
+    }
+    .onboarding-btn {
+        padding: .65rem 1.15rem;
+        font-size: .82rem;
+        border-radius: 11px;
+    }
+    .onboarding-btn.ghost {
+        padding: .45rem .7rem;
+        font-size: .78rem;
+    }
+}
 """
-
-
 def build_ui_html():
     return r"""
 <div class="loading-screen" id="loadingScreen"><i class="fas fa-spinner"></i><div>Đang tải...</div></div>
@@ -1558,7 +2415,7 @@ def build_ui_html():
 </div></header>
 <!-- __TIKTOK_BAR__ -->
 
-<!-- ═══ DATASET SELECTOR ═══ -->
+<!-- DATASET SELECTOR -->
 <div class="dataset-selector" id="datasetSelector">
     <div class="ds-label">
         <i class="fas fa-layer-group"></i>
@@ -1611,11 +2468,11 @@ def build_ui_html():
 </div>
 <main class="main" id="mainContent" style="display:none">
 <div class="container">
-<div class="demo-banner" id="demoBanner" style="display:none">
-<div class="demo-banner-icon"><i class="fas fa-gift"></i></div>
-<div class="demo-banner-text"><div class="title" id="demoBannerTitle">Bạn đang dùng bản Demo</div>
-<div class="desc" id="demoBannerDesc">Xem <b id="demoLimitText">100</b> câu đầu (HSK1-<span id="demoHskMaxText">3</span>). Nghe + Luyện viết giới hạn <b id="demoDailyText">100</b> lượt/ngày (còn lại: <b id="demoRemainingText">50</b> lượt). Đăng nhập để mở khóa toàn bộ!</div></div>
-<button class="demo-banner-btn" id="demoBannerBtn" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> <span id="demoBannerBtnText">Đăng nhập ngay</span></button>
+<div h class="demo-banner"ạn id="demoBanner" style="display:none ng">
+<div class="demo-banner-icon"><i class="fas fa-gheift"></i></div>
+ và<div class="demo-banner-text"><div class="title" id="demoBannerTitle">Đăng nhập miễn phí để mở khóa toàn bộ</div>
+<div class="desc" id="demoBannerDesc">Đăng nhập bằng <b>Gmail</b> để xem <b>toàn bộ kho câu</b>, không giới luyện viết.<br>Nghe + Luyện viết còn lại hôm nay: <b id="demoRemainingText" style="color:#16a34a">100</b> lượt.</div></div>
+<button class="demo-banner-btn" id="demoBannerBtn" onclick="showLoginModal()"><i class="fas fa-sign-in-alt"></i> <span id="demoBannerBtnText">Đăng nhập bằng Gmail</span></button>
 </div>
 <div class="expiry-banner" id="expiryBanner" style="display:none">
     <div class="expiry-banner-icon" id="expiryBannerIcon">
@@ -1657,7 +2514,6 @@ def build_ui_html():
 </div>
 <div class="pf-filters">
 
-<!-- ═══ HSK + CHỦ ĐỀ ═══ -->
 <div class="pf-filter-row">
 <div class="pf-chip" id="pfHskChip"><span class="pf-chip-label">HSK</span><span class="pf-chip-value" id="pfHskValue">Tất cả</span><i class="fas fa-chevron-down pf-chip-arrow"></i>
 <select id="pfHskFilter"><option value="">Tất cả</option><option value="HSK1">HSK1</option><option value="HSK2">HSK2</option><option value="HSK3">HSK3</option><option value="HSK4">HSK4</option><option value="HSK5">HSK5</option><option value="HSK6">HSK6</option></select>
@@ -1667,7 +2523,6 @@ def build_ui_html():
 </div>
 </div>
 
-<!-- ═══ KHỐI GỘP: BỘ DỮ LIỆU + TÌM KIẾM + CHỌN CÂU ═══ -->
 <div class="pf-dataset-row" id="pfDatasetRow">
     <span class="pf-dataset-label"><i class="fas fa-layer-group"></i> Bộ dữ liệu</span>
     <select class="pf-dataset-select" id="pfDatasetSelect"></select>
@@ -1813,9 +2668,48 @@ def build_ui_html():
         </div>
     </div>
 </div>
+
+<!-- ONBOARDING MODAL - CHON CHU DE QUAN TAM -->
+<div class="onboarding-modal" id="onboardingModal">
+    <div class="onboarding-box">
+        <button class="onboarding-close" id="onboardingCloseBtn" type="button" aria-label="Đóng">
+            <i class="fas fa-times"></i>
+        </button>
+        <div class="onboarding-header">
+            <div class="onboarding-icon">
+                <i class="fas fa-compass"></i>
+            </div>
+            <div class="onboarding-title" id="onboardingTitle">Bạn quan tâm chủ đề nào?</div>
+            <div class="onboarding-subtitle" id="onboardingSubtitle">
+                Chọn các chủ đề — chúng tôi sẽ gợi ý câu phù hợp nhất
+            </div>
+            <div class="onboarding-counter" id="onboardingCounter">
+                <i class="fas fa-hand-pointer"></i>
+                <span>Đã chọn <b id="onboardingSelectedCount">0</b> / <b id="onboardingMaxCount">3</b></span>
+            </div>
+        </div>
+        <div class="onboarding-body">
+            <div class="onboarding-section-label">
+                <i class="fas fa-tags"></i>
+                <span>Chủ đề có sẵn trong kho</span>
+            </div>
+            <div class="onboarding-topics" id="onboardingTopics">
+                <div class="onboarding-empty">
+                    <i class="fas fa-spinner fa-pulse"></i> Đang tải...
+                </div>
+            </div>
+        </div>
+        <div class="onboarding-footer">
+            <button class="onboarding-btn ghost" id="onboardingSkipBtn" type="button">
+                <i class="fas fa-forward"></i> Bỏ qua
+            </button>
+            <button class="onboarding-btn primary" id="onboardingStartBtn" type="button" disabled>
+                <i class="fas fa-check"></i> Bắt đầu học
+            </button>
+        </div>
+    </div>
+</div>
 """
-
-
 def build_ui_js():
     return r"""
 var filtered = [];
@@ -1828,25 +2722,21 @@ var currentBtn = null;
 
 var displayState = { vi: true, pinyin: false, practice: false };
 
-/* ============================================================ */
-/* ✅ HELPER: TIER HIỆN TẠI CÓ ĐƯỢC MỞ CHUYÊN NGÀNH KHÔNG?       */
-/* ============================================================ */
+/* HELPER: TIER HIEN TAI CO DUOC MO CHUYEN NGANH KHONG? */
 function canAccessChuyenNganh() {
     return (typeof window.APP_TIER !== 'undefined' && window.APP_TIER === 'active');
 }
 
-/* ============================================================ */
-/* ✅ THÔNG BÁO KHOÁ CHUYÊN NGÀNH (DEMO/TRIAL CHƯA GIA HẠN)      */
-/* ============================================================ */
+/* THONG BAO KHOA CHUYEN NGANH */
 function showChuyenNganhLockMessage() {
     if (typeof currentUser === 'undefined' || !currentUser) {
-        if (confirm('🔒 Bộ dữ liệu Chuyên ngành\n\n' +
+        if (confirm('Bộ dữ liệu Chuyên ngành\n\n' +
                     'Bạn cần ĐĂNG NHẬP và GIA HẠN để mở khoá.\n\n' +
                     'Đăng nhập ngay?')) {
             if (typeof showLoginModal === 'function') showLoginModal();
         }
     } else {
-        if (confirm('🔒 Bộ dữ liệu Chuyên ngành\n\n' +
+        if (confirm('Bộ dữ liệu Chuyên ngành\n\n' +
                     'Chỉ tài khoản ĐÃ GIA HẠN mới mở được.\n\n' +
                     'Gia hạn ngay?')) {
             if (typeof openRenewalModal === 'function') openRenewalModal();
@@ -1856,13 +2746,13 @@ function showChuyenNganhLockMessage() {
 
 function showPracticeFullLockMessage() {
     if (typeof currentUser === 'undefined' || !currentUser) {
-        if (confirm('🔒 Chế độ luyện tập Chuyên ngành\n\n' +
+        if (confirm('Chế độ luyện tập Chuyên ngành\n\n' +
                     'Bạn cần ĐĂNG NHẬP và GIA HẠN để mở khoá.\n\n' +
                     'Đăng nhập ngay?')) {
             if (typeof showLoginModal === 'function') showLoginModal();
         }
     } else {
-        if (confirm('🔒 Chế độ luyện tập Chuyên ngành\n\n' +
+        if (confirm('Chế độ luyện tập Chuyên ngành\n\n' +
                     'Chỉ tài khoản ĐÃ GIA HẠN mới mở được.\n\n' +
                     'Gia hạn ngay?')) {
             if (typeof openRenewalModal === 'function') openRenewalModal();
@@ -1870,7 +2760,9 @@ function showPracticeFullLockMessage() {
     }
 }
 
-/* ============ DATASET SWITCHING (TỰ ĐỘNG) ============ */
+/* ============================================================ */
+/* DATASET SWITCHING                                             */
+/* ============================================================ */
 function initDatasetSelector() {
     if (typeof DATASET_REGISTRY === 'undefined' || !DATASET_REGISTRY) return;
     if (!DATASET_REGISTRY.tonghop) return;
@@ -1896,25 +2788,34 @@ function initDatasetSelector() {
 
     var subGrid = $('dsSubGrid');
     if (subGrid) {
-        var subHtml = '';
+        subGrid.innerHTML = '';
         chuyenNganhKeys.forEach(function(id) {
             var ds = DATASET_REGISTRY[id];
-            var lockIcon = canAccess
-                ? ''
-                : '<i class="fas fa-lock ds-sub-lock"></i>';
-            var lockCls = canAccess ? '' : ' locked';
-            subHtml += '<button class="ds-sub-btn' + lockCls + '" ' +
-                       'data-dataset="' + ds.id + '" ' +
-                       'data-locked="' + (canAccess ? '0' : '1') + '" ' +
-                       'style="--ds-color:' + (ds.color || '#64748b') + '" ' +
-                       'title="' + escapeHtml(ds.name) + ' (' + ds.count + ' câu)' +
-                       (canAccess ? '' : ' — Cần gia hạn để mở khoá') + '">' +
-                       '<i class="fas ' + (ds.icon || 'fa-folder') + '"></i>' +
-                       '<span>' + escapeHtml(ds.name) + '</span>' +
-                       lockIcon +
-                       '</button>';
+
+            var btn = document.createElement('button');
+            btn.className = 'ds-sub-btn' + (canAccess ? '' : ' locked');
+            btn.dataset.dataset = ds.id;
+            btn.dataset.locked = canAccess ? '0' : '1';
+            btn.style.setProperty('--ds-color', ds.color || '#64748b');
+            btn.title = ds.name + ' (' + ds.count + ' câu)' +
+                        (canAccess ? '' : ' - Cần gia hạn để mở khoá');
+
+            var icon = document.createElement('i');
+            icon.className = 'fas ' + (ds.icon || 'fa-folder');
+            btn.appendChild(icon);
+
+            var nameSpan = document.createElement('span');
+            nameSpan.textContent = ds.name.normalize ? ds.name.normalize('NFC') : ds.name;
+            btn.appendChild(nameSpan);
+
+            if (!canAccess) {
+                var lock = document.createElement('i');
+                lock.className = 'fas fa-lock ds-sub-lock';
+                btn.appendChild(lock);
+            }
+
+            subGrid.appendChild(btn);
         });
-        subGrid.innerHTML = subHtml;
     }
 
     if (cnBtn) {
@@ -2017,6 +2918,8 @@ function switchDataset(datasetId) {
         window.__switchRawData(datasetId);
     }
 
+    window.__onboardingOverride = null;
+
     state = { search:'', hsk:'', subject:'' };
     if ($('searchInput')) $('searchInput').value = '';
     if ($('hskFilter')) $('hskFilter').value = '';
@@ -2029,7 +2932,9 @@ function switchDataset(datasetId) {
     if ($('fabGroup')) $('fabGroup').classList.remove('open');
 }
 
-/* ============ VOICE SETTINGS ============ */
+/* ============================================================ */
+/* VOICE SETTINGS                                                */
+/* ============================================================ */
 var voiceState = {
     rate: 1.0,
     pitch: 1.0,
@@ -2091,7 +2996,9 @@ function pickVoice() {
 
 function getChineseVoice() { return pickVoice(); }
 
-/* ============ TIER HELPERS ============ */
+/* ============================================================ */
+/* TIER HELPERS                                                  */
+/* ============================================================ */
 function getTierInfo() {
     if (typeof window.APP_TIER !== 'undefined' && window.APP_LIMITS) {
         return {
@@ -2120,6 +3027,12 @@ function isExpiredTier(){ return getTierInfo().tier === 'expired'; }
 function isLimitedTier(){ var t = getTierInfo().tier; return t === 'demo' || t === 'trial' || t === 'expired'; }
 
 function getLimitedData() {
+    if (window.__onboardingOverride && Array.isArray(window.__onboardingOverride)
+        && window.__onboardingOverride.length > 0
+        && !state.search && !state.hsk && !state.subject) {
+        return window.__onboardingOverride;
+    }
+
     var info = getTierInfo();
     if (info.tier === 'active') return RAW_DATA;
 
@@ -2205,6 +3118,7 @@ function getDemoUsage() {
         return data.count;
     } catch(e) { return 0; }
 }
+
 function incDemoUsage() {
     if (!shouldCountUsage()) return;
     try {
@@ -2215,6 +3129,7 @@ function incDemoUsage() {
         localStorage.setItem('demo_usage', JSON.stringify(data));
     } catch(e) {}
 }
+
 function getDemoRemaining() {
     if (!shouldCountUsage()) return Infinity;
     return Math.max(0, DEMO_DAILY_LIMIT - getDemoUsage());
@@ -2254,18 +3169,23 @@ function showLimitMessage() {
     }
 }
 
+/* ============================================================ */
+/* UTILS                                                         */
+/* ============================================================ */
 function escapeHtml(str) {
     if (str === null || str === undefined) return '';
     return String(str)
         .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
+
 function escapeJs(str) {
     if (str === null || str === undefined) return '';
     return String(str)
         .replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"')
         .replace(/\n/g, '\\n').replace(/\r/g, '');
 }
+
 function formatTimeDiff(ms) {
     var s = Math.floor(ms / 1000);
     if (s < 60) return 'Vừa xong';
@@ -2279,6 +3199,730 @@ function formatTimeDiff(ms) {
     return mo + ' tháng trước';
 }
 
+/* ============================================================ */
+/* TAG CLICKABLE                                                 */
+/* ============================================================ */
+window.searchByTag = function(evt, type, value) {
+    if (evt) {
+        evt.stopPropagation();
+        if (evt.preventDefault) evt.preventDefault();
+    }
+    if (!value) return;
+
+    var searchInput = $('searchInput');
+    if (!searchInput) return;
+
+    var pfModal = $('practiceFullModal');
+    if (pfModal && pfModal.classList.contains('show')) {
+        if (typeof closePracticeFull === 'function') closePracticeFull();
+    }
+
+    if ($('hskFilter')) $('hskFilter').value = '';
+    if ($('subjectFilter')) $('subjectFilter').value = '';
+
+    window.__onboardingOverride = null;
+    var obBanner = $('onboardingActiveBanner');
+    if (obBanner) obBanner.remove();
+
+    searchInput.value = value;
+
+    state.search = value.toLowerCase().trim();
+    state.hsk = '';
+    state.subject = '';
+
+    renderedCount = 0;
+    applyFilter();
+
+    var mainEl = $('mainContent');
+    if (mainEl) {
+        var yOffset = mainEl.getBoundingClientRect().top + window.scrollY - 100;
+        window.scrollTo({ top: yOffset, behavior: 'smooth' });
+    }
+
+    setTimeout(function() {
+        searchInput.focus();
+        try { searchInput.setSelectionRange(0, searchInput.value.length); } catch(e) {}
+    }, 300);
+
+    var clearBtn = $('clearSearchBtn');
+    if (clearBtn) clearBtn.classList.add('show');
+
+    var label = type === 'topic' ? 'chủ điểm' : 'chủ đề';
+    showTagToast('Đang lọc theo ' + label + ': "' + value + '"');
+};
+
+function showTagToast(message) {
+    var old = document.getElementById('tagToast');
+    if (old) old.remove();
+
+    var toast = document.createElement('div');
+    toast.id = 'tagToast';
+    toast.textContent = message;
+    toast.style.cssText = [
+        'position:fixed','top:80px','left:50%',
+        'transform:translateX(-50%) translateY(-20px)',
+        'padding:.7rem 1.2rem',
+        'background:linear-gradient(135deg,#4f46e5,#7c3aed)',
+        'color:#fff','border-radius:50px',
+        'font-size:.85rem','font-weight:700','font-family:inherit',
+        'box-shadow:0 8px 24px rgba(124,58,237,.45)',
+        'z-index:9999','opacity:0',
+        'transition:opacity .25s ease, transform .3s cubic-bezier(.34,1.56,.64,1)',
+        'pointer-events:none','max-width:90vw',
+        'text-overflow:ellipsis','overflow:hidden','white-space:nowrap'
+    ].join(';');
+
+    document.body.appendChild(toast);
+
+    requestAnimationFrame(function() {
+        toast.style.opacity = '1';
+        toast.style.transform = 'translateX(-50%) translateY(0)';
+    });
+
+    setTimeout(function() {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(-50%) translateY(-20px)';
+        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 300);
+    }, 2000);
+}
+
+/* ═══════════════════════════════════════════════════════════ */
+/* ONBOARDING - CHỌN CHỦ ĐỀ QUAN TÂM (DEMO / TRIAL / ACTIVE)     */
+/* ═══════════════════════════════════════════════════════════ */
+var _onboardingSelected = {};
+var _onboardingConfig = null;
+
+/* Lấy config cho cả 3 tier */
+function getOnboardingConfig() {
+    if (typeof ONBOARDING_CONFIG === 'undefined' || !ONBOARDING_CONFIG) return null;
+
+    var info = getTierInfo();
+    var tier = info.tier;
+
+    /* Chỉ 3 tier này mới có onboarding */
+    if (tier !== 'demo' && tier !== 'trial' && tier !== 'active') return null;
+
+    var cfg = ONBOARDING_CONFIG[tier];
+    if (!cfg) return null;
+    if (cfg.enabled === false) return null;
+
+    /* Chuẩn hoá: -1 = không giới hạn */
+    if (typeof cfg.topics_per_user !== 'number') cfg.topics_per_user = -1;
+    if (typeof cfg.max_questions   !== 'number') cfg.max_questions   = -1;
+    if (!Array.isArray(cfg.hsk_allowed) || cfg.hsk_allowed.length === 0) {
+        cfg.hsk_allowed = [1, 2, 3, 4, 5, 6];
+    }
+
+    return cfg;
+}
+
+/* Storage key cho cả 3 tier */
+function getOnboardingStorageKey() {
+    var info = getTierInfo();
+    if (info.tier === 'demo') return 'onboarding_demo';
+    if (info.tier === 'trial' && info.email)  return 'onboarding_trial_' + info.email;
+    if (info.tier === 'active' && info.email) return 'onboarding_active_' + info.email;
+    if (info.tier === 'active') return 'onboarding_active_guest';
+    return null;
+}
+
+function getAvailableTopicsForTier() {
+    var info = getTierInfo();
+    var allowedHsk = getAllowedHskList();
+
+    var subjectMap = {};
+    RAW_DATA.forEach(function(r) {
+        if (info.tier !== 'active' && allowedHsk.indexOf(r.hsk) === -1) return;
+        var s = (r.subject || '').trim();
+        if (!s) return;
+        subjectMap[s] = (subjectMap[s] || 0) + 1;
+    });
+
+    var list = Object.keys(subjectMap).map(function(name) {
+        return { name: name, count: subjectMap[name] };
+    });
+    list.sort(function(a, b) { return b.count - a.count; });
+    return list;
+}
+
+function loadOnboardingSelection() {
+    var key = getOnboardingStorageKey();
+    if (!key) return null;
+    try {
+        var saved = JSON.parse(localStorage.getItem(key) || 'null');
+        if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
+            return saved;
+        }
+    } catch(e) {}
+    return null;
+}
+
+function saveOnboardingSelection(topics, autoPicked) {
+    var key = getOnboardingStorageKey();
+    if (!key) return;
+    try {
+        localStorage.setItem(key, JSON.stringify({
+            topics: topics,
+            auto_picked: !!autoPicked,
+            savedAt: Date.now()
+        }));
+    } catch(e) {}
+}
+
+/* Hiển thị onboarding cho cả 3 tier */
+function maybeShowOnboarding() {
+    var info = getTierInfo();
+
+    /* Chỉ demo / trial / active mới có onboarding */
+    if (info.tier !== 'demo' && info.tier !== 'trial' && info.tier !== 'active') {
+        return;
+    }
+
+    /* Admin thì bỏ qua */
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
+        return;
+    }
+
+    var cfg = getOnboardingConfig();
+    if (!cfg) return;
+
+    var saved = loadOnboardingSelection();
+    if (saved) {
+        window.__onboardingAutoPicked = !!saved.auto_picked;
+        applyOnboardingSelection(saved.topics, false);
+        return;
+    }
+
+    showOnboardingModal();
+}
+
+function showOnboardingModal() {
+    var cfg = getOnboardingConfig();
+    if (!cfg) return;
+
+    _onboardingConfig = cfg;
+
+    var saved = loadOnboardingSelection();
+    if (saved && Array.isArray(saved.topics)) {
+        _onboardingSelected = {};
+        saved.topics.forEach(function(t) { _onboardingSelected[t] = true; });
+    } else {
+        _onboardingSelected = {};
+    }
+
+    var titleEl = $('onboardingTitle');
+    var subtitleEl = $('onboardingSubtitle');
+    if (titleEl) titleEl.textContent = cfg.title || 'Bạn quan tâm chủ đề nào?';
+    if (subtitleEl) subtitleEl.textContent = cfg.subtitle || '';
+
+    /* Cập nhật subtitle theo tier nếu cfg không có */
+    if (!cfg.subtitle) {
+        if (info && info.tier === 'active') {
+            if (subtitleEl) subtitleEl.textContent = 'Chọn bao nhiêu chủ đề cũng được — không giới hạn';
+        }
+    }
+
+    renderOnboardingTopics();
+    updateOnboardingUI();
+
+    var modal = $('onboardingModal');
+    if (modal) modal.classList.add('show');
+}
+
+function renderOnboardingTopics() {
+    var container = $('onboardingTopics');
+    if (!container) return;
+
+    var topics = getAvailableTopicsForTier();
+    if (topics.length === 0) {
+        container.innerHTML = '<div class="onboarding-empty">' +
+            '<i class="fas fa-inbox"></i> Chưa có chủ đề nào trong kho</div>';
+        return;
+    }
+
+    container.innerHTML = '';
+    topics.forEach(function(t) {
+        var btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'onboarding-topic' + (_onboardingSelected[t.name] ? ' selected' : '');
+        btn.dataset.topic = t.name;
+
+        var nameSpan = document.createElement('span');
+        nameSpan.textContent = t.name.normalize ? t.name.normalize('NFC') : t.name;
+        btn.appendChild(nameSpan);
+
+        var countSpan = document.createElement('span');
+        countSpan.className = 'count';
+        countSpan.textContent = t.count;
+        btn.appendChild(countSpan);
+
+        btn.addEventListener('click', function() {
+            onToggleOnboardingTopic(this.dataset.topic);
+        });
+
+        container.appendChild(btn);
+    });
+}
+
+/* Toggle topic — hỗ trợ không giới hạn (max = -1) */
+function onToggleOnboardingTopic(topicName) {
+    if (!_onboardingConfig) return;
+    var max = _onboardingConfig.topics_per_user;
+    var isUnlimited = (max === -1 || max === Infinity);
+
+    if (_onboardingSelected[topicName]) {
+        delete _onboardingSelected[topicName];
+    } else {
+        var currentCount = Object.keys(_onboardingSelected).length;
+        if (!isUnlimited && currentCount >= max) {
+            showTagToast('Chỉ được chọn tối đa ' + max + ' chủ đề');
+            return;
+        }
+        _onboardingSelected[topicName] = true;
+    }
+
+    var btn = null;
+    document.querySelectorAll('.onboarding-topic').forEach(function(b) {
+        if (b.dataset.topic === topicName) btn = b;
+    });
+    if (btn) btn.classList.toggle('selected', !!_onboardingSelected[topicName]);
+    updateOnboardingUI();
+}
+
+/* Update UI counter — hỗ trợ không giới hạn */
+function updateOnboardingUI() {
+    if (!_onboardingConfig) return;
+    var selected = Object.keys(_onboardingSelected).length;
+    var max = _onboardingConfig.topics_per_user;
+    var isUnlimited = (max === -1 || max === Infinity);
+
+    var countEl = $('onboardingSelectedCount');
+    if (countEl) countEl.textContent = selected;
+
+    var counter = $('onboardingCounter');
+    if (counter) {
+        counter.classList.remove('ok', 'full');
+        if (selected > 0) counter.classList.add('ok');
+        if (!isUnlimited && selected >= max) counter.classList.add('full');
+
+        /* Đổi label text nếu không giới hạn */
+        var labelSpan = counter.querySelector('span');
+        if (labelSpan) {
+            if (isUnlimited) {
+                labelSpan.innerHTML = 'Đã chọn <b id="onboardingSelectedCount">'
+                    + selected + '</b> chủ đề (không giới hạn)';
+            } else {
+                labelSpan.innerHTML = 'Đã chọn <b id="onboardingSelectedCount">'
+                    + selected + '</b> / <b id="onboardingMaxCount">'
+                    + max + '</b>';
+            }
+        }
+    }
+
+    var startBtn = $('onboardingStartBtn');
+    if (startBtn) startBtn.disabled = (selected === 0);
+}
+
+function onOnboardingStart() {
+    var topics = Object.keys(_onboardingSelected);
+    if (topics.length === 0) return;
+
+    window.__onboardingAutoPicked = false;
+    saveOnboardingSelection(topics, false);
+
+    var modal = $('onboardingModal');
+    if (modal) modal.classList.remove('show');
+
+    applyOnboardingSelection(topics, true);
+}
+
+/* Nút "Bỏ qua" — hỗ trợ active không giới hạn */
+function onOnboardingSkip() {
+    var modal = $('onboardingModal');
+    if (modal) modal.classList.remove('show');
+
+    var cfg = getOnboardingConfig();
+    if (!cfg) return;
+
+    var allTopics = getAvailableTopicsForTier();
+    if (allTopics.length === 0) return;
+
+    var max = cfg.topics_per_user;
+    var isUnlimited = (max === -1 || max === Infinity);
+
+    var pickedTopics;
+    if (isUnlimited) {
+        /* Không giới hạn → chọn TẤT CẢ */
+        pickedTopics = allTopics.map(function(t) { return t.name; });
+    } else {
+        var pickCount = Math.min(max, allTopics.length);
+        var shuffled = allTopics.slice();
+        for (var i = shuffled.length - 1; i > 0; i--) {
+            var j = Math.floor(Math.random() * (i + 1));
+            var t = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = t;
+        }
+        pickedTopics = shuffled.slice(0, pickCount).map(function(t) { return t.name; });
+    }
+
+    window.__onboardingAutoPicked = true;
+    saveOnboardingSelection(pickedTopics, true);
+    applyOnboardingSelection(pickedTopics, true);
+
+    if (isUnlimited) {
+        showTagToast('Đã chọn tất cả ' + pickedTopics.length + ' chủ đề');
+    } else {
+        showTagToast('Đã gợi ý ' + pickedTopics.length + ' chủ đề phù hợp cho bạn');
+    }
+}
+
+/* Apply selection — hỗ trợ max_questions = -1 (không giới hạn) */
+function applyOnboardingSelection(topics, scrollTop) {
+    var cfg = getOnboardingConfig();
+    if (!cfg) return;
+
+    var maxQ = cfg.max_questions;
+    var isUnlimitedQ = (maxQ === -1 || maxQ === Infinity);
+
+    /* Xác định HSK list */
+    var allowedHsk;
+    if (cfg.hsk_allowed && Array.isArray(cfg.hsk_allowed) && cfg.hsk_allowed.length > 0) {
+        allowedHsk = cfg.hsk_allowed.map(function(n) { return 'HSK' + n; });
+    } else {
+        allowedHsk = getAllowedHskList();
+    }
+
+    /* Filter pool theo topic + HSK */
+    var pool = RAW_DATA.filter(function(r) {
+        if (allowedHsk.indexOf(r.hsk) === -1) return false;
+        var s = (r.subject || '').trim();
+        return topics.indexOf(s) !== -1;
+    });
+
+    pool.sort(function(a, b) {
+        var na = parseInt(a.stt) || 0;
+        var nb = parseInt(b.stt) || 0;
+        return na - nb;
+    });
+
+    var final = [];
+
+    if (isUnlimitedQ) {
+        /* Không giới hạn → lấy TẤT CẢ câu trong pool */
+        final = pool.slice();
+    } else {
+        /* Chia đều theo HSK */
+        var perHsk = Math.ceil(maxQ / allowedHsk.length);
+        var buckets = {};
+        allowedHsk.forEach(function(h) { buckets[h] = []; });
+        pool.forEach(function(r) {
+            if (buckets[r.hsk]) buckets[r.hsk].push(r);
+        });
+
+        for (var i = 0; i < allowedHsk.length; i++) {
+            var h = allowedHsk[i];
+            var take = buckets[h].slice(0, perHsk);
+            final = final.concat(take);
+        }
+
+        /* Bù thêm nếu chưa đủ */
+        if (final.length < maxQ) {
+            var usedIds = {};
+            final.forEach(function(r) { usedIds[r.stt] = true; });
+            for (var p = 0; p < pool.length && final.length < maxQ; p++) {
+                var rp = pool[p];
+                if (!usedIds[rp.stt]) {
+                    final.push(rp);
+                    usedIds[rp.stt] = true;
+                }
+            }
+        }
+
+        /* Cắt nếu vượt */
+        if (final.length > maxQ) final = final.slice(0, maxQ);
+    }
+
+    final.sort(function(a, b) {
+        var na = parseInt(a.stt) || 0;
+        var nb = parseInt(b.stt) || 0;
+        return na - nb;
+    });
+
+    window.__onboardingOverride = final;
+
+    state = { search:'', hsk:'', subject:'' };
+    if ($('searchInput')) $('searchInput').value = '';
+    if ($('hskFilter')) $('hskFilter').value = '';
+    if ($('subjectFilter')) $('subjectFilter').value = '';
+    if ($('clearSearchBtn')) $('clearSearchBtn').classList.remove('show');
+
+    filtered = final;
+    renderedCount = 0;
+    render(true);
+
+    showOnboardingActiveBanner(topics, final.length);
+
+    if (scrollTop) {
+        setTimeout(function() {
+            var mainEl = $('mainContent');
+            if (mainEl) {
+                var yOffset = mainEl.getBoundingClientRect().top + window.scrollY - 100;
+                window.scrollTo({ top: yOffset, behavior: 'smooth' });
+            }
+        }, 200);
+    }
+}
+
+/* Nút "Đổi chủ đề" */
+function onChangeTopicsClick() {
+    var cfg = getOnboardingConfig();
+
+    if (!cfg) {
+        showTagToast('Không thể đổi chủ đề ở chế độ này');
+        return;
+    }
+
+    var key = getOnboardingStorageKey();
+    if (key) {
+        try { localStorage.removeItem(key); } catch(e) {}
+    }
+
+    window.__onboardingOverride = null;
+    window.__onboardingAutoPicked = false;
+
+    _onboardingConfig = cfg;
+    _onboardingSelected = {};
+
+    var modal = $('onboardingModal');
+    if (modal) modal.classList.remove('show');
+
+    var titleEl = $('onboardingTitle');
+    var subtitleEl = $('onboardingSubtitle');
+    if (titleEl) titleEl.textContent = cfg.title || 'Bạn quan tâm chủ đề nào?';
+    if (subtitleEl) subtitleEl.textContent = cfg.subtitle || '';
+
+    renderOnboardingTopics();
+    updateOnboardingUI();
+
+    if (modal) {
+        void modal.offsetWidth;
+        modal.classList.add('show');
+    }
+}
+
+/* Banner "Chủ đề gợi ý" */
+/* Banner "Chủ đề gợi ý" - Giới hạn số chips hiển thị */
+function showOnboardingActiveBanner(topics, count) {
+    var old = $('onboardingActiveBanner');
+    if (old) old.remove();
+
+    var mainContent = $('mainContent');
+    if (!mainContent) return;
+    var container = mainContent.querySelector('.container');
+    if (!container) return;
+
+    var info = getTierInfo();
+    var totalAvailable = RAW_DATA.length;
+
+    var cfg = getOnboardingConfig();
+    var isUnlimitedTier = (info.tier === 'active')
+                       || (cfg && (cfg.max_questions === -1 || cfg.max_questions === Infinity));
+
+    var lockedCount = isUnlimitedTier ? 0 : Math.max(0, totalAvailable - count);
+    var isLimited = (info.tier !== 'active');
+
+    var lockedIndustryCount = 0;
+    if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
+        Object.keys(DATASET_REGISTRY).forEach(function(id) {
+            if (id === 'tonghop') return;
+            if (!canAccessChuyenNganh()) lockedIndustryCount++;
+        });
+    }
+
+    var banner = document.createElement('div');
+    banner.id = 'onboardingActiveBanner';
+    banner.className = 'onboarding-active-banner';
+
+    var isAuto = !!window.__onboardingAutoPicked;
+    var iconHtml = isAuto ? '<i class="fas fa-magic"></i>' : '<i class="fas fa-star"></i>';
+    var labelText = isAuto ? 'Chủ đề gợi ý cho bạn:' : 'Chủ đề của bạn:';
+
+    var iconSpan = document.createElement('span');
+    iconSpan.className = 'ob-icon';
+    iconSpan.innerHTML = iconHtml;
+    banner.appendChild(iconSpan);
+
+    var labelSpan = document.createElement('span');
+    labelSpan.className = 'ob-label';
+    labelSpan.textContent = labelText;
+    banner.appendChild(labelSpan);
+
+    /* ═══════════════════════════════════════════════════════════ */
+    /* FIX: Giới hạn số chips hiển thị — tránh tràn banner          */
+    /* ═══════════════════════════════════════════════════════════ */
+    var MAX_VISIBLE_CHIPS = 5;              /* Số chip tối đa hiển thị */
+    var visibleTopics = topics.slice(0, MAX_VISIBLE_CHIPS);
+    var hiddenCount = Math.max(0, topics.length - MAX_VISIBLE_CHIPS);
+
+    var chipsWrap = document.createElement('span');
+    chipsWrap.className = 'ob-chips';
+
+    visibleTopics.forEach(function(t) {
+        var chip = document.createElement('span');
+        chip.className = 'ob-chip';
+        chip.textContent = t.normalize ? t.normalize('NFC') : t;
+        chipsWrap.appendChild(chip);
+    });
+
+    /* Badge "+N chủ đề khác" — hover/focus để xem tooltip đầy đủ */
+    if (hiddenCount > 0) {
+        var moreChip = document.createElement('span');
+        moreChip.className = 'ob-chip ob-chip-more';
+        moreChip.textContent = '+' + hiddenCount + ' chủ đề khác';
+        moreChip.title = topics.join(' · ');
+        moreChip.setAttribute('data-tooltip', topics.join(' · '));
+        moreChip.style.cursor = 'help';
+        moreChip.style.background = 'linear-gradient(135deg, #94a3b8, #64748b)';
+        chipsWrap.appendChild(moreChip);
+    }
+
+    banner.appendChild(chipsWrap);
+
+    var countSpan = document.createElement('span');
+    countSpan.className = 'ob-count';
+    if (isUnlimitedTier) {
+        countSpan.textContent = '(toàn bộ ' + count + ' câu)';
+    } else {
+        countSpan.textContent = '(' + count + ' câu)';
+    }
+    banner.appendChild(countSpan);
+
+    var changeBtn = document.createElement('button');
+    changeBtn.type = 'button';
+    changeBtn.id = 'onboardingChangeBtn';
+    changeBtn.className = 'ob-change-btn';
+    changeBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Đổi';
+    changeBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        onChangeTopicsClick();
+    });
+    banner.appendChild(changeBtn);
+
+    if (isLimited && (lockedCount > 0 || lockedIndustryCount > 0)) {
+        var statsBar = document.createElement('div');
+        statsBar.className = 'ob-stats-bar';
+
+        if (lockedCount > 0) {
+            var stat1 = document.createElement('div');
+            stat1.className = 'ob-stat-item';
+            stat1.innerHTML =
+                '<span class="ob-stat-icon"><i class="fas fa-lock"></i></span>' +
+                '<span class="ob-stat-text">Còn <b>' + lockedCount + '</b> câu chưa mở khoá</span>';
+            statsBar.appendChild(stat1);
+        }
+
+        if (lockedIndustryCount > 0) {
+            var stat2 = document.createElement('div');
+            stat2.className = 'ob-stat-item ob-stat-industry';
+            stat2.innerHTML =
+                '<span class="ob-stat-icon"><i class="fas fa-industry"></i></span>' +
+                '<span class="ob-stat-text">Còn <b>' + lockedIndustryCount + '</b> chuyên ngành chưa mở</span>';
+            statsBar.appendChild(stat2);
+        }
+
+        var shouldShowCta = false;
+        var ctaLabel = '';
+        var ctaIcon = '';
+        var ctaAction = null;
+
+        if (info.tier === 'demo') {
+            shouldShowCta = false;
+        } else if (info.tier === 'expired') {
+            shouldShowCta = false;
+        } else if (info.tier === 'trial') {
+            var expiryEl = $('expiryBanner');
+            var expiryVisible = false;
+            if (expiryEl) {
+                var displayStyle = window.getComputedStyle(expiryEl).display;
+                expiryVisible = (expiryEl.style.display !== 'none' && displayStyle !== 'none');
+            }
+            if (!expiryVisible) {
+                shouldShowCta = true;
+                ctaLabel = 'Nâng cấp ngay';
+                ctaIcon = 'fas fa-gem';
+                ctaAction = function() {
+                    if (typeof openRenewalModal === 'function') openRenewalModal();
+                };
+            }
+        }
+
+        if ((lockedCount > 0 || lockedIndustryCount > 0) && shouldShowCta) {
+            var ctaBtn = document.createElement('button');
+            ctaBtn.type = 'button';
+            ctaBtn.className = 'ob-cta-btn';
+            ctaBtn.innerHTML = '<i class="' + ctaIcon + '"></i> ' + ctaLabel;
+            ctaBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                if (typeof ctaAction === 'function') ctaAction();
+            });
+            statsBar.appendChild(ctaBtn);
+        }
+
+        banner.appendChild(statsBar);
+    }
+
+    container.insertBefore(banner, container.firstChild);
+}
+
+function initOnboarding() {
+    var startBtn = $('onboardingStartBtn');
+    var skipBtn = $('onboardingSkipBtn');
+    var closeBtn = $('onboardingCloseBtn');
+
+    if (startBtn) startBtn.addEventListener('click', onOnboardingStart);
+    if (skipBtn)  skipBtn.addEventListener('click', onOnboardingSkip);
+
+    /* Nút X đóng = Bỏ qua (auto-pick chủ đề) */
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            onOnboardingSkip();
+        });
+    }
+
+    /* ESC để đóng modal = Bỏ qua */
+    document.addEventListener('keydown', function(e) {
+        if (e.key !== 'Escape') return;
+        var modal = $('onboardingModal');
+        if (modal && modal.classList.contains('show')) {
+            onOnboardingSkip();
+        }
+    });
+
+    /* Click backdrop (ngoài box) để đóng = Bỏ qua */
+    var modal = $('onboardingModal');
+    if (modal) {
+        modal.addEventListener('click', function(e) {
+            if (e.target === modal) {
+                onOnboardingSkip();
+            }
+        });
+    }
+
+    setTimeout(maybeShowOnboarding, 500);
+}
+
+/* Expose ra ngoài */
+window.maybeShowOnboarding = maybeShowOnboarding;
+window.showOnboardingModal = showOnboardingModal;
+window.applyOnboardingSelection = applyOnboardingSelection;
+window.onChangeTopicsClick = onChangeTopicsClick;
+
+/* ============================================================ */
+/* TIKTOK BAR RESPONSIVE                                         */
+/* ============================================================ */
 function moveTikTokBarToHeader() {
     try {
         if (window.innerWidth < 769) return;
@@ -2349,6 +3993,9 @@ function populateTikTokFloat() {
     } catch(e) {}
 }
 
+/* ============================================================ */
+/* INIT APP                                                      */
+/* ============================================================ */
 function initApp() {
     mobileWrapper = $('mobileWrapper');
     $('loadingScreen').classList.add('hidden');
@@ -2370,6 +4017,7 @@ function initApp() {
     initWriter();
     initPracticeFull();
     initVoiceSettings();
+    initOnboarding();
 
     _lastWidthMode = window.innerWidth >= 769 ? 'desktop' : 'mobile';
     if (_lastWidthMode === 'desktop') moveTikTokBarToHeader();
@@ -2389,12 +4037,17 @@ function initApp() {
         $('searchInput').value = '';
         $('hskFilter').value = '';
         $('subjectFilter').value = '';
+        window.__onboardingOverride = null;
+        var obBanner = $('onboardingActiveBanner');
+        if (obBanner) obBanner.remove();
         applyFilter();
     });
     $('clearSearchBtn').addEventListener('click', function() {
         $('searchInput').value = '';
+        state.search = '';
         $('searchInput').focus();
         applyFilter();
+        this.classList.remove('show');
     });
     $('hskFilter').addEventListener('change', function() {
         var val = this.value;
@@ -2439,6 +4092,10 @@ function refreshApp() {
     updateResultCount();
     updateTierBadge();
     updateDemoBanner();
+
+    if (typeof maybeShowOnboarding === 'function') {
+        setTimeout(maybeShowOnboarding, 800);
+    }
 }
 
 function updateTierBadge() {
@@ -2496,20 +4153,23 @@ function updateDemoBanner() {
         banner.style.background = 'linear-gradient(135deg, #fecaca, #fca5a5)';
         banner.style.borderColor = '#dc2626';
     } else {
-        if (titleEl) titleEl.innerHTML = 'Bạn đang dùng bản Demo';
+        if (titleEl) titleEl.innerHTML = 'Đăng nhập miễn phí để mở khóa toàn bộ';
         if (descEl) {
-            descEl.innerHTML = 'Xem <b>' + info.maxQuestions + '</b> câu đầu (HSK1-' +
-                info.maxHSK + ').<br>Nghe + Luyện viết giới hạn <b>' + DEMO_DAILY_LIMIT +
-                '</b> lượt/ngày (còn lại: <b id="demoRemainingText">' + getDemoRemaining() +
-                '</b> lượt).<br>Đăng nhập để mở khóa toàn bộ!';
+            descEl.innerHTML = 'Đăng nhập bằng <b>Gmail</b> để xem <b>toàn bộ kho câu</b>, ' +
+                'không giới hạn nghe và luyện viết.<br>' +
+                'Nghe + Luyện viết còn lại hôm nay: ' +
+                '<b id="demoRemainingText" style="color:#16a34a">' + getDemoRemaining() + '</b> lượt.';
         }
-        if (btnText) btnText.textContent = 'Đăng nhập ngay';
+        if (btnText) btnText.textContent = 'Đăng nhập bằng Gmail';
         if (iconEl) iconEl.innerHTML = '<i class="fas fa-gift"></i>';
         banner.style.background = '';
         banner.style.borderColor = '';
     }
 }
 
+/* ============================================================ */
+/* SCROLL / FAB / THEME / DISPLAY                                */
+/* ============================================================ */
 function initScrollDetection() {
     var sticky = $('stickyTop');
     if (!sticky) return;
@@ -2525,12 +4185,6 @@ function initScrollDetection() {
     update();
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   FAB GROUP — Mặc định MỞ khi vào trang (F5)
-   • Lần đầu vào trang: FAB mở sẵn (HTML đã có class "open")
-   • User đóng trong session: nhớ qua sessionStorage (cùng tab)
-   • F5 / mở tab mới: reset về mặc định (mở)
-   ═══════════════════════════════════════════════════════════════ */
 function initFabGroup() {
     var fabGroup = $('fabGroup');
     var fabMainBtn = $('fabMainBtn');
@@ -2573,6 +4227,7 @@ function initTheme() {
         updateThemeIcon();
     });
 }
+
 function updateThemeIcon() {
     var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
     var icon = $('themeToggle').querySelector('i');
@@ -2652,9 +4307,11 @@ function applyDisplayState() {
         });
     }
 }
+
 function saveDisplayState() {
     try { localStorage.setItem('displayState', JSON.stringify(displayState)); } catch(e) {}
 }
+
 function updateToggleButtons() {
     $('toggleViBtn').classList.toggle('active', displayState.vi);
     $('togglePinyinBtn').classList.toggle('active', displayState.pinyin);
@@ -2669,12 +4326,14 @@ window.toggleFocus = function(stt, element) {
     element.classList.add('focused', 'tapped');
     setTimeout(function() { if (element) element.classList.remove('tapped'); }, 600);
 };
+
 window.clearFocus = function() {
     document.querySelectorAll('.focused').forEach(function(el) {
         el.classList.remove('focused', 'tapped');
     });
     focusedStt = null;
 };
+
 document.addEventListener('click', function(e) {
     if (e.target.closest('.card')) return;
     if (e.target.closest('.practice-input') || e.target.closest('.audio-btn') ||
@@ -2689,10 +4348,16 @@ document.addEventListener('click', function(e) {
         e.target.closest('.tiktok-float-wrap') || e.target.closest('.tiktok-bar') ||
         e.target.closest('.renewal-modal') || e.target.closest('.voice-modal') ||
         e.target.closest('.dataset-selector') ||
+        e.target.closest('.onboarding-modal') ||
+        e.target.closest('.onboarding-active-banner') ||
+        e.target.closest('.tag-clickable') ||
         e.target.closest('.toggle-check-btn')) return;
     clearFocus();
 }, true);
 
+/* ============================================================ */
+/* SPEECH                                                        */
+/* ============================================================ */
 function initSpeech() {
     if ('speechSynthesis' in window) {
         speechSynthesis.getVoices();
@@ -2720,6 +4385,7 @@ window.speakText = function(text, btn, evt) {
     };
     setTimeout(function(){ speechSynthesis.speak(utterance); }, 50);
 };
+
 document.addEventListener('visibilitychange', function() {
     if (document.hidden && 'speechSynthesis' in window) {
         speechSynthesis.cancel();
@@ -2727,7 +4393,6 @@ document.addEventListener('visibilitychange', function() {
     }
 });
 
-/* ============ VOICE SETTINGS UI ============ */
 function populateVoiceSelect() {
     if (!('speechSynthesis' in window)) return;
     var sel = $('voiceSelect');
@@ -2740,12 +4405,19 @@ function populateVoiceSelect() {
         sel.innerHTML = '<option value="">-- Đang tải giọng đọc... --</option>';
         return;
     }
-    var html = '<option value="">-- Tự động (mặc định) --</option>';
+    sel.innerHTML = '';
+    var defaultOpt = document.createElement('option');
+    defaultOpt.value = '';
+    defaultOpt.textContent = '-- Tự động (mặc định) --';
+    sel.appendChild(defaultOpt);
+
     zhVoices.forEach(function(v) {
-        var label = v.name + ' (' + v.lang + ')' + (v.localService ? '' : ' • online');
-        html += '<option value="' + escapeHtml(v.voiceURI) + '">' + escapeHtml(label) + '</option>';
+        var opt = document.createElement('option');
+        opt.value = v.voiceURI;
+        var label = v.name + ' (' + v.lang + ')' + (v.localService ? '' : ' - online');
+        opt.textContent = label;
+        sel.appendChild(opt);
     });
-    sel.innerHTML = html;
     sel.value = voiceState.voiceURI || '';
 }
 
@@ -2885,6 +4557,9 @@ function initVoiceSettings() {
     });
 }
 
+/* ============================================================ */
+/* BUILD FILTERS                                                 */
+/* ============================================================ */
 function buildFilters() {
     var hskSelect = $('hskFilter');
     var subjectSelect = $('subjectFilter');
@@ -2901,7 +4576,7 @@ function buildFilters() {
         allHskList.forEach(function(h) {
             if (allowedHsk.indexOf(h) === -1) {
                 var lockLabel = info.tier === 'trial' ? '(gia hạn)' : '(đăng nhập)';
-                hskHtml += '<option value="' + h + '" disabled>🔒 ' + h + ' ' + lockLabel + '</option>';
+                hskHtml += '<option value="' + h + '" disabled>' + h + ' ' + lockLabel + '</option>';
             }
         });
         hskSelect.innerHTML = hskHtml;
@@ -2921,7 +4596,7 @@ function buildFilters() {
         });
         locked.forEach(function(s) {
             var lockLabel = info.tier === 'trial' ? '(gia hạn)' : '(đăng nhập)';
-            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' + escapeHtml(s) + ' ' + lockLabel + '</option>';
+            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>' + escapeHtml(s) + ' ' + lockLabel + '</option>';
         });
         subjectSelect.innerHTML = subjHtml;
     } else {
@@ -3019,6 +4694,9 @@ function applyFilter() {
     }
 }
 
+/* ============================================================ */
+/* RENDER CARDS                                                  */
+/* ============================================================ */
 function render(reset) {
     if (reset) { renderedCount = 0; focusedStt = null; }
     if (!filtered.length) {
@@ -3057,13 +4735,28 @@ function render(reset) {
                          '</span>';
         }
 
+        var topicTag = '';
+        if (r.topic) {
+            topicTag = '<span class="card-tag topic tag-clickable" ' +
+                       'onclick="searchByTag(event, \'topic\', \'' + escapeJs(r.topic) + '\')" ' +
+                       'title="Lọc theo chủ điểm này">' +
+                       escapeHtml(r.topic) + '</span>';
+        }
+        var subjectTag = '';
+        if (r.subject) {
+            subjectTag = '<span class="card-tag subject tag-clickable" ' +
+                         'onclick="searchByTag(event, \'subject\', \'' + escapeJs(r.subject) + '\')" ' +
+                         'title="Lọc theo chủ đề này">' +
+                         escapeHtml(r.subject) + '</span>';
+        }
+
         mobHtml += '<div class="card" data-hsk="' + (r.hsk || '') + '" onclick="toggleFocus(\'' + sttJs + '\', this)" data-stt="' + sttSafe + '">' +
             '<div class="card-header">' +
                 '<div class="card-stt">' + sttSafe + '</div>' +
                 '<div class="card-meta">' +
                     (r.hsk ? '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>' : '') +
-                    (r.topic ? '<span class="card-tag topic">' + escapeHtml(r.topic) + '</span>' : '') +
-                    (r.subject ? '<span class="card-tag subject">' + escapeHtml(r.subject) + '</span>' : '') +
+                    topicTag +
+                    subjectTag +
                     excelBadge +
                 '</div>' +
                 '<div onclick="event.stopPropagation()" class="action-group">' + audio + writeBtn + fullBtn + '</div>' +
@@ -3130,6 +4823,9 @@ function render(reset) {
     }
 }
 
+/* ============================================================ */
+/* ANSWER CHECKING                                               */
+/* ============================================================ */
 function normalizeAnswer(str) {
     if (!str) return '';
     return String(str)
@@ -3139,6 +4835,7 @@ function normalizeAnswer(str) {
         .toLowerCase()
         .trim();
 }
+
 function removeTones(str) {
     if (!str) return '';
     var map = {
@@ -3148,12 +4845,14 @@ function removeTones(str) {
     };
     return str.replace(/[āáǎàēéěèīíǐìōóǒòūúǔùǖǘǚǜü]/g, function(c) { return map[c] || c; });
 }
+
 function removeFillers(str) {
     if (!str) return '';
     var result = str;
     FILLER_WORDS.forEach(function(w) { result = result.split(w).join(''); });
     return result;
 }
+
 function expandSynonyms(str) {
     var results = [str];
     var keys = Object.keys(SYNONYMS);
@@ -3166,6 +4865,7 @@ function expandSynonyms(str) {
     }
     return results;
 }
+
 function levenshtein(a, b) {
     if (a === b) return 0;
     if (!a.length) return b.length;
@@ -3181,11 +4881,13 @@ function levenshtein(a, b) {
     }
     return matrix[b.length][a.length];
 }
+
 function similarity(a, b) {
     var maxLen = Math.max(a.length, b.length);
     if (maxLen === 0) return 1;
     return 1 - (levenshtein(a, b) / maxLen);
 }
+
 function smartCheck(userAnswer, correctAnswer) {
     var user = normalizeAnswer(userAnswer);
     var correct = normalizeAnswer(correctAnswer);
@@ -3353,7 +5055,8 @@ function updateInlinePreview(input, answer) {
 }
 
 window.fixInlineChar = function(el, evt) {
-    if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
+    evt.stopPropagation();
+    if (evt.preventDefault) evt.preventDefault();
     var wrap = el.closest('.card-practice');
     var input = wrap ? wrap.querySelector('.practice-input') : null;
     if (!input) return;
@@ -3402,9 +5105,9 @@ function showInlineCheckWithAnswer(input) {
     var resultHtml = '';
     if (val) {
         var result = smartCheck(val, answer);
-        if (result.status === 'correct') resultHtml = '<span class="ai-correct">✅ ĐÚNG</span>';
-        else if (result.status === 'partial') resultHtml = '<span class="ai-partial">⚠️ GẦN ĐÚNG</span>';
-        else resultHtml = '<span class="ai-wrong">❌ SAI</span>';
+        if (result.status === 'correct') resultHtml = '<span class="ai-correct">ĐÚNG</span>';
+        else if (result.status === 'partial') resultHtml = '<span class="ai-partial">GẦN ĐÚNG</span>';
+        else resultHtml = '<span class="ai-wrong">SAI</span>';
         if (result.reason) resultHtml += '<span class="ai-reason">' + escapeHtml(result.reason) + '</span>';
     } else {
         resultHtml = '<span class="ai-reason">Chưa gõ gì cả</span>';
@@ -3429,9 +5132,9 @@ window.checkInput = function(input) {
     var resultHtml = '';
     if (val) {
         var result = smartCheck(val, answer);
-        if (result.status === 'correct') resultHtml = '<span class="ai-correct">✅ ĐÚNG</span>';
-        else if (result.status === 'partial') resultHtml = '<span class="ai-partial">⚠️ GẦN ĐÚNG</span>';
-        else resultHtml = '<span class="ai-wrong">❌ SAI</span>';
+        if (result.status === 'correct') resultHtml = '<span class="ai-correct">ĐÚNG</span>';
+        else if (result.status === 'partial') resultHtml = '<span class="ai-partial">GẦN ĐÚNG</span>';
+        else resultHtml = '<span class="ai-wrong">SAI</span>';
         if (result.reason) resultHtml += '<span class="ai-reason">' + escapeHtml(result.reason) + '</span>';
     } else {
         resultHtml = '<span class="ai-reason">Chưa gõ gì cả</span>';
@@ -3461,6 +5164,9 @@ window.toggleInlineCheck = function(btn, evt) {
     }
 };
 
+/* ============================================================ */
+/* PRACTICE FULL MODAL                                           */
+/* ============================================================ */
 var pfCurrentStt = null;
 var pfCurrentAnswer = '';
 var pfCurrentVi = '';
@@ -3486,6 +5192,7 @@ window.openPracticeFull = function(stt, evt) {
     $('practiceFullModal').classList.add('show');
     loadPracticeFull(stt);
 };
+
 window.closePracticeFull = function() {
     if (window._isSpeakingFull) stopSpeakFull();
     if (window._isQuickSpeaking) stopQuickSpeak();
@@ -3523,8 +5230,18 @@ function loadPracticeFull(stt) {
 
     var tagsHtml = '';
     if (r.hsk) tagsHtml += '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>';
-    if (r.topic) tagsHtml += '<span class="card-tag topic">' + escapeHtml(r.topic) + '</span>';
-    if (r.subject) tagsHtml += '<span class="card-tag">' + escapeHtml(r.subject) + '</span>';
+    if (r.topic) {
+        tagsHtml += '<span class="card-tag topic tag-clickable" ' +
+                    'onclick="searchByTag(event, \'topic\', \'' + escapeJs(r.topic) + '\')" ' +
+                    'title="Lọc theo chủ điểm này">' +
+                    escapeHtml(r.topic) + '</span>';
+    }
+    if (r.subject) {
+        tagsHtml += '<span class="card-tag tag-clickable" ' +
+                    'onclick="searchByTag(event, \'subject\', \'' + escapeJs(r.subject) + '\')" ' +
+                    'title="Lọc theo chủ đề này">' +
+                    escapeHtml(r.subject) + '</span>';
+    }
     if (r.excelRow !== undefined && r.excelRow !== null && r.excelRow !== '') {
         tagsHtml += '<span class="card-tag excel-tag" title="Dòng ' + escapeHtml(r.excelRow) + ' trong file Excel">' +
                     '<i class="fas fa-file-excel"></i> Excel: ' + escapeHtml(r.excelRow) +
@@ -3567,7 +5284,6 @@ function loadPracticeFull(stt) {
 
 window.pfNext = function() {
     if (!pfCurrentStt || filtered.length === 0) return;
-
     var idx = -1;
     for (var i = 0; i < filtered.length; i++) {
         if (String(filtered[i].stt) === String(pfCurrentStt)) { idx = i; break; }
@@ -3659,7 +5375,7 @@ function pfBuildFilterOptions() {
         allHskList.forEach(function(h) {
             if (allowedHsk.indexOf(h) === -1) {
                 var lockLabel = info.tier === 'trial' ? '(gia hạn)' : '(đăng nhập)';
-                hskHtml += '<option value="' + h + '" disabled>🔒 ' + h + ' ' + lockLabel + '</option>';
+                hskHtml += '<option value="' + h + '" disabled>' + h + ' ' + lockLabel + '</option>';
             }
         });
         hskSel.innerHTML = hskHtml;
@@ -3676,7 +5392,7 @@ function pfBuildFilterOptions() {
         unlocked.forEach(function(s) { subjHtml += '<option value="' + escapeHtml(s) + '">' + escapeHtml(s) + '</option>'; });
         locked.forEach(function(s) {
             var lockLabel = info.tier === 'trial' ? '(gia hạn)' : '(đăng nhập)';
-            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>🔒 ' + escapeHtml(s) + ' ' + lockLabel + '</option>';
+            subjHtml += '<option value="' + escapeHtml(s) + '" disabled>' + escapeHtml(s) + ' ' + lockLabel + '</option>';
         });
         subjSel.innerHTML = subjHtml;
     } else {
@@ -3851,13 +5567,13 @@ function checkFullAnswer() {
     }
     var result = smartCheck(val, pfCurrentAnswer);
     if (result.status === 'correct') {
-        statusEl.textContent = '✅ ĐÚNG';
+        statusEl.textContent = 'ĐÚNG';
         statusEl.className = 'practice-full-status correct';
     } else if (result.status === 'partial') {
-        statusEl.textContent = '⚠️ ' + (result.reason || 'GẦN ĐÚNG');
+        statusEl.textContent = (result.reason || 'GẦN ĐÚNG');
         statusEl.className = 'practice-full-status partial';
     } else {
-        statusEl.textContent = '❌ SAI';
+        statusEl.textContent = 'SAI';
         statusEl.className = 'practice-full-status wrong';
     }
 }
@@ -3922,7 +5638,7 @@ function revealFullAnswer() {
         var btn = document.createElement('button');
         btn.className = 'answer-phrase-btn';
         btn.textContent = item.text;
-        btn.title = item.pinyin ? (item.text + ' — ' + item.pinyin) : item.text;
+        btn.title = item.pinyin ? (item.text + ' - ' + item.pinyin) : item.text;
         btn.onclick = (function(text, pinyin, el, wrapEl) {
             return function(e) {
                 e.stopPropagation();
@@ -3996,11 +5712,9 @@ function _setSpeakBtnState(speaking) {
 window.stopSpeakFull = function() {
     window._speakToken++;
     window._isSpeakingFull = false;
-
     if ('speechSynthesis' in window) {
         try { speechSynthesis.cancel(); } catch(e) {}
     }
-
     var charsContainer = $('pfAnswerChars');
     if (charsContainer) {
         charsContainer.querySelectorAll('.answer-phrase-btn.reading, .answer-phrase-btn.speaking').forEach(function(b) {
@@ -4014,27 +5728,19 @@ window.stopSpeakFull = function() {
         });
     }
     _activeTooltipWrap = null;
-
     _setSpeakBtnState(false);
 };
 
 window.toggleSpeakFull = function() {
     if (!pfCurrentAnswer) return;
-
-    if (window._isSpeakingFull) {
-        stopSpeakFull();
-        return;
-    }
-
+    if (window._isSpeakingFull) { stopSpeakFull(); return; }
     if (window._isQuickSpeaking) stopQuickSpeak();
-
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) {
         alert('Trình duyệt không hỗ trợ phát âm.');
         return;
     }
     if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
-
     if ('speechSynthesis' in window) {
         try { speechSynthesis.cancel(); } catch(e) {}
     }
@@ -4053,7 +5759,6 @@ function _speakNormal(token) {
     var u = new SpeechSynthesisUtterance(pfCurrentAnswer);
     u.lang = 'zh-CN';
     applyVoiceSettings(u);
-
     var done = false;
     function finish() {
         if (done) return;
@@ -4063,7 +5768,6 @@ function _speakNormal(token) {
     }
     u.onend = finish;
     u.onerror = finish;
-
     setTimeout(function() {
         if (token !== window._speakToken) return;
         try { speechSynthesis.speak(u); } catch(e) { finish(); }
@@ -4074,15 +5778,9 @@ function _speakWithHighlightKaraoke(token) {
     var phrases = window._pfPhrases || [];
     var charsContainer = $('pfAnswerChars');
     if (!charsContainer) { _setSpeakBtnState(false); return; }
-
     var wraps = charsContainer.querySelectorAll('.answer-phrase-wrap');
     var buttons = charsContainer.querySelectorAll('.answer-phrase-btn');
-
-    if (phrases.length === 0) {
-        _speakNormal(token);
-        return;
-    }
-
+    if (phrases.length === 0) { _speakNormal(token); return; }
     var idx = 0;
 
     function cleanupAll() {
@@ -4097,16 +5795,12 @@ function _speakWithHighlightKaraoke(token) {
     }
 
     function speakNext() {
-        if (token !== window._speakToken) {
-            cleanupAll();
-            return;
-        }
+        if (token !== window._speakToken) { cleanupAll(); return; }
         if (idx >= phrases.length) {
             cleanupAll();
             _setSpeakBtnState(false);
             return;
         }
-
         var phrase = phrases[idx];
         var btn = buttons[idx];
         var wrap = wraps[idx];
@@ -4134,16 +5828,12 @@ function _speakWithHighlightKaraoke(token) {
             handled = true;
             if (btn) btn.classList.remove('reading');
             if (wrap) wrap.classList.remove('active-wrap');
-            if (token !== window._speakToken) {
-                cleanupAll();
-                return;
-            }
+            if (token !== window._speakToken) { cleanupAll(); return; }
             idx++;
             setTimeout(speakNext, 120);
         }
         u.onend = next;
         u.onerror = next;
-
         setTimeout(function() {
             if (token !== window._speakToken) { next(); return; }
             try { speechSynthesis.speak(u); } catch(e) { next(); }
@@ -4178,37 +5868,27 @@ function _setQuickSpeakBtnState(speaking) {
 window.stopQuickSpeak = function() {
     window._quickSpeakToken++;
     window._isQuickSpeaking = false;
-
     if ('speechSynthesis' in window) {
         try { speechSynthesis.cancel(); } catch(e) {}
     }
-
     _setQuickSpeakBtnState(false);
 };
 
 window.toggleQuickSpeakFull = function() {
     if (!pfCurrentAnswer) return;
-
-    if (window._isQuickSpeaking) {
-        stopQuickSpeak();
-        return;
-    }
-
+    if (window._isQuickSpeaking) { stopQuickSpeak(); return; }
     if (window._isSpeakingFull) stopSpeakFull();
-
     if (!canUseFeature()) { showLimitMessage(); return; }
     if (!('speechSynthesis' in window)) {
         alert('Trình duyệt không hỗ trợ phát âm.');
         return;
     }
     if (shouldCountUsage()) { incDemoUsage(); updateDemoRemaining(); }
-
     if ('speechSynthesis' in window) {
         try { speechSynthesis.cancel(); } catch(e) {}
     }
     var token = ++window._quickSpeakToken;
     _setQuickSpeakBtnState(true);
-
     _quickSpeakNormal(token);
 };
 
@@ -4216,7 +5896,6 @@ function _quickSpeakNormal(token) {
     var u = new SpeechSynthesisUtterance(pfCurrentAnswer);
     u.lang = 'zh-CN';
     applyVoiceSettings(u);
-
     var done = false;
     function finish() {
         if (done) return;
@@ -4226,7 +5905,6 @@ function _quickSpeakNormal(token) {
     }
     u.onend = finish;
     u.onerror = finish;
-
     setTimeout(function() {
         if (token !== window._quickSpeakToken) return;
         try { speechSynthesis.speak(u); } catch(e) { finish(); }
@@ -4299,6 +5977,7 @@ function initPracticeFull() {
         }
         pfApplyFilter();
     });
+
     document.addEventListener('keydown', function(e) {
         if (!$('practiceFullModal').classList.contains('show')) return;
         var active = document.activeElement;
@@ -4309,6 +5988,7 @@ function initPracticeFull() {
         if (e.key === 'ArrowLeft' && e.ctrlKey) pfPrev();
         if (e.key === 'r' || e.key === 'R') pfToggleRandom();
     });
+
     var modal = $('practiceFullModal');
     var touchStartX = 0;
     modal.addEventListener('touchstart', function(e) {
@@ -4346,47 +6026,44 @@ function initPracticeFull() {
     }
 }
 
-/* ============================================================ */
-/* 📚 DATASET SELECTOR trong Practice Full                       */
-/* ============================================================ */
-
+/* DATASET SELECTOR trong Practice Full */
 function pfBuildDatasetSelect() {
     var sel = $('pfDatasetSelect');
     var row = $('pfDatasetRow');
     if (!sel || typeof DATASET_REGISTRY === 'undefined') return;
 
     var canAccessAll = canAccessChuyenNganh();
+    var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
 
-    var html = '';
-    var keys = Object.keys(DATASET_REGISTRY);
-    keys.forEach(function(id) {
+    sel.innerHTML = '';
+
+    Object.keys(DATASET_REGISTRY).forEach(function(id) {
         var ds = DATASET_REGISTRY[id];
         var isTonghop = (id === 'tonghop');
         var isLocked = !isTonghop && !canAccessAll;
 
-        var label;
-        if (isTonghop) {
-            label = '📚 ' + (ds.count || 0) + ' câu — Tổng hợp VPCX';
-        } else {
-            label = (isLocked ? '🔒 ' : '🏭 ') + ds.name +
-                    ' (' + (ds.count || 0) + ' câu)';
+        var opt = document.createElement('option');
+        opt.value = id;
+        if (isLocked) {
+            opt.dataset.locked = '1';
+            opt.className = 'locked-opt';
         }
 
-        html += '<option value="' + id + '"' +
-                (isLocked ? ' data-locked="1" class="locked-opt"' : '') + '>' +
-                escapeHtml(label) + '</option>';
+        var dsName = ds.name && ds.name.normalize ? ds.name.normalize('NFC') : ds.name;
+        if (isTonghop) {
+            opt.textContent = (ds.count || 0) + ' câu - Tổng hợp VPCX';
+        } else {
+            opt.textContent = (isLocked ? '[Khoá] ' : '') +
+                              dsName + ' (' + (ds.count || 0) + ' câu)';
+        }
+
+        sel.appendChild(opt);
     });
-    sel.innerHTML = html;
 
-    var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
-    sel.value = current;
-
-    if (current !== 'tonghop' && !canAccessAll) {
-        sel.value = 'tonghop';
-    }
+    sel.value = (current !== 'tonghop' && !canAccessAll) ? 'tonghop' : current;
 
     if (row) {
-        var hasLock = !canAccessAll && keys.length > 1;
+        var hasLock = !canAccessAll && Object.keys(DATASET_REGISTRY).length > 1;
         row.classList.toggle('has-locked-options', hasLock);
     }
 }
@@ -4419,6 +6096,10 @@ document.addEventListener('change', function(e) {
         return;
     }
 
+    window.__onboardingOverride = null;
+    var obBanner = $('onboardingActiveBanner');
+    if (obBanner) obBanner.remove();
+
     state = { search:'', hsk:'', subject:'' };
     if ($('pfSearchInput')) $('pfSearchInput').value = '';
     if ($('pfHskFilter')) $('pfHskFilter').value = '';
@@ -4444,6 +6125,9 @@ document.addEventListener('change', function(e) {
     pfBuildDatasetSelect();
 });
 
+/* ============================================================ */
+/* WRITER (Luyện viết chữ Hán)                                   */
+/* ============================================================ */
 var writerInstance = null;
 var currentWriteZh = '';
 var currentWriteVi = '';
@@ -4469,7 +6153,7 @@ function initWriter() {
             },
             onComplete: function(summary) {
                 if (summary.totalMistakes === 0) {
-                    $('writerScore').textContent = '🎉 Tuyệt vời! Viết đúng tất cả các nét!';
+                    $('writerScore').textContent = 'Tuyệt vời! Viết đúng tất cả các nét!';
                     $('writerScore').className = 'writer-score success';
                 } else {
                     $('writerScore').textContent = 'Hoàn thành! Số nét sai: ' + summary.totalMistakes;
