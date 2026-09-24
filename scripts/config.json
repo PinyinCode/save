@@ -1,6 +1,6 @@
 {
     "excel_file": "data/input.xlsx",
-    "data_dir": "data",
+    "data_dir": "scripts/data",
     "output_html": "index.html",
     "sheet_index": 0,
 
