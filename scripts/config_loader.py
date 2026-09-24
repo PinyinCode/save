@@ -102,33 +102,74 @@ def load_config():
     cfg.setdefault("telegram_bot_token", "")
     cfg.setdefault("telegram_chat_id", "")
 
+    # ═══════════════════════════════════════════════════
+    # Onboarding — chọn chủ đề quan tâm (Demo + Trial)
+    # ═══════════════════════════════════════════════════
+    cfg.setdefault("onboarding", {
+        "demo": {
+            "enabled": True,
+            "max_questions": cfg.get("demo_limit", 25),
+            "hsk_allowed": list(range(1, cfg.get("demo_hsk_max", 3) + 1)),
+            "topics_per_user": 3,
+            "title": "Bạn quan tâm chủ đề nào?",
+            "subtitle": "Chọn tối đa 3 chủ đề — chúng tôi sẽ gợi ý câu phù hợp nhất"
+        },
+        "trial": {
+            "enabled": True,
+            "max_questions": cfg.get("trial_max_questions", 50),
+            "hsk_allowed": list(range(1, cfg.get("trial_max_hsk", 5) + 1)),
+            "topics_per_user": 5,
+            "title": "Bạn quan tâm chủ đề nào?",
+            "subtitle": "Chọn tối đa 5 chủ đề — chúng tôi sẽ gợi ý câu phù hợp nhất"
+        }
+    })
+
     return cfg
 
 
 def print_banner(CONFIG):
     """In thông tin config khi build. Dùng .get() để tránh KeyError."""
-    print(f"⚙️  Đã đọc cấu hình từ: {CONFIG_FILE}")
-    print(f"   📄 Excel: {CONFIG.get('excel_file', 'N/A')}")
-    print(f"   📤 Output: {CONFIG.get('output_html', 'N/A')}")
-    print(f"   📞 Zalo: {CONFIG.get('zalo_phone', 'N/A')} ({CONFIG.get('zalo_name', '')})")
-    print(f"   🎵 TikTok: @{CONFIG.get('tiktok_username', 'N/A')} ({CONFIG.get('tiktok_nickname', '')})")
-    print(f"   🖼️  TikTok Avatar: {'Có' if CONFIG.get('tiktok_avatar') else 'Không (dùng fallback)'}")
-    print(f"   🎁 Demo: {CONFIG.get('demo_limit', 25)} câu + HSK1-{CONFIG.get('demo_hsk_max', 3)} "
-          f"+ {CONFIG.get('demo_daily_limit', 50)} lượt/ngày")
-    print(f"   👑 Super admin: {CONFIG.get('super_admin', 'N/A')}")
-    print(f"   🎉 Trial {CONFIG.get('trial_days', 3)} ngày cho user mới đăng ký")
-    print(f"   📚 Trial limits: {CONFIG.get('trial_max_questions', 50)} câu, "
+    print(f"[CFG] Da doc cau hinh tu: {CONFIG_FILE}")
+    print(f"   Excel: {CONFIG.get('excel_file', 'N/A')}")
+    print(f"   Output: {CONFIG.get('output_html', 'N/A')}")
+    print(f"   Zalo: {CONFIG.get('zalo_phone', 'N/A')} ({CONFIG.get('zalo_name', '')})")
+    print(f"   TikTok: @{CONFIG.get('tiktok_username', 'N/A')} ({CONFIG.get('tiktok_nickname', '')})")
+    print(f"   TikTok Avatar: {'Co' if CONFIG.get('tiktok_avatar') else 'Khong (dung fallback)'}")
+    print(f"   Demo: {CONFIG.get('demo_limit', 25)} cau + HSK1-{CONFIG.get('demo_hsk_max', 3)} "
+          f"+ {CONFIG.get('demo_daily_limit', 50)} luot/ngay")
+    print(f"   Super admin: {CONFIG.get('super_admin', 'N/A')}")
+    print(f"   Trial {CONFIG.get('trial_days', 3)} ngay cho user moi dang ky")
+    print(f"   Trial limits: {CONFIG.get('trial_max_questions', 50)} cau, "
           f"HSK1-{CONFIG.get('trial_max_hsk', 5)}, "
-          f"nghe viết {'KHÔNG' if CONFIG.get('trial_unlimited_writing', True) else 'CÓ'} giới hạn")
+          f"nghe viet {'KHONG' if CONFIG.get('trial_unlimited_writing', True) else 'CO'} gioi han")
+
+    # Onboarding
+    onb = CONFIG.get('onboarding', {})
+    demo_cfg = onb.get('demo', {})
+    if demo_cfg.get('enabled'):
+        print(f"   Onboarding Demo: {demo_cfg.get('max_questions', 0)} cau, "
+              f"HSK {demo_cfg.get('hsk_allowed', [])}, "
+              f"toi da {demo_cfg.get('topics_per_user', 3)} chu de")
+    else:
+        print(f"   Onboarding Demo: TAT")
+
+    trial_cfg = onb.get('trial', {})
+    if trial_cfg.get('enabled'):
+        print(f"   Onboarding Trial: {trial_cfg.get('max_questions', 0)} cau, "
+              f"HSK {trial_cfg.get('hsk_allowed', [])}, "
+              f"toi da {trial_cfg.get('topics_per_user', 5)} chu de")
+    else:
+        print(f"   Onboarding Trial: TAT")
+
     bank = CONFIG.get('bank_config', {})
-    print(f"   🏦 Bank: {bank.get('bank_name', 'N/A')} - {bank.get('account_no', 'N/A')}")
+    print(f"   Bank: {bank.get('bank_name', 'N/A')} - {bank.get('account_no', 'N/A')}")
     packages = CONFIG.get('packages', [])
-    print(f"   💰 Packages: {len(packages)} gói")
+    print(f"   Packages: {len(packages)} goi")
     permanent_count = sum(1 for p in packages if p.get("permanent"))
     if permanent_count:
-        print(f"   💎 Có {permanent_count} gói VĨNH VIỄN")
+        print(f"   Co {permanent_count} goi VINH VIEN")
     # Telegram
     if CONFIG.get('telegram_bot_token') and CONFIG.get('telegram_chat_id'):
-        print(f"   📲 Telegram: ĐÃ bật (chat_id: {CONFIG['telegram_chat_id']})")
+        print(f"   Telegram: DA bat (chat_id: {CONFIG['telegram_chat_id']})")
     else:
-        print(f"   📲 Telegram: CHƯA cấu hình (thiếu token hoặc chat_id)")
+        print(f"   Telegram: CHUA cau hinh (thieu token hoac chat_id)")
