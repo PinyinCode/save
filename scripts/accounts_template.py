@@ -17,6 +17,8 @@ FIX (2026-09):
   .header-actions / .user-menu / .user-dropdown.
 - Thêm banner cảnh báo gia hạn 3 mức: warning (≤7 ngày) / urgent (≤3 ngày)
   / expired (đã hết hạn) — với icon + text + nút điều hướng đầy đủ.
+- Dropdown user menu MẶC ĐỊNH MỞ khi vào trang, chỉ nhớ trạng thái
+  đóng trong sessionStorage (reset khi F5 / mở tab mới).
 """
 
 import json
@@ -576,7 +578,6 @@ def build_accounts_css():
     overflow:hidden;
     animation:expirySlideDown .35s cubic-bezier(.34,1.56,.64,1);
     box-shadow:0 6px 20px rgba(0,0,0,.08);
-    /* Mặc định: mức warning — vàng */
     background:linear-gradient(135deg,#fef3c7,#fde68a);
     border:1.5px solid #f59e0b;
 }
@@ -589,7 +590,6 @@ def build_accounts_css():
     to{opacity:1;transform:translateY(0);}
 }
 
-/* ═══ Mức 2: Nguy cấp (≤3 ngày) — CAM ĐẬM + PULSE ═══ */
 .expiry-banner.urgent{
     background:linear-gradient(135deg,#fed7aa,#fdba74);
     border-color:#ea580c;
@@ -605,7 +605,6 @@ def build_accounts_css():
     50%{box-shadow:0 6px 28px rgba(234,88,12,.55);}
 }
 
-/* ═══ Mức 3: Đã hết hạn — ĐỎ + PULSE MẠNH ═══ */
 .expiry-banner.expired{
     background:linear-gradient(135deg,#fecaca,#fca5a5);
     border-color:#dc2626;
@@ -621,7 +620,6 @@ def build_accounts_css():
     50%{box-shadow:0 6px 28px rgba(220,38,38,.6);}
 }
 
-/* ═══ Icon ═══ */
 .expiry-banner-icon{
     width:40px;
     height:40px;
@@ -649,7 +647,6 @@ def build_accounts_css():
     animation:expiryIconShake 1.5s ease-in-out infinite;
 }
 
-/* ═══ Text ═══ */
 .expiry-banner-text{
     flex:1 1 200px;
     min-width:0;
@@ -663,7 +660,6 @@ def build_accounts_css():
 }
 .expiry-banner.urgent .expiry-banner-text .title{color:#9a3412;}
 .expiry-banner.expired .expiry-banner-text .title{color:#7f1d1d;}
-
 [data-theme="dark"] .expiry-banner-text .title{color:#fcd34d;}
 [data-theme="dark"] .expiry-banner.urgent .expiry-banner-text .title{color:#fdba74;}
 [data-theme="dark"] .expiry-banner.expired .expiry-banner-text .title{color:#fca5a5;}
@@ -675,7 +671,6 @@ def build_accounts_css():
 }
 .expiry-banner.urgent .expiry-banner-text .desc{color:#7c2d12;}
 .expiry-banner.expired .expiry-banner-text .desc{color:#7f1d1d;}
-
 [data-theme="dark"] .expiry-banner-text .desc{color:#fde68a;}
 [data-theme="dark"] .expiry-banner.urgent .expiry-banner-text .desc{color:#fed7aa;}
 [data-theme="dark"] .expiry-banner.expired .expiry-banner-text .desc{color:#fecaca;}
@@ -687,7 +682,6 @@ def build_accounts_css():
 }
 [data-theme="dark"] .expiry-banner-text b{color:#fef08a;}
 
-/* ═══ Button ═══ */
 .expiry-banner-btn{
     padding:clamp(.5rem,.9vw,.62rem) clamp(.85rem,1.3vw,1.1rem);
     border-radius:50px;
@@ -729,7 +723,6 @@ def build_accounts_css():
     box-shadow:0 6px 20px rgba(220,38,38,.8);
 }
 
-/* ═══ Responsive mobile ═══ */
 @media (max-width:600px){
     .expiry-banner{
         padding:.65rem .75rem;
@@ -909,15 +902,12 @@ def build_accounts_css():
    Giải pháp: overflow:visible + nâng z-index cho các lớp liên quan.
    ═══════════════════════════════════════════════════════════════ */
 @media (min-width:769px){
-    /* Cho phép dropdown tràn ra ngoài header */
     .header-inner{
         overflow:visible !important;
     }
-    /* .sticky-top cũng phải visible để dropdown không bị cắt */
     .sticky-top{
         overflow:visible !important;
     }
-    /* Nâng z-index để dropdown nổi trên mọi thứ trong header */
     .header-actions{
         z-index:500 !important;
     }
@@ -1104,7 +1094,6 @@ def build_accounts_html():
         </div>
         <div class="admin-body">
 
-            <!-- ═══ DÒNG THỐNG KÊ TỔNG USER/ADMIN ═══ -->
             <div class="admin-summary-bar" id="adminSummaryBar">
                 <div class="summary-item">
                     <i class="fas fa-users" style="color:#3b82f6"></i>
@@ -1118,14 +1107,12 @@ def build_accounts_html():
                 </div>
             </div>
 
-            <!-- ═══ Ô TÌM KIẾM ═══ -->
             <div class="admin-search-wrap">
                 <i class="fas fa-search"></i>
                 <input type="text" class="admin-search" id="adminSearchInput" placeholder="Tìm kiếm theo email hoặc tên...">
                 <button class="admin-search-clear" id="adminSearchClear"><i class="fas fa-times"></i></button>
             </div>
 
-            <!-- ═══ BỘ LỌC ═══ -->
             <div class="admin-filter-row" id="adminFilterRow">
                 <button class="admin-filter-btn active" data-filter="all"><i class="fas fa-users"></i> Tất cả <span class="count" id="filterCountAll">0</span></button>
                 <button class="admin-filter-btn" data-filter="user"><i class="fas fa-user"></i> User <span class="count" id="filterCountUser">0</span></button>
@@ -1136,7 +1123,6 @@ def build_accounts_html():
                 <button class="admin-filter-btn" data-filter="permanent"><i class="fas fa-crown"></i> Vĩnh viễn <span class="count" id="filterCountPermanent">0</span></button>
             </div>
 
-            <!-- ═══ 1. YÊU CẦU GIA HẠN ═══ -->
             <div class="admin-section" id="adminRenewalsSection">
                 <div class="admin-section-head">
                     <div class="ash-left">
@@ -1171,7 +1157,6 @@ def build_accounts_html():
                 </div>
             </div>
 
-            <!-- ═══ 2. DANH SÁCH TÀI KHOẢN ═══ -->
             <div class="admin-section" id="adminUsersSection">
                 <div class="admin-section-head">
                     <div class="ash-left">
@@ -1223,7 +1208,6 @@ def build_accounts_html():
                 </div>
             </div>
 
-            <!-- ═══ 3. LỊCH SỬ ĐĂNG NHẬP ═══ -->
             <div class="admin-section" id="adminLogsSection">
                 <div class="admin-section-head">
                     <div class="ash-left">
@@ -1248,7 +1232,6 @@ def build_accounts_html():
                 </div>
             </div>
 
-            <!-- ═══ 4. LỊCH SỬ GIA HẠN (MẶC ĐỊNH ẨN) ═══ -->
             <div class="admin-section collapsed" id="adminRenewalHistorySection">
                 <div class="admin-section-head">
                     <div class="ash-left">
@@ -1282,7 +1265,7 @@ def build_accounts_html():
 
 def build_user_dropdown_html():
     return r"""
-<div class="user-dropdown" id="userDropdown">
+<div class="user-dropdown show" id="userDropdown">
     <div class="user-info">
         <div class="name" id="userName">-</div>
         <div class="email" id="userEmail">-</div>
@@ -1469,17 +1452,13 @@ function publishTierState() {
     _refreshDatasetLockUI();
 }
 
-/* ✅ Refresh lại UI khoá chuyên ngành mỗi khi tier đổi (login/logout/gia hạn) */
 function _refreshDatasetLockUI() {
-    // 1. Refresh selector trang chủ (sub-buttons + nút chính)
     if (typeof initDatasetSelector === 'function') {
         try { initDatasetSelector(); } catch(e) {}
     }
-    // 2. Refresh selector trong Practice Full
     if (typeof pfBuildDatasetSelect === 'function') {
         try { pfBuildDatasetSelect(); } catch(e) {}
     }
-    // 3. Nếu đang ở chuyên ngành mà bị mất quyền → đẩy về tổng hợp
     if (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET !== 'tonghop') {
         var canAccess = (window.APP_TIER === 'active');
         if (!canAccess) {
@@ -1488,7 +1467,6 @@ function _refreshDatasetLockUI() {
                     window.__switchRawData('tonghop');
                 }
                 if (typeof applyFilter === 'function') applyFilter();
-                // Đồng bộ UI nút
                 if (typeof markCurrentDatasetActive === 'function') {
                     markCurrentDatasetActive();
                 }
@@ -1692,25 +1670,19 @@ function renderExpiryBanner() {
     var banner = $('expiryBanner');
     if (!banner) return;
 
-    // ─── 1. Chưa đăng nhập → ẩn ───
     if (!currentUser) {
         banner.style.display = 'none';
         return;
     }
-
-    // ─── 2. Admin / vĩnh viễn → ẩn ───
     if (currentUser.role === 'admin' || currentUser.isPermanent) {
         banner.style.display = 'none';
         return;
     }
-
-    // ─── 3. Không có ngày hết hạn → coi như vĩnh viễn, ẩn ───
     if (!currentUser.expiresAt) {
         banner.style.display = 'none';
         return;
     }
 
-    // ─── 4. Parse ngày hết hạn ───
     var expDate = getExpiryDate(currentUser.expiresAt);
     if (!expDate || isNaN(expDate.getTime())) {
         banner.style.display = 'none';
@@ -1722,17 +1694,14 @@ function renderExpiryBanner() {
     var expDateStr = expDate.toLocaleDateString('vi-VN');
     var tier = currentUser.tier || 'active';
 
-    // ─── 5. Còn > 7 ngày → ẩn ───
     if (daysLeft > 7) {
         banner.style.display = 'none';
         return;
     }
 
-    // ─── 6. Xác định mức ───
     var isExpired = daysLeft <= 0;
     var isUrgent  = !isExpired && daysLeft <= 3;
 
-    // ─── 7. Reset + set class ───
     banner.classList.remove('urgent', 'expired');
     if (isExpired) {
         banner.classList.add('expired');
@@ -1740,7 +1709,6 @@ function renderExpiryBanner() {
         banner.classList.add('urgent');
     }
 
-    // ─── 8. Icon ───
     var iconWrap = $('expiryBannerIcon') || banner.querySelector('.expiry-banner-icon');
     if (iconWrap) {
         if (isExpired) {
@@ -1752,7 +1720,6 @@ function renderExpiryBanner() {
         }
     }
 
-    // ─── 9. Title ───
     var titleEl = $('expiryBannerTitle') || banner.querySelector('.expiry-banner-text .title');
     if (titleEl) {
         if (isExpired) {
@@ -1766,7 +1733,6 @@ function renderExpiryBanner() {
         }
     }
 
-    // ─── 10. Description ───
     var descEl = $('expiryBannerDesc') || banner.querySelector('.expiry-banner-text .desc');
     if (descEl) {
         if (isExpired) {
@@ -1785,7 +1751,6 @@ function renderExpiryBanner() {
         }
     }
 
-    // ─── 11. Nút button ───
     var contactBtn = $('expiryContactBtn') || banner.querySelector('.expiry-banner-btn');
     if (contactBtn) {
         if (isExpired) {
@@ -1801,8 +1766,32 @@ function renderExpiryBanner() {
         };
     }
 
-    // ─── 12. Hiện banner ───
     banner.style.display = 'flex';
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ✅ ĐỒNG BỘ TRẠNG THÁI DROPDOWN USER MENU
+   • sessionStorage bị xoá khi đóng tab
+   • Trong cùng session: giữ nguyên trạng thái user đã chọn
+   • Mặc định MỞ khi vào trang (F5)
+   ═══════════════════════════════════════════════════════════════ */
+function applyUserDropdownState() {
+    var dd = $('userDropdown');
+    if (!dd) return;
+
+    if (isDemo && !currentUser) {
+        dd.classList.remove('show');
+        return;
+    }
+
+    var closedFlag = null;
+    try { closedFlag = sessionStorage.getItem('userDropdownClosed'); } catch(_e) {}
+
+    if (closedFlag === '1') {
+        dd.classList.remove('show');
+    } else {
+        dd.classList.add('show');
+    }
 }
 
 /* ============ USER UI ============ */
@@ -1811,10 +1800,6 @@ function applyUserUI() {
     var headerLoginBtn = $('headerLoginBtn');
     var userMenu = $('userMenu');
 
-    // ═══════════════════════════════════════════════════════════
-    // ⏰ BANNER CẢNH BÁO GIA HẠN
-    // Hiện khi: Sắp hết hạn (≤7 ngày) / Nguy cấp (≤3 ngày) / Đã hết hạn
-    // ═══════════════════════════════════════════════════════════
     renderExpiryBanner();
 
     var renewBtn = $('dropdownRenewBtn');
@@ -1879,6 +1864,9 @@ function applyUserUI() {
             }
         }
         updateUserDetails();
+
+        /* ✅ Đồng bộ trạng thái dropdown user menu */
+        applyUserDropdownState();
     }
 
     var hskChip = $('hskChip');
@@ -2591,6 +2579,7 @@ window.savePermissions = async function() {
 function initAdminPanel() {
     if ($('openAdminBtn')) $('openAdminBtn').addEventListener('click', function() {
         $('userDropdown').classList.remove('show');
+        try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
         openAdminPanel();
     });
     if ($('adminClose')) $('adminClose').addEventListener('click', function() { $('adminModal').classList.remove('show'); });
@@ -2618,7 +2607,6 @@ function initAdminPanel() {
     });
     if ($('confirmAddUser')) $('confirmAddUser').addEventListener('click', doAddUser);
 
-    /* Search */
     if ($('adminSearchInput')) {
         $('adminSearchInput').addEventListener('input', function() {
             adminSearchQuery = this.value;
@@ -2636,20 +2624,15 @@ function initAdminPanel() {
         });
     }
 
-    /* Filter buttons (chỉ data-filter, không data-renewal-tab) */
     document.querySelectorAll('.admin-filter-btn[data-filter]').forEach(function(btn) {
         btn.addEventListener('click', function() {
             setAdminFilter(this.dataset.filter);
         });
     });
 
-    /* Refresh renewals + renewal history */
     if ($('refreshRenewalsBtn')) $('refreshRenewalsBtn').addEventListener('click', function() { loadRenewals(); });
     if ($('refreshRenewalHistoryBtn')) $('refreshRenewalHistoryBtn').addEventListener('click', function() { loadAdminRenewalHistory(); });
 
-    /* ═══════════════════════════════════════════════════════
-       TOGGLE ẨN/HIỆN SECTION THÔNG MINH
-       ═══════════════════════════════════════════════════════ */
     function bindSectionToggle(btnId, sectionId, label) {
         var btn = $(btnId);
         var sec = $(sectionId);
@@ -2678,7 +2661,6 @@ function initAdminPanel() {
     bindSectionToggle('toggleLogsBtn', 'adminLogsSection', 'lịch sử đăng nhập');
     bindSectionToggle('toggleRenewalHistoryBtn', 'adminRenewalHistorySection', 'lịch sử gia hạn');
 
-    /* Permission modal */
     if ($('permissionClose')) $('permissionClose').addEventListener('click', closePermissionModal);
     if ($('permissionCancel')) $('permissionCancel').addEventListener('click', closePermissionModal);
     if ($('permissionSave')) $('permissionSave').addEventListener('click', savePermissions);
@@ -3035,7 +3017,6 @@ function loadLogs() {
     });
 }
 
-/* ═══ HELPER: render 1 row renewal ═══ */
 function buildRenewalRowHtml(d, isPending) {
     var created = d.createdAt ? d.createdAt.toDate() : new Date();
     var timeStr = formatTimeDiff(Date.now() - created.getTime());
@@ -3094,7 +3075,6 @@ function buildRenewalRowHtml(d, isPending) {
     '</div>';
 }
 
-/* ═══ LOAD GỘP: 1 LẦN QUERY LẤY CẢ PENDING + CONFIRMED ═══ */
 function loadRenewals() {
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
         var renewalsSection = $('adminRenewalsSection');
@@ -3141,7 +3121,6 @@ function loadRenewals() {
 
         renderRenewalsList();
 
-        // Chỉ auto-scroll 1 lần duy nhất khi mở panel lần đầu
         if (pendingRenewalsData.length > 0 && section && !window.__hasScrolledToRenewals) {
             window.__hasScrolledToRenewals = true;
             setTimeout(function() {
@@ -3182,7 +3161,6 @@ window.loadRenewals = loadRenewals;
 function loadPendingRenewals() { loadRenewals(); }
 function loadConfirmedRenewals() { loadRenewals(); }
 
-/* ═══ LOAD: LỊCH SỬ GIA HẠN TỔNG HỢP ═══ */
 function loadAdminRenewalHistory() {
     if (!isSuperAdmin() && !hasPermission('canRenew')) {
         var histSection = $('adminRenewalHistorySection');
@@ -3621,24 +3599,45 @@ function initAuthUI() {
     if ($('logoutBtn')) {
         $('logoutBtn').addEventListener('click', function() {
             if (confirm('Đăng xuất?')) {
-                try { if (currentUser && currentUser.email) localStorage.removeItem('user_cache_' + currentUser.email); } catch(e) {}
+                try {
+                    if (currentUser && currentUser.email) {
+                        localStorage.removeItem('user_cache_' + currentUser.email);
+                    }
+                    sessionStorage.removeItem('userDropdownClosed');
+                } catch(e) {}
                 auth.signOut();
             }
         });
     }
+
+    /* ═══════════════════════════════════════════════════════════
+       USER DROPDOWN — Mặc định MỞ khi vào trang (F5)
+       • Lần đầu vào trang: dropdown mở sẵn (HTML có class "show")
+       • User đóng trong session: nhớ trong sessionStorage
+       • F5 / mở tab mới: reset về mặc định (mở)
+       ═══════════════════════════════════════════════════════════ */
     if ($('userAvatar')) {
         $('userAvatar').addEventListener('click', function(e) {
             e.stopPropagation();
-            $('userDropdown').classList.toggle('show');
+            var dd = $('userDropdown');
+            if (!dd) return;
+            var willOpen = !dd.classList.contains('show');
+            dd.classList.toggle('show');
+            try { sessionStorage.setItem('userDropdownClosed', willOpen ? '0' : '1'); } catch(_e) {}
         });
     }
     document.addEventListener('click', function(e) {
         var dd = $('userDropdown');
-        if (dd && !dd.contains(e.target) && $('userAvatar') && !$('userAvatar').contains(e.target)) dd.classList.remove('show');
+        if (dd && !dd.contains(e.target) && $('userAvatar') && !$('userAvatar').contains(e.target)) {
+            dd.classList.remove('show');
+            try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
+        }
     });
+
     if ($('changeNameBtn')) {
         $('changeNameBtn').addEventListener('click', function() {
             $('userDropdown').classList.remove('show');
+            try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
             if (!currentUser) return;
             editingEmail = currentUser.email;
             $('changeNameCurrent').textContent = currentUser.name;
@@ -3667,6 +3666,7 @@ function initAuthUI() {
         $('dropdownForeverBtn').addEventListener('click', function(e) {
             e.preventDefault();
             $('userDropdown').classList.remove('show');
+            try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
             openRenewalModal();
             setTimeout(function() {
                 if (typeof selectPackage === 'function') selectPackage('forever');
@@ -3678,6 +3678,7 @@ function initAuthUI() {
     if ($('renewalHistoryBtn')) {
         $('renewalHistoryBtn').addEventListener('click', function() {
             $('userDropdown').classList.remove('show');
+            try { sessionStorage.setItem('userDropdownClosed', '1'); } catch(_e) {}
             openRenewalHistory();
         });
     }
