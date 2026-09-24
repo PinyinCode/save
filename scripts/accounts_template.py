@@ -11,16 +11,15 @@ UI Admin Panel tối ưu:
 - Animation grid-template-rows mượt
 
 FIX (2026-09):
-- Sửa lỗi dropdown user menu không bấm được trên desktop
-  do .header-inner có overflow:hidden trong @media (min-width:769px).
-- Đổi overflow:hidden → overflow:visible và nâng z-index cho
-  .header-actions / .user-menu / .user-dropdown.
-- Thêm banner cảnh báo gia hạn 3 mức: warning (≤7 ngày) / urgent (≤3 ngày)
-  / expired (đã hết hạn) — với icon + text + nút điều hướng đầy đủ.
+- Sửa lỗi dropdown user menu không bấm được trên desktop.
+- Thêm banner cảnh báo gia hạn 3 mức: warning (≤30 ngày) / urgent (≤7 ngày)
+  / expired (đã hết hạn).
 - Dropdown user menu MẶC ĐỊNH MỞ khi vào trang, chỉ nhớ trạng thái
   đóng trong sessionStorage (reset khi F5 / mở tab mới).
 - FIX login mobile: tự động dùng signInWithRedirect trên mobile
   thay vì signInWithPopup → tránh lỗi auth/cancelled-popup-request.
+- FIX redirect result: KHÔNG hiện lỗi khi user vào trang lần đầu.
+  Chỉ dùng onAuthStateChanged để xử lý user sau redirect.
 """
 
 import json
@@ -214,7 +213,6 @@ def build_accounts_css():
 
 /* ═══════════════════════════════════════════════════════════
    COLLAPSIBLE SECTIONS — UI THÔNG MINH
-   Dùng grid-template-rows để animate mượt (không giật như max-height)
    ═══════════════════════════════════════════════════════════ */
 .admin-section{
     margin-top:1.5rem;
@@ -900,9 +898,6 @@ def build_accounts_css():
 
 /* ═══════════════════════════════════════════════════════════════
    FIX: Dropdown user menu không bấm được trên desktop
-   Nguyên nhân: .header-inner có overflow:hidden trong @media (min-width:769px)
-   → dropdown bị CLIP khi tràn ra ngoài header.
-   Giải pháp: overflow:visible + nâng z-index cho các lớp liên quan.
    ═══════════════════════════════════════════════════════════════ */
 @media (min-width:769px){
     .header-inner{
@@ -1415,14 +1410,11 @@ function hasPermission(permKey) {
     return perms[permKey] === true;
 }
 
-/* ✅ PHÁT HIỆN MÔI TRƯỜNG ĐỂ CHỌN POPUP/REDIRECT */
+/* ✅ PHÁT HIỆN MÔI TRƯỜNG */
 function isMobileOrInAppBrowser() {
     var ua = navigator.userAgent || '';
-    // Mobile: Android, iOS
     var isMobile = /Android|iPhone|iPad|iPod|Mobile/i.test(ua);
-    // In-app browsers: Zalo, Facebook, Instagram, TikTok, Line, WeChat
     var isInApp = /Zalo|FBAN|FBAV|FB_IAB|Instagram|Line\/|MicroMessenger|TikTok/i.test(ua);
-    // Màn hình nhỏ
     var isSmallScreen = window.innerWidth <= 768;
     return isMobile || isInApp || isSmallScreen;
 }
@@ -1496,23 +1488,17 @@ try {
     auth = firebase.auth();
     db = firebase.firestore();
 
-    /* ✅ BẮT KẾT QUẢ REDIRECT (cho mobile/trong-app) */
-    auth.getRedirectResult()
-        .then(function(result) {
-            if (result && result.user) {
-                console.log('✅ Đăng nhập redirect thành công:', result.user.email);
-                // onAuthStateChanged sẽ tự động được trigger, không cần làm gì thêm
-            }
-        })
-        .catch(function(error) {
-            console.error('❌ Redirect error:', error);
-            // Bỏ qua các lỗi không cần thiết
-            if (error && error.code && error.code !== 'auth/no-auth-event' && error.code !== 'auth/popup-closed-by-user') {
-                if (typeof showLoginError === 'function') {
-                    showLoginError('Lỗi đăng nhập: ' + error.message);
-                }
-            }
-        });
+    /* ═══════════════════════════════════════════════════════════
+       ✅ XỬ LÝ REDIRECT RESULT
+       - Gọi TRƯỚC onAuthStateChanged
+       - CHỈ catch để log, KHÔNG hiện lỗi cho user
+       - onAuthStateChanged sẽ tự bắt user sau khi redirect xong
+       ═══════════════════════════════════════════════════════════ */
+    auth.getRedirectResult().catch(function(err) {
+        // Chỉ log — không hiện lỗi cho user vì lỗi này xảy ra
+        // bình thường khi user vào trang lần đầu (không qua redirect)
+        console.log('📌 Redirect check:', err && err.code ? err.code : 'ok');
+    });
 
     auth.onAuthStateChanged(handleAuthChange);
 } catch(e) {
@@ -3552,8 +3538,9 @@ async function doImport() {
 
     var success = 0, failed = 0;
     var BATCH_SIZE = 400;
-    for (var i = 0; i < toImport.length; i += BATCH_SIZE) {
-        var chunk = toImport.slice(i, i + BATCH_SIZE);
+    for (var i = 0; btn i < toImport.length; i +=.dis BATCH_SIZE) {
+       abled var chunk = toImport =.slice(i, i + false;
+ BATCH_SIZE);
         var batch = db.batch();
         chunk.forEach(function(r) {
             var ref = db.collection('allowed_users').doc(r.email);
@@ -3575,8 +3562,7 @@ async function doImport() {
         catch(err) { failed += chunk.length; console.error(err); }
     }
 
-    btn.disabled = false;
-    btn.innerHTML = originalHTML;
+       btn.innerHTML = originalHTML;
     importRows = [];
     try { localStorage.removeItem('admin_users_cache'); } catch(e) {}
     toImport.forEach(function(r) { try { localStorage.removeItem('user_cache_' + r.email); } catch(e) {} });
@@ -3614,8 +3600,7 @@ function initAuthUI() {
     if ($('loginModal')) $('loginModal').addEventListener('click', function(e) { if (e.target === this) hideLoginModal(); });
 
     /* ═══════════════════════════════════════════════════════════
-       ✅ GOOGLE LOGIN — TỰ ĐỘNG PHÁT HIỆN MOBILE ĐỂ DÙNG REDIRECT
-       Tránh lỗi: auth/cancelled-popup-request, popup bị chặn
+       ✅ GOOGLE LOGIN — TỰ ĐỘNG PHÁT HIỆN MOBILE → REDIRECT
        ═══════════════════════════════════════════════════════════ */
     if ($('googleLoginBtn')) {
         $('googleLoginBtn').addEventListener('click', async function() {
@@ -3627,13 +3612,11 @@ function initAuthUI() {
             btn.disabled = true;
             btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang xử lý...';
 
-            // ✅ Mobile / in-app browser → dùng REDIRECT
+            // Mobile / in-app browser → REDIRECT
             if (isMobileOrInAppBrowser()) {
                 try {
-                    console.log('📱 Mobile detected → dùng signInWithRedirect');
+                    console.log('📱 Mobile detected → signInWithRedirect');
                     await auth.signInWithRedirect(provider);
-                    // Không cần làm gì sau đây, trang sẽ chuyển hướng
-                    // Khi quay lại, getRedirectResult() sẽ xử lý
                 } catch(e) {
                     console.error('❌ Redirect error:', e);
                     btn.disabled = false;
@@ -3643,16 +3626,15 @@ function initAuthUI() {
                 return;
             }
 
-            // ✅ Desktop → dùng POPUP (nhanh hơn)
+            // Desktop → POPUP
             try {
-                console.log('💻 Desktop detected → dùng signInWithPopup');
+                console.log('💻 Desktop detected → signInWithPopup');
                 await auth.signInWithPopup(provider);
                 hideLoginModal();
                 btn.disabled = false;
                 btn.innerHTML = originalHTML;
             } catch(e) {
                 console.warn('⚠️ Popup failed:', e.code, e.message);
-                // Fallback: popup bị chặn → chuyển sang redirect
                 if (e.code === 'auth/popup-blocked' ||
                     e.code === 'auth/cancelled-popup-request' ||
                     e.code === 'auth/popup-closed-by-user' ||
@@ -3689,9 +3671,6 @@ function initAuthUI() {
         });
     }
 
-    /* ═══════════════════════════════════════════════════════════
-       USER DROPDOWN — Mặc định MỞ khi vào trang (F5)
-       ═══════════════════════════════════════════════════════════ */
     if ($('userAvatar')) {
         $('userAvatar').addEventListener('click', function(e) {
             e.stopPropagation();
