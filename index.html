@@ -7249,13 +7249,13 @@ function renderExpiryBanner() {
     var expDateStr = expDate.toLocaleDateString('vi-VN');
     var tier = currentUser.tier || 'active';
 
-    if (daysLeft > 7) {
+    if (daysLeft > 30) {
         banner.style.display = 'none';
         return;
     }
 
     var isExpired = daysLeft <= 0;
-    var isUrgent  = !isExpired && daysLeft <= 3;
+    var isUrgent  = !isExpired && daysLeft <= 7;
 
     banner.classList.remove('urgent', 'expired');
     if (isExpired) {
