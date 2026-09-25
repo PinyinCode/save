@@ -3122,6 +3122,19 @@ function switchDataset(datasetId) {
     updateResultCount();
 
     if ($('fabGroup')) $('fabGroup').classList.remove('open');
+
+    // ⬇️ FIX: Khôi phục banner chủ đề sau khi đổi dataset
+    var saved = loadOnboardingSelection();
+    if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
+        var cfg = getOnboardingConfig();
+        if (cfg) {
+            // Chỉ áp dụng lại nếu dataset là tonghop (vì chuyên ngành có kho riêng)
+            if (datasetId === 'tonghop') {
+                window.__onboardingAutoPicked = !!saved.auto_picked;
+                applyOnboardingSelection(saved.topics, false);
+            }
+        }
+    }
 }
 
 /* ============================================================ */
@@ -3641,6 +3654,9 @@ function saveOnboardingSelection(topics, autoPicked) {
     } catch(e) {}
 }
 
+/* ═══════════════════════════════════════════════════════════ */
+/* SỬA: MAYBE SHOW ONBOARDING — LUÔN VẼ BANNER NẾU CÓ SELECTION */
+/* ═══════════════════════════════════════════════════════════ */
 function maybeShowOnboarding() {
     var info = getTierInfo();
 
@@ -3649,17 +3665,24 @@ function maybeShowOnboarding() {
         return;
     }
 
-    if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
-        return;
-    }
+    
 
     var cfg = getOnboardingConfig();
     if (!cfg) return;
 
     var saved = loadOnboardingSelection();
-    if (saved) {
+    if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
         window.__onboardingAutoPicked = !!saved.auto_picked;
-        applyOnboardingSelection(saved.topics, false);
+
+        // Nếu banner đã tồn tại và override đã có → chỉ cần refresh stats
+        var existingBanner = $('onboardingActiveBanner');
+        var override = window.__onboardingOverride;
+
+        if (!existingBanner || !override || override.length === 0) {
+            applyOnboardingSelection(saved.topics, false);
+        } else {
+            showOnboardingActiveBanner(saved.topics, override.length);
+        }
         return;
     }
 
@@ -3692,9 +3715,6 @@ function showOnboardingModal() {
     if (modal) modal.classList.add('show');
 }
 
-/* ═══════════════════════════════════════════════════════════ */
-/* SỬA: RENDER ONBOARDING TOPICS — CÓ ICON KHOÁ + SỐ CÂU KHOÁ  */
-/* ═══════════════════════════════════════════════════════════ */
 function renderOnboardingTopics() {
     var container = $('onboardingTopics');
     if (!container) return;
@@ -3820,6 +3840,9 @@ function onOnboardingStart() {
     applyOnboardingSelection(topics, true);
 }
 
+/* ═══════════════════════════════════════════════════════════ */
+/* SỬA: ON ONBOARDING SKIP — GIỮ SELECTION CŨ NẾU CÓ            */
+/* ═══════════════════════════════════════════════════════════ */
 function onOnboardingSkip() {
     var modal = $('onboardingModal');
     if (modal) modal.classList.remove('show');
@@ -3827,15 +3850,48 @@ function onOnboardingSkip() {
     var cfg = getOnboardingConfig();
     if (!cfg) return;
 
+    var selectedCount = Object.keys(_onboardingSelected).length;
+
+    // ═══════════════════════════════════════════════════════════
+    // ĐÃ CHỌN → xóa hết, không chọn gì
+    // CHƯA CHỌN → auto chọn (random cho demo/expired/trial, tất cả cho active/admin)
+    // ═══════════════════════════════════════════════════════════
+    if (selectedCount > 0) {
+        // Đã chọn → xóa hết
+        _onboardingSelected = {};
+        window.__onboardingOverride = null;
+        window.__onboardingAutoPicked = false;
+
+        // Xóa selection đã lưu
+        var key = getOnboardingStorageKey();
+        if (key) {
+            try { localStorage.removeItem(key); } catch(e) {}
+        }
+
+        // Xóa banner đang hiện (nếu có)
+        var banner = $('onboardingActiveBanner');
+        if (banner) banner.remove();
+
+        // Reload data đầy đủ
+        state = { search:'', hsk:'', subject:'' };
+        if ($('searchInput')) $('searchInput').value = '';
+        if ($('hskFilter')) $('hskFilter').value = '';
+        if ($('subjectFilter')) $('subjectFilter').value = '';
+        if ($('clearSearchBtn')) $('clearSearchBtn').classList.remove('show');
+
+        filtered = getLimitedData();
+        renderedCount = 0;
+        render(true);
+
+        showTagToast('Đã bỏ chọn tất cả chủ đề');
+        return;
+    }
+
+    // Chưa chọn gì → auto chọn như cũ
     var allTopics = getAvailableTopicsForTier();
     if (allTopics.length === 0) return;
 
     var info = getTierInfo();
-
-    // ═══════════════════════════════════════════════════════════
-    // DEMO / EXPIRED / TRIAL → chọn GIỚI HẠN (random)
-    // ACTIVE (đã gia hạn) / ADMIN → chọn TẤT CẢ
-    // ═══════════════════════════════════════════════════════════
     var isLimitedTier = (info.tier === 'demo'
                       || info.tier === 'expired'
                       || info.tier === 'trial');
@@ -3844,11 +3900,10 @@ function onOnboardingSkip() {
     var isUnlimited;
 
     if (isLimitedTier) {
-        // Số chủ đề tối đa: ưu tiên cfg.topics_per_user, fallback 3
         var max = (cfg.topics_per_user > 0) ? cfg.topics_per_user : 3;
         var pickCount = Math.min(max, allTopics.length);
 
-        // Random chọn N chủ đề từ danh sách
+        // Random chọn N chủ đề
         var shuffled = allTopics.slice();
         for (var i = shuffled.length - 1; i > 0; i--) {
             var j = Math.floor(Math.random() * (i + 1));
@@ -3857,7 +3912,6 @@ function onOnboardingSkip() {
         pickedTopics = shuffled.slice(0, pickCount).map(function(t) { return t.name; });
         isUnlimited = false;
     } else {
-        // Active / Admin → chọn tất cả
         pickedTopics = allTopics.map(function(t) { return t.name; });
         isUnlimited = true;
     }
@@ -3947,16 +4001,23 @@ function applyOnboardingSelection(topics, scrollTop) {
 
     window.__onboardingOverride = final;
 
-    state = { search:'', hsk:'', subject:'' };
-    if ($('searchInput')) $('searchInput').value = '';
-    if ($('hskFilter')) $('hskFilter').value = '';
-    if ($('subjectFilter')) $('subjectFilter').value = '';
-    if ($('clearSearchBtn')) $('clearSearchBtn').classList.remove('show');
+    // FIX: Chỉ reset filter + render khi thực sự cần
+    var needReset = scrollTop || !filtered || filtered.length === 0
+                    || (!state.search && !state.hsk && !state.subject);
 
-    filtered = final;
-    renderedCount = 0;
-    render(true);
+    if (needReset) {
+        state = { search:'', hsk:'', subject:'' };
+        if ($('searchInput')) $('searchInput').value = '';
+        if ($('hskFilter')) $('hskFilter').value = '';
+        if ($('subjectFilter')) $('subjectFilter').value = '';
+        if ($('clearSearchBtn')) $('clearSearchBtn').classList.remove('show');
 
+        filtered = final;
+        renderedCount = 0;
+        render(true);
+    }
+
+    // FIX: Luôn vẽ lại banner (remove cũ + insert mới) để stats đúng tier hiện tại
     showOnboardingActiveBanner(topics, final.length);
 
     if (scrollTop) {
@@ -3970,6 +4031,9 @@ function applyOnboardingSelection(topics, scrollTop) {
     }
 }
 
+/* ═══════════════════════════════════════════════════════════ */
+/* SỬA: ON CHANGE TOPICS CLICK — KHÔNG XÓA STORAGE NGAY         */
+/* ═══════════════════════════════════════════════════════════ */
 function onChangeTopicsClick() {
     var cfg = getOnboardingConfig();
 
@@ -3978,16 +4042,18 @@ function onChangeTopicsClick() {
         return;
     }
 
-    var key = getOnboardingStorageKey();
-    if (key) {
-        try { localStorage.removeItem(key); } catch(e) {}
-    }
-
-    window.__onboardingOverride = null;
-    window.__onboardingAutoPicked = false;
+    // FIX: KHÔNG xóa localStorage + override ngay.
+    // Chỉ mở modal; user bấm "Bắt đầu" / "Bỏ qua" thì mới ghi đè.
+    // Nếu user đóng modal (X) mà không chọn → giữ nguyên selection cũ.
 
     _onboardingConfig = cfg;
+
+    // Load lại selection hiện tại vào _onboardingSelected để hiển thị đúng
     _onboardingSelected = {};
+    var saved = loadOnboardingSelection();
+    if (saved && Array.isArray(saved.topics)) {
+        saved.topics.forEach(function(t) { _onboardingSelected[t] = true; });
+    }
 
     var modal = $('onboardingModal');
     if (modal) modal.classList.remove('show');
@@ -4017,6 +4083,9 @@ function showOnboardingActiveBanner(topics, count) {
     if (!mainContent) return;
     var container = mainContent.querySelector('.container');
     if (!container) return;
+
+    // FIX: Nếu mainContent đang ẩn (chưa init xong), thoát.
+    if (mainContent.style.display === 'none') return;
 
     var info = getTierInfo();
     var totalAvailable = RAW_DATA.length;
@@ -4189,6 +4258,7 @@ function showOnboardingActiveBanner(topics, count) {
 
     container.insertBefore(banner, container.firstChild);
 }
+
 function initOnboarding() {
     var startBtn = $('onboardingStartBtn');
     var skipBtn = $('onboardingSkipBtn');
@@ -4351,6 +4421,16 @@ function initApp() {
         var obBanner = $('onboardingActiveBanner');
         if (obBanner) obBanner.remove();
         applyFilter();
+
+        // FIX: Khôi phục banner chủ đề sau khi reset filter
+        var saved = loadOnboardingSelection();
+        if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
+            var cfg = getOnboardingConfig();
+            if (cfg) {
+                window.__onboardingAutoPicked = !!saved.auto_picked;
+                applyOnboardingSelection(saved.topics, false);
+            }
+        }
     });
     $('clearSearchBtn').addEventListener('click', function() {
         $('searchInput').value = '';
@@ -4358,6 +4438,16 @@ function initApp() {
         $('searchInput').focus();
         applyFilter();
         this.classList.remove('show');
+
+        // FIX: Khôi phục banner chủ đề sau khi xóa search
+        var saved = loadOnboardingSelection();
+        if (saved && Array.isArray(saved.topics) && saved.topics.length > 0) {
+            var cfg = getOnboardingConfig();
+            if (cfg) {
+                window.__onboardingAutoPicked = !!saved.auto_picked;
+                applyOnboardingSelection(saved.topics, false);
+            }
+        }
     });
     $('hskFilter').addEventListener('change', function() {
         var val = this.value;
@@ -4394,6 +4484,9 @@ function initApp() {
     catch(e) { console.error('Init error:', e); }
 }
 
+/* ═══════════════════════════════════════════════════════════ */
+/* SỬA: REFRESH APP — VẼ LẠI BANNER SAU LOGIN/RELOAD            */
+/* ═══════════════════════════════════════════════════════════ */
 function refreshApp() {
     buildFilters();
     applyFilter();
@@ -4403,8 +4496,10 @@ function refreshApp() {
     updateTierBadge();
     updateDemoBanner();
 
+    // FIX: Gọi maybeShowOnboarding để vẽ banner chủ đề nếu đã có selection.
+    // Dùng setTimeout 0ms để chạy sau khi các hàm trên hoàn tất.
     if (typeof maybeShowOnboarding === 'function') {
-        setTimeout(maybeShowOnboarding, 800);
+        setTimeout(maybeShowOnboarding, 0);
     }
 }
 
