@@ -4860,13 +4860,12 @@ var currentBtn = null;
 
 var displayState = { vi: true, pinyin: false, practice: false };
 
-/* ============================================================ */
-/* TIER ACCESS HELPERS                                           */
-/* ============================================================ */
+/* HELPER: TIER HIEN TAI CO DUOC MO CHUYEN NGANH KHONG? */
 function canAccessChuyenNganh() {
     return (typeof window.APP_TIER !== 'undefined' && window.APP_TIER === 'active');
 }
 
+/* THONG BAO KHOA CHUYEN NGANH */
 function showChuyenNganhLockMessage() {
     if (typeof currentUser === 'undefined' || !currentUser) {
         if (confirm('Bộ dữ liệu Chuyên ngành\n\n' +
@@ -4924,11 +4923,13 @@ function initDatasetSelector() {
     }
 
     var canAccess = canAccessChuyenNganh();
+
     var subGrid = $('dsSubGrid');
     if (subGrid) {
         subGrid.innerHTML = '';
         chuyenNganhKeys.forEach(function(id) {
             var ds = DATASET_REGISTRY[id];
+
             var btn = document.createElement('button');
             btn.className = 'ds-sub-btn' + (canAccess ? '' : ' locked');
             btn.dataset.dataset = ds.id;
@@ -4936,17 +4937,21 @@ function initDatasetSelector() {
             btn.style.setProperty('--ds-color', ds.color || '#64748b');
             btn.title = ds.name + ' (' + ds.count + ' câu)' +
                         (canAccess ? '' : ' - Cần gia hạn để mở khoá');
+
             var icon = document.createElement('i');
             icon.className = 'fas ' + (ds.icon || 'fa-folder');
             btn.appendChild(icon);
+
             var nameSpan = document.createElement('span');
             nameSpan.textContent = ds.name.normalize ? ds.name.normalize('NFC') : ds.name;
             btn.appendChild(nameSpan);
+
             if (!canAccess) {
                 var lock = document.createElement('i');
                 lock.className = 'fas fa-lock ds-sub-lock';
                 btn.appendChild(lock);
             }
+
             subGrid.appendChild(btn);
         });
     }
@@ -4954,6 +4959,7 @@ function initDatasetSelector() {
     if (cnBtn) {
         var oldLock = cnBtn.querySelector('.ds-main-lock');
         if (oldLock) oldLock.remove();
+
         if (!canAccess) {
             var span = cnBtn.querySelector('span');
             if (span) {
@@ -5040,21 +5046,27 @@ function markCurrentDatasetActive() {
 
 function switchDataset(datasetId) {
     if (!DATASET_REGISTRY[datasetId]) return;
+
     if (datasetId !== 'tonghop' && !canAccessChuyenNganh()) {
         showChuyenNganhLockMessage();
         return;
     }
+
     if (typeof window.__switchRawData === 'function') {
         window.__switchRawData(datasetId);
     }
+
     window.__onboardingOverride = null;
+
     state = { search:'', hsk:'', subject:'' };
     if ($('searchInput')) $('searchInput').value = '';
     if ($('hskFilter')) $('hskFilter').value = '';
     if ($('subjectFilter')) $('subjectFilter').value = '';
+
     buildFilters();
     applyFilter();
     updateResultCount();
+
     if ($('fabGroup')) $('fabGroup').classList.remove('open');
 }
 
@@ -5099,10 +5111,12 @@ function pickVoice() {
     if (!('speechSynthesis' in window)) return null;
     var voices = speechSynthesis.getVoices();
     if (!voices.length) return null;
+
     if (voiceState && voiceState.voiceURI) {
         var chosen = voices.find(function(v) { return v.voiceURI === voiceState.voiceURI; });
         if (chosen) return chosen;
     }
+
     var priorities = [
         function(v){ return v.lang === 'zh-CN' && /Ting-?Ting/i.test(v.name); },
         function(v){ return v.lang === 'zh-CN' && /Siri/i.test(v.name); },
@@ -5113,22 +5127,23 @@ function pickVoice() {
     ];
     for (var i = 0; i < priorities.length; i++) {
         var found = voices.find(priorities[i]);
-        if (found) return foundIM;
+        if (found) return found;
     }
     return null;
 }
 
-function getITChineseVoice() { return pickVoice(); }
+function getChineseVoice() { return pickVoice(); }
 
-/* ================================= ============================== */
-/* TIER HELPERS ' — EXPIRED DÙNG Y HỆT DEMnumberO                        */
-')/* ============================================================ */
+/* ============================================================ */
+/* TIER HELPERS — EXPIRED DÙNG Y HỆT DEMO                        */
+/* ============================================================ */
 function getTierInfo() {
     if (typeof window.APP_TIER !== 'undefined' && window.APP_LIMITS) {
         var tier = window.APP_TIER;
         var maxQ = window.APP_LIMITS.maxQuestions;
         var maxH = window.APP_LIMITS.maxHSK;
 
+        /* FIX: EXPIRED = DEMO — fallback nếu giá trị thiếu */
         if (tier === 'expired') {
             if (!maxQ || maxQ <= 0) {
                 maxQ = (typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 60;
@@ -5163,75 +5178,6 @@ function isActiveTier() { return getTierInfo().tier === 'active'; }
 function isExpiredTier(){ return getTierInfo().tier === 'expired'; }
 function isLimitedTier(){ var t = getTierInfo().tier; return t === 'demo' || t === 'trial' || t === 'expired'; }
 
-/* ══════════════════════════════════════════════════════════
-   CHIA maxQ CÂU ĐỀU CHO NHIỀU CHỦ ĐỀ NHẤT (50% rule)
-   - Số chủ đề MỞ tối đa = ceil(numSubjects / 2)
-   - VD: 100 chủ đề → 50 MỞ + 50 KHOÁ
-   - Trả về: { items, openSubjects, lockedSubjects }
-   ══════════════════════════════════════════════════════════ */
-function distributeBySubjects(items, maxQ) {
-    var empty = { items: [], openSubjects: [], lockedSubjects: [] };
-    if (!items || items.length === 0) return empty;
-    if (maxQ <= 0) return empty;
-
-    var bySubject = {};
-    items.forEach(function(r) {
-        var s = (r.subject || '').trim() || '(không có)';
-        if (!bySubject[s]) bySubject[s] = [];
-        bySubject[s].push(r);
-    });
-
-    var subjects = Object.keys(bySubject);
-    var numSubj = subjects.length;
-    if (numSubj === 0) return empty;
-
-    // GIỚI HẠN: tối đa 50% (làm tròn lên, tối thiểu 1)
-    var maxSubjects = Math.max(1, Math.ceil(numSubj / 2));
-
-    subjects.sort(function(a, b) {
-        return bySubject[b].length - bySubject[a].length;
-    });
-
-    var openSubjects = subjects.slice(0, maxSubjects);
-    var lockedSubjects = subjects.slice(maxSubjects);
-
-    var numOpen = openSubjects.length;
-    var perSubj = Math.floor(maxQ / numOpen);
-    var remainder = maxQ % numOpen;
-
-    var result = [];
-    openSubjects.forEach(function(s, idx) {
-        var take = perSubj + (idx < remainder ? 1 : 0);
-        take = Math.min(take, bySubject[s].length);
-        result = result.concat(bySubject[s].slice(0, take));
-    });
-
-    // Bù nếu tổng chưa đủ maxQ
-    if (result.length < maxQ) {
-        var usedIds = {};
-        result.forEach(function(r) { usedIds[r.stt] = true; });
-        for (var i = 0; i < openSubjects.length && result.length < maxQ; i++) {
-            var bucket = bySubject[openSubjects[i]];
-            for (var j = 0; j < bucket.length && result.length < maxQ; j++) {
-                if (!usedIds[bucket[j].stt]) {
-                    result.push(bucket[j]);
-                    usedIds[bucket[j].stt] = true;
-                }
-            }
-        }
-    }
-
-    result.sort(function(a, b) {
-        return (parseInt(a.stt) || 0) - (parseInt(b.stt) || 0);
-    });
-
-    return {
-        items: result,
-        openSubjects: openSubjects,
-        lockedSubjects: lockedSubjects
-    };
-}
-
 function getLimitedData() {
     if (window.__onboardingOverride && Array.isArray(window.__onboardingOverride)
         && window.__onboardingOverride.length > 0
@@ -5244,15 +5190,45 @@ function getLimitedData() {
 
     var max = (typeof info.maxQuestions === 'number' && info.maxQuestions > 0)
               ? info.maxQuestions
-              : ((typeof DEMO_L ? DEMO_LIMIT : 60);
+              : ((typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 60);
 
     var allowedHsk = getAllowedHskList();
-    var eligible = RAW_DATA.filter(function(r) {
-        return allowedHsk.indexOf(r.hsk) !== -1;
+    if (!allowedHsk || allowedHsk.length === 0) {
+        return RAW_DATA.slice(0, max);
+    }
+
+    var perHsk = Math.floor(max / allowedHsk.length);
+    var remainder = max % allowedHsk.length;
+
+    var buckets = {};
+    allowedHsk.forEach(function(h) { buckets[h] = []; });
+    RAW_DATA.forEach(function(r) {
+        if (r.hsk && buckets[r.hsk]) buckets[r.hsk].push(r);
     });
 
-    var dist = distributeBySubjects(eligible, max);
-    return dist.items;
+    var result = [];
+    for (var i = 0; i < allowedHsk.length; i++) {
+        var hsk = allowedHsk[i];
+        var take = perHsk + (i >= allowedHsk.length - remainder ? 1 : 0);
+        var bucket = buckets[hsk];
+        if (bucket && bucket.length > 0) {
+            result = result.concat(bucket.slice(0, take));
+        }
+    }
+
+    if (result.length < max) {
+        var usedIds = {};
+        result.forEach(function(r) { usedIds[r.stt] = true; });
+        for (var j = 0; j < RAW_DATA.length && result.length < max; j++) {
+            var r2 = RAW_DATA[j];
+            if (!usedIds[r2.stt]) {
+                result.push(r2);
+                usedIds[r2.stt] = true;
+            }
+        }
+    }
+
+    return result;
 }
 
 function getAllowedHskList() {
@@ -5273,19 +5249,8 @@ function getAllowedSubjectList() {
         RAW_DATA.forEach(function(r) { if (r.subject) set[r.subject] = 1; });
         return Object.keys(set).sort();
     }
-
-    var allowedHsk = getAllowedHskList();
-    var eligible = RAW_DATA.filter(function(r) {
-        return allowedHsk.indexOf(r.hsk) !== -1;
-    });
-
-    var max = (typeof info.maxQuestions === 'number' && info.maxQuestions > 0)
-              ? info.maxQuestions
-              : ((typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 60);
-
-    var dist = distributeBySubjects(eligible, max);
     var set2 = {};
-    dist.openSubjects.forEach(function(s) { if (s) set2[s] = 1; });
+    getLimitedData().forEach(function(r) { if (r.subject) set2[r.subject] = 1; });
     return Object.keys(set2).sort();
 }
 
@@ -5389,6 +5354,7 @@ function formatTimeDiff(ms) {
     var mo = Math.floor(d / 30);
     return mo + ' tháng trước';
 }
+
 /* ============================================================ */
 /* TAG CLICKABLE                                                 */
 /* ============================================================ */
@@ -5477,10 +5443,8 @@ function showTagToast(message) {
 }
 
 /* ═══════════════════════════════════════════════════════════ */
-/* ONBOARDING - CHỌN CHỦ ĐỀ QUAN TÂM                            */
-/* - Demo/Expired dùng chung config                             */
-/* - 50% chủ đề MỞ, 50% chủ đề KHOÁ                             */
-/* - 60 câu chia đều cho chủ đề MỞ, chọn N → N câu              */
+/* ONBOARDING - CHỌN CHỦ ĐỀ QUAN TÂM                             */
+/* FIX: EXPIRED dùng config giống DEMO                          */
 /* ═══════════════════════════════════════════════════════════ */
 var _onboardingSelected = {};
 var _onboardingConfig = null;
@@ -5491,10 +5455,11 @@ function getOnboardingConfig() {
     var info = getTierInfo();
     var tier = info.tier;
 
-    // Expired dùng config giống Demo
+    /* FIX: expired dùng config giống Demo */
     var configKey = tier;
     if (tier === 'expired') configKey = 'demo';
 
+    /* Chỉ 3 tier này mới có onboarding (expired dùng demo) */
     if (configKey !== 'demo' && configKey !== 'trial' && configKey !== 'active') return null;
 
     var cfg = ONBOARDING_CONFIG[configKey];
@@ -5506,6 +5471,7 @@ function getOnboardingConfig() {
     if (!Array.isArray(cfg.hsk_allowed) || cfg.hsk_allowed.length === 0) {
         cfg.hsk_allowed = [1, 2, 3, 4, 5, 6];
     }
+
     return cfg;
 }
 
@@ -5515,6 +5481,7 @@ function getOnboardingStorageKey() {
     if (info.tier === 'trial' && info.email)  return 'onboarding_trial_' + info.email;
     if (info.tier === 'active' && info.email) return 'onboarding_active_' + info.email;
     if (info.tier === 'active') return 'onboarding_active_guest';
+    /* FIX: expired lưu riêng */
     if (info.tier === 'expired' && info.email) return 'onboarding_expired_' + info.email;
     if (info.tier === 'expired') return 'onboarding_expired_guest';
     return null;
@@ -5524,62 +5491,18 @@ function getAvailableTopicsForTier() {
     var info = getTierInfo();
     var allowedHsk = getAllowedHskList();
 
-    // Đếm TẤT CẢ chủ đề trong RAW_DATA (số lượng thật toàn kho)
-    var subjectMapAll = {};
+    var subjectMap = {};
     RAW_DATA.forEach(function(r) {
+        if (info.tier !== 'active' && allowedHsk.indexOf(r.hsk) === -1) return;
         var s = (r.subject || '').trim();
         if (!s) return;
-        subjectMapAll[s] = (subjectMapAll[s] || 0) + 1;
+        subjectMap[s] = (subjectMap[s] || 0) + 1;
     });
 
-    // Tier active → TẤT CẢ chủ đề MỞ
-    if (info.tier === 'active') {
-        var listActive = Object.keys(subjectMapAll).map(function(name) {
-            return {
-                name: name,
-                count: subjectMapAll[name],
-                allowedCount: subjectMapAll[name],
-                locked: false
-            };
-        });
-        listActive.sort(function(a, b) { return b.count - a.count; });
-        return listActive;
-    }
-
-    // Demo/Trial/Expired: dùng distributeBySubjects để biết MỞ/KHOÁ
-    var eligible = RAW_DATA.filter(function(r) {
-        return allowedHsk.indexOf(r.hsk) !== -1;
+    var list = Object.keys(subjectMap).map(function(name) {
+        return { name: name, count: subjectMap[name] };
     });
-
-    var max = (typeof info.maxQuestions === 'number' && info.maxQuestions > 0)
-              ? info.maxQuestions
-              : ((typeof DEMO_LIMIT === 'number') ? DEMO_LIMIT : 60);
-
-    var dist = distributeBySubjects(eligible, max);
-    var openSet = {};
-    dist.openSubjects.forEach(function(s) { openSet[s] = true; });
-    var lockedSet = {};
-    dist.lockedSubjects.forEach(function(s) { lockedSet[s] = true; });
-
-    var list = Object.keys(subjectMapAll).map(function(name) {
-        var isOpen = !!openSet[name];
-        var isLocked = !!lockedSet[name];
-        return {
-            name: name,
-            count: subjectMapAll[name],
-            allowedCount: isOpen ? dist.items.filter(function(r) {
-                return (r.subject || '').trim() === name;
-            }).length : 0,
-            locked: isLocked
-        };
-    });
-
-    // MỞ trước (count giảm dần), KHOÁ sau (count giảm dần)
-    list.sort(function(a, b) {
-        if (a.locked !== b.locked) return a.locked ? 1 : -1;
-        return b.count - a.count;
-    });
-
+    list.sort(function(a, b) { return b.count - a.count; });
     return list;
 }
 
@@ -5607,6 +5530,7 @@ function saveOnboardingSelection(topics, autoPicked) {
     } catch(e) {}
 }
 
+/* FIX: cho cả expired hiện modal chọn chủ đề */
 function maybeShowOnboarding() {
     var info = getTierInfo();
 
@@ -5673,22 +5597,8 @@ function renderOnboardingTopics() {
     topics.forEach(function(t) {
         var btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = 'onboarding-topic';
+        btn.className = 'onboarding-topic' + (_onboardingSelected[t.name] ? ' selected' : '');
         btn.dataset.topic = t.name;
-        btn.dataset.locked = t.locked ? '1' : '0';
-
-        // Đánh dấu đã chọn — chỉ áp dụng cho chủ đề MỞ
-        if (!t.locked && _onboardingSelected[t.name]) {
-            btn.classList.add('selected');
-        }
-
-        // Nếu bị khoá → thêm class + icon khoá
-        if (t.locked) {
-            btn.classList.add('locked');
-            var lockIcon = document.createElement('i');
-            lockIcon.className = 'fas fa-lock onboarding-topic-lock';
-            btn.appendChild(lockIcon);
-        }
 
         var nameSpan = document.createElement('span');
         nameSpan.textContent = t.name.normalize ? t.name.normalize('NFC') : t.name;
@@ -5700,14 +5610,6 @@ function renderOnboardingTopics() {
         btn.appendChild(countSpan);
 
         btn.addEventListener('click', function() {
-            if (t.locked) {
-                if (typeof showTagToast === 'function') {
-                    showTagToast('🔒 Chủ đề này chưa mở khoá — cần gia hạn');
-                } else {
-                    alert('Chủ đề này chưa mở khoá. Vui lòng gia hạn để sử dụng.');
-                }
-                return;
-            }
             onToggleOnboardingTopic(this.dataset.topic);
         });
 
@@ -5717,20 +5619,6 @@ function renderOnboardingTopics() {
 
 function onToggleOnboardingTopic(topicName) {
     if (!_onboardingConfig) return;
-
-    // Chặn nếu chủ đề bị khoá (an toàn 2 lớp)
-    var topics = getAvailableTopicsForTier();
-    var target = null;
-    for (var i = 0; i < topics.length; i++) {
-        if (topics[i].name === topicName) { target = topics[i]; break; }
-    }
-    if (target && target.locked) {
-        if (typeof showTagToast === 'function') {
-            showTagToast('🔒 Chủ đề này chưa mở khoá');
-        }
-        return;
-    }
-
     var max = _onboardingConfig.topics_per_user;
     var isUnlimited = (max === -1 || max === Infinity);
 
@@ -5806,18 +5694,17 @@ function onOnboardingSkip() {
     if (!cfg) return;
 
     var allTopics = getAvailableTopicsForTier();
-    var openTopics = allTopics.filter(function(t) { return !t.locked; });
-    if (openTopics.length === 0) return;
+    if (allTopics.length === 0) return;
 
     var max = cfg.topics_per_user;
     var isUnlimited = (max === -1 || max === Infinity);
 
     var pickedTopics;
     if (isUnlimited) {
-        pickedTopics = openTopics.map(function(t) { return t.name; });
+        pickedTopics = allTopics.map(function(t) { return t.name; });
     } else {
-        var pickCount = Math.min(max, openTopics.length);
-        var shuffled = openTopics.slice();
+        var pickCount = Math.min(max, allTopics.length);
+        var shuffled = allTopics.slice();
         for (var i = shuffled.length - 1; i > 0; i--) {
             var j = Math.floor(Math.random() * (i + 1));
             var t = shuffled[i]; shuffled[i] = shuffled[j]; shuffled[j] = t;
@@ -5836,14 +5723,6 @@ function onOnboardingSkip() {
     }
 }
 
-/* ══════════════════════════════════════════════════════════
-   ÁP DỤNG CHỦ ĐỀ ĐÃ CHỌN
-   - B1: Chia maxQ câu cho 50% chủ đề (pool gốc)
-   - B2: Filter pool đó theo chủ đề user CHỌN
-        → KHÔNG chia lại, chỉ BỎ chủ đề không chọn
-   - VD: pool 50 chủ đề × 1 câu = 50 câu
-        user chọn 3 → giữ 3 câu
-   ══════════════════════════════════════════════════════════ */
 function applyOnboardingSelection(topics, scrollTop) {
     var cfg = getOnboardingConfig();
     if (!cfg) return;
@@ -5858,48 +5737,59 @@ function applyOnboardingSelection(topics, scrollTop) {
         allowedHsk = getAllowedHskList();
     }
 
-    var eligible = RAW_DATA.filter(function(r) {
-        return allowedHsk.indexOf(r.hsk) !== -1;
+    var pool = RAW_DATA.filter(function(r) {
+        if (allowedHsk.indexOf(r.hsk) === -1) return false;
+        var s = (r.subject || '').trim();
+        return topics.indexOf(s) !== -1;
     });
 
-    var final;
+    pool.sort(function(a, b) {
+        var na = parseInt(a.stt) || 0;
+        var nb = parseInt(b.stt) || 0;
+        return na - nb;
+    });
+
+    var final = [];
 
     if (isUnlimitedQ) {
-        // Active: filter theo chủ đề đã chọn, lấy hết
-        final = eligible.filter(function(r) {
-            var s = (r.subject || '').trim();
-            return topics.indexOf(s) !== -1;
-        });
+        final = pool.slice();
     } else {
-        // Demo/Trial/Expired:
-        // B1: Chia maxQ cho 50% chủ đề (pool gốc)
-        var dist = distributeBySubjects(eligible, maxQ);
-
-        // B2: Filter pool đó theo chủ đề user CHỌN
-        //     KHÔNG chia lại — chỉ giữ những câu thuộc chủ đề đã chọn
-        final = dist.items.filter(function(r) {
-            var s = (r.subject || '').trim();
-            return topics.indexOf(s) !== -1;
+        var perHsk = Math.ceil(maxQ / allowedHsk.length);
+        var buckets = {};
+        allowedHsk.forEach(function(h) { buckets[h] = []; });
+        pool.forEach(function(r) {
+            if (buckets[r.hsk]) buckets[r.hsk].push(r);
         });
+
+        for (var i = 0; i < allowedHsk.length; i++) {
+            var h = allowedHsk[i];
+            var take = buckets[h].slice(0, perHsk);
+            final = final.concat(take);
+        }
+
+        if (final.length < maxQ) {
+            var usedIds = {};
+            final.forEach(function(r) { usedIds[r.stt] = true; });
+            for (var p = 0; p < pool.length && final.length < maxQ; p++) {
+                var rp = pool[p];
+                if (!usedIds[rp.stt]) {
+                    final.push(rp);
+                    usedIds[rp.stt] = true;
+                }
+            }
+        }
+
+        if (final.length > maxQ) final = final.slice(0, maxQ);
     }
 
     final.sort(function(a, b) {
-        return (parseInt(a.stt) || 0) - (parseInt(b.stt) || 0);
+        var na = parseInt(a.stt) || 0;
+        var nb = parseInt(b.stt) || 0;
+        return na - nb;
     });
-
-    // LOG debug
-    console.log('[Onboarding] Chọn', topics.length, 'chủ đề →',
-                final.length, 'câu (maxQ =', maxQ, ')');
-    var bySubject = {};
-    final.forEach(function(r) {
-        var s = r.subject || '(không có)';
-        bySubject[s] = (bySubject[s] || 0) + 1;
-    });
-    console.log('[Onboarding] Phân bổ:', bySubject);
 
     window.__onboardingOverride = final;
 
-    // Reset filter & render
     state = { search:'', hsk:'', subject:'' };
     if ($('searchInput')) $('searchInput').value = '';
     if ($('hskFilter')) $('hskFilter').value = '';
@@ -6079,7 +5969,11 @@ function showOnboardingActiveBanner(topics, count) {
         var ctaIcon = '';
         var ctaAction = null;
 
-        if (info.tier === 'trial') {
+        if (info.tier === 'demo') {
+            shouldShowCta = false;
+        } else if (info.tier === 'expired') {
+            shouldShowCta = false;
+        } else if (info.tier === 'trial') {
             var expiryEl = $('expiryBanner');
             var expiryVisible = false;
             if (expiryEl) {
@@ -6155,6 +6049,7 @@ window.maybeShowOnboarding = maybeShowOnboarding;
 window.showOnboardingModal = showOnboardingModal;
 window.applyOnboardingSelection = applyOnboardingSelection;
 window.onChangeTopicsClick = onChangeTopicsClick;
+
 /* ============================================================ */
 /* TIKTOK BAR RESPONSIVE                                         */
 /* ============================================================ */
@@ -7057,6 +6952,7 @@ function render(reset) {
         mobileWrapper.appendChild(endNote);
     }
 }
+
 /* ============================================================ */
 /* ANSWER CHECKING                                               */
 /* ============================================================ */
@@ -7399,7 +7295,7 @@ window.toggleInlineCheck = function(btn, evt) {
 };
 
 /* ============================================================ */
-/* PRACTICE FULL MODAL                                           */
+/* PRACTICE FULL MODAL — expired dùng được như Demo              */
 /* ============================================================ */
 var pfCurrentStt = null;
 var pfCurrentAnswer = '';
@@ -7408,9 +7304,11 @@ var pfCurrentPinyin = '';
 var pfHintEnabled = false;
 var pfRandomMode = false;
 
+/* FIX: Bỏ chặn isExpiredTier() — expired dùng được như Demo */
 window.openPracticeFull = function(stt, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
 
+    /* Chỉ check lượt dùng (demo/expired đều đếm) */
     if (!canUseFeature()) { showLimitMessage(); return; }
 
     if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
@@ -7820,10 +7718,12 @@ function togglePhraseTooltip(wrapEl) {
     if (!wrapEl) return;
     var tip = wrapEl.querySelector('.answer-phrase-tooltip');
     if (!tip) return;
+
     if (_activeTooltipWrap && _activeTooltipWrap !== wrapEl) {
         var oldTip = _activeTooltipWrap.querySelector('.answer-phrase-tooltip');
         if (oldTip) oldTip.classList.remove('show');
     }
+
     if (tip.classList.contains('show')) {
         tip.classList.remove('show');
         _activeTooltipWrap = null;
@@ -8359,7 +8259,7 @@ document.addEventListener('change', function(e) {
 });
 
 /* ============================================================ */
-/* WRITER (Luyện viết chữ Hán)                                   */
+/* WRITER (Luyện viết chữ Hán) — expired dùng được như Demo      */
 /* ============================================================ */
 var writerInstance = null;
 var currentWriteZh = '';
@@ -8413,6 +8313,7 @@ function initWriter() {
     });
 }
 
+/* FIX: Bỏ chặn isExpiredTier() — expired dùng được writer như Demo */
 window.openWriter = function(zh, vi, pinyin, evt) {
     if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
     if (!canUseFeature()) { showLimitMessage(); return; }
