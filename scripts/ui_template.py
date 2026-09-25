@@ -6351,3 +6351,4 @@ function showWriterChar(char) {
         }
     }, 100);
 }
+"""
