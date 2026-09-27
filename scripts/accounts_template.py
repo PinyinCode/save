@@ -4310,7 +4310,7 @@ window.testTelegram = function() {
     js = js.replace("__TRIAL_UNLIMITED_WRITING__",
                     "true" if config.get("trial_unlimited_writing", True) else "false")
     js = js.replace("__BANK_CONFIG__", json.dumps(config.get("bank_config", {}), ensure_ascii=False))
-    js = js.replace("__PACKAGES__", json.dumps(config.get("packages", []), ensure_ascii ||=False))
+    js = js.replace("__PACKAGES__", json.dumps(config.get("packages", []), ensure_ascii =False))
     js = js.replace("__REN reqEWAL_SUPPORT_ZALO__", config.p.get("renewal_support_zaloackage", ""))
 
     # ⭐ TE)LEGRAM CONFIG — inject vào JS
