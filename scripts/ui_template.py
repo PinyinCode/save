@@ -114,7 +114,13 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-label i{color:var(--primary);font-size:.85rem}
 .ds-main-row{
-    display:grid;grid-template-columns:1fr 1fr;gap:.5rem;
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;
+}
+@media(max-width:768px){
+    .ds-main-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:500px){
+    .ds-main-row{grid-template-columns:1fr;}
 }
 @media(max-width:500px){
     .ds-main-row{grid-template-columns:1fr}
@@ -376,7 +382,137 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     border-color: transparent;
 }
+.ds-btn[data-dataset-group="chuyen-nganh"].has-lock.active {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-color: transparent;
+}
 
+/* ═══════════════════════════════════════════════════════════ */
+/* FAVORITES TAB ROW — nằm dưới ds-sub-wrap                     */
+/* Tự động bị đẩy xuống khi mở dropdown Chuyên ngành            */
+/* ═══════════════════════════════════════════════════════════ */
+.ds-fav-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .5rem;
+    margin-top: .65rem;
+    padding-top: .65rem;
+    border-top: 1.5px dashed var(--border);
+    animation: dsFadeIn .25s ease-out;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .65rem .85rem;
+    border-radius: 11px;
+    border: 2px solid rgba(239, 68, 68, 0.35);
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    color: #dc2626;
+    font-size: .82rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all .2s ease;
+    text-align: left;
+    position: relative;
+    overflow: visible;
+    width: 100%;
+    justify-content: flex-start;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.1);
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] i:first-child {
+    color: #ef4444;
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: color .2s;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] span {
+    flex: 1;
+    min-width: 0;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"]:hover {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"].active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #dc2626;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45);
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"].active i:first-child {
+    color: #fff;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] .ds-fav-badge {
+    position: absolute;
+    top: -8px;
+    right: -6px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 .4rem;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, .5), 0 0 0 2px var(--surface);
+    animation: favBadgePulse 2s ease-in-out infinite;
+    z-index: 10;
+    line-height: 1;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] .ds-fav-badge[data-count="0"] {
+    display: none;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] .ds-fav-lock {
+    position: absolute;
+    top: -8px;
+    right: -6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .62rem;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, .55), 0 0 0 2px var(--surface);
+    z-index: 10;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"].fav-locked {
+    opacity: .65;
+    cursor: pointer;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"].fav-locked:hover {
+    opacity: .85;
+    border-color: #dc2626;
+    background: rgba(220, 38, 38, .06);
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"].fav-locked i:first-child {
+    color: #dc2626;
+}
+[data-theme="dark"] .ds-fav-row .ds-btn[data-dataset-group="favorites"] {
+    background: linear-gradient(135deg, rgba(239, 68, 68, .15), rgba(220, 38, 38, .1));
+    border-color: rgba(239, 68, 68, .5);
+    color: #fca5a5;
+}
+[data-theme="dark"] .ds-fav-row .ds-btn[data-dataset-group="favorites"]:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, .25), rgba(220, 38, 38, .18));
+    color: #fecaca;
+}
+[data-theme="dark"] .ds-fav-row .ds-btn[data-dataset-group="favorites"].active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+}
+
+/* ============================================================ */
+/* FLASHCARD UI */
 /* ============================================================ */
 /* FLASHCARD UI */
 /* ============================================================ */
@@ -3087,6 +3223,7 @@ def build_ui_html():
             <i class="fas fa-chevron-down ds-arrow"></i>
             <span class="ds-new-badge" id="dsNewBadge">NEW</span>
         </button>
+        <!-- __FAV_DATASET_TAB__ -->
     </div>
     <div class="ds-sub-wrap" id="dsSubWrap" style="display:none">
         <div class="ds-sub-label">
@@ -3494,6 +3631,9 @@ function initDatasetSelector() {
         }
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       NÚT TỔNG HỢP — Click để về tab tổng hợp
+       ═══════════════════════════════════════════════════════════ */
     document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(btn) {
         if (btn.__boundDataset) return;
         btn.__boundDataset = true;
@@ -3501,12 +3641,19 @@ function initDatasetSelector() {
             switchDataset('tonghop');
             var sub = $('dsSubWrap');
             if (sub) sub.style.display = 'none';
-            document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
+
+            /* Bỏ active TẤT CẢ tab */
+            document.querySelectorAll('.ds-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
             btn.classList.add('active');
-            if (cnBtn) cnBtn.classList.remove('active');
         });
     });
 
+    /* ═══════════════════════════════════════════════════════════
+       NÚT CHUYÊN NGÀNH — Click để mở/đóng dropdown
+       Khi mở → bỏ active TẤT CẢ tab khác (Tổng hợp + Yêu thích)
+       ═══════════════════════════════════════════════════════════ */
     if (cnBtn && !cnBtn.__boundToggle) {
         cnBtn.__boundToggle = true;
         cnBtn.addEventListener('click', function() {
@@ -3514,18 +3661,24 @@ function initDatasetSelector() {
             if (!sub) return;
             var isOpen = sub.style.display !== 'none';
             if (isOpen) {
+                /* Đóng dropdown → bỏ active nút CN */
                 sub.style.display = 'none';
                 cnBtn.classList.remove('active');
             } else {
+                /* Mở dropdown → active nút CN, bỏ active TẤT CẢ tab khác */
                 sub.style.display = 'block';
-                cnBtn.classList.add('active');
-                document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
+
+                document.querySelectorAll('.ds-btn').forEach(function(b) {
                     b.classList.remove('active');
                 });
+                cnBtn.classList.add('active');
             }
         });
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       SUB-BUTTONS CHUYÊN NGÀNH — Click để chuyển dataset
+       ═══════════════════════════════════════════════════════════ */
     document.querySelectorAll('.ds-sub-btn').forEach(function(btn) {
         if (btn.__boundSub) return;
         btn.__boundSub = true;
@@ -3537,16 +3690,22 @@ function initDatasetSelector() {
                 return;
             }
             var id = this.dataset.dataset;
-            document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
             this.classList.add('active');
             switchDataset(id);
+
+            /* Bỏ active TẤT CẢ tab chính, chỉ giữ nút CN active */
+            document.querySelectorAll('.ds-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
             if (cnBtn) cnBtn.classList.add('active');
         });
     });
 
     markCurrentDatasetActive();
 }
-
 function markCurrentDatasetActive() {
     var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
     document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
