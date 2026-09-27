@@ -16,7 +16,7 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
 ✅ INTRO: Banner giới thiệu + Modal 6 slide hướng dẫn.
 
 ✅ FAVORITES:
-   - Tab Yêu thích (cuối dataset selector)
+   - Tab Yêu thích — 3 tab cùng hàng trên PC (Tổng hợp + Chuyên ngành + Yêu thích)
    - Item Yêu thích trong dropdown bộ dữ liệu
    - Nút tim trên card (đổi màu theo trạng thái)
    - Nút tim FLOAT góc phải (Practice Full)
@@ -105,7 +105,6 @@ ICON_MAP = {
 
     # ─── Mua bán / Kho vận ───
     "thu mua":              "fa-shopping-cart",
-    "xuất nhập khẩu":       "fa-ship",
     "xuất nhập khẩu":       "fa-ship",
     "logistics":            "fa-truck",
     "vận tải":              "fa-truck",
@@ -443,6 +442,34 @@ FULLWIDTH_CSS = r"""
     width: 100% !important;
     text-align: center !important;
     font-size: clamp(1.15rem, 2.2vw, 1.6rem) !important;
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
+   PC: [Tổng hợp] [Chuyên ngành] [Yêu thích] — 3 cột đều
+   Mobile: Yêu thích tự xuống hàng riêng
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* PC: ds-main-row chia 3 cột */
+@media (min-width: 769px) {
+    .ds-main-row {
+        grid-template-columns: 1fr 1fr 1fr !important;
+    }
+}
+
+/* Mobile: 2 cột (Yêu thích xuống hàng) */
+@media (max-width: 768px) {
+    .ds-main-row {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+/* Mobile rất nhỏ: 1 cột dọc */
+@media (max-width: 500px) {
+    .ds-main-row {
+        grid-template-columns: 1fr !important;
+    }
 }
 
 
@@ -792,14 +819,19 @@ ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 # ⬇️⬇️⬇️ Chèn snippet Favorites vào HTML
 _fav_html = build_favorites_html()
 
-# ═══ 1. Tab Yêu thích — chèn SAU nút Chuyên ngành (đứng cuối) ═══
-ui_html = re.sub(
-    r'(<button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">.*?</button>)',
-    r'\1\n        ' + _fav_html["dataset_tab"],
-    ui_html,
-    count=1,
-    flags=re.DOTALL
+# ═══════════════════════════════════════════════════════════════════
+# ═══ 1. Tab Yêu thích — chèn TRỰC TIẾP vào ds-main-row ═══
+# 3 tab cùng hàng trên PC, mobile tự xuống hàng
+# ═══════════════════════════════════════════════════════════════════
+ui_html = ui_html.replace(
+    '<!-- __FAV_DATASET_TAB__ -->',
+    _fav_html["dataset_tab"]
 )
+if 'data-dataset-group="favorites"' not in ui_html:
+    print("⚠️  Chưa chèn được tab Yêu thích — kiểm tra placeholder")
+    print("   <!-- __FAV_DATASET_TAB__ --> trong ui_template.py")
+else:
+    print("✅ Đã chèn tab Yêu thích vào ds-main-row")
 
 # ═══════════════════════════════════════════════════════════════════
 # ═══ 2. ★ HAI NÚT FLOAT trong Practice Full ═══
@@ -1067,7 +1099,7 @@ print(f"\n🎉 Đã tạo: {OUTPUT_HTML}")
 print(f"📦 Kích thước: {size_kb:.1f} KB")
 print(f"📚 Tổng số bộ dữ liệu: {total_datasets} (1 tổng hợp + {_chuyen_nganh_count} chuyên ngành)")
 print(f"📝 Tổng số câu hỏi: {total_questions}")
-print(f"❤️  Yêu thích: tab cuối + dropdown + 2 nút float (tim + chỉ câu yêu thích)")
+print(f"❤️  Yêu thích: 3 tab cùng hàng (PC) + dropdown + 2 nút float")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
