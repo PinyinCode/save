@@ -5,9 +5,11 @@
 Format chuẩn trả về: [{"stt","hsk","topic","subject","vi","zh","pinyin"}, ...]
 
 ✅ TỰ ĐỘNG CHUYỂN SỐ Ả RẬP → SỐ HÁN trong cột Tiếng Trung:
-   "订单是500个" → "订单是五百个"
-   "B-02库位"   → "B-02库位" (giữ nguyên vì có chữ cái)
-   "500MB"      → "500MB"    (giữ nguyên vì dính MB)
+   "订单是500个"   → "订单是五百个"
+   "Tỷ lệ đạt 50%" → "Tỷ lệ đạt 百分之五十"
+   "B-02库位"      → "B-02库位" (giữ nguyên vì có chữ cái)
+   "500MB"         → "500MB"    (giữ nguyên vì dính MB)
+   "v2.0"          → "v2.0"     (giữ nguyên vì là version)
 """
 import openpyxl
 import os
@@ -69,9 +71,23 @@ def _num_to_chinese(num):
     return _num_to_chinese_basic(num)
 
 
+def _digits_to_chinese(digits_str):
+    """Đổi chuỗi chữ số (phần thập phân) → Hán.
+    VD: '25' → '二五', '05' → '零五'
+    """
+    return ''.join([_CN_DIGITS[int(d)] for d in digits_str])
+
+
 def convert_arabic_to_chinese(text):
     """
     Chuyển số Ả Rập trong câu → số Hán.
+    Xử lý đặc biệt theo thứ tự:
+      1. "50%"    → "百分之五十"
+      2. "50.5%"  → "百分之五十点五"
+      3. "0.5%"   → "百分之零点五"
+      4. "3.5"    → "三点五" (số thập phân độc lập)
+      5. "500"    → "五百"   (số nguyên độc lập)
+
     KHÔNG chuyển nếu số thuộc mã/thuật ngữ:
       - Đứng sau chữ cái hoặc dấu gạch: B-02, IP, USB
       - Đứng trước chữ cái: 500MB, 2TB
@@ -80,7 +96,45 @@ def convert_arabic_to_chinese(text):
     if not text or not isinstance(text, str):
         return text
 
-    def replace(match):
+    # ═══════════════════════════════════════════════════════════
+    # BƯỚC 1: Xử lý phần trăm (%) — chạy TRƯỚC để tránh xung đột
+    # ═══════════════════════════════════════════════════════════
+    def replace_percent(match):
+        num_str = match.group(1)
+        if '.' in num_str:
+            parts = num_str.split('.')
+            int_part = _num_to_chinese(int(parts[0]))
+            dec_part = _digits_to_chinese(parts[1])
+            return '百分之' + int_part + '点' + dec_part
+        else:
+            return '百分之' + _num_to_chinese(int(num_str))
+
+    # Pattern: số nguyên hoặc thập phân đứng trước %
+    # VD khớp: "50%", "50.5%", "0.5%", "100%"
+    percent_pattern = r'(\d+(?:\.\d+)?)%'
+    text = re.sub(percent_pattern, replace_percent, text)
+
+    # ═══════════════════════════════════════════════════════════
+    # BƯỚC 2: Xử lý số thập phân độc lập (VD: "3.5", "0.25")
+    # ═══════════════════════════════════════════════════════════
+    def replace_decimal(match):
+        num_str = match.group(0)
+        parts = num_str.split('.')
+        int_part = _num_to_chinese(int(parts[0]))
+        dec_part = _digits_to_chinese(parts[1])
+        return int_part + '点' + dec_part
+
+    # Regex số thập phân: chỉ convert nếu độc lập
+    #   (?<![A-Za-z\-\.]) — không đứng sau chữ cái/gạch/chấm
+    #   \d+\.\d+          — số.số
+    #   (?![A-Za-z])      — không đứng trước chữ cái
+    decimal_pattern = r'(?<![A-Za-z\-\.])\d+\.\d+(?![A-Za-z])'
+    text = re.sub(decimal_pattern, replace_decimal, text)
+
+    # ═══════════════════════════════════════════════════════════
+    # BƯỚC 3: Xử lý số nguyên độc lập (VD: "500", "100")
+    # ═══════════════════════════════════════════════════════════
+    def replace_int(match):
         num = int(match.group(0))
         return _num_to_chinese(num)
 
@@ -88,8 +142,10 @@ def convert_arabic_to_chinese(text):
     #   (?<![A-Za-z\-\.]) — không đứng sau chữ cái/gạch/chấm
     #   \d+               — chuỗi số
     #   (?![A-Za-z]|\.\d) — không đứng trước chữ cái hoặc .số
-    pattern = r'(?<![A-Za-z\-\.])\d+(?![A-Za-z]|\.\d)'
-    return re.sub(pattern, replace, text)
+    int_pattern = r'(?<![A-Za-z\-\.])\d+(?![A-Za-z]|\.\d)'
+    text = re.sub(int_pattern, replace_int, text)
+
+    return text
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -169,16 +225,39 @@ if __name__ == "__main__":
     print("TEST convert_arabic_to_chinese")
     print("=" * 60)
     tests = [
+        # Số nguyên
         "订单是500个，但是实际只收到480个。",
         "系统里的数量比实际数量多了20个。",
         "系统库存和实际库存差了50个。",
         "系统里的消耗数量比实际少了30个。",
         "系统记录的数量比实际多了20个。",
+
+        # Mã / thuật ngữ — KHÔNG đổi
         "这批物料实际放在B-02库位。",
         "不能自己修改这台电脑的IP地址。",
         "这个文件很大，有500MB。",
         "使用的是WPS版本v2.0。",
+
+        # Ngày tháng
         "今天是2024年12月25日。",
+
+        # Phần trăm
+        "Tỷ lệ đạt là 50%",
+        "Tăng trưởng 50.5%",
+        "Chỉ chiếm 0.5%",
+        "Hoàn thành 100% nhiệm vụ",
+        "Lợi nhuận giảm 3.25%",
+        "Tỷ lệ lỗi là 0.25%",
+        "订单完成度是50%。",
+        "价格涨了20%，但是销量跌了15%。",
+
+        # Số thập phân độc lập
+        "Điểm trung bình là 3.5",
+        "Chiều dài 2.75 mét",
+
+        # Mix phức tạp
+        "Tỷ lệ 50% nghĩa là một nửa, tức 0.5",
+        "Sản phẩm A-01 đạt 95.5% và B-02 đạt 87%",
     ]
     for t in tests:
         result = convert_arabic_to_chinese(t)
