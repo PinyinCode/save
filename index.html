@@ -128,7 +128,13 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
 }
 .ds-label i{color:var(--primary);font-size:.85rem}
 .ds-main-row{
-    display:grid;grid-template-columns:1fr 1fr;gap:.5rem;
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;
+}
+@media(max-width:768px){
+    .ds-main-row{grid-template-columns:1fr 1fr;}
+}
+@media(max-width:500px){
+    .ds-main-row{grid-template-columns:1fr;}
 }
 @media(max-width:500px){
     .ds-main-row{grid-template-columns:1fr}
@@ -390,7 +396,137 @@ body.show-practice .card-body{background:linear-gradient(135deg,var(--surface-2)
     background: linear-gradient(135deg, #4f46e5, #7c3aed);
     border-color: transparent;
 }
+.ds-btn[data-dataset-group="chuyen-nganh"].has-lock.active {
+    background: linear-gradient(135deg, #4f46e5, #7c3aed);
+    border-color: transparent;
+}
 
+/* ═══════════════════════════════════════════════════════════ */
+/* FAVORITES TAB ROW — nằm dưới ds-sub-wrap                     */
+/* Tự động bị đẩy xuống khi mở dropdown Chuyên ngành            */
+/* ═══════════════════════════════════════════════════════════ */
+.ds-fav-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: .5rem;
+    margin-top: .65rem;
+    padding-top: .65rem;
+    border-top: 1.5px dashed var(--border);
+    animation: dsFadeIn .25s ease-out;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .65rem .85rem;
+    border-radius: 11px;
+    border: 2px solid rgba(239, 68, 68, 0.35);
+    background: linear-gradient(135deg, #fef2f2, #fee2e2);
+    color: #dc2626;
+    font-size: .82rem;
+    font-weight: 800;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all .2s ease;
+    text-align: left;
+    position: relative;
+    overflow: visible;
+    width: 100%;
+    justify-content: flex-start;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.1);
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] i:first-child {
+    color: #ef4444;
+    font-size: 1rem;
+    flex-shrink: 0;
+    transition: color .2s;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] span {
+    flex: 1;
+    min-width: 0;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"]:hover {
+    border-color: #ef4444;
+    background: linear-gradient(135deg, #fee2e2, #fecaca);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"].active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-color: #dc2626;
+    color: #fff;
+    box-shadow: 0 4px 14px rgba(239, 68, 68, 0.45);
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"].active i:first-child {
+    color: #fff;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] .ds-fav-badge {
+    position: absolute;
+    top: -8px;
+    right: -6px;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 .4rem;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+    font-size: .65rem;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, .5), 0 0 0 2px var(--surface);
+    animation: favBadgePulse 2s ease-in-out infinite;
+    z-index: 10;
+    line-height: 1;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] .ds-fav-badge[data-count="0"] {
+    display: none;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"] .ds-fav-lock {
+    position: absolute;
+    top: -8px;
+    right: -6px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .62rem;
+    box-shadow: 0 2px 8px rgba(220, 38, 38, .55), 0 0 0 2px var(--surface);
+    z-index: 10;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"].fav-locked {
+    opacity: .65;
+    cursor: pointer;
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"].fav-locked:hover {
+    opacity: .85;
+    border-color: #dc2626;
+    background: rgba(220, 38, 38, .06);
+}
+.ds-fav-row .ds-btn[data-dataset-group="favorites"].fav-locked i:first-child {
+    color: #dc2626;
+}
+[data-theme="dark"] .ds-fav-row .ds-btn[data-dataset-group="favorites"] {
+    background: linear-gradient(135deg, rgba(239, 68, 68, .15), rgba(220, 38, 38, .1));
+    border-color: rgba(239, 68, 68, .5);
+    color: #fca5a5;
+}
+[data-theme="dark"] .ds-fav-row .ds-btn[data-dataset-group="favorites"]:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, .25), rgba(220, 38, 38, .18));
+    color: #fecaca;
+}
+[data-theme="dark"] .ds-fav-row .ds-btn[data-dataset-group="favorites"].active {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: #fff;
+}
+
+/* ============================================================ */
+/* FLASHCARD UI */
 /* ============================================================ */
 /* FLASHCARD UI */
 /* ============================================================ */
@@ -3389,8 +3525,50 @@ body.hide-floating .tiktok-bar { display: none !important; }
 .user-menu{position:relative}
 .user-avatar{width:38px;height:38px;border-radius:50%;border:2px solid var(--border);cursor:pointer;object-fit:cover;transition:.15s;display:block;}
 .user-avatar:hover{border-color:var(--primary);transform:scale(1.05)}
-.user-dropdown{position:absolute;top:calc(100% + .5rem);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 10px 30px rgba(0,0,0,.15);padding:.5rem;min-width:290px;display:none;z-index:200;}
+.user-dropdown{
+    position:absolute;
+    top:calc(100% + .5rem);
+    right:0;
+    background:var(--surface);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:0 10px 30px rgba(0,0,0,.15);
+    padding:.5rem;
+    min-width:290px;
+    display:none;
+    z-index:200;
+}
 .user-dropdown.show{display:block}
+
+/* ═══════════════════════════════════════════════════════════════
+   MŨI TÊN TAM GIÁC — Chỉ lên avatar (nút mở dropdown)
+   - ::before: tạo mũi tên (border-color)
+   - ::after:  tạo khoảng trắng giữa mũi tên và dropdown
+   ═══════════════════════════════════════════════════════════════ */
+.user-dropdown::before{
+    content:'';
+    position:absolute;
+    top:-9px;
+    right:20px;
+    width:0;
+    height:0;
+    border-left:9px solid transparent;
+    border-right:9px solid transparent;
+    border-bottom:9px solid var(--border);
+    pointer-events:none;
+}
+.user-dropdown::after{
+    content:'';
+    position:absolute;
+    top:-7px;
+    right:22px;
+    width:0;
+    height:0;
+    border-left:7px solid transparent;
+    border-right:7px solid transparent;
+    border-bottom:7px solid var(--surface);
+    pointer-events:none;
+}
 .user-info{padding:.75rem;border-bottom:1px solid var(--border);margin-bottom:.5rem}
 .user-info .name{font-weight:700;font-size:.9rem;color:var(--text);margin-bottom:.2rem}
 .user-info .email{font-size:.75rem;color:var(--text-3);word-break:break-all}
@@ -6644,6 +6822,34 @@ body:not(.practice-full-open) .pf-fav-filter-summary{
 
 
 /* ═══════════════════════════════════════════════════════════════════
+   ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
+   PC: [Tổng hợp] [Chuyên ngành] [Yêu thích] — 3 cột đều
+   Mobile: Yêu thích tự xuống hàng riêng
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* PC: ds-main-row chia 3 cột */
+@media (min-width: 769px) {
+    .ds-main-row {
+        grid-template-columns: 1fr 1fr 1fr !important;
+    }
+}
+
+/* Mobile: 2 cột (Yêu thích xuống hàng) */
+@media (max-width: 768px) {
+    .ds-main-row {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+/* Mobile rất nhỏ: 1 cột dọc */
+@media (max-width: 500px) {
+    .ds-main-row {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════
    ★★★ HEADER DESIGN ★★★
    ═══════════════════════════════════════════════════════════════════ */
 
@@ -8240,6 +8446,9 @@ function initDatasetSelector() {
         }
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       NÚT TỔNG HỢP — Click để về tab tổng hợp
+       ═══════════════════════════════════════════════════════════ */
     document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(btn) {
         if (btn.__boundDataset) return;
         btn.__boundDataset = true;
@@ -8247,12 +8456,19 @@ function initDatasetSelector() {
             switchDataset('tonghop');
             var sub = $('dsSubWrap');
             if (sub) sub.style.display = 'none';
-            document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
+
+            /* Bỏ active TẤT CẢ tab */
+            document.querySelectorAll('.ds-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
             btn.classList.add('active');
-            if (cnBtn) cnBtn.classList.remove('active');
         });
     });
 
+    /* ═══════════════════════════════════════════════════════════
+       NÚT CHUYÊN NGÀNH — Click để mở/đóng dropdown
+       Khi mở → bỏ active TẤT CẢ tab khác (Tổng hợp + Yêu thích)
+       ═══════════════════════════════════════════════════════════ */
     if (cnBtn && !cnBtn.__boundToggle) {
         cnBtn.__boundToggle = true;
         cnBtn.addEventListener('click', function() {
@@ -8260,18 +8476,24 @@ function initDatasetSelector() {
             if (!sub) return;
             var isOpen = sub.style.display !== 'none';
             if (isOpen) {
+                /* Đóng dropdown → bỏ active nút CN */
                 sub.style.display = 'none';
                 cnBtn.classList.remove('active');
             } else {
+                /* Mở dropdown → active nút CN, bỏ active TẤT CẢ tab khác */
                 sub.style.display = 'block';
-                cnBtn.classList.add('active');
-                document.querySelectorAll('.ds-btn[data-dataset="tonghop"]').forEach(function(b) {
+
+                document.querySelectorAll('.ds-btn').forEach(function(b) {
                     b.classList.remove('active');
                 });
+                cnBtn.classList.add('active');
             }
         });
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       SUB-BUTTONS CHUYÊN NGÀNH — Click để chuyển dataset
+       ═══════════════════════════════════════════════════════════ */
     document.querySelectorAll('.ds-sub-btn').forEach(function(btn) {
         if (btn.__boundSub) return;
         btn.__boundSub = true;
@@ -8283,16 +8505,22 @@ function initDatasetSelector() {
                 return;
             }
             var id = this.dataset.dataset;
-            document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
+            document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
             this.classList.add('active');
             switchDataset(id);
+
+            /* Bỏ active TẤT CẢ tab chính, chỉ giữ nút CN active */
+            document.querySelectorAll('.ds-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
             if (cnBtn) cnBtn.classList.add('active');
         });
     });
 
     markCurrentDatasetActive();
 }
-
 function markCurrentDatasetActive() {
     var current = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
     document.querySelectorAll('.ds-sub-btn').forEach(function(b) {
@@ -12297,6 +12525,9 @@ var BANK_CONFIG = {"bank_id": "970418", "bank_name": "BIDV", "account_no": "8897
 var PACKAGES = [{"id": "1m", "label": "1 tháng", "amount": 50000, "days": 30, "popular": false}, {"id": "3m", "label": "3 tháng", "amount": 120000, "days": 90, "popular": true, "save": "Tiết kiệm 33%"}, {"id": "1y", "label": "1 năm", "amount": 300000, "days": 365, "popular": false, "save": "Tiết kiệm 58%"}, {"id": "forever", "label": "Premium", "amount": 1000000, "days": 36500, "popular": false, "save": "Premium - Admin Hỗ trợ trực tiếp", "permanent": true}];
 var RENEWAL_SUPPORT_ZALO = "0922331886";
 
+/* ⭐ TELEGRAM CONFIG */
+var TELEGRAM_BOT_TOKEN = "8936673606:AAGQtSbDPpIH7kCB3zHEPrzWYETDgTuBOqU";
+var TELEGRAM_CHAT_ID   = "-5459456615";
 /* ============ STATE ============ */
 var currentUser = null;
 var isDemo = true;
@@ -15082,6 +15313,99 @@ setTimeout(function() {
         enterDemoMode();
     }
 }, 5000);
+
+/* ═══════════════════════════════════════════════════════════════
+   📱 TELEGRAM NOTIFICATION — Gửi tin nhắn khi có sự kiện
+   - notifyTelegramUserPaid: khi user bấm "Tôi đã thanh toán"
+   - notifyTelegramAdminConfirmed: khi admin duyệt đơn
+   ═══════════════════════════════════════════════════════════════ */
+function _telegramSendMessage(text) {
+    if (!TELEGRAM_BOT_TOKEN || !TELEGRAM_CHAT_ID || TELEGRAM_CHAT_ID === '-0') {
+        console.warn('[Telegram] Chưa cấu hình bot_token / chat_id hợp lệ');
+        console.warn('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? 'OK' : 'MISSING');
+        console.warn('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || 'MISSING');
+        return Promise.reject('not_configured');
+    }
+
+    var url = 'https://api.telegram.org/bot' + TELEGRAM_BOT_TOKEN + '/sendMessage';
+
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            chat_id: TELEGRAM_CHAT_ID,
+            text: text,
+            parse_mode: 'HTML',
+            disable_web_page_preview: true
+        })
+    })
+    .then(function(r) {
+        return r.json();
+    })
+    .then(function(data) {
+        if (!data.ok) {
+            console.error('[Telegram] ❌ API error:', data.description);
+            throw new Error(data.description || 'Telegram API error');
+        }
+        console.log('[Telegram] ✅ Đã gửi tin nhắn thành công');
+        return data;
+    })
+    .catch(function(err) {
+        console.error('[Telegram] ❌ Lỗi gửi:', err);
+        throw err;
+    });
+}
+
+window.notifyTelegramUserPaid = function(req) {
+    if (!req) return Promise.resolve();
+
+    var isPermanent = req.isPermanent || false;
+    var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    var text = '💰 <b>USER ĐÃ THANH TOÁN</b>\n\n' +
+        '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
+        '📧 ' + escapeHtml(req.email) + '\n' +
+        '💵 <b>' + amountStr + 'đ</b>\n' +
+        '📦 ' + escapeHtml(req.packageLabel || req.package) +
+            (isPermanent ? ' <b>(💎 VĨNH VIỄN)</b>' : ' (' + req.days + ' ngày)') + '\n' +
+        '🔑 Mã: <code>' + escapeHtml(req.transferCode || '—') + '</code>\n\n' +
+        '⏳ Vui lòng kiểm tra và xác nhận trong trang quản trị.';
+
+    return _telegramSendMessage(text);
+};
+
+window.notifyTelegramAdminConfirmed = function(req, newExpiryStr) {
+    if (!req) return Promise.resolve();
+
+    var isPermanent = req.isPermanent || false;
+    var amountStr = String(req.amount || 0).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+
+    var text = '✅ <b>ĐÃ XÁC NHẬN GIA HẠN</b>\n\n' +
+        '👤 <b>' + escapeHtml(req.name || req.email) + '</b>\n' +
+        '📧 ' + escapeHtml(req.email) + '\n' +
+        '💵 ' + amountStr + 'đ\n' +
+        '📦 ' + escapeHtml(req.packageLabel || req.package) + '\n' +
+        (isPermanent
+            ? '💎 <b>KÍCH HOẠT VĨNH VIỄN</b>'
+            : '📅 Hạn mới: <b>' + escapeHtml(newExpiryStr || '?') + '</b>') + '\n\n' +
+        '🎉 User đã được gia hạn thành công.';
+
+    return _telegramSendMessage(text);
+};
+
+/* ═══ DEBUG: Test gửi tin nhắn ═══ */
+window.testTelegram = function() {
+    console.log('[Telegram] Test started...');
+    console.log('[Telegram] Token:', TELEGRAM_BOT_TOKEN ? TELEGRAM_BOT_TOKEN.substring(0, 15) + '...' : '❌ MISSING');
+    console.log('[Telegram] Chat ID:', TELEGRAM_CHAT_ID || '❌ MISSING');
+    return _telegramSendMessage('🧪 <b>Test Telegram</b>\n\nBot đang hoạt động tốt! ✅\n\nThời gian: ' + new Date().toLocaleString('vi-VN'))
+        .then(function() {
+            alert('✅ Đã gửi test! Kiểm tra Telegram.');
+        })
+        .catch(function(err) {
+            alert('❌ Lỗi gửi test: ' + err.message + '\n\nXem F12 Console để biết chi tiết.');
+        });
+};
 
 /* ==== INTRO JS ==== */
 
