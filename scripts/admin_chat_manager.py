@@ -628,10 +628,20 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
 
 /* ─── MOBILE ─── */
 @media (max-width:768px){
-    .acm-modal{padding:0;align-items:flex-end;}
+    .acm-modal{
+        padding:0;
+        align-items:flex-end;
+        /* ⭐ FIX: dùng dvh để trừ address bar mobile */
+        height:100vh;
+        height:100dvh;
+    }
     .acm-box{
         max-width:100%;
+        /* ⭐ FIX: dùng dvh + fallback vh cho browser cũ */
         height:92vh;
+        height:92dvh;
+        max-height:calc(100vh - 8px);
+        max-height:calc(100dvh - 8px);
         border-radius:20px 20px 0 0;
         animation:acmSlideUp .3s cubic-bezier(.34,1.56,.64,1);
     }
