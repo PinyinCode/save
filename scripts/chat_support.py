@@ -635,6 +635,7 @@ def build_telegram_notify_js():
 /* ═══════════════════════════════════════════════════════════════
    📨 TELEGRAM NOTIFY — Gửi thông báo về Telegram
    Cung cấp: window.__sendTelegramNotify(email, name, text, from)
+   + ⭐ Nút bấm "Trả lời trên Web" — admin click → mở chat trực tiếp
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     'use strict';
@@ -686,13 +687,28 @@ def build_telegram_notify_js():
             '─────────────────\n' +
             '⏰ ' + new Date().toLocaleString('vi-VN');
 
+        // ⭐ Tạo URL mở Admin Chat Manager trên web
+        var siteUrl = window.location.origin + window.location.pathname;
+        var adminUrl = siteUrl + '?admin_chat=' + encodeURIComponent(userEmail || '');
+
         var url = 'https://api.telegram.org/bot' + token + '/sendMessage';
         var payload = {
             chat_id: chatId,
             text: text,
             parse_mode: 'Markdown',
-            disable_web_page_preview: true
+            disable_web_page_preview: true,
+            // ⭐ Nút bấm inline — click mở web chat
+            reply_markup: JSON.stringify({
+                inline_keyboard: [[
+                    {
+                        text: '💬 Trả lời trên Web',
+                        url: adminUrl
+                    }
+                ]]
+            })
         };
+
+        console.log('[Telegram] 📤 Sending...', { to: chatId, from: from, adminUrl: adminUrl });
 
         fetch(url, {
             method: 'POST',
@@ -721,7 +737,6 @@ def build_telegram_notify_js():
         '| Chat ID:', window.TELEGRAM_CHAT_ID || '❌');
 })();
 """
-
 
 # ═══════════════════════════════════════════════════════════════
 #  JS
