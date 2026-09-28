@@ -23547,37 +23547,77 @@ window.favFilterCount = favFilterCount;
         });
 
         /* ⭐ Auto-open chat khi URL có ?admin_chat=email (từ nút Telegram) */
-        setTimeout(function() {
-            try {
-                var urlParams = new URLSearchParams(window.location.search);
-                var targetEmail = urlParams.get('admin_chat');
-
-                if (targetEmail && isAdmin()) {
-                    console.log('🎯 Auto-open chat từ URL:', targetEmail);
-
-                    // Mở modal admin chat manager
-                    openModal();
-
-                    // Đợi data load xong rồi mở thread
-                    setTimeout(function() {
-                        if (typeof window.__acmOpenThread === 'function') {
-                            window.__acmOpenThread(targetEmail);
-                        }
-
-                        // Xoá param khỏi URL để không mở lại khi F5
-                        try {
-                            var url = new URL(window.location.href);
-                            url.searchParams.delete('admin_chat');
-                            window.history.replaceState({}, '', url.pathname + url.hash);
-                        } catch(e) {}
-                    }, 1500);
-                }
-            } catch(e) {
-                console.warn('Auto-open chat error:', e);
-            }
-        }, 2000);
+        handleAutoOpenFromUrl();
 
         console.log('✅ Admin Chat Manager: init');
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ AUTO-OPEN CHAT TỪ URL (link Telegram copy)
+       - Nếu admin đã login → mở chat ngay
+       - Nếu chưa login → lưu email vào localStorage, đợi login xong
+       ═══════════════════════════════════════════════════════════ */
+    function handleAutoOpenFromUrl() {
+        try {
+            var urlParams = new URLSearchParams(window.location.search);
+            var targetEmail = urlParams.get('admin_chat');
+
+            if (!targetEmail) return;
+
+            console.log('🎯 Phát hiện ?admin_chat=', targetEmail);
+
+            // ⭐ Lưu email vào localStorage (không mất khi đóng WebView)
+            try { localStorage.setItem('acm_pending_email', targetEmail); } catch(e) {}
+
+            // Đợi 2s cho Firebase init
+            setTimeout(function() {
+                if (isAdmin()) {
+                    openAutoChat(targetEmail);
+                }
+                // Nếu chưa login → để checkPendingEmail() xử lý sau
+            }, 2000);
+
+        } catch(e) {
+            console.warn('handleAutoOpenFromUrl error:', e);
+        }
+    }
+
+    function openAutoChat(targetEmail) {
+        console.log('🎯 Auto-open chat cho:', targetEmail);
+
+        // Mở modal admin chat manager
+        openModal();
+
+        // Đợi data load xong rồi mở thread
+        setTimeout(function() {
+            if (typeof window.__acmOpenThread === 'function') {
+                window.__acmOpenThread(targetEmail);
+            }
+
+            // Xoá param khỏi URL để không mở lại khi F5
+            try {
+                var url = new URL(window.location.href);
+                url.searchParams.delete('admin_chat');
+                window.history.replaceState({}, '', url.pathname + url.hash);
+            } catch(e) {}
+
+            // Xoá pending email
+            try { localStorage.removeItem('acm_pending_email'); } catch(e) {}
+
+        }, 1500);
+    }
+
+    /* ⭐ Sau khi login admin xong → kiểm tra pending email */
+    function checkPendingEmail() {
+        try {
+            var pending = localStorage.getItem('acm_pending_email');
+            if (pending && isAdmin()) {
+                console.log('🎯 Có pending email sau login:', pending);
+                setTimeout(function() {
+                    openAutoChat(pending);
+                }, 1000);
+            }
+        } catch(e) {}
     }
 
     var _lastRole = null;
@@ -23595,6 +23635,8 @@ window.favFilterCount = favFilterCount;
             if (!ACM.usersUnsub && !ACM.threadsUnsub) {
                 startWatchers();
             }
+            // ⭐ Kiểm tra pending email sau khi login admin
+            checkPendingEmail();
         } else {
             fab.classList.remove('show');
             stopWatchers();
