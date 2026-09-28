@@ -10,6 +10,11 @@ Admin Chat Manager — Trình quản lý chat riêng cho admin.
 - ⭐ Hiển thị thời gian hoạt động gần nhất (từ login_logs)
 - ⭐ Xoá lịch sử chat của user
 - ⭐ Nhắn tin hàng loạt (chọn nhiều user → gửi 1 tin)
+
+⭐ UPDATE (2026-09):
+   - Đổi logic online: user được coi là ONLINE nếu timestamp presence
+     trong vòng 20 PHÚT (thay vì 3 phút như trước).
+   - Cutoff có thể cấu hình qua ACM_PRESENCE_CUTOFF_MS.
 """
 
 
@@ -1192,6 +1197,11 @@ def build_admin_chat_js():
 (function() {
     'use strict';
 
+    /* ⭐ CẤU HÌNH ONLINE: 20 PHÚT
+       User được coi là ONLINE nếu timestamp presence
+       trong vòng 20 phút gần nhất. */
+    var ACM_PRESENCE_CUTOFF_MS = 20 * 60 * 1000;  // 20 phút = 1,200,000 ms
+
     var ACM = {
         inited: false,
         isOpen: false,
@@ -2224,7 +2234,10 @@ def build_admin_chat_js():
         if (typeof firebase !== 'undefined' && firebase.database) {
             try {
                 var presenceRef = firebase.database().ref('presence');
-                var PRESENCE_CUTOFF = 3 * 60 * 1000;
+
+                // ⭐ CUTOFF 20 PHÚT — user được coi là online nếu
+                // timestamp presence trong vòng 20 phút gần nhất.
+                var PRESENCE_CUTOFF = ACM_PRESENCE_CUTOFF_MS;
 
                 var handler = presenceRef.on('value', function(snap) {
                     var val = snap.val() || {};
@@ -2239,7 +2252,8 @@ def build_admin_chat_js():
                         }
                     });
 
-                    console.log('👥 ACM: Online users:', Object.keys(ACM.onlineMap).length);
+                    console.log('👥 ACM: Online users (cutoff ' + (PRESENCE_CUTOFF / 60000) + ' phút):',
+                                Object.keys(ACM.onlineMap).length);
                     rebuildList();
                 }, function(err) {
                     console.error('ACM presence watch error:', err);
@@ -2482,7 +2496,8 @@ def build_admin_chat_js():
         /* ⭐ Auto-open chat khi URL có ?admin_chat=email (từ nút Telegram) */
         handleAutoOpenFromUrl();
 
-        console.log('✅ Admin Chat Manager: init');
+        console.log('✅ Admin Chat Manager: init (presence cutoff = ' +
+                    (ACM_PRESENCE_CUTOFF_MS / 60000) + ' phút)');
     }
 
     /* ═══════════════════════════════════════════════════════════
