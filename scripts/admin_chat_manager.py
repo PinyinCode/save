@@ -1274,6 +1274,7 @@ def build_admin_chat_js():
     function rebuildList() {
         var map = {};
 
+        // 1. Từ allowed_users
         Object.keys(ACM.usersMap).forEach(function(email) {
             var u = ACM.usersMap[email];
             var emailLower = (email || '').toLowerCase();
@@ -1291,15 +1292,20 @@ def build_admin_chat_js():
             };
         });
 
+        // 2. Merge với chat_threads
         Object.keys(ACM.threadsMap).forEach(function(email) {
             var t = ACM.threadsMap[email];
+
+            // ⭐ Chỉ coi "có tin nhắn" nếu lastMessage có nội dung thực
+            var threadHasMessages = !!(t.lastMessage && t.lastMessage.trim());
+
             if (!map[email]) {
                 map[email] = {
                     email: email,
                     name: t.userName || email.split('@')[0],
                     role: 'user',
                     tier: 'demo',
-                    thread: t,
+                    thread: threadHasMessages ? t : null,   // ⭐ null nếu rỗng
                     unread: 0,
                     lastMessage: '',
                     lastMessageAt: 0,
@@ -1307,7 +1313,11 @@ def build_admin_chat_js():
                     lastLoginAt: 0
                 };
             }
-            map[email].thread = t;
+
+            if (threadHasMessages) {
+                map[email].thread = t;
+            }
+
             map[email].unread = t.unreadByAdmin || 0;
             map[email].lastMessage = t.lastMessage || '';
             map[email].lastMessageAt = t.lastMessageAt
@@ -1321,8 +1331,10 @@ def build_admin_chat_js():
             }
         });
 
+        // 3. Array
         ACM.allUsers = Object.keys(map).map(function(k) { return map[k]; });
 
+        // 4. Sort: unread > online > login gần đây > có tin gần đây > alphabet
         ACM.allUsers.sort(function(a, b) {
             if (a.unread > 0 && b.unread === 0) return -1;
             if (a.unread === 0 && b.unread > 0) return 1;
@@ -1342,19 +1354,31 @@ def build_admin_chat_js():
             return (a.name || '').localeCompare(b.name || '');
         });
 
+        // 5. Stats
         updateStats();
+
+        // 6. Render
         scheduleRender();
     }
 
     function updateStats() {
         var all = ACM.allUsers.length;
         var unread = 0, hasThread = 0, noThread = 0, online = 0;
+
         ACM.allUsers.forEach(function(u) {
+            // ⭐ Chỉ đếm "có tin nhắn" nếu thread có lastMessage thực
+            var threadHasMessages = false;
+            if (u.thread) {
+                var t = u.thread;
+                threadHasMessages = !!(t.lastMessage && t.lastMessage.trim());
+            }
+
             if (u.unread > 0) unread++;
-            if (u.thread) hasThread++;
+            if (threadHasMessages) hasThread++;
             else noThread++;
             if (ACM.onlineMap[u.email]) online++;
         });
+
         var el;
         if ((el = $id('acmCountAll'))) el.textContent = all;
         if ((el = $id('acmCountOnline'))) el.textContent = online;
@@ -1362,6 +1386,7 @@ def build_admin_chat_js():
         if ((el = $id('acmCountHasThread'))) el.textContent = hasThread;
         if ((el = $id('acmCountNoThread'))) el.textContent = noThread;
 
+        // ⭐ Badge FAB
         var fabBadge = $id('acmFabBadge');
         if (fabBadge) {
             if (unread > 0) {
@@ -1371,6 +1396,11 @@ def build_admin_chat_js():
                 fabBadge.classList.remove('show');
             }
         }
+
+        console.log('📊 ACM Stats:', {
+            all: all, online: online, unread: unread,
+            hasThread: hasThread, noThread: noThread
+        });
     }
 
     function scheduleRender() {
@@ -1798,6 +1828,7 @@ def build_admin_chat_js():
             var userName = ACM.pendingDelete.userName;
             var threadRef = db.collection('chat_threads').doc(email);
 
+            // ⭐ Ghi Firestore
             await threadRef.set({
                 messages: [],
                 lastMessage: '',
@@ -1813,6 +1844,47 @@ def build_admin_chat_js():
 
             console.log('✅ Đã xoá lịch sử chat:', email);
 
+            // ⭐ Cập nhật LOCAL state NGAY — UI phản hồi tức thì
+            if (ACM.threadsMap && ACM.threadsMap[email]) {
+                ACM.threadsMap[email].lastMessage = '';
+                ACM.threadsMap[email].lastMessageAt = null;
+                ACM.threadsMap[email].lastMessageFrom = '';
+                ACM.threadsMap[email].unreadByAdmin = 0;
+            }
+
+            // ⭐ Bỏ khỏi danh sách đã chọn (nếu đang bulk mode)
+            var selIdx = ACM.selectedUsers.indexOf(email);
+            if (selIdx !== -1) ACM.selectedUsers.splice(selIdx, 1);
+            updateBulkCount();
+
+            // ⭐ Xoá cache
+            try { localStorage.removeItem('admin_users_cache'); } catch(e) {}
+
+            // ⭐ Render lại NGAY (dùng local state đã cập nhật)
+            rebuildList();
+            updateStats();
+
+            // ⭐ Đóng confirm + đóng chat nếu đang mở với user này
+            hideDeleteConfirm();
+
+            // ⭐ Nếu chat đang mở với user này → reset chat body
+            try {
+                var chatBox = document.querySelector('.chat-box');
+                var chatBody = $id('chatBody');
+                if (chatBody && chatBody.offsetParent !== null) {
+                    // Kiểm tra xem có đang mở chat với user này không
+                    var headerInfo = $id('chatHeaderInfo');
+                    if (headerInfo && headerInfo.textContent && headerInfo.textContent.indexOf(email) !== -1) {
+                        chatBody.innerHTML = '<div class="chat-empty">' +
+                            '<i class="fas fa-comments"></i>' +
+                            '<div class="title">Đã xoá lịch sử chat</div>' +
+                            '<div class="desc">Bắt đầu cuộc trò chuyện mới.</div>' +
+                        '</div>';
+                    }
+                }
+            } catch(e) {}
+
+            // ⭐ Ghi log admin action
             try {
                 db.collection('activity_logs').add({
                     email: email,
@@ -1823,8 +1895,17 @@ def build_admin_chat_js():
                 });
             } catch(e) {}
 
-            hideDeleteConfirm();
-            startWatchers();
+            // ⭐ Sau khi Firestore sync → rebuild lần cuối
+            setTimeout(function() {
+                rebuildList();
+                updateStats();
+            }, 800);
+
+            setTimeout(function() {
+                rebuildList();
+                updateStats();
+            }, 2000);
+
             showSmallToast('✅ Đã xoá lịch sử chat của ' + userName);
 
         } catch (err) {
@@ -1835,7 +1916,6 @@ def build_admin_chat_js():
             btn.innerHTML = originalHTML;
         }
     }
-
     function showSmallToast(msg) {
         var toast = document.getElementById('acmSmallToast');
         if (!toast) {
