@@ -6,8 +6,9 @@ Admin Chat Manager — Trình quản lý chat riêng cho admin.
 - Filter: Tất cả / Online / Chưa đọc / Có tin nhắn / Chưa nhắn
 - Search: tìm theo tên / email
 - Click user → xem lịch sử hoạt động HOẶC chat
-- ⭐ MỚI: Xem lịch sử hoạt động của user (login, chat, renewal, ...)
-- ⭐ MỚI: Hiển thị thời gian hoạt động gần nhất (từ login_logs)
+- ⭐ Xem lịch sử hoạt động của user (login, chat, renewal, ...)
+- ⭐ Hiển thị thời gian hoạt động gần nhất (từ login_logs)
+- ⭐ MỚI: Xoá lịch sử chat của user
 """
 
 
@@ -235,8 +236,6 @@ def build_admin_chat_css():
 .acm-user-time{
     font-size:.68rem;color:#94a3b8;white-space:nowrap;
 }
-
-/* ⭐ Thời gian hoạt động — Online / Recent login */
 .acm-user-time.online-now{
     color:#16a34a;
     font-weight:800;
@@ -266,7 +265,7 @@ def build_admin_chat_css():
     50%{transform:scale(1.15);}
 }
 
-/* ⭐ Actions cho mỗi user (chat + history) */
+/* ⭐ Actions cho mỗi user (chat + history + delete) */
 .acm-user-actions{
     display:flex;gap:.3rem;flex-shrink:0;margin-left:.5rem;
 }
@@ -282,6 +281,18 @@ def build_admin_chat_css():
 .acm-user-btn.chat:hover{box-shadow:0 4px 12px rgba(79,70,229,.4);}
 .acm-user-btn.history{background:#eff6ff;color:#4f46e5;}
 .acm-user-btn.history:hover{background:#4f46e5;color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.4);}
+
+/* ⭐ Nút xoá lịch sử chat */
+.acm-user-btn.delete-history{
+    background:#fef2f2;
+    color:#dc2626;
+}
+.acm-user-btn.delete-history:hover{
+    background:#dc2626;
+    color:#fff;
+    box-shadow:0 4px 12px rgba(220,38,38,.4);
+    transform:scale(1.1);
+}
 
 /* ─── EMPTY ─── */
 .acm-empty{
@@ -535,6 +546,81 @@ def build_admin_chat_css():
         font-size:1.1rem;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ CONFIRM MODAL — Xoá lịch sử chat
+   ═══════════════════════════════════════════════════════════════ */
+.acm-confirm-overlay{
+    position:fixed;inset:0;
+    background:rgba(15,23,42,.8);
+    backdrop-filter:blur(4px);
+    z-index:6000;
+    display:none;
+    align-items:center;justify-content:center;
+    padding:1rem;
+}
+.acm-confirm-overlay.show{display:flex;}
+.acm-confirm-box{
+    background:#fff;
+    border-radius:16px;
+    max-width:420px;
+    width:100%;
+    padding:1.5rem;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+    animation:acmSlideIn .3s cubic-bezier(.34,1.56,.64,1);
+    text-align:center;
+}
+[data-theme="dark"] .acm-confirm-box{background:#1e293b;}
+.acm-confirm-icon{
+    width:60px;height:60px;border-radius:50%;
+    background:linear-gradient(135deg,#fef2f2,#fee2e2);
+    color:#dc2626;
+    display:flex;align-items:center;justify-content:center;
+    font-size:1.6rem;
+    margin:0 auto 1rem;
+}
+[data-theme="dark"] .acm-confirm-icon{background:rgba(220,38,38,.2);}
+.acm-confirm-title{
+    font-size:1.05rem;font-weight:800;
+    color:#0f172a;margin-bottom:.5rem;
+}
+[data-theme="dark"] .acm-confirm-title{color:#f1f5f9;}
+.acm-confirm-desc{
+    font-size:.85rem;color:#64748b;
+    line-height:1.5;margin-bottom:1.25rem;
+}
+[data-theme="dark"] .acm-confirm-desc{color:#94a3b8;}
+.acm-confirm-desc b{color:#dc2626;font-weight:800;}
+.acm-confirm-actions{
+    display:flex;gap:.5rem;justify-content:center;
+    flex-wrap:wrap;
+}
+.acm-confirm-btn{
+    padding:.6rem 1.2rem;
+    border-radius:10px;
+    border:1.5px solid #e2e8f0;
+    background:#fff;
+    color:#0f172a;
+    font-size:.85rem;font-weight:700;
+    cursor:pointer;font-family:inherit;
+    display:inline-flex;align-items:center;gap:.4rem;
+    transition:.15s;
+}
+.acm-confirm-btn:hover{background:#f8fafc;}
+.acm-confirm-btn.danger{
+    background:linear-gradient(135deg,#dc2626,#b91c1c);
+    color:#fff;border-color:#dc2626;
+    box-shadow:0 4px 12px rgba(220,38,38,.3);
+}
+.acm-confirm-btn.danger:hover{
+    box-shadow:0 6px 18px rgba(220,38,38,.5);
+    transform:translateY(-1px);
+}
+.acm-confirm-btn:disabled{opacity:.5;cursor:not-allowed;}
+[data-theme="dark"] .acm-confirm-btn{
+    background:#334155;color:#f1f5f9;border-color:#475569;
+}
+[data-theme="dark"] .acm-confirm-btn:hover{background:#475569;}
 """
 
 
@@ -613,6 +699,27 @@ def build_admin_chat_html():
     </div>
 </div>
 
+<!-- ⭐ Confirm xoá lịch sử chat -->
+<div class="acm-confirm-overlay" id="acmConfirmDelete">
+    <div class="acm-confirm-box">
+        <div class="acm-confirm-icon">
+            <i class="fas fa-trash-alt"></i>
+        </div>
+        <div class="acm-confirm-title">Xoá lịch sử chat?</div>
+        <div class="acm-confirm-desc" id="acmConfirmDesc">
+            Toàn bộ tin nhắn sẽ bị xoá vĩnh viễn và <b>không thể khôi phục</b>.
+        </div>
+        <div class="acm-confirm-actions">
+            <button class="acm-confirm-btn" type="button" id="acmConfirmCancel">
+                <i class="fas fa-times"></i> Huỷ
+            </button>
+            <button class="acm-confirm-btn danger" type="button" id="acmConfirmOk">
+                <i class="fas fa-trash-alt"></i> Xoá vĩnh viễn
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- FAB mở Admin Chat Manager (chỉ admin thấy) -->
 <button class="acm-fab" id="acmFab" type="button" title="Quản lý Chat (Admin)">
     <i class="fas fa-users-cog"></i>
@@ -635,19 +742,20 @@ def build_admin_chat_js():
         view: 'list',           // 'list' | 'history'
         usersUnsub: null,
         threadsUnsub: null,
-        presenceUnsub: null,    // RTDB presence
-        historyUnsub: null,     // Firestore activity logs
-        loginLogsUnsub: null,   // ⭐ MỚI: watch login_logs
+        presenceUnsub: null,
+        historyUnsub: null,
+        loginLogsUnsub: null,
         currentHistoryEmail: null,
         allUsers: [],
         usersMap: {},
         threadsMap: {},
-        onlineMap: {},          // { email: true } — RTDB
-        loginLogsMap: {},       // ⭐ MỚI: { email: timestamp } — login_logs
+        onlineMap: {},
+        loginLogsMap: {},
         activityMap: {},
         filter: 'all',
         searchTerm: '',
-        renderTimer: null
+        renderTimer: null,
+        pendingDelete: null     // ⭐ MỚI
     };
 
     function $id(id) { return document.getElementById(id); }
@@ -718,7 +826,7 @@ def build_admin_chat_js():
                 lastMessage: '',
                 lastMessageAt: 0,
                 lastMessageFrom: '',
-                lastLoginAt: ACM.loginLogsMap[emailLower] || 0   // ⭐ MỚI
+                lastLoginAt: ACM.loginLogsMap[emailLower] || 0
             };
         });
 
@@ -748,7 +856,6 @@ def build_admin_chat_js():
             map[email].lastMessageFrom = t.lastMessageFrom || '';
             if (t.userName && !map[email].name) map[email].name = t.userName;
 
-            // ⭐ Fallback: nếu chưa có login log → dùng last message time
             if (!map[email].lastLoginAt && map[email].lastMessageAt) {
                 map[email].lastLoginAt = map[email].lastMessageAt;
             }
@@ -757,28 +864,23 @@ def build_admin_chat_js():
         // 3. Array
         ACM.allUsers = Object.keys(map).map(function(k) { return map[k]; });
 
-        // 4. Sort: unread > online > login gần đây > có tin gần đây > alphabet
+        // 4. Sort
         ACM.allUsers.sort(function(a, b) {
-            // Ưu tiên 1: unread
             if (a.unread > 0 && b.unread === 0) return -1;
             if (a.unread === 0 && b.unread > 0) return 1;
 
-            // Ưu tiên 2: đang online (RTDB presence)
             var aOn = ACM.onlineMap[a.email] ? 1 : 0;
             var bOn = ACM.onlineMap[b.email] ? 1 : 0;
             if (aOn !== bOn) return bOn - aOn;
 
-            // ⭐ Ưu tiên 3: login gần đây (login_logs)
             if (a.lastLoginAt !== b.lastLoginAt) {
                 return b.lastLoginAt - a.lastLoginAt;
             }
 
-            // Ưu tiên 4: có tin nhắn gần đây
             if (a.lastMessageAt > 0 && b.lastMessageAt === 0) return -1;
             if (a.lastMessageAt === 0 && b.lastMessageAt > 0) return 1;
             if (a.lastMessageAt !== b.lastMessageAt) return b.lastMessageAt - a.lastMessageAt;
 
-            // Cuối: alphabet
             return (a.name || '').localeCompare(b.name || '');
         });
 
@@ -880,7 +982,6 @@ def build_admin_chat_js():
                 preview = '<i>Chưa nhắn tin</i>';
             }
 
-            // ⭐ Thời gian hoạt động gần nhất — Ưu tiên: Online > Login > Chat
             var timeText = '';
             var timeClass = '';
             if (isOnline) {
@@ -918,6 +1019,14 @@ def build_admin_chat_js():
                         (u.unread > 99 ? '99+' : u.unread) + '</span>' : '') +
                 '</div>' +
                 '<div class="acm-user-actions">' +
+                    (hasThread ?
+                        '<button class="acm-user-btn delete-history" type="button" ' +
+                            'onclick="window.__acmDeleteHistory(\'' + jsStr(u.email) + '\', \'' + jsStr(u.name || u.email) + '\', ' + (u.unread || 0) + ')" ' +
+                            'title="Xoá lịch sử chat">' +
+                            '<i class="fas fa-trash-alt"></i>' +
+                        '</button>'
+                        : ''
+                    ) +
                     '<button class="acm-user-btn history" type="button" ' +
                         'onclick="window.__acmShowHistory(\'' + jsStr(u.email) + '\')" ' +
                         'title="Xem lịch sử hoạt động">' +
@@ -933,6 +1042,114 @@ def build_admin_chat_js():
         });
 
         el.innerHTML = html;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ XOÁ LỊCH SỬ CHAT
+       ═══════════════════════════════════════════════════════════ */
+    window.__acmDeleteHistory = function(email, userName, unread) {
+        if (!isAdmin()) {
+            alert('Chỉ admin mới có quyền xoá!');
+            return;
+        }
+        if (!email) return;
+
+        ACM.pendingDelete = { email: email, userName: userName || email };
+
+        var descEl = $id('acmConfirmDesc');
+        if (descEl) {
+            descEl.innerHTML =
+                'Xoá toàn bộ tin nhắn của <b>' + esc(userName || email) + '</b>' +
+                '<br><span style="font-size:.78rem;color:#94a3b8">' + esc(email) + '</span>' +
+                (unread > 0 ? '<br><br>⚠️ Có <b>' + unread + '</b> tin chưa đọc cũng sẽ bị xoá.' : '') +
+                '<br><br>Hành động này <b>không thể khôi phục</b>.';
+        }
+
+        $id('acmConfirmDelete').classList.add('show');
+    };
+
+    function hideDeleteConfirm() {
+        $id('acmConfirmDelete').classList.remove('show');
+        ACM.pendingDelete = null;
+    }
+
+    async function doDeleteHistory() {
+        if (!ACM.pendingDelete) return;
+        var db = getDb();
+        if (!db) return;
+
+        var btn = $id('acmConfirmOk');
+        var originalHTML = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-pulse"></i> Đang xoá...';
+
+        try {
+            var email = ACM.pendingDelete.email;
+            var userName = ACM.pendingDelete.userName;
+            var threadRef = db.collection('chat_threads').doc(email);
+
+            await threadRef.set({
+                messages: [],
+                lastMessage: '',
+                lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                lastMessageFrom: '',
+                unreadByAdmin: 0,
+                unreadByUser: 0,
+                userTypingAt: null,
+                adminTypingAt: null,
+                historyClearedAt: firebase.firestore.FieldValue.serverTimestamp(),
+                historyClearedBy: (getCu() && getCu().email) || 'admin'
+            }, { merge: true });
+
+            console.log('✅ Đã xoá lịch sử chat:', email);
+
+            try {
+                db.collection('activity_logs').add({
+                    email: email,
+                    type: 'admin',
+                    title: 'Admin đã xoá lịch sử chat',
+                    detail: 'Bởi: ' + ((getCu() && getCu().email) || 'admin'),
+                    at: firebase.firestore.FieldValue.serverTimestamp()
+                });
+            } catch(e) {}
+
+            hideDeleteConfirm();
+            startWatchers();
+            showSmallToast('✅ Đã xoá lịch sử chat của ' + userName);
+
+        } catch (err) {
+            console.error('❌ Lỗi xoá lịch sử:', err);
+            alert('❌ Lỗi: ' + err.message);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        }
+    }
+
+    function showSmallToast(msg) {
+        var toast = document.getElementById('acmSmallToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'acmSmallToast';
+            toast.style.cssText =
+                'position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-100px);' +
+                'background:linear-gradient(135deg,#16a34a,#22c55e);color:#fff;' +
+                'padding:.8rem 1.4rem;border-radius:50px;font-weight:800;font-size:.88rem;' +
+                'box-shadow:0 12px 40px rgba(22,163,74,.5);z-index:99999;' +
+                'transition:transform .4s cubic-bezier(.34,1.56,.64,1),opacity .3s;' +
+                'opacity:0;pointer-events:none;max-width:90vw;text-align:center;';
+            document.body.appendChild(toast);
+        }
+        toast.textContent = msg;
+        requestAnimationFrame(function() {
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+            toast.style.opacity = '1';
+        });
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(function() {
+            toast.style.transform = 'translateX(-50%) translateY(-100px)';
+            toast.style.opacity = '0';
+        }, 3000);
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -1004,7 +1221,6 @@ def build_admin_chat_js():
         var tierLabel = getTierLabel(role === 'admin' ? 'admin' : tier);
         var isOnline = !!ACM.onlineMap[email];
 
-        // ⭐ Thời gian login gần nhất
         var lastLoginMs = ACM.loginLogsMap[(email || '').toLowerCase()] || 0;
         var lastLoginText = lastLoginMs > 0 ? formatDateTime(lastLoginMs) : '';
 
@@ -1031,7 +1247,6 @@ def build_admin_chat_js():
                     '<div class="acm-hist-meta">' +
                         '<span><i class="fas fa-list"></i> ' + activities.length + ' hoạt động</span>' +
                         (threadInfo.userEmail ? '<span><i class="fas fa-comments"></i> Có tin nhắn</span>' : '') +
-                        // ⭐ Hiển thị lần login cuối
                         (lastLoginText ? '<span><i class="fas fa-sign-in-alt"></i> Login cuối: ' + esc(lastLoginText) + '</span>' : '') +
                     '</div>' +
                 '</div>' +
@@ -1249,7 +1464,7 @@ def build_admin_chat_js():
             }
         }
 
-        // ⭐ 4. Watch login_logs — lần đăng nhập cuối
+        // 4. Watch login_logs
         ACM.loginLogsUnsub = db.collection('login_logs')
             .orderBy('time', 'desc')
             .limit(500)
@@ -1259,7 +1474,6 @@ def build_admin_chat_js():
                     var d = doc.data() || {};
                     var email = (d.email || '').toLowerCase();
                     if (!email) return;
-                    // Chỉ lấy log mới nhất của mỗi user
                     if (!ACM.loginLogsMap[email] && d.time) {
                         var ts = d.time.toMillis ? d.time.toMillis() : 
                                  (d.time.seconds ? d.time.seconds * 1000 : 0);
@@ -1390,6 +1604,24 @@ def build_admin_chat_js():
                 ACM.filter = this.getAttribute('data-filter');
                 scheduleRender();
             });
+        });
+
+        /* ⭐ Bind confirm xoá lịch sử */
+        var confirmCancel = $id('acmConfirmCancel');
+        if (confirmCancel) confirmCancel.addEventListener('click', hideDeleteConfirm);
+
+        var confirmOk = $id('acmConfirmOk');
+        if (confirmOk) confirmOk.addEventListener('click', doDeleteHistory);
+
+        var confirmOverlay = $id('acmConfirmDelete');
+        if (confirmOverlay) confirmOverlay.addEventListener('click', function(e) {
+            if (e.target === this) hideDeleteConfirm();
+        });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape' && $id('acmConfirmDelete').classList.contains('show')) {
+                hideDeleteConfirm();
+            }
         });
 
         console.log('✅ Admin Chat Manager: init');
