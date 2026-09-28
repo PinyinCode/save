@@ -2389,6 +2389,37 @@ def build_admin_chat_js():
             });
         });
 
+        /* ⭐ Auto-open chat khi URL có ?admin_chat=email (từ nút Telegram) */
+        setTimeout(function() {
+            try {
+                var urlParams = new URLSearchParams(window.location.search);
+                var targetEmail = urlParams.get('admin_chat');
+
+                if (targetEmail && isAdmin()) {
+                    console.log('🎯 Auto-open chat từ URL:', targetEmail);
+
+                    // Mở modal admin chat manager
+                    openModal();
+
+                    // Đợi data load xong rồi mở thread
+                    setTimeout(function() {
+                        if (typeof window.__acmOpenThread === 'function') {
+                            window.__acmOpenThread(targetEmail);
+                        }
+
+                        // Xoá param khỏi URL để không mở lại khi F5
+                        try {
+                            var url = new URL(window.location.href);
+                            url.searchParams.delete('admin_chat');
+                            window.history.replaceState({}, '', url.pathname + url.hash);
+                        } catch(e) {}
+                    }, 1500);
+                }
+            } catch(e) {
+                console.warn('Auto-open chat error:', e);
+            }
+        }, 2000);
+
         console.log('✅ Admin Chat Manager: init');
     }
 
