@@ -23,6 +23,28 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
    - ★ Nút toggle "Chỉ câu yêu thích" góc trái (Practice Full)
      → Khi bật: dropdown "CÂU:" chỉ liệt kê câu yêu thích
    - Chỉ tier ACTIVE/ADMIN dùng được, tier khác hiển thị 🔒
+
+✅ CHAT SUPPORT: Module độc lập (chat_support.py)
+   - User ↔ Admin realtime qua Firestore
+   - FAB + badge poll 60s
+   - Admin panel có tab "Chat hỗ trợ"
+
+✅ RTDB PRESENCE (2026-09):
+   - User online tracking qua Firebase Realtime Database
+   - KHÔNG tốn Firestore quota
+   - onDisconnect tự động xóa khi user tắt tab
+   - Admin xem được danh sách user online realtime
+
+✅ FIX (2026-09):
+   - Chèn QUOTA DASHBOARD vào Admin Panel (trước đây bị thiếu)
+   - Chèn USER ONLINE section vào Admin Panel
+   - Escape "</" cho TẤT CẢ JSON blobs
+
+✅ FIX (2026-09-28): TELEGRAM NOTIFY
+   - Thêm build_config_js() + build_telegram_notify_js() vào full_js
+   - Gửi thông báo Telegram khi user nhắn tin
+   - LOẠI BỎ thẻ <script> thừa trong full_js (build_config_js wrap trong
+     <script>...</script> → khi nhúng vào HTML_SHELL bị LỒNG 2 thẻ → vỡ HTML).
 """
 import json
 import os
@@ -59,6 +81,18 @@ from favorites_module import (
     build_favorites_js,
 )
 
+# ⬇️⬇️⬇️ Module Chat Support (độc lập) + Quota + Online
+from chat_support import (
+    build_chat_css,
+    build_chat_html,
+    build_chat_js,
+    build_quota_html,
+    build_quota_js,
+    build_quota_init_js,
+    build_online_section_html,
+    build_config_js,              # ⭐ THÊM
+    build_telegram_notify_js,     # ⭐ THÊM
+)
 
 # ═══════════════════════════════════════════════════════════════════
 #  HELPER: escape string an toàn khi nhúng vào JS
@@ -74,6 +108,18 @@ def _js_str(s):
             .replace('\n', '\\n')
             .replace('\r', '\\r')
             .replace('</', '<\\/'))
+
+
+def _json_blob(obj, compact=True):
+    """
+    Serialize object → JSON an toàn để nhúng vào <script>.
+    Escape "</" → "<\\/" để tránh đóng </script> sớm.
+    """
+    if compact:
+        s = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    else:
+        s = json.dumps(obj, ensure_ascii=False)
+    return s.replace("</", "<\\/")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -92,10 +138,6 @@ data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
 print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
 
 # ─── 2. Map icon + màu cho các chuyên ngành phổ biến ───
-# ═══════════════════════════════════════════════════════════════════
-#  ICON MAP — MỖI NGÀNH 1 ICON RIÊNG
-#  Màu đồng nhất cho TẤT CẢ = UNIFIED_COLOR (tím giống IT)
-# ═══════════════════════════════════════════════════════════════════
 ICON_MAP = {
     # ─── Nhân sự / Hành chính ───
     "nhân sự":              "fa-users",
@@ -145,14 +187,8 @@ ICON_MAP = {
     "it":                   "fa-laptop-code",
 }
 
-# Icon mặc định nếu không match ngành nào
 DEFAULT_ICON_NAME = "fa-folder"
-
-# ═══════════════════════════════════════════════════════════════════
-#  MÀU ĐỒNG NHẤT — TẤT CẢ NÚT DÙNG CÙNG MÀU NÀY
-#  (Tím giống IT hiện tại)
-# ═══════════════════════════════════════════════════════════════════
-UNIFIED_COLOR = "#7c3aed"     # ← Đổi màu ở đây nếu muốn (VD: "#6366f1", "#0ea5e9")
+UNIFIED_COLOR = "#7c3aed"
 
 
 def auto_detect_icon_color(display_name):
@@ -167,15 +203,13 @@ def auto_detect_icon_color(display_name):
     if key in ICON_MAP:
         return (ICON_MAP[key], UNIFIED_COLOR)
 
-    # ─── 2. Match theo TỪ riêng (tránh "it" match bừa trong "unity") ───
-    #     VD: "máy tính & it" → ["máy", "tính", "&", "it"] → key "it" có trong list
+    # ─── 2. Match theo TỪ riêng ───
     words = re.split(r'[\s&\-_/,\.]+', key)
-    # Ưu tiên key DÀI match trước (tránh "it" match trước "máy tính & it")
     for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if k in words:
             return (ICON_MAP[k], UNIFIED_COLOR)
 
-    # ─── 3. Match substring (CHỈ key >= 3 ký tự, tránh "it"/"qa"/"qc") ───
+    # ─── 3. Match substring (CHỈ key >= 3 ký tự) ───
     for k in sorted(ICON_MAP.keys(), key=len, reverse=True):
         if len(k) >= 3 and k in key:
             return (ICON_MAP[k], UNIFIED_COLOR)
@@ -268,36 +302,45 @@ else:
     print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
     print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
 
-# ─── 5. Serialize DATASET_REGISTRY ───
-dataset_registry_json = json.dumps(
-    DATASET_REGISTRY,
-    ensure_ascii=False,
-    separators=(",", ":"),
-).replace("</", "<\\/")
-
-# ─── 6. RAW_DATA ───
-json_data = json.dumps(data_tonghop, ensure_ascii=False, separators=(",", ":"))
-json_data = json_data.replace("</", "<\\/")
-
-firebase_config_json = json.dumps(CONFIG["firebase_config"], ensure_ascii=False)
-synonyms_json = json.dumps(CONFIG["synonyms"], ensure_ascii=False, separators=(",", ":"))
-fillers_json = json.dumps(CONFIG["filler_words"], ensure_ascii=False, separators=(",", ":"))
-
-# ─── 7. Onboarding config ───
-onboarding_config_json = json.dumps(
-    CONFIG.get("onboarding", {}),
-    ensure_ascii=False,
-    separators=(",", ":"),
-)
+# ─── 5. Serialize (escape "</" cho TẤT CẢ) ───
+dataset_registry_json = _json_blob(DATASET_REGISTRY)
+json_data = _json_blob(data_tonghop)
+firebase_config_json = _json_blob(CONFIG["firebase_config"])
+synonyms_json = _json_blob(CONFIG["synonyms"])
+fillers_json = _json_blob(CONFIG["filler_words"])
+onboarding_config_json = _json_blob(CONFIG.get("onboarding", {}))
 
 telegram_bot_token = CONFIG.get("telegram_bot_token", "")
 telegram_chat_id = CONFIG.get("telegram_chat_id", "")
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  BUILD AUTH
+#  BUILD AUTH + CHÈN QUOTA + ONLINE SECTIONS
 # ═══════════════════════════════════════════════════════════════════
 auth_css, auth_html, auth_js = build_all_auth(CONFIG)
+
+# ⬇️⬇️⬇️ THÊM: Chèn User Online section (RTDB) vào Admin Panel
+if '<!-- __ADMIN_ONLINE_SECTION__ -->' in auth_html:
+    auth_html = auth_html.replace(
+        '<!-- __ADMIN_ONLINE_SECTION__ -->',
+        build_online_section_html()
+    )
+    print("✅ Đã chèn User Online section vào Admin Panel")
+else:
+    print("⚠️  Không tìm thấy placeholder <!-- __ADMIN_ONLINE_SECTION__ -->")
+    print("   → Thêm vào accounts_template.py → build_accounts_html()")
+    print("   → TRƯỚC dòng <!-- __ADMIN_QUOTA_SECTION__ -->")
+
+# ⬇️⬇️⬇️ Chèn Quota Dashboard vào Admin Panel (như cũ)
+if '<!-- __ADMIN_QUOTA_SECTION__ -->' in auth_html:
+    auth_html = auth_html.replace(
+        '<!-- __ADMIN_QUOTA_SECTION__ -->',
+        build_quota_html()
+    )
+    print("✅ Đã chèn Quota Dashboard vào Admin Panel")
+else:
+    print("⚠️  Không tìm thấy placeholder <!-- __ADMIN_QUOTA_SECTION__ -->")
+    print("   → Kiểm tra accounts_template.py → build_accounts_html()")
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -447,25 +490,20 @@ FULLWIDTH_CSS = r"""
 
 /* ═══════════════════════════════════════════════════════════════════
    ★★★ FAVORITES TAB — 3 TAB CÙNG HÀNG TRÊN PC ★★★
-   PC: [Tổng hợp] [Chuyên ngành] [Yêu thích] — 3 cột đều
-   Mobile: Yêu thích tự xuống hàng riêng
    ═══════════════════════════════════════════════════════════════════ */
 
-/* PC: ds-main-row chia 3 cột */
 @media (min-width: 769px) {
     .ds-main-row {
         grid-template-columns: 1fr 1fr 1fr !important;
     }
 }
 
-/* Mobile: 2 cột (Yêu thích xuống hàng) */
 @media (max-width: 768px) {
     .ds-main-row {
         grid-template-columns: 1fr 1fr !important;
     }
 }
 
-/* Mobile rất nhỏ: 1 cột dọc */
 @media (max-width: 500px) {
     .ds-main-row {
         grid-template-columns: 1fr !important;
@@ -805,6 +843,7 @@ full_css = (
     + "\n/* ==== ACCOUNTS + RENEWAL CSS ==== */\n" + auth_css
     + "\n/* ==== INTRO CSS ==== */\n" + build_intro_css()
     + "\n/* ==== ❤️ FAVORITES CSS ==== */\n" + build_favorites_css()
+    + "\n/* ==== 💬 CHAT SUPPORT CSS ==== */\n" + build_chat_css()
     + "\n/* ==== FULLWIDTH SCALE + HEADER DESIGN (override cuối) ==== */\n" + FULLWIDTH_CSS
 )
 
@@ -819,10 +858,7 @@ ui_html = ui_html.replace("<!-- __QUICK_INTRO_BANNER__ -->", build_intro_html())
 # ⬇️⬇️⬇️ Chèn snippet Favorites vào HTML
 _fav_html = build_favorites_html()
 
-# ═══════════════════════════════════════════════════════════════════
 # ═══ 1. Tab Yêu thích — chèn TRỰC TIẾP vào ds-main-row ═══
-# 3 tab cùng hàng trên PC, mobile tự xuống hàng
-# ═══════════════════════════════════════════════════════════════════
 ui_html = ui_html.replace(
     '<!-- __FAV_DATASET_TAB__ -->',
     _fav_html["dataset_tab"]
@@ -833,12 +869,7 @@ if 'data-dataset-group="favorites"' not in ui_html:
 else:
     print("✅ Đã chèn tab Yêu thích vào ds-main-row")
 
-# ═══════════════════════════════════════════════════════════════════
-# ═══ 2. ★ HAI NÚT FLOAT trong Practice Full ═══
-#     - Nút tim (pf_float_btn) — góc phải
-#     - Nút toggle "Chỉ câu yêu thích" (pf_fav_only_btn) — góc trái
-#     Cả 2 chèn ngay trước TikTok float
-# ═══════════════════════════════════════════════════════════════════
+# ═══ 2. HAI NÚT FLOAT trong Practice Full ═══
 _pf_buttons = _fav_html["pf_float_btn"] + '\n' + _fav_html["pf_fav_only_btn"]
 
 ui_html = ui_html.replace(
@@ -846,14 +877,10 @@ ui_html = ui_html.replace(
     _pf_buttons + '\n<a class="pf-tiktok-float" id="pfTiktokFloat"'
 )
 
-# ═══ 3. Dropdown item Yêu thích — chèn SAU item Chuyên ngành trong DROPDOWN ═══
-# Tìm item Chuyên ngành trong dropdown (không phải tab) và chèn Yêu thích sau nó
+# ═══ 3. Dropdown item Yêu thích ═══
 _dd_patterns = [
-    # Pattern chính: dropdown item với class ds-dropdown-item + data-dataset-group
     r'(<button[^>]*class="[^"]*ds-dropdown-item[^"]*"[^>]*data-dataset-group="chuyen-nganh"[^>]*>.*?</button>)',
-    # Fallback: dropdown item có id riêng
     r'(<button[^>]*id="dsChuyenNganhDropdownItem"[^>]*>.*?</button>)',
-    # Fallback: <a> tag thay vì <button>
     r'(<a[^>]*class="[^"]*ds-dropdown-item[^"]*"[^>]*data-dataset-group="chuyen-nganh"[^>]*>.*?</a>)',
 ]
 
@@ -888,6 +915,7 @@ full_body = (
     '<div class="page-wrap">\n'
     + ui_html
     + "\n" + auth_html
+    + "\n" + build_chat_html()
     + '\n</div>'
 )
 
@@ -896,12 +924,33 @@ full_body = (
 #  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
 full_js = (
-    build_ui_js()
+    # ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN (inject window.TELEGRAM_*, ZALO_*, SITE_NAME)
+    build_config_js(CONFIG)
+    # ⭐ 2. Telegram notify module — định nghĩa window.__sendTelegramNotify()
+    + "\n/* ==== 📨 TELEGRAM NOTIFY ==== */\n" + build_telegram_notify_js()
+    # 3. Các module còn lại
+    + "\n/* ==== UI JS ==== */\n" + build_ui_js()
     + "\n/* ==== SOCIAL JS ==== */\n" + build_social_js()
     + "\n/* ==== ACCOUNTS + RENEWAL JS ==== */\n" + auth_js
     + "\n/* ==== INTRO JS ==== */\n" + build_intro_js()
     + "\n/* ==== ❤️ FAVORITES JS ==== */\n" + build_favorites_js()
+    + "\n/* ==== 💬 CHAT SUPPORT JS ==== */\n" + build_chat_js()
+    + "\n/* ==== 📊 QUOTA JS ==== */\n" + build_quota_js()
+    + "\n/* ==== 📊 QUOTA INIT (bind buttons) ==== */\n" + build_quota_init_js()
 )
+
+# ═══════════════════════════════════════════════════════════════════
+#  ⭐⭐⭐ FIX (2026-09-28): LOẠI BỎ THẺ <script> THỪA TRONG full_js ⭐⭐⭐
+#  Lý do: build_config_js() và build_telegram_notify_js() trả về chuỗi
+#         CÓ WRAP trong '<script>...</script>' → khi nhúng vào HTML_SHELL
+#         (đã có sẵn <script>__JS__</script>) → LỒNG 2 THẺ SCRIPT
+#         → trình duyệt đóng thẻ script sớm → TRANG TRẮNG, code rò rỉ.
+#  Giải pháp: strip TẤT CẢ thẻ <script> và </script> khỏi full_js.
+# ═══════════════════════════════════════════════════════════════════
+full_js = full_js.replace('<script>', '').replace('</script>', '')
+full_js = full_js.replace('<SCRIPT>', '').replace('</SCRIPT>', '')
+# Fallback: nếu vẫn còn dạng escape '<\/script>' → giữ nguyên an toàn
+# (không replace vì đã an toàn)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -919,6 +968,7 @@ HTML_SHELL = r'''<!DOCTYPE html>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/hanzi-writer@3.5.0/dist/hanzi-writer.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -979,13 +1029,13 @@ window.__switchRawData = function(datasetId) {
 
         console.log('📲 Telegram module init:', {
             hasToken: _TG_TOKEN && _TG_TOKEN.indexOf('__') !== 0 && _TG_TOKEN.length > 20,
-            tokenPreview: _TG_TOKEN,
- ? _TG_TOKEN.substring(0, 15) +                        '...' : '(empty)',
-            text chatId: _TG_CHAT: || '(empty)'
+            tokenPreview: (_TG_TOKEN && _TG_TOKEN.length > 15)
+                ? _TG_TOKEN.substring(0, 15) + '...'
+                : '(empty)',
+            chatId: _TG_CHAT || '(empty)'
         });
 
-        text window.sendTelegramMessage = function(text),
- {
+        window.sendTelegramMessage = function(text) {
             try {
                 if (!_TG_TOKEN || !_TG_CHAT || _TG_TOKEN.indexOf('__') === 0 || _TG_TOKEN.length < 20) {
                     console.log('⚠️ Telegram chưa cấu hình — bỏ qua');
@@ -995,7 +1045,9 @@ window.__switchRawData = function(datasetId) {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        chat_id: _TG_CHAT                        parse_mode: 'HTML',
+                        chat_id: _TG_CHAT,
+                        text: text,
+                        parse_mode: 'HTML',
                         disable_web_page_preview: true
                     })
                 })
@@ -1058,7 +1110,7 @@ html_output = (HTML_SHELL
     .replace("__BODY__", full_body)
     .replace("__JS__",   full_js)
 
-    # 2. Data blobs
+    # 2. Data blobs (đã escape "</" qua _json_blob)
     .replace("__DATA__",              json_data)
     .replace("__DATASET_REGISTRY__",  dataset_registry_json)
     .replace("__FIREBASE_CONFIG__",   firebase_config_json)
@@ -1103,6 +1155,9 @@ print(f"❤️  Yêu thích: 3 tab cùng hàng (PC) + dropdown + 2 nút float")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
 print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
+print(f"💬 Chat Support: đã thêm (user ↔ admin)")
+print(f"📊 Quota Dashboard: đã thêm vào Admin Panel")
+print(f"👥 User Online (RTDB): đã thêm section vào Admin Panel")
 
 # ─── Onboarding info ───
 _onb = CONFIG.get("onboarding", {})
