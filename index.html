@@ -7075,6 +7075,23 @@ body.has-floating-group #chatFloatWrap{
 }
 .acm-close:hover{background:rgba(255,255,255,.35);transform:scale(1.05);}
 
+/* ⭐ Nút toggle bulk mode trên header */
+.acm-bulk-toggle{
+    width:36px;height:36px;border-radius:50%;
+    border:none;background:rgba(255,255,255,.2);
+    color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.95rem;flex-shrink:0;transition:.15s;
+}
+.acm-bulk-toggle:hover{
+    background:rgba(255,255,255,.35);
+    transform:scale(1.05);
+}
+.acm-bulk-toggle.active{
+    background:rgba(251,191,36,.5);
+    box-shadow:0 0 0 3px rgba(251,191,36,.3);
+}
+
 /* ─── STATS BAR ─── */
 .acm-stats{
     display:grid;
@@ -7145,6 +7162,144 @@ body.has-floating-group #chatFloatWrap{
 .acm-refresh-btn:hover{background:#4f46e5;color:#fff;transform:rotate(180deg);}
 .acm-refresh-btn.spinning{animation:acmSpin .6s linear infinite;}
 @keyframes acmSpin{to{transform:rotate(360deg);}}
+
+/* ⭐ BULK TOOLBAR */
+.acm-bulk-toolbar{
+    display:none;
+    padding:.65rem 1.25rem;
+    background:linear-gradient(135deg, #eff6ff, #e0e7ff);
+    border-bottom:1px solid #c7d2fe;
+    flex-shrink:0;
+    align-items:center;
+    gap:.75rem;
+    flex-wrap:wrap;
+}
+.acm-bulk-toolbar.show{display:flex;}
+[data-theme="dark"] .acm-bulk-toolbar{
+    background:linear-gradient(135deg, rgba(79,70,229,.15), rgba(124,58,237,.1));
+    border-color:rgba(124,58,237,.3);
+}
+.acm-bulk-info{
+    flex:1;
+    min-width:0;
+    font-size:.82rem;
+    font-weight:700;
+    color:#4f46e5;
+    display:flex;
+    align-items:center;
+    gap:.35rem;
+}
+[data-theme="dark"] .acm-bulk-info{color:#a5b4fc;}
+.acm-bulk-count{
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    padding:.15rem .55rem;
+    border-radius:50px;
+    font-weight:900;
+    font-size:.85rem;
+    min-width:28px;
+    text-align:center;
+}
+.acm-bulk-btn{
+    padding:.5rem 1rem;
+    border-radius:9px;
+    border:none;
+    font-size:.8rem;
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+    display:inline-flex;
+    align-items:center;
+    gap:.35rem;
+    transition:.15s;
+    white-space:nowrap;
+}
+.acm-bulk-btn.primary{
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    box-shadow:0 3px 10px rgba(79,70,229,.35);
+}
+.acm-bulk-btn.primary:hover{
+    transform:translateY(-1px);
+    box-shadow:0 5px 14px rgba(79,70,229,.5);
+}
+.acm-bulk-btn.primary:disabled{
+    opacity:.4;
+    cursor:not-allowed;
+    transform:none;
+}
+.acm-bulk-btn.ghost{
+    background:rgba(255,255,255,.7);
+    color:#4f46e5;
+    border:1.5px solid rgba(79,70,229,.35);
+}
+.acm-bulk-btn.ghost:hover{
+    background:#fff;
+    border-color:#4f46e5;
+}
+[data-theme="dark"] .acm-bulk-btn.ghost{
+    background:rgba(30,41,59,.6);
+    color:#a5b4fc;
+    border-color:rgba(124,58,237,.4);
+}
+
+/* ⭐ CHECKBOX user */
+.acm-user-checkbox{
+    width:24px;height:24px;flex-shrink:0;
+    display:none;
+    align-items:center;justify-content:center;
+    cursor:pointer;
+}
+body.acm-bulk-mode .acm-user-checkbox{display:flex;}
+.acm-user-checkbox input{
+    width:20px;height:20px;
+    accent-color:#4f46e5;
+    cursor:pointer;
+    margin:0;
+}
+
+/* User được chọn */
+.acm-user.selected{
+    border-color:#4f46e5;
+    background:linear-gradient(90deg, rgba(79,70,229,.08), rgba(124,58,237,.05));
+    box-shadow:0 2px 12px rgba(79,70,229,.15);
+}
+[data-theme="dark"] .acm-user.selected{
+    background:linear-gradient(90deg, rgba(79,70,229,.2), rgba(124,58,237,.12));
+}
+
+/* ⭐ SELECT ALL ROW */
+.acm-select-all-row{
+    display:none;
+    padding:.5rem .85rem;
+    background:#fff;
+    border:1.5px dashed #c7d2fe;
+    border-radius:10px;
+    margin-bottom:.5rem;
+    align-items:center;
+    gap:.5rem;
+    font-size:.8rem;
+    font-weight:700;
+    color:#4f46e5;
+    cursor:pointer;
+    transition:.15s;
+}
+body.acm-bulk-mode .acm-select-all-row{display:flex;}
+.acm-select-all-row:hover{
+    background:#eff6ff;
+    border-color:#4f46e5;
+}
+[data-theme="dark"] .acm-select-all-row{
+    background:#1e293b;
+    border-color:rgba(124,58,237,.3);
+    color:#a5b4fc;
+}
+.acm-select-all-row input{
+    width:20px;height:20px;
+    accent-color:#4f46e5;
+    cursor:pointer;
+    margin:0;
+}
 
 /* ─── LIST ─── */
 .acm-list{
@@ -7260,7 +7415,7 @@ body.has-floating-group #chatFloatWrap{
     50%{transform:scale(1.15);}
 }
 
-/* ⭐ Actions cho mỗi user (chat + history + delete) */
+/* ⭐ Actions cho mỗi user */
 .acm-user-actions{
     display:flex;gap:.3rem;flex-shrink:0;margin-left:.5rem;
 }
@@ -7277,7 +7432,7 @@ body.has-floating-group #chatFloatWrap{
 .acm-user-btn.history{background:#eff6ff;color:#4f46e5;}
 .acm-user-btn.history:hover{background:#4f46e5;color:#fff;box-shadow:0 4px 12px rgba(79,70,229,.4);}
 
-/* ⭐ Nút xoá lịch sử chat */
+/* ⭐ Nút xoá lịch sử */
 .acm-user-btn.delete-history{
     background:#fef2f2;
     color:#dc2626;
@@ -7322,7 +7477,6 @@ body.has-floating-group #chatFloatWrap{
 .acm-history.show{display:block;}
 [data-theme="dark"] .acm-history{background:#0f172a;}
 
-/* Header của user trong history */
 .acm-hist-header{
     display:flex;align-items:center;gap:1rem;
     padding:1rem;
@@ -7356,7 +7510,6 @@ body.has-floating-group #chatFloatWrap{
     display:flex;flex-wrap:wrap;gap:.75rem;
 }
 
-/* ── Filter tabs history ── */
 .acm-hist-filters{
     display:flex;gap:.4rem;flex-wrap:wrap;
     margin-bottom:1rem;
@@ -7375,7 +7528,6 @@ body.has-floating-group #chatFloatWrap{
 .acm-hist-filter:hover{border-color:#4f46e5;color:#4f46e5;}
 .acm-hist-filter.active{background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;border-color:transparent;}
 
-/* ── Timeline ── */
 .acm-timeline{
     position:relative;
     padding-left:2rem;
@@ -7401,7 +7553,6 @@ body.has-floating-group #chatFloatWrap{
 [data-theme="dark"] .acm-tl-item{background:#1e293b;border-color:#4f46e5;}
 .acm-tl-item:hover{box-shadow:0 4px 12px rgba(79,70,229,.1);transform:translateX(2px);}
 
-/* Chấm tròn trên timeline */
 .acm-tl-item::before{
     content:'';
     position:absolute;
@@ -7413,7 +7564,6 @@ body.has-floating-group #chatFloatWrap{
 }
 [data-theme="dark"] .acm-tl-item::before{border-color:#1e293b;}
 
-/* Màu theo type */
 .acm-tl-item[data-type="login"]{border-left-color:#16a34a;}
 .acm-tl-item[data-type="login"]::before{background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.15);}
 .acm-tl-item[data-type="logout"]{border-left-color:#94a3b8;}
@@ -7615,7 +7765,229 @@ body.has-floating-group #chatFloatWrap{
 [data-theme="dark"] .acm-confirm-btn{
     background:#334155;color:#f1f5f9;border-color:#475569;
 }
-[data-theme="dark"] .acm-confirm-btn:hover{background:#475569;}
+
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ BULK COMPOSE MODAL
+   ═══════════════════════════════════════════════════════════════ */
+.acm-bulk-compose{
+    position:fixed;inset:0;
+    background:rgba(15,23,42,.8);
+    backdrop-filter:blur(4px);
+    z-index:6100;
+    display:none;
+    align-items:center;justify-content:center;
+    padding:1rem;
+}
+.acm-bulk-compose.show{display:flex;}
+.acm-bulk-compose-box{
+    background:#fff;
+    border-radius:18px;
+    max-width:560px;
+    width:100%;
+    max-height:90vh;
+    display:flex;flex-direction:column;
+    box-shadow:0 20px 60px rgba(0,0,0,.4);
+    animation:acmSlideIn .3s cubic-bezier(.34,1.56,.64,1);
+    overflow:hidden;
+}
+[data-theme="dark"] .acm-bulk-compose-box{background:#1e293b;}
+.acm-bulk-compose-header{
+    padding:1rem 1.25rem;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    display:flex;align-items:center;gap:.75rem;
+    flex-shrink:0;
+}
+.acm-bulk-compose-header h3{
+    font-size:1rem;font-weight:800;
+    margin:0;flex:1;
+    display:flex;align-items:center;gap:.4rem;
+}
+.acm-bulk-compose-close{
+    width:32px;height:32px;border-radius:50%;
+    border:none;background:rgba(255,255,255,.2);
+    color:#fff;cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    font-size:.9rem;flex-shrink:0;
+    transition:.15s;
+}
+.acm-bulk-compose-close:hover{background:rgba(255,255,255,.35);}
+.acm-bulk-compose-body{
+    padding:1.25rem;
+    overflow-y:auto;
+    flex:1;
+    min-height:0;
+}
+.acm-bulk-label{
+    font-size:.72rem;
+    font-weight:800;
+    color:#64748b;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    margin-bottom:.4rem;
+    display:flex;
+    align-items:center;
+    gap:.35rem;
+}
+[data-theme="dark"] .acm-bulk-label{color:#94a3b8;}
+.acm-bulk-textarea{
+    width:100%;
+    min-height:130px;
+    max-height:280px;
+    padding:.85rem 1rem;
+    border-radius:12px;
+    border:1.5px solid #e2e8f0;
+    background:#f8fafc;
+    color:#0f172a;
+    font-size:.9rem;
+    font-family:inherit;
+    line-height:1.5;
+    outline:none;
+    resize:vertical;
+    transition:.15s;
+}
+.acm-bulk-textarea:focus{
+    border-color:#4f46e5;
+    box-shadow:0 0 0 3px rgba(79,70,229,.1);
+}
+[data-theme="dark"] .acm-bulk-textarea{
+    background:#0f172a;
+    color:#f1f5f9;
+    border-color:#334155;
+}
+.acm-bulk-charcount{
+    text-align:right;
+    font-size:.72rem;
+    color:#94a3b8;
+    margin-top:.35rem;
+}
+.acm-bulk-templates{
+    display:flex;
+    gap:.35rem;
+    flex-wrap:wrap;
+    margin-top:.65rem;
+}
+.acm-bulk-template{
+    padding:.35rem .75rem;
+    border-radius:50px;
+    border:1.5px solid #e2e8f0;
+    background:#fff;
+    color:#4f46e5;
+    font-size:.72rem;
+    font-weight:700;
+    cursor:pointer;
+    font-family:inherit;
+    transition:.15s;
+}
+.acm-bulk-template:hover{
+    background:#4f46e5;
+    color:#fff;
+    border-color:#4f46e5;
+}
+[data-theme="dark"] .acm-bulk-template{
+    background:#334155;
+    color:#a5b4fc;
+    border-color:#475569;
+}
+[data-theme="dark"] .acm-bulk-template:hover{
+    background:#4f46e5;
+    color:#fff;
+}
+.acm-bulk-recipients{
+    margin-top:1rem;
+    padding:.75rem;
+    border-radius:10px;
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    max-height:140px;
+    overflow-y:auto;
+}
+[data-theme="dark"] .acm-bulk-recipients{
+    background:#0f172a;
+    border-color:#334155;
+}
+.acm-bulk-recipient-tag{
+    display:inline-block;
+    padding:.2rem .55rem;
+    margin:.15rem;
+    border-radius:50px;
+    background:#e0e7ff;
+    color:#3730a3;
+    font-size:.7rem;
+    font-weight:700;
+}
+[data-theme="dark"] .acm-bulk-recipient-tag{
+    background:rgba(124,58,237,.25);
+    color:#ddd6fe;
+}
+.acm-bulk-compose-footer{
+    padding:1rem 1.25rem;
+    border-top:1px solid #e2e8f0;
+    display:flex;
+    gap:.5rem;
+    justify-content:flex-end;
+    flex-shrink:0;
+    background:#fff;
+}
+[data-theme="dark"] .acm-bulk-compose-footer{
+    background:#1e293b;
+    border-color:#334155;
+}
+.acm-bulk-send-btn{
+    padding:.7rem 1.4rem;
+    border-radius:10px;
+    border:none;
+    background:linear-gradient(135deg,#4f46e5,#7c3aed);
+    color:#fff;
+    font-size:.85rem;
+    font-weight:800;
+    cursor:pointer;
+    font-family:inherit;
+    display:inline-flex;
+    align-items:center;
+    gap:.4rem;
+    transition:.15s;
+    box-shadow:0 4px 12px rgba(124,58,237,.35);
+}
+.acm-bulk-send-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 6px 18px rgba(124,58,237,.5);
+}
+.acm-bulk-send-btn:disabled{
+    opacity:.5;
+    cursor:not-allowed;
+    transform:none;
+}
+.acm-bulk-progress{
+    display:none;
+    padding:.75rem 1.25rem;
+    background:linear-gradient(90deg, #eff6ff, #e0e7ff);
+    border-top:1px solid #c7d2fe;
+    flex-shrink:0;
+}
+.acm-bulk-progress.show{display:block;}
+.acm-bulk-progress-text{
+    font-size:.78rem;
+    font-weight:700;
+    color:#4f46e5;
+    margin-bottom:.4rem;
+    display:flex;
+    justify-content:space-between;
+    gap:.5rem;
+}
+.acm-bulk-progress-bar{
+    height:6px;
+    background:#c7d2fe;
+    border-radius:50px;
+    overflow:hidden;
+}
+.acm-bulk-progress-fill{
+    height:100%;
+    background:linear-gradient(90deg,#4f46e5,#7c3aed);
+    border-radius:50px;
+    transition:width .3s ease;
+    width:0%;
+}
 
 /* ==== 🎯 DRAGGABLE FAB CSS ==== */
 
@@ -9450,6 +9822,9 @@ body.has-floating-group #chatFloatWrap{
         <!-- ═══ VIEW 1: DANH SÁCH USER ═══ -->
         <div class="acm-header" id="acmHeaderList">
             <h3><i class="fas fa-users-cog"></i> Quản lý Chat — Tất cả User</h3>
+            <button class="acm-bulk-toggle" id="acmBulkToggle" type="button" title="Chọn nhiều user để gửi hàng loạt">
+                <i class="fas fa-check-square"></i>
+            </button>
             <button class="acm-close" id="acmClose" type="button" title="Đóng">
                 <i class="fas fa-times"></i>
             </button>
@@ -9483,6 +9858,23 @@ body.has-floating-group #chatFloatWrap{
                    placeholder="🔍 Tìm theo tên hoặc email..." autocomplete="off">
             <button class="acm-refresh-btn" id="acmRefreshBtn" type="button" title="Làm mới">
                 <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+
+        <!-- ⭐ BULK TOOLBAR -->
+        <div class="acm-bulk-toolbar" id="acmBulkToolbar">
+            <div class="acm-bulk-info">
+                <i class="fas fa-check-circle"></i>
+                Đã chọn: <span class="acm-bulk-count" id="acmBulkCount">0</span> user
+            </div>
+            <button class="acm-bulk-btn ghost" type="button" id="acmBulkSelectAll">
+                <i class="fas fa-check-double"></i> Chọn tất cả
+            </button>
+            <button class="acm-bulk-btn ghost" type="button" id="acmBulkClear">
+                <i class="fas fa-times"></i> Bỏ chọn
+            </button>
+            <button class="acm-bulk-btn primary" type="button" id="acmBulkSend" disabled>
+                <i class="fas fa-paper-plane"></i> Gửi hàng loạt
             </button>
         </div>
 
@@ -9530,6 +9922,58 @@ body.has-floating-group #chatFloatWrap{
             </button>
             <button class="acm-confirm-btn danger" type="button" id="acmConfirmOk">
                 <i class="fas fa-trash-alt"></i> Xoá vĩnh viễn
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ⭐ BULK MESSAGE COMPOSE MODAL -->
+<div class="acm-bulk-compose" id="acmBulkCompose">
+    <div class="acm-bulk-compose-box">
+        <div class="acm-bulk-compose-header">
+            <h3><i class="fas fa-bullhorn"></i> Nhắn tin hàng loạt</h3>
+            <button class="acm-bulk-compose-close" type="button" id="acmBulkComposeClose">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="acm-bulk-compose-body">
+            <div class="acm-bulk-label">
+                <i class="fas fa-users"></i> Người nhận (<span id="acmBulkRecipientCount">0</span>)
+            </div>
+            <div class="acm-bulk-recipients" id="acmBulkRecipientsList"></div>
+
+            <div class="acm-bulk-label" style="margin-top:1rem;">
+                <i class="fas fa-comment-dots"></i> Nội dung tin nhắn
+            </div>
+            <textarea class="acm-bulk-textarea" id="acmBulkTextarea"
+                      placeholder="Nhập nội dung tin nhắn gửi cho tất cả user đã chọn..."
+                      maxlength="1000"></textarea>
+            <div class="acm-bulk-charcount">
+                <span id="acmBulkCharCount">0</span>/1000
+            </div>
+
+            <div class="acm-bulk-templates">
+                <button class="acm-bulk-template" type="button" data-text="Chào bạn, admin đã xác nhận thanh toán và gia hạn tài khoản cho bạn. Chúc bạn học tốt! 🎓">✅ Đã gia hạn</button>
+                <button class="acm-bulk-template" type="button" data-text="Chào bạn, admin đã nhận được yêu cầu gia hạn của bạn. Vui lòng chuyển khoản và xác nhận để được kích hoạt nhé!">💰 Nhắc thanh toán</button>
+                <button class="acm-bulk-template" type="button" data-text="Chào bạn, tài khoản của bạn sắp hết hạn. Vui lòng gia hạn để tiếp tục sử dụng đầy đủ tính năng nhé! ⏰">⏰ Nhắc gia hạn</button>
+                <button class="acm-bulk-template" type="button" data-text="Cảm ơn bạn đã ủng hộ. Chúc bạn học tiếng Trung hiệu quả! 🎉">🎉 Cảm ơn</button>
+            </div>
+        </div>
+        <div class="acm-bulk-progress" id="acmBulkProgress">
+            <div class="acm-bulk-progress-text">
+                <span><i class="fas fa-spinner fa-pulse"></i> Đang gửi...</span>
+                <span id="acmBulkProgressText">0/0</span>
+            </div>
+            <div class="acm-bulk-progress-bar">
+                <div class="acm-bulk-progress-fill" id="acmBulkProgressFill"></div>
+            </div>
+        </div>
+        <div class="acm-bulk-compose-footer">
+            <button class="acm-bulk-btn ghost" type="button" id="acmBulkComposeCancel">
+                <i class="fas fa-times"></i> Huỷ
+            </button>
+            <button class="acm-bulk-send-btn" type="button" id="acmBulkComposeSend" disabled>
+                <i class="fas fa-paper-plane"></i> Gửi <span id="acmBulkSendCount">0</span> tin
             </button>
         </div>
     </div>
@@ -21871,6 +22315,7 @@ window.favFilterCount = favFilterCount;
 
 /* ═══════════════════════════════════════════════════════════════
    📋 ADMIN CHAT MANAGER — Trình quản lý chat + Lịch sử hoạt động
+   + Xoá lịch sử + Nhắn tin hàng loạt
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     'use strict';
@@ -21894,7 +22339,9 @@ window.favFilterCount = favFilterCount;
         filter: 'all',
         searchTerm: '',
         renderTimer: null,
-        pendingDelete: null     // ⭐ MỚI
+        pendingDelete: null,
+        bulkMode: false,        // ⭐ bulk
+        selectedUsers: []       // ⭐ bulk
     };
 
     function $id(id) { return document.getElementById(id); }
@@ -21906,6 +22353,10 @@ window.favFilterCount = favFilterCount;
     function jsStr(s) {
         if (s == null) return '';
         return String(s).replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'\\"');
+    }
+    function cssEsc(s) {
+        if (window.CSS && CSS.escape) return CSS.escape(s);
+        return String(s).replace(/([^\w-])/g, '\\$1');
     }
     function getDb() { return window.db || null; }
     function getCu() { return window.currentUser || null; }
@@ -21951,7 +22402,6 @@ window.favFilterCount = favFilterCount;
     function rebuildList() {
         var map = {};
 
-        // 1. Từ allowed_users
         Object.keys(ACM.usersMap).forEach(function(email) {
             var u = ACM.usersMap[email];
             var emailLower = (email || '').toLowerCase();
@@ -21969,7 +22419,6 @@ window.favFilterCount = favFilterCount;
             };
         });
 
-        // 2. Merge với chat_threads
         Object.keys(ACM.threadsMap).forEach(function(email) {
             var t = ACM.threadsMap[email];
             if (!map[email]) {
@@ -22000,10 +22449,8 @@ window.favFilterCount = favFilterCount;
             }
         });
 
-        // 3. Array
         ACM.allUsers = Object.keys(map).map(function(k) { return map[k]; });
 
-        // 4. Sort
         ACM.allUsers.sort(function(a, b) {
             if (a.unread > 0 && b.unread === 0) return -1;
             if (a.unread === 0 && b.unread > 0) return 1;
@@ -22023,10 +22470,7 @@ window.favFilterCount = favFilterCount;
             return (a.name || '').localeCompare(b.name || '');
         });
 
-        // 5. Stats
         updateStats();
-
-        // 6. Render
         scheduleRender();
     }
 
@@ -22102,10 +22546,22 @@ window.favFilterCount = favFilterCount;
         }
 
         var html = '';
+
+        // ⭐ Select all row (chỉ hiện trong bulk mode)
+        var allSelected = list.length > 0 && list.every(function(u) {
+            return ACM.selectedUsers.indexOf(u.email) !== -1;
+        });
+        html += '<label class="acm-select-all-row">' +
+            '<input type="checkbox" ' + (allSelected ? 'checked' : '') +
+                ' onchange="window.__acmToggleSelectAll(this.checked)" />' +
+            '<span>Chọn tất cả (' + list.length + ' user đang hiển thị)</span>' +
+        '</label>';
+
         list.forEach(function(u) {
             var hasUnread = u.unread > 0;
             var hasThread = !!u.thread;
             var isOnline = !!ACM.onlineMap[u.email];
+            var isSelected = ACM.selectedUsers.indexOf(u.email) !== -1;
             var initial = (u.name || u.email || '?').charAt(0).toUpperCase();
             var tierClass = getTierClass(u.role === 'admin' ? 'admin' : u.tier);
             var tierLabel = getTierLabel(u.role === 'admin' ? 'admin' : u.tier);
@@ -22136,7 +22592,13 @@ window.favFilterCount = favFilterCount;
             html += '<div class="acm-user' +
                         (hasUnread ? ' has-unread' : '') +
                         (hasThread ? '' : ' no-thread') +
-                    '">' +
+                        (isSelected ? ' selected' : '') +
+                    '" data-email="' + esc(u.email) + '">' +
+                '<label class="acm-user-checkbox" onclick="event.stopPropagation()">' +
+                    '<input type="checkbox" ' +
+                        (isSelected ? 'checked' : '') +
+                        ' onchange="window.__acmToggleSelect(\'' + jsStr(u.email) + '\', this.checked)" />' +
+                '</label>' +
                 '<div class="acm-user-avatar' +
                     (hasThread ? '' : ' no-thread') +
                     (isOnline ? ' online' : '') +
@@ -22181,6 +22643,243 @@ window.favFilterCount = favFilterCount;
         });
 
         el.innerHTML = html;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ BULK MODE
+       ═══════════════════════════════════════════════════════════ */
+    function toggleBulkMode() {
+        ACM.bulkMode = !ACM.bulkMode;
+        document.body.classList.toggle('acm-bulk-mode', ACM.bulkMode);
+
+        var btn = $id('acmBulkToggle');
+        if (btn) btn.classList.toggle('active', ACM.bulkMode);
+
+        var toolbar = $id('acmBulkToolbar');
+        if (toolbar) toolbar.classList.toggle('show', ACM.bulkMode);
+
+        if (!ACM.bulkMode) {
+            ACM.selectedUsers = [];
+            updateBulkCount();
+        }
+
+        scheduleRender();
+    }
+
+    window.__acmToggleSelect = function(email, checked) {
+        if (!email) return;
+        var idx = ACM.selectedUsers.indexOf(email);
+        if (checked && idx === -1) {
+            ACM.selectedUsers.push(email);
+        } else if (!checked && idx !== -1) {
+            ACM.selectedUsers.splice(idx, 1);
+        }
+        updateBulkCount();
+        var userEl = document.querySelector('.acm-user[data-email="' + cssEsc(email) + '"]');
+        if (userEl) userEl.classList.toggle('selected', checked);
+    };
+
+    window.__acmToggleSelectAll = function(checked) {
+        var visibleList = ACM.allUsers.filter(function(u) {
+            if (ACM.filter === 'online' && !ACM.onlineMap[u.email]) return false;
+            if (ACM.filter === 'unread' && u.unread === 0) return false;
+            if (ACM.filter === 'has-thread' && !u.thread) return false;
+            if (ACM.filter === 'no-thread' && u.thread) return false;
+            if (ACM.searchTerm) {
+                var s = ACM.searchTerm.toLowerCase();
+                var name = (u.name || '').toLowerCase();
+                var email = (u.email || '').toLowerCase();
+                if (name.indexOf(s) < 0 && email.indexOf(s) < 0) return false;
+            }
+            return true;
+        });
+
+        if (checked) {
+            visibleList.forEach(function(u) {
+                if (ACM.selectedUsers.indexOf(u.email) === -1) {
+                    ACM.selectedUsers.push(u.email);
+                }
+            });
+        } else {
+            visibleList.forEach(function(u) {
+                var idx = ACM.selectedUsers.indexOf(u.email);
+                if (idx !== -1) ACM.selectedUsers.splice(idx, 1);
+            });
+        }
+
+        updateBulkCount();
+        scheduleRender();
+    };
+
+    function updateBulkCount() {
+        var count = ACM.selectedUsers.length;
+        var countEl = $id('acmBulkCount');
+        if (countEl) countEl.textContent = count;
+
+        var sendBtn = $id('acmBulkSend');
+        if (sendBtn) sendBtn.disabled = count === 0;
+    }
+
+    function openBulkCompose() {
+        var count = ACM.selectedUsers.length;
+        if (count === 0) {
+            alert('⚠️ Vui lòng chọn ít nhất 1 user!');
+            return;
+        }
+
+        var listEl = $id('acmBulkRecipientsList');
+        if (listEl) {
+            var html = '';
+            ACM.selectedUsers.forEach(function(email) {
+                var user = ACM.usersMap[email] || {};
+                var name = user.name || email.split('@')[0];
+                html += '<span class="acm-bulk-recipient-tag">' + esc(name) + '</span>';
+            });
+            listEl.innerHTML = html;
+        }
+
+        var countEl = $id('acmBulkRecipientCount');
+        if (countEl) countEl.textContent = count;
+
+        var sendCountEl = $id('acmBulkSendCount');
+        if (sendCountEl) sendCountEl.textContent = count;
+
+        var ta = $id('acmBulkTextarea');
+        if (ta) {
+            ta.value = '';
+            var cc = $id('acmBulkCharCount');
+            if (cc) cc.textContent = '0';
+        }
+
+        var prog = $id('acmBulkProgress');
+        if (prog) prog.classList.remove('show');
+        var fill = $id('acmBulkProgressFill');
+        if (fill) fill.style.width = '0%';
+
+        var sendBtn = $id('acmBulkComposeSend');
+        if (sendBtn) sendBtn.disabled = true;
+
+        $id('acmBulkCompose').classList.add('show');
+        setTimeout(function() { if (ta) ta.focus(); }, 200);
+    }
+
+    function closeBulkCompose() {
+        $id('acmBulkCompose').classList.remove('show');
+    }
+
+    async function sendBulkMessage() {
+        if (!isAdmin()) {
+            alert('Chỉ admin mới có quyền gửi!');
+            return;
+        }
+
+        var ta = $id('acmBulkTextarea');
+        var text = (ta && ta.value.trim()) || '';
+
+        if (!text) {
+            alert('⚠️ Vui lòng nhập nội dung tin nhắn!');
+            if (ta) ta.focus();
+            return;
+        }
+
+        var recipients = ACM.selectedUsers.slice();
+        if (recipients.length === 0) {
+            alert('⚠️ Không có user nào để gửi!');
+            return;
+        }
+
+        if (!confirm('📤 GỬI TIN NHẮN HÀNG LOẠT\n\n' +
+                     'Số người nhận: ' + recipients.length + '\n' +
+                     'Nội dung: ' + text.substring(0, 100) + (text.length > 100 ? '...' : '') +
+                     '\n\nTiếp tục?')) return;
+
+        var db = getDb();
+        if (!db) return;
+
+        var sendBtn = $id('acmBulkComposeSend');
+        var cancelBtn = $id('acmBulkComposeCancel');
+        var closeBtn = $id('acmBulkComposeClose');
+
+        if (sendBtn) sendBtn.disabled = true;
+        if (cancelBtn) cancelBtn.disabled = true;
+        if (closeBtn) closeBtn.disabled = true;
+
+        var prog = $id('acmBulkProgress');
+        if (prog) prog.classList.add('show');
+
+        var success = 0;
+        var failed = 0;
+        var adminEmail = (getCu() && getCu().email) || 'admin';
+        var adminName = (getCu() && getCu().name) || 'Admin';
+
+        for (var i = 0; i < recipients.length; i++) {
+            var email = recipients[i];
+
+            var progText = $id('acmBulkProgressText');
+            if (progText) progText.textContent = (i + 1) + '/' + recipients.length;
+            var progFill = $id('acmBulkProgressFill');
+            if (progFill) progFill.style.width = Math.round(((i + 1) / recipients.length) * 100) + '%';
+
+            try {
+                var threadRef = db.collection('chat_threads').doc(email);
+                var doc = await threadRef.get();
+                var data = doc.exists ? doc.data() : {};
+                var msgs = data.messages || [];
+
+                var newMsg = {
+                    from: 'admin',
+                    fromEmail: adminEmail,
+                    fromName: adminName,
+                    text: text,
+                    at: firebase.firestore.Timestamp.now()
+                };
+                msgs.push(newMsg);
+                if (msgs.length > 100) msgs = msgs.slice(-100);
+
+                await threadRef.set({
+                    messages: msgs,
+                    lastMessage: text.substring(0, 100),
+                    lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastMessageFrom: 'admin',
+                    userEmail: email,
+                    userName: data.userName || email.split('@')[0],
+                    unreadByUser: (data.unreadByUser || 0) + 1,
+                    unreadByAdmin: 0,
+                    adminTypingAt: null
+                }, { merge: true });
+
+                success++;
+                console.log('✅ Bulk sent to:', email);
+
+            } catch (e) {
+                failed++;
+                console.error('❌ Bulk send failed:', email, e);
+            }
+
+            if (i < recipients.length - 1) {
+                await new Promise(function(r) { setTimeout(r, 100); });
+            }
+        }
+
+        try {
+            db.collection('activity_logs').add({
+                email: adminEmail,
+                type: 'admin',
+                title: 'Gửi tin nhắn hàng loạt',
+                detail: 'Gửi cho ' + success + '/' + recipients.length + ' user: ' + text.substring(0, 80),
+                at: firebase.firestore.FieldValue.serverTimestamp(),
+                metadata: { recipients: recipients, success: success, failed: failed }
+            });
+        } catch(e) {}
+
+        if (sendBtn) sendBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+        if (closeBtn) closeBtn.disabled = false;
+
+        showSmallToast('✅ Đã gửi ' + success + '/' + recipients.length + ' tin' +
+                       (failed > 0 ? ' (' + failed + ' lỗi)' : ''));
+
+        closeBulkCompose();
     }
 
     /* ═══════════════════════════════════════════════════════════
@@ -22305,6 +23004,7 @@ window.favFilterCount = favFilterCount;
         $id('acmHeaderList').style.display = 'none';
         $id('acmStats').style.display = 'none';
         $id('acmSearchBar').style.display = 'none';
+        $id('acmBulkToolbar').style.display = 'none';
         $id('acmList').style.display = 'none';
 
         $id('acmHeaderHistory').style.display = 'flex';
@@ -22500,6 +23200,7 @@ window.favFilterCount = favFilterCount;
         $id('acmHeaderList').style.display = 'flex';
         $id('acmStats').style.display = 'grid';
         $id('acmSearchBar').style.display = 'flex';
+        if (ACM.bulkMode) $id('acmBulkToolbar').style.display = 'flex';
         $id('acmList').style.display = 'block';
 
         if (ACM.historyUnsub) {
@@ -22516,7 +23217,6 @@ window.favFilterCount = favFilterCount;
         var db = getDb();
         if (!db || !isAdmin()) return;
 
-        // 1. Watch allowed_users
         ACM.usersUnsub = db.collection('allowed_users')
             .onSnapshot(function(snap) {
                 ACM.usersMap = {};
@@ -22546,7 +23246,6 @@ window.favFilterCount = favFilterCount;
                 console.error('ACM users watch error:', err);
             });
 
-        // 2. Watch chat_threads
         ACM.threadsUnsub = db.collection('chat_threads')
             .onSnapshot(function(snap) {
                 ACM.threadsMap = {};
@@ -22570,7 +23269,6 @@ window.favFilterCount = favFilterCount;
                 console.error('ACM threads watch error:', err);
             });
 
-        // 3. Watch RTDB presence
         if (typeof firebase !== 'undefined' && firebase.database) {
             try {
                 var presenceRef = firebase.database().ref('presence');
@@ -22603,7 +23301,6 @@ window.favFilterCount = favFilterCount;
             }
         }
 
-        // 4. Watch login_logs
         ACM.loginLogsUnsub = db.collection('login_logs')
             .orderBy('time', 'desc')
             .limit(500)
@@ -22652,6 +23349,16 @@ window.favFilterCount = favFilterCount;
         $id('acmModal').classList.remove('show');
         document.body.style.overflow = '';
         if (ACM.view === 'history') hideHistory();
+        // Reset bulk mode khi đóng
+        if (ACM.bulkMode) {
+            ACM.bulkMode = false;
+            document.body.classList.remove('acm-bulk-mode');
+            var toolbar = $id('acmBulkToolbar');
+            if (toolbar) toolbar.classList.remove('show');
+            var btn = $id('acmBulkToggle');
+            if (btn) btn.classList.remove('active');
+            ACM.selectedUsers = [];
+        }
     }
 
     function toggleModal() {
@@ -22705,8 +23412,15 @@ window.favFilterCount = favFilterCount;
 
         document.addEventListener('keydown', function(e) {
             if (e.key === 'Escape' && ACM.isOpen) {
-                if (ACM.view === 'history') hideHistory();
-                else closeModal();
+                if ($id('acmBulkCompose').classList.contains('show')) {
+                    closeBulkCompose();
+                } else if ($id('acmConfirmDelete').classList.contains('show')) {
+                    hideDeleteConfirm();
+                } else if (ACM.view === 'history') {
+                    hideHistory();
+                } else {
+                    closeModal();
+                }
             }
         });
 
@@ -22757,10 +23471,60 @@ window.favFilterCount = favFilterCount;
             if (e.target === this) hideDeleteConfirm();
         });
 
-        document.addEventListener('keydown', function(e) {
-            if (e.key === 'Escape' && $id('acmConfirmDelete').classList.contains('show')) {
-                hideDeleteConfirm();
-            }
+        /* ⭐ BULK MODE */
+        var bulkToggle = $id('acmBulkToggle');
+        if (bulkToggle) bulkToggle.addEventListener('click', toggleBulkMode);
+
+        var bulkSelectAll = $id('acmBulkSelectAll');
+        if (bulkSelectAll) bulkSelectAll.addEventListener('click', function() {
+            window.__acmToggleSelectAll(true);
+        });
+
+        var bulkClear = $id('acmBulkClear');
+        if (bulkClear) bulkClear.addEventListener('click', function() {
+            ACM.selectedUsers = [];
+            updateBulkCount();
+            scheduleRender();
+        });
+
+        var bulkSend = $id('acmBulkSend');
+        if (bulkSend) bulkSend.addEventListener('click', openBulkCompose);
+
+        var bulkComposeClose = $id('acmBulkComposeClose');
+        if (bulkComposeClose) bulkComposeClose.addEventListener('click', closeBulkCompose);
+
+        var bulkComposeCancel = $id('acmBulkComposeCancel');
+        if (bulkComposeCancel) bulkComposeCancel.addEventListener('click', closeBulkCompose);
+
+        var bulkComposeOverlay = $id('acmBulkCompose');
+        if (bulkComposeOverlay) bulkComposeOverlay.addEventListener('click', function(e) {
+            if (e.target === this) closeBulkCompose();
+        });
+
+        var bulkComposeSend = $id('acmBulkComposeSend');
+        if (bulkComposeSend) bulkComposeSend.addEventListener('click', sendBulkMessage);
+
+        var bulkTextarea = $id('acmBulkTextarea');
+        if (bulkTextarea) {
+            bulkTextarea.addEventListener('input', function() {
+                var len = this.value.length;
+                var cc = $id('acmBulkCharCount');
+                if (cc) cc.textContent = len;
+                var sendBtn = $id('acmBulkComposeSend');
+                if (sendBtn) sendBtn.disabled = len === 0;
+            });
+        }
+
+        document.querySelectorAll('.acm-bulk-template').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var text = this.getAttribute('data-text') || this.textContent.trim();
+                var ta = $id('acmBulkTextarea');
+                if (ta) {
+                    ta.value = text;
+                    ta.dispatchEvent(new Event('input'));
+                    ta.focus();
+                }
+            });
         });
 
         console.log('✅ Admin Chat Manager: init');
