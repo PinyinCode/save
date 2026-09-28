@@ -630,12 +630,13 @@ def build_telegram_notify_js():
     """
     Sinh JS cung cấp window.__sendTelegramNotify().
     Cần chạy SAU build_config_js() và TRƯỚC build_chat_js().
+    + URL copy để admin mở Chrome/Safari trả lời.
     """
     return r"""
 /* ═══════════════════════════════════════════════════════════════
    📨 TELEGRAM NOTIFY — Gửi thông báo về Telegram
    Cung cấp: window.__sendTelegramNotify(email, name, text, from)
-   + ⭐ Nút bấm "Trả lời trên Web" — admin click → mở chat trực tiếp
+   + URL copy → admin mở Chrome/Safari trả lời
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     'use strict';
@@ -678,6 +679,10 @@ def build_telegram_notify_js():
         var isAdmin  = (from === 'admin');
         var header   = isAdmin ? '📤 *Admin vừa trả lời*' : '💬 *Tin nhắn mới từ*';
 
+        // ⭐ URL để admin copy → mở Chrome/Safari
+        var siteUrl = window.location.origin + window.location.pathname;
+        var adminUrl = siteUrl + '?admin_chat=' + encodeURIComponent(userEmail || '');
+
         var text =
             header + ' ' + escapeMarkdown(siteName) + '\n' +
             '👤 *Tên:* ' + escapeMarkdown(userName || 'User') + '\n' +
@@ -685,27 +690,16 @@ def build_telegram_notify_js():
             '─────────────────\n' +
             escapeMarkdown(messageText || '') + '\n' +
             '─────────────────\n' +
-            '⏰ ' + new Date().toLocaleString('vi-VN');
-
-        // ⭐ Tạo URL mở Admin Chat Manager trên web
-        var siteUrl = window.location.origin + window.location.pathname;
-        var adminUrl = siteUrl + '?admin_chat=' + encodeURIComponent(userEmail || '');
+            '⏰ ' + new Date().toLocaleString('vi-VN') + '\n\n' +
+            '🔗 *Copy link dưới → mở Chrome/Safari để trả lời:*\n' +
+            '`' + adminUrl + '`';
 
         var url = 'https://api.telegram.org/bot' + token + '/sendMessage';
         var payload = {
             chat_id: chatId,
             text: text,
             parse_mode: 'Markdown',
-            disable_web_page_preview: true,
-            // ⭐ Nút bấm inline — click mở web chat
-            reply_markup: JSON.stringify({
-                inline_keyboard: [[
-                    {
-                        text: '💬 Trả lời trên Web',
-                        url: adminUrl
-                    }
-                ]]
-            })
+            disable_web_page_preview: true
         };
 
         console.log('[Telegram] 📤 Sending...', { to: chatId, from: from, adminUrl: adminUrl });
