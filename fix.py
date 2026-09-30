@@ -38,25 +38,35 @@ DATA_DIR = "data"
 # =================================================================
 #  CONFIG — resolve theo vị trí file script (không phụ thuộc CWD)
 # =================================================================
+# =================================================================
+#  CONFIG — resolve theo vị trí file script
+# =================================================================
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-ROOT_DIR   = os.path.dirname(SCRIPT_DIR)   # main/
+ROOT_DIR   = os.path.dirname(SCRIPT_DIR)   # cha của save/
 
-# Data nằm CẠNH script: main/scripts/data/
+# Data nằm CẠNH script
 DATA_DIR    = os.environ.get("FIX_DATA_DIR",
                              os.path.join(SCRIPT_DIR, "data"))
 
-# index.html + config.json nằm ở ROOT: main/
-INDEX_HTML  = os.environ.get("FIX_INDEX_HTML",
-                             os.path.join(ROOT_DIR, "index.html"))
-CONFIG_JSON = os.environ.get("FIX_CONFIG_JSON",
-                             os.path.join(ROOT_DIR, "config.json"))
+# index.html + config.json — thử ROOT trước, fallback về SCRIPT_DIR
+_candidate_index = os.path.join(ROOT_DIR, "index.html")
+if os.path.isfile(_candidate_index):
+    INDEX_HTML = _candidate_index
+else:
+    INDEX_HTML = os.path.join(SCRIPT_DIR, "index.html")
 
-# File cần BỎ QUA khi quét data/ (vì đã là tab "Tổng hợp")
+_candidate_cfg = os.path.join(ROOT_DIR, "config.json")
+if os.path.isfile(_candidate_cfg):
+    CONFIG_JSON = _candidate_cfg
+else:
+    CONFIG_JSON = os.path.join(SCRIPT_DIR, "config.json")
+
 SKIP_FILES = {"input.xlsx", "input.xls", "input.csv"}
 
 print("[fix.py] SCRIPT_DIR = " + SCRIPT_DIR)
 print("[fix.py] DATA_DIR   = " + DATA_DIR)
 print("[fix.py] INDEX_HTML = " + INDEX_HTML)
+print("[fix.py] CONFIG_JSON= " + CONFIG_JSON)
 
 TAB_ICONS = [
     "fa-comments", "fa-file-alt", "fa-book", "fa-graduation-cap",
