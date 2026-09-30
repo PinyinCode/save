@@ -3,8 +3,9 @@
 fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
 
 ĐẶC ĐIỂM:
-  - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/
+  - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/ (TRỪ input.xlsx)
   - Tên tab = tên file (normalize NFC — hiển thị đúng dấu tiếng Việt)
+  - Label = tên file (bỏ số đầu) + số câu thực tế
   - Logic đọc Excel GIỐNG data_reader.py:
       openpyxl, cột VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
       Data bắt đầu từ dòng 2, tự động chuyển số Ả Rập → Hán (cn2an)
@@ -35,6 +36,9 @@ import openpyxl
 INDEX_HTML = "index.html"
 CONFIG_JSON = "config.json"
 DATA_DIR = "data"
+
+# File cần BỎ QUA khi quét data/ (vì đã là tab "Tổng hợp" trong convert.py)
+SKIP_FILES = {"input.xlsx", "input.xls", "input.csv"}
 
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
     os.chdir("..")
@@ -284,7 +288,7 @@ def _read_excel_rows(filepath):
 
 
 # =================================================================
-#  SCAN data/
+#  SCAN data/ — BO QUA input.xlsx
 # =================================================================
 def scan_data_dir():
     if not os.path.isdir(DATA_DIR):
@@ -309,8 +313,14 @@ def scan_data_dir():
     for filepath in files:
         fname = os.path.basename(filepath)
 
+        # Bo file tam Office
         if fname.startswith("~$"):
             print("   [skip] " + fname + " - file tam")
+            continue
+
+        # ═══ BO QUA input.xlsx (đã là tab Tổng hợp) ═══
+        if fname.lower() in SKIP_FILES:
+            print("   [skip] " + fname + " - da la tab Tong hop")
             continue
 
         print("   [file] " + fname)
@@ -477,7 +487,6 @@ def build_js_override(ids_js):
     add("            } catch(err) {}")
     add("")
     add("            // 3. Ap dung onboarding override cho tab moi (neu co)")
-    add("            //    Khong xoa override - de user giu chu de da chon")
     add("            var savedTopics = null;")
     add("            if (typeof loadOnboardingSelection === 'function') {")
     add("                try {")
@@ -498,7 +507,7 @@ def build_js_override(ids_js):
     add("                }")
     add("")
     add("                // Ve lai banner chu de")
-    add("                if (savedTopics && savedTopics.length > 0") 
+    add("                if (savedTopics && savedTopics.length > 0")
     add("                    && typeof applyOnboardingSelection === 'function') {")
     add("                    try {")
     add("                        var cfg = (typeof getOnboardingConfig === 'function')")
@@ -795,16 +804,15 @@ def main():
         sys.exit(1)
     print("   [OK] Da chen " + str(len(new_datasets)) + " entry")
 
-    # PATCH 2: Buttons
+    # PATCH 2: Buttons (FIX INDENT)
     print("")
     print("[PATCH 2] Them button tabs...")
-    new_btns = ""
+   ) new_btns = ""
     for ds in new_datasets:
-        # Chỉ lấy số câu thực tế, KHÔNG lặp lại số trong tên file
-clean_name = re.sub(r'^\d+\s*', '', ds["name"]).strip()
-if not clean_name:
-    clean_name = ds["name"]
-label = clean_name + " · " + str(ds["count"]) + " câu"
+        clean_name = re.sub(r'^\d+\s+', '', ds["name"]).strip()
+        if not clean_name:
+            clean_name = ds["name"]
+        label = clean_name + " · " + str(ds["count"]) + " cau"
         new_btns += (
             '\n        <button class="ds-btn ds-btn-primary" '
             'data-dataset="' + ds["id"] + '">\n'
@@ -819,9 +827,10 @@ label = clean_name + " · " + str(ds["count"]) + " câu"
     )
     html, n = pat_btn.subn(r'\1' + new_btns + r'\2', html, count=1)
     if n == 0:
-        print("[X] Khong tim thay nut chuyen-nganh")
-        sys.exit(1)
-    print("   [OK] Da chen " + str(len(new_datasets)) + " button")
+        print("[X] Khong { tim thay nut chuyen-")
+nganh")
+        sys.exit   (1)
+    print("   css_lines [OK] Da chen " + str(len(new_datasets)) + " button")
 
     # PATCH 3: CSS layout
     print("")
@@ -836,8 +845,7 @@ label = clean_name + " · " + str(ds["count"]) + " câu"
     css_lines.append("        gap: .5rem !important;")
     css_lines.append("    }")
     css_lines.append("}")
-    css_lines.append("@media (min-width: 769px) and (max-width: 1100px) {")
-    css_lines.append("    .ds-main-row {")
+    css_lines.append("@media (min-width: 769px) and (max-width: 1100px.append("    .ds-main-row {")
     css_lines.append("        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;")
     css_lines.append("        gap: .55rem !important;")
     css_lines.append("    }")
