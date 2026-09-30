@@ -35,27 +35,12 @@ INDEX_HTML = "index.html"
 CONFIG_JSON = "config.json"
 DATA_DIR = "data"
 
-# =================================================================
-#  CONFIG — resolve theo vị trí file script (không phụ thuộc CWD)
-# =================================================================
-# =================================================================
-#  CONFIG — tất cả nằm cạnh fix.py (root repo)
-# =================================================================
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-DATA_DIR    = os.environ.get("FIX_DATA_DIR",
-                             os.path.join(SCRIPT_DIR, "data"))
-INDEX_HTML  = os.environ.get("FIX_INDEX_HTML",
-                             os.path.join(SCRIPT_DIR, "index.html"))
-CONFIG_JSON = os.environ.get("FIX_CONFIG_JSON",
-                             os.path.join(SCRIPT_DIR, "config.json"))
-
+# File cần BỎ QUA khi quét data/ (vì đã là tab "Tổng hợp" trong convert.py)
 SKIP_FILES = {"input.xlsx", "input.xls", "input.csv"}
 
-print("[fix.py] SCRIPT_DIR  = " + SCRIPT_DIR)
-print("[fix.py] DATA_DIR    = " + DATA_DIR + "   (chỉ main/data/)")
-print("[fix.py] INDEX_HTML  = " + INDEX_HTML)
-print("[fix.py] CONFIG_JSON = " + CONFIG_JSON)
+if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
+    os.chdir("..")
+    print("[fix.py] Phat hien chay tu scripts/ -> chuyen ve root")
 
 TAB_ICONS = [
     "fa-comments", "fa-file-alt", "fa-book", "fa-graduation-cap",
