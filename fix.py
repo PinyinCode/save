@@ -906,7 +906,7 @@ def main():
     for ds in new_datasets:
         inject += '"' + ds["id"] + '":' + _escape_json_for_script(ds) + ','
 
--column    html, n = pat_registry.subn(r'\1\2' + inject, html, count=1)
+    html, n = pat_registry.subn(r'\1\2' + inject, html, count=1)
     if n == 0:
         print("[X] Khong chen duoc registry")
         sys.exit(1)
