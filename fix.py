@@ -2,20 +2,23 @@
 """
 fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
 
+Logic đọc Excel GIỐNG HỆT data_reader.py của convert.py:
+  - Dùng openpyxl, KHÔNG dùng pandas
+  - Cột theo VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
+  - Data bắt đầu từ dòng 2 (dòng 1 là header)
+  - Tự động chuyển số Ả Rập → số Hán (cn2an)
+
 Mục đích:
-    - Bất kỳ file .xlsx/.xls/.csv nào trong data/ → 1 tab riêng
-    - Tên tab = tên file (giống logic chuyên ngành trong main.py)
-    - KHÔNG can thiệp main.py, ui_template.py, config.json
-    - Bỏ qua file trùng với excel_file trong config (tab tổng hợp cũ)
+  - Bất kỳ file .xlsx/.xls/.csv nào trong data/ → 1 tab riêng
+  - Tên tab = tên file (giống logic chuyên ngành trong convert.py)
+  - KHÔNG can thiệp convert.py, ui_template.py, config.json
 
 Cách chạy:
-    python main.py      # Tạo index.html như bình thường
-    python fix.py       # Patch index.html — thêm N tab từ data/
+  python scripts/convert.py    # Tạo index.html gốc
+  python fix.py                # Patch index.html — thêm tab từ data/
 
-Kết quả (ví dụ có 2 file):
-    [Tổng hợp VPCX] [Input] [Giao Tiếp] [Chuyên ngành ▼] [Yêu thích]
-    - PC: nhiều cột (grid auto-fit)
-    - Mobile: 2 cột
+Kết quả (ví dụ 2 file):
+  [Tổng hợp VPCX] [Input] [Giao Tiếp] [Chuyên ngành ▼] [Yêu thích]
 """
 import json
 import os
@@ -24,56 +27,145 @@ import sys
 import glob
 import unicodedata
 
+import openpyxl
+
 # ═══════════════════════════════════════════════════════════════════
 #  CONFIG
 # ═══════════════════════════════════════════════════════════════════
-INDEX_HTML   = "index.html"
-CONFIG_JSON  = "config.json"
-DATA_DIR     = "data"
+INDEX_HTML  = "index.html"
+CONFIG_JSON = "config.json"
+DATA_DIR    = "data"
 
-# Icon + màu cho tab mới (tự luân phiên nếu nhiều file)
+# Nếu fix.py chạy từ scripts/, tự nhảy ra root
+if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
+    os.chdir("..")
+    print("🔄 fix.py phát hiện chạy từ scripts/ → chuyển về root")
+
 TAB_ICONS = [
-    "fa-comments",     # Giao tiếp
-    "fa-file-alt",     # Tài liệu
-    "fa-book",         # Sách
-    "fa-graduation-cap",  # Học tập
-    "fa-star",         # Nổi bật
-    "fa-fire",         # Hot
-    "fa-bolt",         # Nhanh
-    "fa-rocket",       # Mới
+    "fa-comments", "fa-file-alt", "fa-book", "fa-graduation-cap",
+    "fa-star", "fa-fire", "fa-bolt", "fa-rocket",
 ]
 TAB_COLORS = [
-    "#0891b2",   # teal
-    "#dc2626",   # đỏ
-    "#059669",   # xanh lá
-    "#d97706",   # cam
-    "#7c3aed",   # tím
-    "#db2777",   # hồng
-    "#0284c7",   # xanh dương
-    "#65a30d",   # olive
+    "#0891b2", "#dc2626", "#059669", "#d97706",
+    "#7c3aed", "#db2777", "#0284c7", "#65a30d",
 ]
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  CHUYỂN SỐ Ả RẬP → SỐ HÁN (copy từ data_reader.py)
+# ═══════════════════════════════════════════════════════════════════
+try:
+    import cn2an
+    HAS_CN2AN = True
+except ImportError:
+    HAS_CN2AN = False
+    print("⚠️  Không có cn2an — số Ả Rập sẽ giữ nguyên")
+
+_CN_DIGITS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
+_CN_UNITS = ['', '十', '百', '千']
+
+
+def _num_to_chinese_basic(num):
+    if num == 0:
+        return '零'
+    if num < 0:
+        return '负' + _num_to_chinese_basic(-num)
+    result = ''
+    unit_idx = 0
+    n = num
+    while n > 0:
+        digit = n % 10
+        if digit != 0:
+            if not (unit_idx == 1 and digit == 1 and n < 20 and result == ''):
+                result = _CN_DIGITS[digit] + _CN_UNITS[unit_idx] + result
+            else:
+                result = _CN_UNITS[unit_idx] + result
+        else:
+            if result and not result.startswith('零'):
+                result = '零' + result
+        n //= 10
+        unit_idx += 1
+    if result.startswith('一十'):
+        result = result[1:]
+    return result
+
+
+def _num_to_chinese(num):
+    if HAS_CN2AN:
+        try:
+            return cn2an.an2cn(num)
+        except Exception:
+            pass
+    return _num_to_chinese_basic(num)
+
+
+def _digits_to_chinese(digits_str):
+    return ''.join([_CN_DIGITS[int(d)] for d in digits_str])
+
+
+def convert_arabic_to_chinese(text):
+    """Chuyển số Ả Rập → số Hán (giống data_reader.py)."""
+    if not text or not isinstance(text, str):
+        return text
+
+    # Phần trăm
+    def replace_percent(match):
+        num_str = match.group(1)
+        if '.' in num_str:
+            parts = num_str.split('.')
+            int_part = _num_to_chinese(int(parts[0]))
+            dec_part = _digits_to_chinese(parts[1])
+            return '百分之' + int_part + '点' + dec_part
+        return '百分之' + _num_to_chinese(int(num_str))
+
+    text = re.sub(r'(\d+(?:\.\d+)?)%', replace_percent, text)
+
+    # Số thập phân độc lập
+    def replace_decimal(match):
+        num_str = match.group(0)
+        parts = num_str.split('.')
+        int_part = _num_to_chinese(int(parts[0]))
+        dec_part = _digits_to_chinese(parts[1])
+        return int_part + '点' + dec_part
+
+    text = re.sub(
+        r'(?<![A-Za-z\-\.])\d+\.\d+(?![A-Za-z])',
+        replace_decimal, text
+    )
+
+    # Số nguyên độc lập
+    def replace_int(match):
+        return _num_to_chinese(int(match.group(0)))
+
+    text = re.sub(
+        r'(?<![A-Za-z\-\.])\d+(?![A-Za-z]|\.\d)',
+        replace_int, text
+    )
+
+    return text
+
+
+def _clean(s):
+    """Làm sạch cell (giống data_reader.py)."""
+    if s is None:
+        return ""
+    return (str(s).replace('\n', ' ').replace('\r', ' ')
+            .replace('\t', ' ').replace('\\', '\\\\'))
 
 
 # ═══════════════════════════════════════════════════════════════════
 #  HELPERS
 # ═══════════════════════════════════════════════════════════════════
 def _slugify(filename):
-    """Sinh id an toàn từ tên file (khớp main.py)."""
     base = filename.rsplit(".", 1)[0]
     base = unicodedata.normalize("NFD", base)
     base = "".join(c for c in base if unicodedata.category(c) != "Mn")
     base = base.replace("đ", "d").replace("Đ", "D")
-    base = re.sub(r"[^a-zA-Z0-9]+", "-", base).strip("-").lower()
-    return base or "dataset"
+    return re.sub(r"[^a-zA-Z0-9]+", "-", base).strip("-").lower() or "dataset"
 
 
 def _display_name(filename):
-    """
-    Tên tab hiển thị — GIỐNG LOGIC chuyên ngành trong main.py:
-        'input.xlsx'       → 'Input'
-        'Giao_tiếp.xlsx'   → 'Giao Tiếp'
-        'LUYEN_THI.xlsx'   → 'Luyen Thi'  (nếu .islower/.isupper)
-    """
+    """Tên tab hiển thị (giống logic chuyên ngành của convert.py)."""
     name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
     if name.islower() or name.isupper():
         name = name.title()
@@ -81,13 +173,11 @@ def _display_name(filename):
 
 
 def _escape_json_for_script(obj):
-    """Serialize → JSON an toàn cho <script> context."""
     s = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
     return s.replace("</", "<\\/")
 
 
 def _js_str(s):
-    """Escape string JS (dùng cho label)."""
     if s is None:
         return ""
     return (str(s)
@@ -100,59 +190,77 @@ def _js_str(s):
 
 
 def _read_excel_rows(filepath):
-    """Đọc Excel → list[dict] theo cấu trúc chuẩn của app."""
+    """
+    Đọc Excel → list[dict] — GIỐNG HỆT data_reader.read_excel().
+    Cột theo VỊ TRÍ:
+        0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
+        Data bắt đầu từ dòng 2.
+    """
     try:
-        import pandas as pd
-    except ImportError:
-        print("❌ Cần cài pandas + openpyxl: pip install pandas openpyxl")
-        sys.exit(1)
-
-    try:
-        df = pd.read_excel(filepath, sheet_name=0)
+        wb = openpyxl.load_workbook(filepath, data_only=True)
     except Exception as e:
-        print(f"   ❌ Không đọc được {os.path.basename(filepath)}: {e}")
+        print(f"      ❌ Không load được: {e}")
         return []
 
-    df.columns = [str(c).strip().lower() for c in df.columns]
+    try:
+        ws = wb.worksheets[0]
+    except Exception as e:
+        print(f"      ❌ Không có sheet: {e}")
+        return []
+
+    print(f"      📊 Sheet: {ws.title} - {ws.max_row} dòng")
+
+    # ═══ CẤU HÌNH CỘT (GIỐNG data_reader.py) ═══
+    COL_STT     = 0
+    COL_HSK     = 1
+    COL_TOPIC   = 2
+    COL_SUBJECT = 3
+    COL_VI      = 4
+    COL_ZH      = 5
+    COL_PINYIN  = 6
+    DATA_START  = 2
 
     rows = []
-    for idx, row in df.iterrows():
-        def _v(col):
-            val = row.get(col, "")
-            try:
-                if pd.isna(val):
-                    return ""
-            except (TypeError, ValueError):
-                pass
-            return "" if val is None else str(val).strip()
+    converted_count = 0
 
-        stt = _v("stt") or str(idx + 2)
-        zh = _v("zh") or _v("hanzi") or _v("chinese") or _v("tieng_trung")
-        vi = _v("vi") or _v("vietnamese") or _v("tieng_viet")
-        pinyin = _v("pinyin")
-        hsk = _v("hsk").upper() if _v("hsk") else ""
-        topic = _v("topic") or _v("chude") or _v("chu_de")
-        subject = _v("subject") or _v("chuyen_nganh") or _v("chuyennganh")
-        excel_row = _v("excelrow") or _v("excel_row") or str(idx + 2)
-
-        if not zh and not vi:
+    for row in ws.iter_rows(min_row=DATA_START, values_only=True):
+        if not row or len(row) <= max(COL_VI, COL_ZH):
             continue
 
+        stt     = row[COL_STT]     if COL_STT     < len(row) and row[COL_STT]     is not None else ""
+        hsk     = _clean(row[COL_HSK])     if COL_HSK     < len(row) else ""
+        topic   = _clean(row[COL_TOPIC])   if COL_TOPIC   < len(row) else ""
+        subject = _clean(row[COL_SUBJECT]) if COL_SUBJECT < len(row) else ""
+        vi      = _clean(row[COL_VI])      if COL_VI      < len(row) else ""
+        zh      = _clean(row[COL_ZH])      if COL_ZH      < len(row) else ""
+        pinyin  = _clean(row[COL_PINYIN])  if COL_PINYIN  < len(row) else ""
+
+        if not vi and not zh:
+            continue
+
+        # ⬇️ CHUYỂN SỐ Ả RẬP → HÁN
+        zh_original = zh
+        zh = convert_arabic_to_chinese(zh)
+        if zh != zh_original:
+            converted_count += 1
+
         rows.append({
-            "stt": stt,
-            "vi": vi,
-            "zh": zh,
-            "pinyin": pinyin,
-            "hsk": hsk,
-            "topic": topic,
+            "stt":     str(stt),
+            "hsk":     hsk,
+            "topic":   topic,
             "subject": subject,
-            "excelRow": excel_row,
+            "vi":      vi,
+            "zh":      zh,
+            "pinyin":  pinyin,
         })
+
+    if converted_count > 0:
+        print(f"      🔄 Đã chuyển số Ả Rập → Hán: {converted_count} câu")
+
     return rows
 
 
 def _load_config():
-    """Đọc config.json để biết file excel_file (bỏ qua)."""
     if not os.path.isfile(CONFIG_JSON):
         return {}
     try:
@@ -163,36 +271,28 @@ def _load_config():
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  SCAN + PARSE
+#  SCAN data/
 # ═══════════════════════════════════════════════════════════════════
 def scan_data_dir(config):
-    """
-    Quét data/ → trả về list[dict] dataset entries.
-    Bỏ qua:
-      - file excel_file trong config (đã là tab tổng hợp)
-      - file tạm ~$...
-      - thư mục con
-    """
+    """Quét data/ → list[dict] dataset entries."""
     if not os.path.isdir(DATA_DIR):
-        print(f"⚠️  Không thấy thư mục '{DATA_DIR}/' — bỏ qua.")
+        print(f"⚠️  Không thấy '{DATA_DIR}/' — bỏ qua.")
         return []
 
-    # File cần bỏ qua
+    # File cần bỏ qua (trùng excel_file trong config)
     skip_abs = set()
     excel_file = config.get("excel_file", "")
     if excel_file:
-        # Có thể là "data/input.xlsx" hoặc "input.xlsx"
         skip_abs.add(os.path.abspath(excel_file))
         skip_abs.add(os.path.abspath(os.path.join(DATA_DIR, os.path.basename(excel_file))))
 
-    # Quét các đuôi Excel
     files = []
     for ext in ("*.xlsx", "*.xls", "*.csv"):
         files.extend(glob.glob(os.path.join(DATA_DIR, ext)))
     files = sorted(set(files))
 
     if not files:
-        print(f"ℹ️  Không có file Excel nào trong '{DATA_DIR}/'")
+        print(f"ℹ️  Không có file Excel trong '{DATA_DIR}/'")
         return []
 
     print(f"\n📂 Quét '{DATA_DIR}/' — {len(files)} file")
@@ -203,9 +303,9 @@ def scan_data_dir(config):
     for filepath in files:
         fname = os.path.basename(filepath)
 
-        # Bỏ file tạm
+        # Bỏ file tạm Office
         if fname.startswith("~$"):
-            print(f"   ⏭️  {fname} — file tạm, bỏ qua")
+            print(f"   ⏭️  {fname} — file tạm")
             continue
 
         # Bỏ file trùng excel_file
@@ -213,13 +313,12 @@ def scan_data_dir(config):
             print(f"   ⏭️  {fname} — trùng excel_file, bỏ qua")
             continue
 
-        # Đọc Excel
+        print(f"   📄 {fname}")
         rows = _read_excel_rows(filepath)
         if not rows:
             print(f"   ⚠️  {fname} — rỗng hoặc lỗi, bỏ qua")
             continue
 
-        # Sinh id + đảm bảo không trùng
         base_id = _slugify(fname)
         dataset_id = base_id
         counter = 2
@@ -228,7 +327,6 @@ def scan_data_dir(config):
             counter += 1
         used_ids.add(dataset_id)
 
-        # Icon + màu luân phiên
         idx = len(datasets)
         icon = TAB_ICONS[idx % len(TAB_ICONS)]
         color = TAB_COLORS[idx % len(TAB_COLORS)]
@@ -257,76 +355,63 @@ def main():
     print("🔧 fix.py — Auto-scan data/ → thêm tab riêng cho mỗi file")
     print("=" * 62)
 
-    # ─── 0. Kiểm tra ───
     if not os.path.isfile(INDEX_HTML):
-        print(f"❌ Không thấy {INDEX_HTML}. Chạy `python main.py` trước.")
+        print(f"❌ Không thấy {INDEX_HTML}. Chạy convert.py trước.")
         sys.exit(1)
 
     config = _load_config()
 
-    # ─── 1. Đọc index.html ───
     with open(INDEX_HTML, "r", encoding="utf-8") as f:
         html = f.read()
 
-    # ─── 2. Quét data/ ───
     datasets = scan_data_dir(config)
 
     if not datasets:
-        print("\nℹ️  Không có dataset mới nào. Giữ nguyên index.html.")
+        print("\nℹ️  Không có dataset mới. Giữ nguyên index.html.")
         return
 
-    # ─── 3. Lọc bỏ những dataset đã có trong HTML (chạy lại nhiều lần) ───
+    # Lọc bỏ dataset đã có trong HTML
     new_datasets = []
     for ds in datasets:
-        marker = f'"id":"{ds["id"]}"'
-        marker2 = f"'id': '{ds['id']}'"
-        marker3 = f'data-dataset="{ds["id"]}"'
-        if marker in html or marker2 in html or marker3 in html:
+        if (f'"id":"{ds["id"]}"' in html
+                or f"'id': '{ds['id']}'" in html
+                or f'data-dataset="{ds["id"]}"' in html):
             print(f"   ⏭️  '{ds['id']}' đã có trong HTML — bỏ qua")
         else:
             new_datasets.append(ds)
 
     if not new_datasets:
-        print("\n✅ Tất cả dataset đã có trong HTML — không cần patch.")
+        print("\n✅ Tất cả dataset đã có — không cần patch.")
         return
 
-    print(f"\n🎯 Sẽ thêm {len(new_datasets)} tab mới:")
+    print(f"\n🎯 Sẽ thêm {len(new_datasets)} tab:")
     for ds in new_datasets:
         print(f"   • {ds['name']} ({ds['count']} câu)")
 
     # ═══════════════════════════════════════════════════════════════
     #  PATCH 1: Inject dataset vào DATASET_REGISTRY
     # ═══════════════════════════════════════════════════════════════
-    print("\n🔨 PATCH 1: Inject dataset vào DATASET_REGISTRY...")
-
-    pat_registry = re.compile(
-        r'(var\s+DATASET_REGISTRY\s*=\s*)(\{)',
-        re.MULTILINE
-    )
+    print("\n🔨 PATCH 1: Inject vào DATASET_REGISTRY...")
+    pat_registry = re.compile(r'(var\s+DATASET_REGISTRY\s*=\s*)(\{)', re.MULTILINE)
     if not pat_registry.search(html):
-        print("❌ Không tìm thấy `var DATASET_REGISTRY = {`")
+        print("❌ Không tìm thấy DATASET_REGISTRY")
         sys.exit(1)
 
-    inject_entries = ""
-    for ds in new_datasets:
-        entry_json = _escape_json_for_script(ds)
-        inject_entries += f'"{ds["id"]}":{entry_json},'
-
-    html, n = pat_registry.subn(r'\1\2' + inject_entries, html, count=1)
+    inject = "".join(f'"{ds["id"]}":{_escape_json_for_script(ds)},' for ds in new_datasets)
+    html, n = pat_registry.subn(r'\1\2' + inject, html, count=1)
     if n == 0:
-        print("❌ Không chèn được registry entries.")
+        print("❌ Không chèn được registry")
         sys.exit(1)
     print(f"   ✅ Đã chèn {len(new_datasets)} entry")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 2: Thêm <button> cho từng tab vào .ds-main-row
+    #  PATCH 2: Thêm button vào .ds-main-row
     # ═══════════════════════════════════════════════════════════════
-    print("\n🔨 PATCH 2: Thêm button tabs vào .ds-main-row...")
-
-    new_btns_html = ""
+    print("\n🔨 PATCH 2: Thêm button tabs...")
+    new_btns = ""
     for ds in new_datasets:
         label = f'{ds["name"]} · {ds["count"]} câu'
-        new_btns_html += (
+        new_btns += (
             f'\n        <button class="ds-btn ds-btn-primary" '
             f'data-dataset="{ds["id"]}">\n'
             f'            <i class="fas {ds["icon"]}"></i>\n'
@@ -334,124 +419,100 @@ def main():
             f'        </button>\n    '
         )
 
-    # Chèn TRƯỚC nút "chuyen-nganh"
     pat_btn = re.compile(
         r'(\s*)(<button\s+class="[^"]*ds-btn[^"]*"\s+[^>]*data-dataset-group="chuyen-nganh")',
         re.MULTILINE
     )
-    html, n = pat_btn.subn(r'\1' + new_btns_html + r'\2', html, count=1)
+    html, n = pat_btn.subn(r'\1' + new_btns + r'\2', html, count=1)
     if n == 0:
-        print("❌ Không tìm thấy nút 'chuyen-nganh' để chèn trước.")
+        print("❌ Không tìm thấy nút chuyen-nganh")
         sys.exit(1)
-    print(f"   ✅ Đã chèn {len(new_datasets)} tab button")
+    print(f"   ✅ Đã chèn {len(new_datasets)} button")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 3: Override CSS layout (auto-fit cho N tab)
+    #  PATCH 3: CSS layout
     # ═══════════════════════════════════════════════════════════════
-    print("\n🔨 PATCH 3: Override CSS layout (auto-fit)...")
-
-    # Sinh màu cho mỗi dataset
+    print("\n🔨 PATCH 3: CSS layout...")
     color_css = ""
     for ds in new_datasets:
-        dsid = ds["id"]
-        color = ds["color"]
+        c = ds["color"]
+        i = ds["id"]
         color_css += f"""
-.ds-btn[data-dataset="{dsid}"] {{
+.ds-btn[data-dataset="{i}"] {{
     background: linear-gradient(135deg,
-        color-mix(in srgb, {color} 12%, var(--surface)),
-        color-mix(in srgb, {color} 4%, var(--surface))) !important;
-    border-color: color-mix(in srgb, {color} 40%, var(--border)) !important;
+        color-mix(in srgb, {c} 12%, var(--surface)),
+        color-mix(in srgb, {c} 4%, var(--surface))) !important;
+    border-color: color-mix(in srgb, {c} 40%, var(--border)) !important;
 }}
-.ds-btn[data-dataset="{dsid}"] i:first-child {{
-    color: {color} !important;
-}}
-.ds-btn[data-dataset="{dsid}"]:hover {{
-    border-color: {color} !important;
+.ds-btn[data-dataset="{i}"] i:first-child {{ color: {c} !important; }}
+.ds-btn[data-dataset="{i}"]:hover {{
+    border-color: {c} !important;
     background: linear-gradient(135deg,
-        color-mix(in srgb, {color} 20%, var(--surface)),
-        color-mix(in srgb, {color} 8%, var(--surface))) !important;
+        color-mix(in srgb, {c} 20%, var(--surface)),
+        color-mix(in srgb, {c} 8%, var(--surface))) !important;
 }}
-.ds-btn[data-dataset="{dsid}"].active {{
-    background: linear-gradient(135deg, {color},
-        color-mix(in srgb, {color} 72%, #000)) !important;
+.ds-btn[data-dataset="{i}"].active {{
+    background: linear-gradient(135deg, {c},
+        color-mix(in srgb, {c} 72%, #000)) !important;
     color: #fff !important;
-    border-color: {color} !important;
-    box-shadow: 0 4px 12px color-mix(in srgb, {color} 40%, transparent) !important;
+    border-color: {c} !important;
+    box-shadow: 0 4px 12px color-mix(in srgb, {c} 40%, transparent) !important;
 }}
-.ds-btn[data-dataset="{dsid}"].active i:first-child {{
-    color: #fff !important;
-}}
-[data-theme="dark"] .ds-btn[data-dataset="{dsid}"] {{
+.ds-btn[data-dataset="{i}"].active i:first-child {{ color: #fff !important; }}
+[data-theme="dark"] .ds-btn[data-dataset="{i}"] {{
     background: linear-gradient(135deg,
-        color-mix(in srgb, {color} 20%, var(--surface)),
-        color-mix(in srgb, {color} 8%, var(--surface))) !important;
-    border-color: color-mix(in srgb, {color} 50%, var(--border)) !important;
+        color-mix(in srgb, {c} 20%, var(--surface)),
+        color-mix(in srgb, {c} 8%, var(--surface))) !important;
+    border-color: color-mix(in srgb, {c} 50%, var(--border)) !important;
 }}
-[data-theme="dark"] .ds-btn[data-dataset="{dsid}"].active {{
-    background: linear-gradient(135deg, {color},
-        color-mix(in srgb, {color} 72%, #000)) !important;
-    border-color: {color} !important;
+[data-theme="dark"] .ds-btn[data-dataset="{i}"].active {{
+    background: linear-gradient(135deg, {c},
+        color-mix(in srgb, {c} 72%, #000)) !important;
+    border-color: {c} !important;
 }}
 """
 
-    css_override = f"""
-/* ═══════════════════════════════════════════════════════════════════
-   ★★ FIX.PY: AUTO-FIT LAYOUT CHO N TAB ★★
-   Số cột tự động theo số tab — PC nhiều cột, mobile 2 cột.
-   ═══════════════════════════════════════════════════════════════════ */
-
-/* Mobile: 2 cột cố định */
+    css = f"""
+/* ★★ FIX.PY: AUTO-FIT LAYOUT CHO N TAB ★★ */
 @media (max-width: 768px) {{
     .ds-main-row {{
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: .5rem !important;
     }}
 }}
-
-/* PC nhỏ (769-1100): 3 cột */
 @media (min-width: 769px) and (max-width: 1100px) {{
     .ds-main-row {{
         grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         gap: .55rem !important;
     }}
 }}
-
-/* PC lớn (>=1101): auto-fit — tự chia cột theo không gian */
 @media (min-width: 1101px) {{
     .ds-main-row {{
         grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
         gap: .6rem !important;
     }}
 }}
-
-/* Màu riêng cho từng tab mới */
 {color_css}
 """
-
     pat_style = re.compile(r'(\s*)(</style>)', re.MULTILINE)
-    html, n = pat_style.subn(r'\1' + css_override + r'\1\2', html, count=1)
+    html, n = pat_style.subn(r'\1' + css + r'\1\2', html, count=1)
     if n == 0:
-        print("⚠️  Không tìm thấy </style> — bỏ qua PATCH CSS.")
+        print("⚠️  Không tìm thấy </style> — bỏ qua CSS")
     else:
-        print("   ✅ Đã override CSS auto-fit")
+        print("   ✅ Đã override CSS")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 4: Inject JS binding cho tất cả tab mới
+    #  PATCH 4: JS binding
     # ═══════════════════════════════════════════════════════════════
-    print("\n🔨 PATCH 4: Inject JS binding...")
+    print("\n🔨 PATCH 4: JS binding...")
+    ids_js = json.dumps([ds["id"] for ds in new_datasets])
 
-    new_ids_js = json.dumps([ds["id"] for ds in new_datasets])
-
-    js_override = f"""
+    js = f"""
 <script>
-/* ═══════════════════════════════════════════════════════════════════
-   ★★ FIX.PY OVERRIDE: Bind các tab mới từ data/ ★★
-   Chạy SAU tất cả JS gốc. Không đụng vào code main.py.
-   ═══════════════════════════════════════════════════════════════════ */
+/* ★★ FIX.PY OVERRIDE: Bind tab mới từ data/ ★★ */
 (function() {{
     'use strict';
-
-    var NEW_IDS = {new_ids_js};
+    var NEW_IDS = {ids_js};
 
     function bindTab(dsId) {{
         var btn = document.querySelector('.ds-btn[data-dataset="' + dsId + '"]');
@@ -459,22 +520,18 @@ def main():
         btn.__fixPyBound = true;
 
         btn.addEventListener('click', function() {{
-            /* Đóng dropdown chuyên ngành */
             var sub = document.getElementById('dsSubWrap');
             if (sub) sub.style.display = 'none';
 
-            /* Xoá active mọi nơi */
             document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {{
                 b.classList.remove('active');
             }});
-
-            /* Active tab này */
             this.classList.add('active');
 
-            /* Switch dataset — gọi đúng hàm global */
-            var switchFn = window.switchDataset || (typeof switchDataset !== 'undefined' ? switchDataset : null);
-            if (typeof switchFn === 'function') {{
-                switchFn(dsId);
+            var fn = window.switchDataset
+                  || (typeof switchDataset !== 'undefined' ? switchDataset : null);
+            if (typeof fn === 'function') {{
+                fn(dsId);
             }} else {{
                 console.warn('⚠️ Không tìm thấy switchDataset()');
             }}
@@ -486,11 +543,10 @@ def main():
         patchMarkActive();
     }}
 
-    /* Đảm bảo markCurrentDatasetActive nhận diện các tab mới */
     function patchMarkActive() {{
         if (window.__fixPyMarkPatched) return;
         var origMark = window.markCurrentDatasetActive
-                     || (typeof markCurrentDatasetActive !== 'undefined' ? markCurrentDatasetActive : null);
+                    || (typeof markCurrentDatasetActive !== 'undefined' ? markCurrentDatasetActive : null);
         if (typeof origMark !== 'function') return;
 
         window.markCurrentDatasetActive = function() {{
@@ -503,14 +559,12 @@ def main():
         window.__fixPyMarkPatched = true;
     }}
 
-    /* Init */
     if (document.readyState === 'loading') {{
         document.addEventListener('DOMContentLoaded', bindAll);
     }} else {{
         bindAll();
     }}
 
-    /* Re-bind khi DOM thay đổi (an toàn cho SPA-like updates) */
     var _timer = null;
     var observer = new MutationObserver(function() {{
         clearTimeout(_timer);
@@ -520,17 +574,16 @@ def main():
         observer.observe(document.body, {{ childList: true, subtree: true }});
     }}
 
-    console.log('✅ fix.py: đã bind ' + NEW_IDS.length + ' tab mới:', NEW_IDS);
+    console.log('✅ fix.py: bind ' + NEW_IDS.length + ' tab:', NEW_IDS);
 }})();
 </script>
 """
-
     pat_body = re.compile(r'(\s*)(</body>)', re.IGNORECASE)
-    html, n = pat_body.subn(r'\1' + js_override + r'\1\2', html, count=1)
+    html, n = pat_body.subn(r'\1' + js + r'\1\2', html, count=1)
     if n == 0:
-        print("❌ Không tìm thấy </body> để chèn JS.")
+        print("❌ Không tìm thấy </body>")
         sys.exit(1)
-    print("   ✅ Đã inject JS binding")
+    print("   ✅ Đã inject JS")
 
     # ═══════════════════════════════════════════════════════════════
     #  GHI FILE
@@ -542,10 +595,10 @@ def main():
     print("\n" + "=" * 62)
     print(f"🎉 HOÀN TẤT! Đã patch {INDEX_HTML}")
     print(f"📦 Kích thước: {size_kb:.1f} KB")
-    print(f"➕ Đã thêm {len(new_datasets)} tab mới")
+    print(f"➕ Đã thêm {len(new_datasets)} tab:")
     for ds in new_datasets:
         print(f"   • {ds['name']} ({ds['count']} câu)")
-    print(f"🎨 Layout: PC auto-fit (200px/cột) · Mobile 2 cột")
+    print(f"🎨 Layout: PC auto-fit · Mobile 2 cột")
     print("=" * 62)
 
 
