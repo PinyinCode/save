@@ -507,13 +507,52 @@ def main():
     print("\n🔨 PATCH 4: JS binding...")
     ids_js = json.dumps([ds["id"] for ds in new_datasets])
 
-    js = f"""
+    js_override = f"""
 <script>
-/* ★★ FIX.PY OVERRIDE: Bind tab mới từ data/ ★★ */
+/* ═══════════════════════════════════════════════════════════════════
+   ★★ FIX.PY OVERRIDE: Bind tab mới + Fix getLimitedData ★★
+   ═══════════════════════════════════════════════════════════════════ */
 (function() {{
     'use strict';
-    var NEW_IDS = {ids_js};
+    var NEW_IDS = {new_ids_js};
 
+    /* ═══════════════════════════════════════════════════════════
+       PATCH 1: getLimitedData — bỏ onboarding override cho tab mới
+       (Fix bug: Demo/Expired không mở được câu nào ở tab mới)
+       ═══════════════════════════════════════════════════════════ */
+    function patchGetLimitedData() {{
+        if (window.__fixPyLimitedPatched) return;
+        var origGet = window.getLimitedData
+                    || (typeof getLimitedData !== 'undefined' ? getLimitedData : null);
+        if (typeof origGet !== 'function') return;
+
+        window.getLimitedData = function() {{
+            var currentDs = (typeof CURRENT_DATASET !== 'undefined')
+                            ? CURRENT_DATASET : 'tonghop';
+
+            // Tab mới KHÔNG dùng onboarding override
+            // (vì override thuộc tab tonghop → filter sẽ ra 0 câu)
+            if (currentDs !== 'tonghop') {{
+                var savedOverride = window.__onboardingOverride;
+                window.__onboardingOverride = null;
+                try {{
+                    var result = origGet.apply(this, arguments);
+                    return result;
+                }} finally {{
+                    window.__onboardingOverride = savedOverride;
+                }}
+            }}
+
+            return origGet.apply(this, arguments);
+        }};
+
+        window.__fixPyLimitedPatched = true;
+        console.log('✅ fix.py: đã patch getLimitedData()');
+    }}
+
+    /* ═══════════════════════════════════════════════════════════
+       PATCH 2: Bind click cho tab mới
+       ═══════════════════════════════════════════════════════════ */
     function bindTab(dsId) {{
         var btn = document.querySelector('.ds-btn[data-dataset="' + dsId + '"]');
         if (!btn || btn.__fixPyBound) return;
@@ -532,31 +571,38 @@ def main():
                   || (typeof switchDataset !== 'undefined' ? switchDataset : null);
             if (typeof fn === 'function') {{
                 fn(dsId);
-            }} else {{
-                console.warn('⚠️ Không tìm thấy switchDataset()');
+            }} else if (typeof window.__switchRawData === 'function') {{
+                window.__switchRawData(dsId);
+                if (typeof applyFilter === 'function') applyFilter();
             }}
         }});
     }}
 
-    function bindAll() {{
-        NEW_IDS.forEach(bindTab);
-        patchMarkActive();
-    }}
-
+    /* ═══════════════════════════════════════════════════════════
+       PATCH 3: markCurrentDatasetActive nhận diện tab mới
+       ═══════════════════════════════════════════════════════════ */
     function patchMarkActive() {{
         if (window.__fixPyMarkPatched) return;
         var origMark = window.markCurrentDatasetActive
-                    || (typeof markCurrentDatasetActive !== 'undefined' ? markCurrentDatasetActive : null);
+                    || (typeof markCurrentDatasetActive !== 'undefined'
+                        ? markCurrentDatasetActive : null);
         if (typeof origMark !== 'function') return;
 
         window.markCurrentDatasetActive = function() {{
             origMark.apply(this, arguments);
-            var cur = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';
+            var cur = (typeof CURRENT_DATASET !== 'undefined')
+                      ? CURRENT_DATASET : 'tonghop';
             document.querySelectorAll('.ds-btn[data-dataset]').forEach(function(b) {{
                 b.classList.toggle('active', b.dataset.dataset === cur);
             }});
         }};
         window.__fixPyMarkPatched = true;
+    }}
+
+    function bindAll() {{
+        patchGetLimitedData();
+        NEW_IDS.forEach(bindTab);
+        patchMarkActive();
     }}
 
     if (document.readyState === 'loading') {{
