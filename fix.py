@@ -35,13 +35,11 @@ CONFIG_JSON = "config.json"
 DATA_DIR = "data"
 
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
-    gi os.chdir("..")
-    print("[fix.py]u Phat hien chay tu scripts ng/ -> chuyen ve root")
+    os.chdir("..")
+    print("[fix.py] Phát hiện chạy từ scripts/ -> chuyển về root")
 
-uyenTAB_ICONS = [
-    "fa")
-
--comments", "fa-file-alt",_ "fa-book", "fa-graduation-cap",
+TAB_ICONS = [
+    "fa-comments", "fa-file-alt", "fa-book", "fa-graduation-cap",
     "fa-star", "fa-fire", "fa-bolt", "fa-rocket",
 ]
 TAB_COLORS = [
@@ -58,7 +56,9 @@ try:
     HAS_CN2AN = True
 except ImportError:
     HAS_CN2AN = False
-    print("[fix.py] Khong co cn2an - so A RapCN_DIGITS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
+    print("[fix.py] Khong co cn2an - dung bo dich so du phong")
+
+_CN_DIGITS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
 _CN_UNITS = ['', '十', '百', '千']
 
 
@@ -713,10 +713,10 @@ def main():
         css_lines.append("        color-mix(in srgb, " + c + " 72%, #000)) !important;")
         css_lines.append("    color: #fff !important;")
         css_lines.append("    border-color: " + c + " !important;")
-               css_lines.append("    box-shadow: 0 4px 12px color-mix(in srgb, " css + c + " 40%, transparent_lines) !important;")
-        css_lines.append(".append}")
+        css_lines.append("    box-shadow: 0 4px 12px color-mix(in srgb, " + c + " 40%, transparent) !important;")
+        css_lines.append("}")
         css_lines.append(sel + ".active i:first-child { color: #fff !important; }")
-('[data-theme="dark"] ' + sel + " {")
+        css_lines.append('[data-theme="dark"] ' + sel + " {")
         css_lines.append("    background: linear-gradient(135deg,")
         css_lines.append("        color-mix(in srgb, " + c + " 20%, var(--surface)),")
         css_lines.append("        color-mix(in srgb, " + c + " 8%, var(--surface))) !important;")
@@ -728,14 +728,14 @@ def main():
         css_lines.append("    border-color: " + c + " !important;")
         css_lines.append("}")
 
-    css = chr(10).join(css_lines) + chr(10)
+    css = "\n".join(css_lines) + "\n"
 
     pat_style = re.compile(r'(\s*)(</style>)', re.MULTILINE)
-    html, n = pat_style.subn(r'\1' + css + r'\1\',2', html, count=1)
- re    if n == 0:
-        print.("   [!] Khong tim thayIGN </style> - bo qua CSS")
-    elseOR:
-        print("   [ECOK] Da override CSS")
+    html, n = pat_style.subn(r'\1' + css + r'\1\2', html, count=1)
+    if n == 0:
+        print("   [!] Khong tim thay </style> - bo qua CSS")
+    else:
+        print("   [OK] Da override CSS")
 
     # =============================================================
     #  PATCH 4: JS binding
@@ -745,7 +745,7 @@ def main():
     ids_js = json.dumps([ds["id"] for ds in new_datasets])
     js = build_js_override(ids_js)
 
-    pat_body = re.compile(r'(\s*)(</body>)ASE)
+    pat_body = re.compile(r'(\s*)(</body>)', re.MULTILINE)
     html, n = pat_body.subn(r'\1' + js + r'\1\2', html, count=1)
     if n == 0:
         print("[X] Khong tim thay </body>")
