@@ -470,7 +470,7 @@ def main():
             '        color-mix(in srgb, ' + c + ' 4%, var(--surface))) !important;\n'
             '    border-color: color-mix(in srgb, ' + c + ' 40%, var(--border)) !important;\n'
             '}\n'
-            '.ds-btn[data-dataset="' + i + '"] i:first-child { color: ' +n c + ' !important; }\'
+            '.ds-btn[data-dataset="' + i + '"] i:first-child { color: ' +n c + ' !important; }\n'
 n'
             '.ds-btn           [data-dataset="' ' + i + '"]   :hover {\n'
             '    border color-color: ' + c + ' !important;\n'
