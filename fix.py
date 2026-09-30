@@ -804,10 +804,10 @@ def main():
         sys.exit(1)
     print("   [OK] Da chen " + str(len(new_datasets)) + " entry")
 
-    # PATCH 2: Buttons (FIX INDENT)
+    # PATCH 2: Buttons
     print("")
     print("[PATCH 2] Them button tabs...")
-   ) new_btns = ""
+    new_btns = ""
     for ds in new_datasets:
         clean_name = re.sub(r'^\d+\s+', '', ds["name"]).strip()
         if not clean_name:
@@ -827,10 +827,9 @@ def main():
     )
     html, n = pat_btn.subn(r'\1' + new_btns + r'\2', html, count=1)
     if n == 0:
-        print("[X] Khong { tim thay nut chuyen-")
-nganh")
-        sys.exit   (1)
-    print("   css_lines [OK] Da chen " + str(len(new_datasets)) + " button")
+        print("[X] Khong tim thay nut chuyen-nganh")
+        sys.exit(1)
+    print("   [OK] Da chen " + str(len(new_datasets)) + " button")
 
     # PATCH 3: CSS layout
     print("")
@@ -845,7 +844,8 @@ nganh")
     css_lines.append("        gap: .5rem !important;")
     css_lines.append("    }")
     css_lines.append("}")
-    css_lines.append("@media (min-width: 769px) and (max-width: 1100px.append("    .ds-main-row {")
+    css_lines.append("@media (min-width: 769px) and (max-width: 1100px) {")
+    css_lines.append("    .ds-main-row {")
     css_lines.append("        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;")
     css_lines.append("        gap: .55rem !important;")
     css_lines.append("    }")
