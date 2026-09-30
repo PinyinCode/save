@@ -3,20 +3,18 @@
 fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
 
 ĐẶC ĐIỂM:
-  - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/ (KỂ CẢ input.xlsx)
-  - Tên tab = tên file (giống logic chuyên ngành trong convert.py)
-  - Logic đọc Excel GIỐNG HỆT data_reader.py:
-      openpyxl, cột theo VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
+  - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/
+  - Tên tab = tên file (đã normalize NFC — hiển thị đúng dấu tiếng Việt)
+  - Logic đọc Excel GIỐNG data_reader.py:
+      openpyxl, cột VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
       Data bắt đầu từ dòng 2, tự động chuyển số Ả Rập → Hán (cn2an)
   - Tier Demo/Expired/Trial vẫn "khoá 1 phần" như tab tổng hợp
+  - Click tab mới KHÔNG bị chặn bởi popup "Chuyên ngành"
   - KHÔNG can thiệp convert.py, ui_template.py, config.json
 
 Cách chạy:
     python scripts/convert.py    # Tạo index.html gốc
     python fix.py                # Patch index.html — thêm tab từ data/
-
-Kết quả (ví dụ 2 file trong data/):
-    [Tổng hợp VPCX] [Input] [Giao Tiếp] [Chuyên ngành ▼] [Yêu thích]
 """
 import json
 import os
@@ -160,7 +158,15 @@ def _slugify(filename):
 
 
 def _display_name(filename):
+    """
+    Tên tab hiển thị:
+      'input.xlsx'              → 'Input'
+      '1000_Câu_giao_tiếp.xlsx' → '1000 Câu Giao Tiếp'
+    Normalize NFC để hiển thị đúng dấu tiếng Việt.
+    """
     name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
+    # ═══ FIX: Normalize NFC — tránh lỗi NFD (a + combining circumflex) ═══
+    name = unicodedata.normalize("NFC", name)
     if name.islower() or name.isupper():
         name = name.title()
     return name
@@ -186,19 +192,16 @@ def _js_str(s):
 def _find_file_safe(filepath):
     """
     Tìm file với tên chính xác trên filesystem — xử lý NFD/NFC mismatch.
-    Trả về path thật hoặc None nếu không tìm thấy.
     """
     if os.path.isfile(filepath):
         return filepath
 
-    # Thử normalize NFC / NFD
     dirname = os.path.dirname(filepath) or "."
     basename = os.path.basename(filepath)
 
     if not os.path.isdir(dirname):
         return None
 
-    # Các biến thể của basename
     variants = set()
     variants.add(basename)
     variants.add(unicodedata.normalize("NFC", basename))
@@ -222,22 +225,13 @@ def _find_file_safe(filepath):
 def _read_excel_rows(filepath):
     """
     Đọc Excel → list[dict] — GIỐNG data_reader.read_excel().
-    Cột theo VỊ TRÍ:
-        0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
-        Data bắt đầu từ dòng 2.
-    Có DEBUG chi tiết để tìm lỗi.
+    Cột theo VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin.
+    Data bắt đầu từ dòng 2.
     """
-    print(f"      🔍 Bắt đầu đọc: {os.path.basename(filepath)}")
-
-    # ═══ FIX: Tìm file với tên chính xác (xử lý NFD/NFC) ═══
     real_path = _find_file_safe(filepath)
     if not real_path:
-        print(f"      ❌ Không tìm thấy file trên filesystem")
-        print(f"         Path: {repr(filepath)}")
+        print(f"      ❌ Không tìm thấy file: {os.path.basename(filepath)}")
         return []
-
-    if real_path != filepath:
-        print(f"      🔧 Đã fix path NFC/NFD: {os.path.basename(real_path)}")
 
     try:
         wb = openpyxl.load_workbook(real_path, data_only=True)
@@ -251,21 +245,8 @@ def _read_excel_rows(filepath):
         print(f"      ❌ Không có sheet: {e}")
         return []
 
-    print(f"      📊 Sheet: {ws.title} - {ws.max_row} dòng, {ws.max_column} cột")
+    print(f"      📊 {ws.title} - {ws.max_row} dòng, {ws.max_column} cột")
 
-    # ═══ DEBUG: In cấu trúc 3 dòng đầu ═══
-    try:
-        print(f"      🔍 Dòng 1 (header):")
-        for i, cell in enumerate(ws[1][:9]):
-            print(f"         Cột {i}: {repr(cell.value)}")
-
-        print(f"      🔍 Dòng 2:")
-        for i, cell in enumerate(ws[2][:9]):
-            print(f"         Cột {i}: {repr(cell.value)}")
-    except Exception as e:
-        print(f"      ⚠️  Không in được debug: {e}")
-
-    # ═══ CẤU HÌNH CỘT (GIỐNG data_reader.py) ═══
     COL_STT     = 0
     COL_HSK     = 1
     COL_TOPIC   = 2
@@ -278,15 +259,13 @@ def _read_excel_rows(filepath):
     rows = []
     converted_count = 0
     total_rows = 0
-    skipped_short = 0
     skipped_empty = 0
 
     for row in ws.iter_rows(min_row=DATA_START, values_only=True):
         total_rows += 1
 
-        # Bỏ dòng quá ngắn
         if not row or len(row) <= max(COL_VI, COL_ZH):
-            skipped_short += 1
+            skipped_empty += 1
             continue
 
         stt     = row[COL_STT]     if COL_STT     < len(row) and row[COL_STT]     is not None else ""
@@ -295,14 +274,15 @@ def _read_excel_rows(filepath):
         subject = _clean(row[COL_SUBJECT]) if COL_SUBJECT < len(row) else ""
         vi      = _clean(row[COL_VI])      if COL_VI      < len(row) else ""
         zh      = _clean(row[COL_ZH])      if COL_ZH      < len(row) else ""
-        pinyin  = _clean(row[COL_PINYIN])  if COL_PINYIN  < len(row) else ""
+        pinyin
 
-        # Bỏ dòng rỗng
+
+  = _clean(row[COL_PINYIN])  if COL_PINYIN  < len(row) else ""
+
         if not vi and not zh:
             skipped_empty += 1
             continue
 
-        # Chuyển số Ả Rập → Hán
         zh_original = zh
         zh = convert_arabic_to_chinese(zh)
         if zh != zh_original:
@@ -318,21 +298,15 @@ def _read_excel_rows(filepath):
             "pinyin":  pinyin,
         })
 
-    print(f"      🔍 Tổng dòng đọc: {total_rows}")
-    print(f"      🔍 Bỏ qua (dòng ngắn): {skipped_short}")
-    print(f"      🔍 Bỏ qua (dòng rỗng): {skipped_empty}")
-    print(f"      ✅ Dòng có data: {len(rows)}")
+    print(f"      ✅ {len(rows)} câu (bỏ qua {skipped_empty} dòng rỗng)")
     if converted_count > 0:
-        print(f"      🔄 Đã chuyển số Ả Rập → Hán: {converted_count} câu")
+        print(f"      🔄 Chuyển số Ả Rập → Hán: {converted_count} câu")
 
-    return rows
-
-
-# ═══════════════════════════════════════════════════════════════════
-#  SCAN data/ — ĐỌC HẾT MỌI FILE
+    return rows# ═══════════════════════════════════════════════════════════════════
+#  SCAN data/
 # ═══════════════════════════════════════════════════════════════════
 def scan_data_dir():
-    """Quét data/ → list[dict] dataset entries — ĐỌC HẾT MỌI FILE."""
+    """Quét data/ → list[dict] dataset entries."""
     if not os.path.isdir(DATA_DIR):
         print(f"⚠️  Không thấy '{DATA_DIR}/' — bỏ qua.")
         return []
@@ -354,7 +328,6 @@ def scan_data_dir():
     for filepath in files:
         fname = os.path.basename(filepath)
 
-        # Bỏ file tạm Office (~$...)
         if fname.startswith("~$"):
             print(f"   ⏭️  {fname} — file tạm")
             continue
@@ -365,7 +338,6 @@ def scan_data_dir():
             print(f"   ⚠️  {fname} — rỗng hoặc lỗi, bỏ qua")
             continue
 
-        # Sinh id unique
         base_id = _slugify(fname)
         dataset_id = base_id
         counter = 2
@@ -374,7 +346,6 @@ def scan_data_dir():
             counter += 1
         used_ids.add(dataset_id)
 
-        # Icon + màu luân phiên
         idx = len(datasets)
         icon = TAB_ICONS[idx % len(TAB_ICONS)]
         color = TAB_COLORS[idx % len(TAB_COLORS)]
@@ -416,7 +387,7 @@ def main():
         print("\nℹ️  Không có dataset nào. Giữ nguyên index.html.")
         return
 
-    # Lọc bỏ dataset đã có trong HTML (chạy lại nhiều lần)
+    # Lọc bỏ dataset đã có trong HTML
     new_datasets = []
     for ds in datasets:
         if (f'"id":"{ds["id"]}"' in html
@@ -548,15 +519,15 @@ def main():
         print("   ✅ Đã override CSS")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 4: JS binding + Fix getLimitedData
+    #  PATCH 4: JS binding — CHẶN popup "Chuyên ngành"
     # ═══════════════════════════════════════════════════════════════
-    print("\n🔨 PATCH 4: JS binding + patch getLimitedData...")
+    print("\n🔨 PATCH 4: JS binding (chặn popup + fix getLimitedData)...")
     ids_js = json.dumps([ds["id"] for ds in new_datasets])
 
     js = f"""
 <script>
 /* ═══════════════════════════════════════════════════════════════════
-   ★★ FIX.PY OVERRIDE: Bind tab mới + Fix getLimitedData ★★
+   ★★ FIX.PY OVERRIDE — Bind tab mới + Chặn popup tier-check ★★
    ═══════════════════════════════════════════════════════════════════ */
 (function() {{
     'use strict';
@@ -564,7 +535,6 @@ def main():
 
     /* ═══════════════════════════════════════════════════════════
        PATCH 1: getLimitedData — bỏ onboarding override cho tab mới
-       (Fix bug: Demo/Expired không mở được câu nào ở tab mới)
        ═══════════════════════════════════════════════════════════ */
     function patchGetLimitedData() {{
         if (window.__fixPyLimitedPatched) return;
@@ -577,7 +547,6 @@ def main():
                             ? CURRENT_DATASET : 'tonghop';
 
             // Tab mới KHÔNG dùng onboarding override
-            // (vì override thuộc tab tonghop → filter sẽ ra 0 câu)
             if (currentDs !== 'tonghop') {{
                 var savedOverride = window.__onboardingOverride;
                 window.__onboardingOverride = null;
@@ -585,11 +554,12 @@ def main():
                 try {{
                     var result = origGet.apply(this, arguments);
 
-                    // ═══ FALLBACK: Nếu rỗng (HSK không match) ═══
-                    if (result.length === 0 && RAW_DATA.length > 0) {{
+                    // FALLBACK: nếu rỗng (HSK không match)
+                    if (result.length === 0
+                        && typeof RAW_DATA !== 'undefined'
+                        && RAW_DATA.length > 0) {{
                         console.warn('⚠️ getLimitedData() rỗng cho tab '
                                      + currentDs + ' — dùng fallback');
-
                         var info = (typeof getTierInfo === 'function')
                                    ? getTierInfo() : {{}};
                         var max = info.maxQuestions || 60;
@@ -611,32 +581,92 @@ def main():
     }}
 
     /* ═══════════════════════════════════════════════════════════
-       PATCH 2: Bind click cho tab mới
+       PATCH 2: Bind click — CAPTURE PHASE + stopImmediatePropagation
+       → Chặn MỌI handler cũ (từ convert.py) chạy trước
+       → Fix bug: click tab mới bị hiện popup "Chuyên ngành"
        ═══════════════════════════════════════════════════════════ */
     function bindTab(dsId) {{
         var btn = document.querySelector('.ds-btn[data-dataset="' + dsId + '"]');
         if (!btn || btn.__fixPyBound) return;
         btn.__fixPyBound = true;
 
-        btn.addEventListener('click', function() {{
+        // ═══ DÙNG CAPTURE PHASE (true) — chạy TRƯỚC mọi handler khác ═══
+        btn.addEventListener('click', function(e) {{
+            // ═══ CHẶN HOÀN TOÀN event propagation ═══
+            e.stopImmediatePropagation();
+            e.stopPropagation();
+            e.preventDefault();
+
+            console.log('🖱️ fix.py: click tab ' + dsId);
+
+            // Đóng dropdown chuyên ngành (nếu đang mở)
             var sub = document.getElementById('dsSubWrap');
             if (sub) sub.style.display = 'none';
 
+            // Xoá active mọi nơi
             document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {{
                 b.classList.remove('active');
             }});
             this.classList.add('active');
 
-            var fn = window.switchDataset
-                  || (typeof switchDataset !== 'undefined' ? switchDataset : null);
-            if (typeof fn === 'function') {{
-                fn(dsId);
-            }} else if (typeof window.__switchRawData === 'function') {{
+            // ═══ Gọi __switchRawData() — BYPASS tier check của switchDataset ═══
+            if (typeof window.__switchRawData === 'function') {{
                 window.__switchRawData(dsId);
-                if (typeof applyFilter === 'function') applyFilter();
+            }} else if (typeof DATASET_REGISTRY !== 'undefined'
+                       && DATASET_REGISTRY[dsId]) {{
+                // Fallback thủ công
+                if (typeof RAW_DATA !== 'undefined') {{
+                    window.RAW_DATA = DATASET_REGISTRY[dsId].data || [];
+                }}
+                if (typeof CURRENT_DATASET !== 'undefined') {{
+                    window.CURRENT_DATASET = dsId;
+                }}
             }}
 
-            // ═══ VERIFY sau 300ms ═══
+            // Reset filter state
+            if (typeof state !== 'undefined' && state) {{
+                state.search = '';
+                state.hsk = '';
+                state.subject = '';
+            }}
+            try {{
+                var searchInput = document.getElementById('searchInput');
+                var hskFilter = document.getElementById('hskFilter');
+                var subjectFilter = document.getElementById('subjectFilter');
+                if (searchInput) searchInput.value = '';
+                if (hskFilter) hskFilter.value = '';
+                if (subjectFilter) subjectFilter.value = '';
+                var clearBtn = document.getElementById('clearSearchBtn');
+                if (clearBtn) clearBtn.classList.remove('show');
+            }} catch(err) {{}}
+
+            // Xoá onboarding override + banner
+            window.__onboardingOverride = null;
+            var obBanner = document.getElementById('onboardingActiveBanner');
+            if (obBanner) obBanner.remove();
+
+            // Re-render
+            try {{
+                if (typeof applyFilter === 'function') applyFilter();
+                if (typeof updateResultCount === 'function') updateResultCount();
+                if (typeof markCurrentDatasetActive === 'function') {{
+                    markCurrentDatasetActive();
+                }}
+            }} catch(err) {{
+                console.warn('fix.py: re-render error:', err);
+            }}
+
+            // Scroll lên đầu
+            setTimeout(function() {{
+                var mainEl = document.getElementById('mainContent');
+                if (mainEl) {{
+                    var yOffset = mainEl.getBoundingClientRect().top
+                                + window.scrollY - 100;
+                    window.scrollTo({{ top: yOffset, behavior: 'smooth' }});
+                }}
+            }}, 100);
+
+            // VERIFY sau 300ms
             setTimeout(function() {{
                 try {{
                     var info = (typeof getTierInfo === 'function')
@@ -651,15 +681,15 @@ def main():
                                 + ', RAW_DATA=' + rawLen
                                 + ', limited=' + limLen
                                 + ', cards=' + cards);
-                }} catch(e) {{
-                    console.warn('verify error:', e);
+                }} catch(err) {{
+                    console.warn('verify error:', err);
                 }}
             }}, 300);
-        }});
+        }}, true);  /* ⬅️ TRUE = capture phase */
     }}
 
     /* ═══════════════════════════════════════════════════════════
-       PATCH 3: markCurrentDatasetActive nhận diện tab mới
+       PATCH 3: markCurrentDatasetActive
        ═══════════════════════════════════════════════════════════ */
     function patchMarkActive() {{
         if (window.__fixPyMarkPatched) return;
@@ -727,6 +757,7 @@ def main():
         print(f"   • {ds['name']} ({ds['count']} câu)")
     print(f"🎨 Layout: PC auto-fit · Mobile 2 cột")
     print(f"🔒 Tier: Demo/Trial/Expired khoá 1 phần")
+    print(f"🚫 Chặn popup 'Chuyên ngành' cho tab mới")
     print("=" * 62)
 
 
