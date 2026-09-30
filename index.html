@@ -24840,23 +24840,24 @@ window.__switchRawData = function(datasetId) {
 </script>
 
 <script>
-/* =================================================================
+/* ================================================================
    FIX.PY OVERRIDE - Bind tab moi + TICH HOP TIER LOCK
-   =================================================================
+   ================================================================
    Quy tac:
-     1. Goi switchDataset() -> applyFilter() -> getLimitedData()
-     2. KHONG goi __switchRawData() truc tiep (bypass tier)
-     3. KHONG override APP_TIER / APP_LIMITS / publishTierState
-     4. Chi dung onboarding override cho tab tonghop
-   =================================================================
+     1. Clone nut de XOA event listener cu cua convert.py
+        (tranh popup 'Chuyen nganh' khi click tab moi)
+     2. Doi RAW_DATA + reset state + goi applyFilter()
+     3. applyFilter() goi getLimitedData() -> CAT THEO TIER
+     4. KHONG goi switchDataset() (no co tier check -> popup)
+     5. KHONG override APP_TIER / APP_LIMITS
+   ================================================================
 */
 (function() {
     'use strict';
     var NEW_IDS = ["1000-cau-giao-tiep", "input"];
 
     /* ------------------------------------------------------------
-       PATCH A: getLimitedData — bo onboarding override cho tab moi
-       (Vi override thuoc tab tonghop -> filter se ra 0 cau)
+       PATCH A: getLimitedData - bo onboarding override cho tab moi
        ------------------------------------------------------------ */
     function patchGetLimitedData() {
         if (window.__fixPyLimitedPatched) return;
@@ -24868,18 +24869,14 @@ window.__switchRawData = function(datasetId) {
             var currentDs = (typeof CURRENT_DATASET !== 'undefined')
                             ? CURRENT_DATASET : 'tonghop';
 
-            // Tab tonghop: giu nguyen logic goc
             if (currentDs === 'tonghop') {
                 return origGet.apply(this, arguments);
             }
 
-            // Tab moi: tam bo override, goi logic goc
             var savedOverride = window.__onboardingOverride;
             window.__onboardingOverride = null;
             try {
                 var result = origGet.apply(this, arguments);
-
-                // Fallback: neu rong (HSK khong match)
                 if (result.length === 0
                     && typeof RAW_DATA !== 'undefined'
                     && RAW_DATA.length > 0) {
@@ -24898,16 +24895,20 @@ window.__switchRawData = function(datasetId) {
     }
 
     /* ------------------------------------------------------------
-       PATCH B: bindTab — GOI switchDataset() GOC
-       switchDataset() se goi applyFilter() -> getLimitedData()
-       -> cat cau theo tier (Demo=60, Trial=N, Active=full)
+       PATCH B: bindTab - CLONE nut de xoa listener cu
        ------------------------------------------------------------ */
     function bindTab(dsId) {
         var btn = document.querySelector('.ds-btn[data-dataset="' + dsId + '"]');
-        if (!btn || btn.__fixPyBound) return;
-        btn.__fixPyBound = true;
+        if (!btn) return;
+        if (btn.__fixPyBound) return;
 
-        btn.addEventListener('click', function(e) {
+        // Clone nut de xoa TAT CA event listener cu
+        var cloned = btn.cloneNode(true);
+        btn.parentNode.replaceChild(cloned, btn);
+        cloned.__fixPyBound = true;
+
+        // Gan listener MOI
+        cloned.addEventListener('click', function(e) {
             e.stopImmediatePropagation();
             e.stopPropagation();
             e.preventDefault();
@@ -24922,42 +24923,46 @@ window.__switchRawData = function(datasetId) {
             });
             this.classList.add('active');
 
-            // ═══════════════════════════════════════════════
-            //  GOI switchDataset() GOC - DE CO TIER LOCK
-            // ═══════════════════════════════════════════════
-            var switchFn = window.switchDataset
-                        || (typeof switchDataset !== 'undefined' ? switchDataset : null);
-
-            if (typeof switchFn === 'function') {
-                switchFn(dsId);
-                console.log('[fix.py] Da goi switchDataset("' + dsId + '")');
-            } else {
-                console.warn('[fix.py] Khong tim thay switchDataset - fallback');
-                // Fallback: tu lam giong switchDataset
-                if (typeof window.__switchRawData === 'function') {
-                    window.__switchRawData(dsId);
-                }
-                if (typeof state !== 'undefined' && state) {
-                    state.search = '';
-                    state.hsk = '';
-                    state.subject = '';
-                }
-                try {
-                    var si = document.getElementById('searchInput');
-                    var hf = document.getElementById('hskFilter');
-                    var sf = document.getElementById('subjectFilter');
-                    if (si) si.value = '';
-                    if (hf) hf.value = '';
-                    if (sf) sf.value = '';
-                } catch(err) {}
-                if (typeof buildFilters === 'function') buildFilters();
-                if (typeof applyFilter === 'function') applyFilter();
+            // 1. Doi RAW_DATA
+            if (typeof window.__switchRawData === 'function') {
+                window.__switchRawData(dsId);
+                console.log('[fix.py] __switchRawData("' + dsId + '")');
             }
 
-            // Xoa onboarding override + banner
+            // 2. Reset state
+            if (typeof state !== 'undefined' && state) {
+                state.search = '';
+                state.hsk = '';
+                state.subject = '';
+            }
+            try {
+                var si = document.getElementById('searchInput');
+                var hf = document.getElementById('hskFilter');
+                var sf = document.getElementById('subjectFilter');
+                if (si) si.value = '';
+                if (hf) hf.value = '';
+                if (sf) sf.value = '';
+                var cb = document.getElementById('clearSearchBtn');
+                if (cb) cb.classList.remove('show');
+            } catch(err) {}
+
+            // 3. Xoa override + banner
             window.__onboardingOverride = null;
             var obBanner = document.getElementById('onboardingActiveBanner');
             if (obBanner) obBanner.remove();
+
+            // 4. Re-render (CO TIER LOCK)
+            try {
+                if (typeof buildFilters === 'function') buildFilters();
+                if (typeof applyFilter === 'function') applyFilter();
+                if (typeof updateResultCount === 'function') updateResultCount();
+                if (typeof markCurrentDatasetActive === 'function') {
+                    markCurrentDatasetActive();
+                }
+                console.log('[fix.py] applyFilter() done');
+            } catch(err) {
+                console.warn('[fix.py] re-render error:', err);
+            }
 
             // Scroll len dau
             setTimeout(function() {
@@ -24969,7 +24974,7 @@ window.__switchRawData = function(datasetId) {
                 }
             }, 100);
 
-            // VERIFY sau 400ms
+            // VERIFY
             setTimeout(function() {
                 try {
                     var info = (typeof getTierInfo === 'function')
@@ -25026,6 +25031,7 @@ window.__switchRawData = function(datasetId) {
         bindAll();
     }
 
+    // Re-bind khi DOM thay doi
     var _timer = null;
     var observer = new MutationObserver(function() {
         clearTimeout(_timer);
