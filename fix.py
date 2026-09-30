@@ -302,7 +302,7 @@ def _read_excel_rows(filepath):
     if converted_count > 0:
         print(f"      🔄 Chuyển số Ả Rập → Hán: {converted_count} câu")
 
-    return rows# ═══════════════════════════════════════════════════════════════════
+    return rows
 #  SCAN data/
 # ═══════════════════════════════════════════════════════════════════
 def scan_data_dir():
