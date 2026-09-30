@@ -12,6 +12,7 @@ fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
   - TIER LOCK + ONBOARDING giống tab tổng hợp
   - Clone nút để XÓA event listener cũ của convert.py → không còn popup
   - KHÔNG can thiệp convert.py, ui_template.py, config.json
+  - ⚡ CHỈ QUÉT sub-btn từ scripts/data (không quét data/ — đã do convert.py xử lý)
 
 Cách chạy:
     python scripts/convert.py    # Tạo index.html gốc
@@ -929,7 +930,6 @@ def main():
     print("[PATCH 2] Them button tabs...")
     new_btns = ""
     for ds in new_datasets:
-        # Label = CHỈ tên file, KHÔNG thêm số câu
         label = ds["name"]
         new_btns += (
             '\n        <button class="ds-btn ds-btn-primary" '
