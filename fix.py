@@ -3,20 +3,20 @@
 fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
 
 ĐẶC ĐIỂM:
-  - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/ (kể cả input.xlsx)
+  - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/ (KỂ CẢ input.xlsx)
   - Tên tab = tên file (giống logic chuyên ngành trong convert.py)
-  - Logic đọc Excel giống HỆT data_reader.py:
+  - Logic đọc Excel GIỐNG HỆT data_reader.py:
       openpyxl, cột theo VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
       Data bắt đầu từ dòng 2, tự động chuyển số Ả Rập → Hán (cn2an)
-  - KHÔNG can thiệp convert.py, ui_template.py, config.json
   - Tier Demo/Expired/Trial vẫn "khoá 1 phần" như tab tổng hợp
+  - KHÔNG can thiệp convert.py, ui_template.py, config.json
 
 Cách chạy:
     python scripts/convert.py    # Tạo index.html gốc
     python fix.py                # Patch index.html — thêm tab từ data/
 
 Kết quả (ví dụ 2 file trong data/):
-    [Input 1700 câu] [1000 Câu Giao Tiếp 1000 câu] [Chuyên ngành ▼] [Yêu thích]
+    [Tổng hợp VPCX] [Input] [Giao Tiếp] [Chuyên ngành ▼] [Yêu thích]
 """
 import json
 import os
@@ -26,6 +26,7 @@ import glob
 import unicodedata
 
 import openpyxl
+
 
 # ═══════════════════════════════════════════════════════════════════
 #  CONFIG
@@ -37,7 +38,7 @@ DATA_DIR    = "data"
 # Nếu fix.py chạy từ scripts/, tự nhảy ra root
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
     os.chdir("..")
-    print("🔄 fix.py phát hiện chạy từ scripts/ → chuyển về root")
+    print("🔄 fix.py chạy từ scripts/ → chuyển về root")
 
 TAB_ICONS = [
     "fa-comments", "fa-file-alt", "fa-book", "fa-graduation-cap",
@@ -106,7 +107,6 @@ def convert_arabic_to_chinese(text):
     if not text or not isinstance(text, str):
         return text
 
-    # Phần trăm
     def replace_percent(match):
         num_str = match.group(1)
         if '.' in num_str:
@@ -118,7 +118,6 @@ def convert_arabic_to_chinese(text):
 
     text = re.sub(r'(\d+(?:\.\d+)?)%', replace_percent, text)
 
-    # Số thập phân độc lập
     def replace_decimal(match):
         num_str = match.group(0)
         parts = num_str.split('.')
@@ -131,7 +130,6 @@ def convert_arabic_to_chinese(text):
         replace_decimal, text
     )
 
-    # Số nguyên độc lập
     def replace_int(match):
         return _num_to_chinese(int(match.group(0)))
 
@@ -144,7 +142,6 @@ def convert_arabic_to_chinese(text):
 
 
 def _clean(s):
-    """Làm sạch cell (giống data_reader.py)."""
     if s is None:
         return ""
     return (str(s).replace('\n', ' ').replace('\r', ' ')
@@ -163,7 +160,6 @@ def _slugify(filename):
 
 
 def _display_name(filename):
-    """Tên tab hiển thị (giống logic chuyên ngành của convert.py)."""
     name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
     if name.islower() or name.isupper():
         name = name.title()
@@ -187,17 +183,66 @@ def _js_str(s):
             .replace("</", "<\\/"))
 
 
+def _find_file_safe(filepath):
+    """
+    Tìm file với tên chính xác trên filesystem — xử lý NFD/NFC mismatch.
+    Trả về path thật hoặc None nếu không tìm thấy.
+    """
+    if os.path.isfile(filepath):
+        return filepath
+
+    # Thử normalize NFC / NFD
+    dirname = os.path.dirname(filepath) or "."
+    basename = os.path.basename(filepath)
+
+    if not os.path.isdir(dirname):
+        return None
+
+    # Các biến thể của basename
+    variants = set()
+    variants.add(basename)
+    variants.add(unicodedata.normalize("NFC", basename))
+    variants.add(unicodedata.normalize("NFD", basename))
+
+    try:
+        for fname in os.listdir(dirname):
+            fname_nfc = unicodedata.normalize("NFC", fname)
+            fname_nfd = unicodedata.normalize("NFD", fname)
+            for variant in variants:
+                if (fname == variant
+                        or fname_nfc == unicodedata.normalize("NFC", variant)
+                        or fname_nfd == unicodedata.normalize("NFD", variant)):
+                    return os.path.join(dirname, fname)
+    except Exception:
+        pass
+
+    return None
+
+
 def _read_excel_rows(filepath):
     """
-    Đọc Excel → list[dict] — GIỐNG HỆT data_reader.read_excel().
+    Đọc Excel → list[dict] — GIỐNG data_reader.read_excel().
     Cột theo VỊ TRÍ:
         0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
         Data bắt đầu từ dòng 2.
+    Có DEBUG chi tiết để tìm lỗi.
     """
+    print(f"      🔍 Bắt đầu đọc: {os.path.basename(filepath)}")
+
+    # ═══ FIX: Tìm file với tên chính xác (xử lý NFD/NFC) ═══
+    real_path = _find_file_safe(filepath)
+    if not real_path:
+        print(f"      ❌ Không tìm thấy file trên filesystem")
+        print(f"         Path: {repr(filepath)}")
+        return []
+
+    if real_path != filepath:
+        print(f"      🔧 Đã fix path NFC/NFD: {os.path.basename(real_path)}")
+
     try:
-        wb = openpyxl.load_workbook(filepath, data_only=True)
+        wb = openpyxl.load_workbook(real_path, data_only=True)
     except Exception as e:
-        print(f"      ❌ Không load được: {e}")
+        print(f"      ❌ Không load được: {type(e).__name__}: {e}")
         return []
 
     try:
@@ -206,7 +251,19 @@ def _read_excel_rows(filepath):
         print(f"      ❌ Không có sheet: {e}")
         return []
 
-    print(f"      📊 Sheet: {ws.title} - {ws.max_row} dòng")
+    print(f"      📊 Sheet: {ws.title} - {ws.max_row} dòng, {ws.max_column} cột")
+
+    # ═══ DEBUG: In cấu trúc 3 dòng đầu ═══
+    try:
+        print(f"      🔍 Dòng 1 (header):")
+        for i, cell in enumerate(ws[1][:9]):
+            print(f"         Cột {i}: {repr(cell.value)}")
+
+        print(f"      🔍 Dòng 2:")
+        for i, cell in enumerate(ws[2][:9]):
+            print(f"         Cột {i}: {repr(cell.value)}")
+    except Exception as e:
+        print(f"      ⚠️  Không in được debug: {e}")
 
     # ═══ CẤU HÌNH CỘT (GIỐNG data_reader.py) ═══
     COL_STT     = 0
@@ -220,9 +277,16 @@ def _read_excel_rows(filepath):
 
     rows = []
     converted_count = 0
+    total_rows = 0
+    skipped_short = 0
+    skipped_empty = 0
 
     for row in ws.iter_rows(min_row=DATA_START, values_only=True):
+        total_rows += 1
+
+        # Bỏ dòng quá ngắn
         if not row or len(row) <= max(COL_VI, COL_ZH):
+            skipped_short += 1
             continue
 
         stt     = row[COL_STT]     if COL_STT     < len(row) and row[COL_STT]     is not None else ""
@@ -233,10 +297,12 @@ def _read_excel_rows(filepath):
         zh      = _clean(row[COL_ZH])      if COL_ZH      < len(row) else ""
         pinyin  = _clean(row[COL_PINYIN])  if COL_PINYIN  < len(row) else ""
 
+        # Bỏ dòng rỗng
         if not vi and not zh:
+            skipped_empty += 1
             continue
 
-        # ⬇️ CHUYỂN SỐ Ả RẬP → HÁN
+        # Chuyển số Ả Rập → Hán
         zh_original = zh
         zh = convert_arabic_to_chinese(zh)
         if zh != zh_original:
@@ -252,6 +318,10 @@ def _read_excel_rows(filepath):
             "pinyin":  pinyin,
         })
 
+    print(f"      🔍 Tổng dòng đọc: {total_rows}")
+    print(f"      🔍 Bỏ qua (dòng ngắn): {skipped_short}")
+    print(f"      🔍 Bỏ qua (dòng rỗng): {skipped_empty}")
+    print(f"      ✅ Dòng có data: {len(rows)}")
     if converted_count > 0:
         print(f"      🔄 Đã chuyển số Ả Rập → Hán: {converted_count} câu")
 
@@ -284,7 +354,7 @@ def scan_data_dir():
     for filepath in files:
         fname = os.path.basename(filepath)
 
-        # Chỉ bỏ file tạm Office (~$...)
+        # Bỏ file tạm Office (~$...)
         if fname.startswith("~$"):
             print(f"   ⏭️  {fname} — file tạm")
             continue
@@ -295,6 +365,7 @@ def scan_data_dir():
             print(f"   ⚠️  {fname} — rỗng hoặc lỗi, bỏ qua")
             continue
 
+        # Sinh id unique
         base_id = _slugify(fname)
         dataset_id = base_id
         counter = 2
@@ -303,6 +374,7 @@ def scan_data_dir():
             counter += 1
         used_ids.add(dataset_id)
 
+        # Icon + màu luân phiên
         idx = len(datasets)
         icon = TAB_ICONS[idx % len(TAB_ICONS)]
         color = TAB_COLORS[idx % len(TAB_COLORS)]
@@ -341,7 +413,7 @@ def main():
     datasets = scan_data_dir()
 
     if not datasets:
-        print("\nℹ️  Không có dataset nào trong data/. Giữ nguyên index.html.")
+        print("\nℹ️  Không có dataset nào. Giữ nguyên index.html.")
         return
 
     # Lọc bỏ dataset đã có trong HTML (chạy lại nhiều lần)
@@ -363,7 +435,7 @@ def main():
         print(f"   • {ds['name']} ({ds['count']} câu)")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 1: Inject dataset vào DATASET_REGISTRY
+    #  PATCH 1: DATASET_REGISTRY
     # ═══════════════════════════════════════════════════════════════
     print("\n🔨 PATCH 1: Inject vào DATASET_REGISTRY...")
     pat_registry = re.compile(r'(var\s+DATASET_REGISTRY\s*=\s*)(\{)', re.MULTILINE)
@@ -379,7 +451,7 @@ def main():
     print(f"   ✅ Đã chèn {len(new_datasets)} entry")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 2: Thêm button vào .ds-main-row
+    #  PATCH 2: Buttons
     # ═══════════════════════════════════════════════════════════════
     print("\n🔨 PATCH 2: Thêm button tabs...")
     new_btns = ""
@@ -393,7 +465,6 @@ def main():
             f'        </button>\n    '
         )
 
-    # Chèn TRƯỚC nút chuyen-nganh
     pat_btn = re.compile(
         r'(\s*)(<button\s+class="[^"]*ds-btn[^"]*"\s+[^>]*data-dataset-group="chuyen-nganh")',
         re.MULTILINE
@@ -405,7 +476,7 @@ def main():
     print(f"   ✅ Đã chèn {len(new_datasets)} button")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 3: CSS layout (auto-fit)
+    #  PATCH 3: CSS layout
     # ═══════════════════════════════════════════════════════════════
     print("\n🔨 PATCH 3: CSS layout...")
     color_css = ""
@@ -510,8 +581,23 @@ def main():
             if (currentDs !== 'tonghop') {{
                 var savedOverride = window.__onboardingOverride;
                 window.__onboardingOverride = null;
+
                 try {{
-                    return origGet.apply(this, arguments);
+                    var result = origGet.apply(this, arguments);
+
+                    // ═══ FALLBACK: Nếu rỗng (HSK không match) ═══
+                    if (result.length === 0 && RAW_DATA.length > 0) {{
+                        console.warn('⚠️ getLimitedData() rỗng cho tab '
+                                     + currentDs + ' — dùng fallback');
+
+                        var info = (typeof getTierInfo === 'function')
+                                   ? getTierInfo() : {{}};
+                        var max = info.maxQuestions || 60;
+                        result = RAW_DATA.slice(0, max);
+                        console.log('✅ Fallback: lấy ' + result.length + ' câu đầu');
+                    }}
+
+                    return result;
                 }} finally {{
                     window.__onboardingOverride = savedOverride;
                 }}
@@ -549,6 +635,26 @@ def main():
                 window.__switchRawData(dsId);
                 if (typeof applyFilter === 'function') applyFilter();
             }}
+
+            // ═══ VERIFY sau 300ms ═══
+            setTimeout(function() {{
+                try {{
+                    var info = (typeof getTierInfo === 'function')
+                               ? getTierInfo() : {{}};
+                    var rawLen = (typeof RAW_DATA !== 'undefined')
+                                 ? RAW_DATA.length : 0;
+                    var limLen = (typeof getLimitedData === 'function')
+                                 ? getLimitedData().length : 0;
+                    var cards = document.querySelectorAll('.card').length;
+                    console.log('🔍 Tab ' + dsId
+                                + ': tier=' + info.tier
+                                + ', RAW_DATA=' + rawLen
+                                + ', limited=' + limLen
+                                + ', cards=' + cards);
+                }} catch(e) {{
+                    console.warn('verify error:', e);
+                }}
+            }}, 300);
         }});
     }}
 
@@ -585,6 +691,7 @@ def main():
         bindAll();
     }}
 
+    // Re-bind khi DOM thay đổi
     var _timer = null;
     var observer = new MutationObserver(function() {{
         clearTimeout(_timer);
@@ -606,20 +713,6 @@ def main():
     print("   ✅ Đã inject JS")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 5 (OPTIONAL): Xóa tab "Tổng hợp VPCX" cũ
-    #  BẬT bằng cách bỏ comment bên dưới nếu bạn muốn xóa tab tổng hợp.
-    #  Mặc định TẮT — giữ tab tổng hợp bên cạnh tab "Input".
-    # ═══════════════════════════════════════════════════════════════
-    # print("\n🔨 PATCH 5: Xóa tab Tổng hợp cũ...")
-    # pat_tonghop_btn = re.compile(
-    #     r'<button[^>]*data-dataset="tonghop"[^>]*>.*?</button>\s*',
-    #     re.DOTALL
-    # )
-    # html, n = pat_tonghop_btn.subn('', html)
-    # if n > 0:
-    #     print(f"   ✅ Đã xóa {n} nút tổng hợp")
-
-    # ═══════════════════════════════════════════════════════════════
     #  GHI FILE
     # ═══════════════════════════════════════════════════════════════
     with open(INDEX_HTML, "w", encoding="utf-8") as f:
@@ -633,7 +726,7 @@ def main():
     for ds in new_datasets:
         print(f"   • {ds['name']} ({ds['count']} câu)")
     print(f"🎨 Layout: PC auto-fit · Mobile 2 cột")
-    print(f"🔒 Tier: Demo/Trial/Expired khoá 1 phần như tab tổng hợp")
+    print(f"🔒 Tier: Demo/Trial/Expired khoá 1 phần")
     print("=" * 62)
 
 
