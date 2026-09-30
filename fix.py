@@ -457,69 +457,74 @@ def main():
     # =============================================================
     #  PATCH 3: CSS layout
     # =============================================================
+    # =============================================================
+    #  PATCH 3: CSS layout
+    # =============================================================
     print("")
     print("[PATCH 3] CSS layout...")
-    color_css = ""
+
+    # Dung list + join de tranh loi escape \n khi paste
+    css_lines = []
+    css_lines.append("")
+    css_lines.append("/* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB ==== */")
+    css_lines.append("@media (max-width: 768px) {")
+    css_lines.append("    .ds-main-row {")
+    css_lines.append("        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;")
+    css_lines.append("        gap: .5rem !important;")
+    css_lines.append("    }")
+    css_lines.append("}")
+    css_lines.append("@media (min-width: 769px) and (max-width: 1100px) {")
+    css_lines.append("    .ds-main-row {")
+    css_lines.append("        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;")
+    css_lines.append("        gap: .55rem !important;")
+    css_lines.append("    }")
+    css_lines.append("}")
+    css_lines.append("@media (min-width: 1101px) {")
+    css_lines.append("    .ds-main-row {")
+    css_lines.append("        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;")
+    css_lines.append("        gap: .6rem !important;")
+    css_lines.append("    }")
+    css_lines.append("}")
+
     for ds in new_datasets:
         c = ds["color"]
         i = ds["id"]
-        color_css += (
-            '\n.ds-btn[data-dataset="' + i + '"] {\n'
-            '    background: linear-gradient(135deg,\n'
-            '        color-mix(in srgb, ' + c + ' 12%, var(--surface)),\n'
-            '        color-mix(in srgb, ' + c + ' 4%, var(--surface))) !important;\n'
-            '    border-color: color-mix(in srgb, ' + c + ' 40%, var(--border)) !important;\n'
-            '}\n'
-            '.ds-btn[data-dataset="' + i + '"] i:first-child { color: ' +n c + ' !important; }\n'
-n'
-            '.ds-btn           [data-dataset="' ' + i + '"]   :hover {\n'
-            '    border color-color: ' + c + ' !important;\n'
-            '    background: linear-gradient(135deg,\n'
-            '        color-mix(in srgb, ' + c + ' 20%, var(--surface)),\n'
-            '        color-mix(in srgb, ' + c + ' 8%, var(--surface))) !important;\n'
-            '}\n'
-            '.ds-btn[data-dataset="' + i + '"].active {\n'
-            '    background: linear-gradient(135deg, ' + c + ',\n'
-            '        color-mix(in srgb, ' + c + ' 72%, #000)) !important;\: #fff !important;\n'
-            '    border-color: ' + c + ' !important;\n'
-            '    box-shadow: 0 4px 12px color-mix(in srgb, ' + c + ' 40%, transparent) !important;\n'
-            '}\n'
-            '.ds-btn[data-dataset="' + i + '"].active i:first-child { color: #fff !important; }\n'
-            '[data-theme="dark"] .ds-btn[data-dataset="' + i + '"] {\n'
-            '    background: linear-gradient(135deg,\n'
-            '        color-mix(in srgb, ' + c + ' 20%, var(--surface)),\n'
-            '        color-mix(in srgb, ' + c + ' 8%, var(--surface))) !important;\n'
-            '    border-color: color-mix(in srgb, ' + c + ' 50%, var(--border)) !important;\n'
-            '}\n'
-            '[data-theme="dark"] .ds-btn[data-dataset="' + i + '"].active {\n'
-            '    background: linear-gradient(135deg, ' + c + ',\n'
-            '        color-mix(in srgb, ' + c + ' 72%, #000)) !important;\n'
-            '    border-color: ' + c + ' !important;\n'
-            '}\n'
-        )
+        sel = '.ds-btn[data-dataset="' + i + '"]'
+        css_lines.append("")
+        css_lines.append(sel + " {")
+        css_lines.append("    background: linear-gradient(135deg,")
+        css_lines.append("        color-mix(in srgb, " + c + " 12%, var(--surface)),")
+        css_lines.append("        color-mix(in srgb, " + c + " 4%, var(--surface))) !important;")
+        css_lines.append("    border-color: color-mix(in srgb, " + c + " 40%, var(--border)) !important;")
+        css_lines.append("}")
+        css_lines.append(sel + " i:first-child { color: " + c + " !important; }")
+        css_lines.append(sel + ":hover {")
+        css_lines.append("    border-color: " + c + " !important;")
+        css_lines.append("    background: linear-gradient(135deg,")
+        css_lines.append("        color-mix(in srgb, " + c + " 20%, var(--surface)),")
+        css_lines.append("        color-mix(in srgb, " + c + " 8%, var(--surface))) !important;")
+        css_lines.append("}")
+        css_lines.append(sel + ".active {")
+        css_lines.append("    background: linear-gradient(135deg, " + c + ",")
+        css_lines.append("        color-mix(in srgb, " + c + " 72%, #000)) !important;")
+        css_lines.append("    color: #fff !important;")
+        css_lines.append("    border-color: " + c + " !important;")
+        css_lines.append("    box-shadow: 0 4px 12px color-mix(in srgb, " + c + " 40%, transparent) !important;")
+        css_lines.append("}")
+        css_lines.append(sel + ".active i:first-child { color: #fff !important; }")
+        css_lines.append('[data-theme="dark"] ' + sel + " {")
+        css_lines.append("    background: linear-gradient(135deg,")
+        css_lines.append("        color-mix(in srgb, " + c + " 20%, var(--surface)),")
+        css_lines.append("        color-mix(in srgb, " + c + " 8%, var(--surface))) !important;")
+        css_lines.append("    border-color: color-mix(in srgb, " + c + " 50%, var(--border)) !important;")
+        css_lines.append("}")
+        css_lines.append('[data-theme="dark"] ' + sel + ".active {")
+        css_lines.append("    background: linear-gradient(135deg, " + c + ",")
+        css_lines.append("        color-mix(in srgb, " + c + " 72%, #000)) !important;")
+        css_lines.append("    border-color: " + c + " !important;")
+        css_lines.append("}")
 
-    css = (
-        '\n/* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB ==== */\n'
-        '@media (max-width: 768px) {\n'
-        '    .ds-main-row {\n'
-        '        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;\n'
-        '        gap: .5rem !important;\n'
-        '    }\n'
-        '}\n'
-        '@media (min-width: 769px) and (max-width: 1100px) {\n'
-        '    .ds-main-row {\n'
-        '        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;\n'
-        '        gap: .55rem !important;\n'
-        '    }\n'
-        '}\n'
-        '@media (min-width: 1101px) {\n'
-        '    .ds-main-row {\n'
-        '        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;\n'
-        '        gap: .6rem !important;\n'
-        '    }\n'
-        '}\n'
-        + color_css + '\n'
-    )
+    css = chr(10).join(css_lines) + chr(10)
 
     pat_style = re.compile(r'(\s*)(</style>)', re.MULTILINE)
     html, n = pat_style.subn(r'\1' + css + r'\1\2', html, count=1)
