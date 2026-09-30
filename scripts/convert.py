@@ -3,29 +3,12 @@
 Chuyển file Excel → HTML tự chứa dữ liệu.
 Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + data.
 
-✅ VỊ TRÍ FILE:
-   repo-root/
-   ├── index.html              ← OUTPUT (script ghi vào đây)
-   ├── fix.py                  ← Ở ROOT
-   ├── data/                   ← Ở ROOT — fix.py xử lý riêng (KHÔNG phải chuyên ngành)
-   └── scripts/
-       ├── convert.py          ← SCRIPT NÀY
-       ├── config.json         ← Ở TRONG scripts/
-       └── data/               ← CHUYÊN NGÀNH (mỗi thư mục con = 1 chuyên ngành)
-           ├── Giày da/
-           │   └── *.xlsx
-           ├── Kế toán/
-           │   └── *.xlsx
-           └── ...
-
-✅ CHUYÊN NGÀNH: Chỉ đọc từ scripts/data/ (đệ quy 1 cấp)
-   - Mỗi THƯ MỤC CON trong scripts/data/ = 1 chuyên ngành
-   - Tên hiển thị = TÊN THƯ MỤC
-   - Nhiều file .xlsx trong cùng thư mục → GỘP dữ liệu
-   - KHÔNG đọc data/ (root) — thư mục đó để fix.py xử lý
-
 ✅ HEADER: Subtitle "Văn phòng & Công xưởng" được thiết kế lại
-   thành PILL nổi bật với icon ✦ lấp lánh.
+   thành PILL nổi bật với icon ✦ lấp lánh — không còn mờ.
+
+✅ ĐA DATASET: Tự động quét thư mục `data/`, mỗi file Excel
+   → 1 mục "Chuyên ngành" trong dropdown. Thêm file mới = copy
+   vào `data/` + chạy lại `python main.py`, không cần sửa code.
 
 ✅ ONBOARDING: Demo + Trial được hỏi chọn chủ đề quan tâm
    → tự động filter + chia đều theo HSK.
@@ -33,17 +16,35 @@ Ghép 6 template: ui + social + accounts (gộp renewal) + intro + favorites + d
 ✅ INTRO: Banner giới thiệu + Modal 6 slide hướng dẫn.
 
 ✅ FAVORITES:
-   - Tab Yêu thích — 3 tab cùng hàng trên PC
+   - Tab Yêu thích — 3 tab cùng hàng trên PC (Tổng hợp + Chuyên ngành + Yêu thích)
    - Item Yêu thích trong dropdown bộ dữ liệu
-   - Nút tim trên card, nút tim FLOAT, toggle "Chỉ câu yêu thích"
+   - Nút tim trên card (đổi màu theo trạng thái)
+   - Nút tim FLOAT góc phải (Practice Full)
+   - ★ Nút toggle "Chỉ câu yêu thích" góc trái (Practice Full)
+     → Khi bật: dropdown "CÂU:" chỉ liệt kê câu yêu thích
+   - Chỉ tier ACTIVE/ADMIN dùng được, tier khác hiển thị 🔒
 
-✅ CHAT SUPPORT + RTDB PRESENCE + TELEGRAM NOTIFY
+✅ CHAT SUPPORT: Module độc lập (chat_support.py)
+   - User ↔ Admin realtime qua Firestore
+   - FAB + badge poll 60s
+   - Admin panel có tab "Chat hỗ trợ"
 
-✅ FIX (2026-09-30): CHUYÊN NGÀNH CHỈ ĐỌC TỪ scripts/data/
-   - Quét đệ quy 1 cấp theo thư mục con
-   - Tên hiển thị = tên thư mục cha
-   - Gộp nhiều file trong cùng thư mục
-   - data/ (root) KHÔNG bị coi là chuyên ngành
+✅ RTDB PRESENCE (2026-09):
+   - User online tracking qua Firebase Realtime Database
+   - KHÔNG tốn Firestore quota
+   - onDisconnect tự động xóa khi user tắt tab
+   - Admin xem được danh sách user online realtime
+
+✅ FIX (2026-09):
+   - Chèn QUOTA DASHBOARD vào Admin Panel (trước đây bị thiếu)
+   - Chèn USER ONLINE section vào Admin Panel
+   - Escape "</" cho TẤT CẢ JSON blobs
+
+✅ FIX (2026-09-28): TELEGRAM NOTIFY
+   - Thêm build_config_js() + build_telegram_notify_js() vào full_js
+   - Gửi thông báo Telegram khi user nhắn tin
+   - LOẠI BỎ thẻ <script> thừa trong full_js (build_config_js wrap trong
+     <script>...</script> → khi nhúng vào HTML_SHELL bị LỒNG 2 thẻ → vỡ HTML).
 """
 import json
 import os
@@ -52,14 +53,7 @@ import glob
 import re
 import unicodedata
 
-# ═══════════════════════════════════════════════════════════════════
-#  ⭐ RESOLVE PATHS — convert.py nằm trong scripts/
-# ═══════════════════════════════════════════════════════════════════
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))    # = scripts/
-ROOT_DIR   = os.path.dirname(SCRIPT_DIR)                    # = repo-root/
-
-# Import các module CÙNG CẤP với convert.py (trong scripts/)
-sys.path.insert(0, SCRIPT_DIR)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config_loader import load_config, print_banner, CONFIG_FILE
 from data_reader import read_excel
@@ -96,8 +90,8 @@ from chat_support import (
     build_quota_js,
     build_quota_init_js,
     build_online_section_html,
-    build_config_js,
-    build_telegram_notify_js,
+    build_config_js,              # ⭐ THÊM
+    build_telegram_notify_js,     # ⭐ THÊM
 )
 
 # ⬇️⬇️⬇️ Module Admin Chat Manager (trình quản lý chat riêng cho admin)
@@ -110,8 +104,6 @@ from draggable_fab import (
     build_draggable_fab_css,
     build_draggable_fab_js,
 )
-
-
 # ═══════════════════════════════════════════════════════════════════
 #  HELPER: escape string an toàn khi nhúng vào JS
 # ═══════════════════════════════════════════════════════════════════
@@ -146,39 +138,14 @@ def _json_blob(obj, compact=True):
 CONFIG = load_config()
 print_banner(CONFIG)
 
-
-# ═══════════════════════════════════════════════════════════════════
-#  ⭐ PATHS
-#  - EXCEL_FILE:  file tổng hợp (resolve relative với scripts/, fallback ROOT)
-#  - OUTPUT_HTML: index.html ở ROOT repo
-#  - DATA_DIR:    scripts/data/ — chứa các THƯ MỤC CHUYÊN NGÀNH
-# ═══════════════════════════════════════════════════════════════════
 EXCEL_FILE = CONFIG["excel_file"]
-if not os.path.isabs(EXCEL_FILE):
-    # Thử scripts/ trước, fallback về root
-    _cand = os.path.join(SCRIPT_DIR, EXCEL_FILE)
-    if not os.path.isfile(_cand):
-        _cand = os.path.join(ROOT_DIR, EXCEL_FILE)
-    EXCEL_FILE = _cand
-
 OUTPUT_HTML = CONFIG["output_html"]
-if not os.path.isabs(OUTPUT_HTML):
-    # index.html luôn ở ROOT repo
-    OUTPUT_HTML = os.path.join(ROOT_DIR, os.path.basename(OUTPUT_HTML))
-
 SHEET_INDEX = CONFIG["sheet_index"]
-
-# ⭐ CHUYÊN NGÀNH CHỈ đọc từ scripts/data/
-DATA_DIR = os.path.join(SCRIPT_DIR, "data")
-
-print(f"📁 Chuyên ngành chỉ đọc từ: {os.path.abspath(DATA_DIR)}")
-print(f"📄 Output HTML: {os.path.abspath(OUTPUT_HTML)}")
-
+DATA_DIR = CONFIG.get("data_dir", "data")
 
 # ─── 1. Đọc dataset gốc ───
 data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
 print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
-
 
 # ─── 2. Map icon + màu cho các chuyên ngành phổ biến ───
 ICON_MAP = {
@@ -260,9 +227,9 @@ def auto_detect_icon_color(display_name):
     return (DEFAULT_ICON_NAME, UNIFIED_COLOR)
 
 
-def slugify_dataset_id(name):
-    """Tạo id slug từ tên thư mục: 'Nhân sự' → 'nhan-su'."""
-    base = str(name).rsplit(".", 1)[0] if "." in str(name) else str(name)
+def slugify_dataset_id(filename):
+    """Tạo id slug từ tên file: 'Nhân_sự.xlsx' → 'nhan-su'."""
+    base = filename.rsplit(".", 1)[0]
     base = unicodedata.normalize("NFD", base)
     base = "".join(c for c in base if unicodedata.category(c) != "Mn")
     base = base.replace("đ", "d").replace("Đ", "D")
@@ -283,106 +250,67 @@ DATASET_REGISTRY = {
     }
 }
 
-
-# ═══════════════════════════════════════════════════════════════════
-#  ⭐ QUÉT CHUYÊN NGÀNH — CHỈ scripts/data/, ĐỆ QUY 1 CẤP
-#  - Mỗi THƯ MỤC CON trong scripts/data/ = 1 chuyên ngành
-#  - Tên hiển thị = TÊN THƯ MỤC
-#  - Nhiều file .xlsx trong thư mục → GỘP
-# ═══════════════════════════════════════════════════════════════════
+# ─── 4. Quét thư mục data/ ───
 _tonghop_abs = os.path.abspath(EXCEL_FILE)
 _chuyen_nganh_count = 0
 
 if os.path.isdir(DATA_DIR):
-    print(f"\n🔍 Quét CHUYÊN NGÀNH tại: {os.path.abspath(DATA_DIR)}")
+    excel_files = []
+    for ext in ("*.xlsx", "*.xls", "*.csv"):
+        excel_files.extend(glob.glob(os.path.join(DATA_DIR, ext)))
+    excel_files.sort()
 
-    # Lấy danh sách thư mục con
-    try:
-        _entries = sorted(os.listdir(DATA_DIR))
-    except OSError as e:
-        _entries = []
-        print(f"❌ Không đọc được {DATA_DIR}: {e}")
+    print(f"\n🔍 Quét thư mục '{DATA_DIR}/' — tìm thấy {len(excel_files)} file Excel")
 
-    _subdirs = [
-        e for e in _entries
-        if os.path.isdir(os.path.join(DATA_DIR, e))
-        and not e.startswith(".") and not e.startswith("~$")
-    ]
+    for filepath in excel_files:
+        filename = os.path.basename(filepath)
 
-    if not _subdirs:
-        print(f"ℹ️  Không có THƯ MỤC chuyên ngành nào trong '{DATA_DIR}/'")
-        print(f"   → Tạo thư mục con: scripts/data/<Tên chuyên ngành>/")
-        print(f"   → Bỏ file .xlsx vào trong thư mục đó.")
-
-    for sub_name in _subdirs:
-        sub_dir = os.path.join(DATA_DIR, sub_name)
-
-        # Thu thập TẤT CẢ file Excel trong thư mục chuyên ngành này
-        _sub_files = []
-        for ext in ("*.xlsx", "*.xls", "*.csv"):
-            _sub_files.extend(glob.glob(os.path.join(sub_dir, ext)))
-        _sub_files = sorted(set(
-            f for f in _sub_files
-            if not os.path.basename(f).startswith("~$")
-        ))
-
-        if not _sub_files:
-            print(f"   ⚠️  {sub_name}: không có file Excel, bỏ qua")
+        if filename.startswith("~$"):
+            continue
+        if os.path.abspath(filepath) == _tonghop_abs:
+            print(f"⏭️  {filename} — bỏ qua (file tổng hợp)")
             continue
 
-        # ─── GỘP dữ liệu từ tất cả file .xlsx trong thư mục ───
-        merged_data = []
-        source_files = []
-        for fp in _sub_files:
-            if os.path.abspath(fp) == _tonghop_abs:
+        try:
+            sub_data = read_excel(filepath, 0)
+            if not sub_data:
+                print(f"⚠️  {filename}: file rỗng, bỏ qua")
                 continue
-            try:
-                rows = read_excel(fp, 0)
-                if rows:
-                    merged_data.extend(rows)
-                    source_files.append(os.path.basename(fp))
-            except Exception as e:
-                print(f"   ❌ Lỗi đọc {os.path.basename(fp)}: {e}")
 
-        if not merged_data:
-            print(f"   ⚠️  {sub_name}: không có dữ liệu, bỏ qua")
+            display_name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
+            if display_name.islower() or display_name.isupper():
+                display_name = display_name.title()
+
+            dataset_id = slugify_dataset_id(filename)
+            base_id = dataset_id
+            counter = 2
+            while dataset_id in DATASET_REGISTRY:
+                dataset_id = f"{base_id}-{counter}"
+                counter += 1
+
+            icon, color = auto_detect_icon_color(display_name)
+
+            DATASET_REGISTRY[dataset_id] = {
+                "id": dataset_id,
+                "name": display_name,
+                "icon": icon,
+                "color": color,
+                "data": sub_data,
+                "count": len(sub_data),
+                "source": filename,
+            }
+            _chuyen_nganh_count += 1
+            print(f"🏭 {display_name:25s} ({filename}) — {len(sub_data)} câu")
+        except Exception as e:
+            print(f"❌ Lỗi đọc {filename}: {e}")
             continue
-
-        # ─── Tên hiển thị = TÊN THƯ MỤC ───
-        display_name = sub_name.replace("_", " ").strip()
-        if display_name.islower() or display_name.isupper():
-            display_name = display_name.title()
-
-        # ─── ID slug từ tên thư mục ───
-        dataset_id = slugify_dataset_id(sub_name)
-        base_id = dataset_id
-        counter = 2
-        while dataset_id in DATASET_REGISTRY:
-            dataset_id = f"{base_id}-{counter}"
-            counter += 1
-
-        icon, color = auto_detect_icon_color(display_name)
-
-        DATASET_REGISTRY[dataset_id] = {
-            "id": dataset_id,
-            "name": display_name,
-            "icon": icon,
-            "color": color,
-            "data": merged_data,
-            "count": len(merged_data),
-            "source": ", ".join(source_files),
-        }
-        _chuyen_nganh_count += 1
-        print(f"🏭 {display_name:25s} — {len(merged_data)} câu "
-              f"(từ {len(source_files)} file)")
 
     if _chuyen_nganh_count == 0:
-        print(f"\nℹ️  Không có chuyên ngành nào trong '{DATA_DIR}/'")
+        print(f"ℹ️  Không có file chuyên ngành nào trong '{DATA_DIR}/'")
+        print(f"   (chỉ dùng dataset tổng hợp).")
 else:
-    print(f"\n⚠️  KHÔNG tìm thấy thư mục chuyên ngành:")
-    print(f"   {os.path.abspath(DATA_DIR)}")
-    print(f"   → Tạo thư mục 'scripts/data/<Tên chuyên ngành>/' và bỏ file Excel vào.")
-
+    print(f"\nℹ️  Chưa có thư mục '{DATA_DIR}/' — chỉ dùng dataset tổng hợp.")
+    print(f"   → Tạo thư mục '{DATA_DIR}/' và bỏ file Excel vào để thêm chuyên ngành.")
 
 # ─── 5. Serialize (escape "</" cho TẤT CẢ) ───
 dataset_registry_json = _json_blob(DATASET_REGISTRY)
@@ -411,8 +339,9 @@ if '<!-- __ADMIN_ONLINE_SECTION__ -->' in auth_html:
 else:
     print("⚠️  Không tìm thấy placeholder <!-- __ADMIN_ONLINE_SECTION__ -->")
     print("   → Thêm vào accounts_template.py → build_accounts_html()")
+    print("   → TRƯỚC dòng <!-- __ADMIN_QUOTA_SECTION__ -->")
 
-# ⬇️⬇️⬇️ Chèn Quota Dashboard vào Admin Panel
+# ⬇️⬇️⬇️ Chèn Quota Dashboard vào Admin Panel (như cũ)
 if '<!-- __ADMIN_QUOTA_SECTION__ -->' in auth_html:
     auth_html = auth_html.replace(
         '<!-- __ADMIN_QUOTA_SECTION__ -->',
@@ -985,6 +914,7 @@ for _pat in _dd_patterns:
 if not _dd_inserted:
     print("⚠️  Chưa tìm thấy item Chuyên ngành trong dropdown.")
     print("   → Kiểm tra lại class/id của dropdown item trong ui_template.py")
+    print("   → Hoặc chèn thủ công snippet 'dataset_dropdown_item' vào đúng vị trí")
 
 social_html = build_social_html()
 ui_html = ui_html.replace(
@@ -1005,9 +935,9 @@ full_body = (
 #  GHÉP JS
 # ═══════════════════════════════════════════════════════════════════
 full_js = (
-    # ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN
+    # ⭐ 1. Config — PHẢI CHÈN ĐẦU TIÊN (inject window.TELEGRAM_*, ZALO_*, SITE_NAME)
     build_config_js(CONFIG)
-    # ⭐ 2. Telegram notify module
+    # ⭐ 2. Telegram notify module — định nghĩa window.__sendTelegramNotify()
     + "\n/* ==== 📨 TELEGRAM NOTIFY ==== */\n" + build_telegram_notify_js()
     # 3. Các module còn lại
     + "\n/* ==== UI JS ==== */\n" + build_ui_js()
@@ -1023,10 +953,17 @@ full_js = (
 )
 
 # ═══════════════════════════════════════════════════════════════════
-#  ⭐⭐⭐ FIX: LOẠI BỎ THẺ <script> THỪA TRONG full_js ⭐⭐⭐
+#  ⭐⭐⭐ FIX (2026-09-28): LOẠI BỎ THẺ <script> THỪA TRONG full_js ⭐⭐⭐
+#  Lý do: build_config_js() và build_telegram_notify_js() trả về chuỗi
+#         CÓ WRAP trong '<script>...</script>' → khi nhúng vào HTML_SHELL
+#         (đã có sẵn <script>__JS__</script>) → LỒNG 2 THẺ SCRIPT
+#         → trình duyệt đóng thẻ script sớm → TRANG TRẮNG, code rò rỉ.
+#  Giải pháp: strip TẤT CẢ thẻ <script> và </script> khỏi full_js.
 # ═══════════════════════════════════════════════════════════════════
 full_js = full_js.replace('<script>', '').replace('</script>', '')
 full_js = full_js.replace('<SCRIPT>', '').replace('</SCRIPT>', '')
+# Fallback: nếu vẫn còn dạng escape '<\/script>' → giữ nguyên an toàn
+# (không replace vì đã an toàn)
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -1229,7 +1166,7 @@ print(f"📚 Tổng số bộ dữ liệu: {total_datasets} (1 tổng hợp + {_
 print(f"📝 Tổng số câu hỏi: {total_questions}")
 print(f"❤️  Yêu thích: 3 tab cùng hàng (PC) + dropdown + 2 nút float")
 print(f"✅ Subtitle đã đổi thành PILL nổi bật với icon ✦")
-print(f"✅ Chuyên ngành: chỉ đọc từ scripts/data/ (đệ quy 1 cấp)")
+print(f"✅ Đã thêm Dataset Selector 2 cấp + badge NEW cho Chuyên ngành")
 print(f"✅ Đã thêm Intro banner + Modal 6 slide hướng dẫn")
 print(f"💬 Chat Support: đã thêm (user ↔ admin)")
 print(f"📊 Quota Dashboard: đã thêm vào Admin Panel")
