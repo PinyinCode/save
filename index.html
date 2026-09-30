@@ -24867,8 +24867,23 @@ window.__switchRawData = function(datasetId) {
             if (currentDs !== 'tonghop') {
                 var savedOverride = window.__onboardingOverride;
                 window.__onboardingOverride = null;
+
                 try {
-                    return origGet.apply(this, arguments);
+                    var result = origGet.apply(this, arguments);
+
+                    // ═══ FALLBACK: Nếu rỗng (HSK không match) ═══
+                    if (result.length === 0 && RAW_DATA.length > 0) {
+                        console.warn('⚠️ getLimitedData() rỗng cho tab '
+                                     + currentDs + ' — dùng fallback');
+
+                        var info = (typeof getTierInfo === 'function')
+                                   ? getTierInfo() : {};
+                        var max = info.maxQuestions || 60;
+                        result = RAW_DATA.slice(0, max);
+                        console.log('✅ Fallback: lấy ' + result.length + ' câu đầu');
+                    }
+
+                    return result;
                 } finally {
                     window.__onboardingOverride = savedOverride;
                 }
@@ -24906,6 +24921,26 @@ window.__switchRawData = function(datasetId) {
                 window.__switchRawData(dsId);
                 if (typeof applyFilter === 'function') applyFilter();
             }
+
+            // ═══ VERIFY sau 300ms ═══
+            setTimeout(function() {
+                try {
+                    var info = (typeof getTierInfo === 'function')
+                               ? getTierInfo() : {};
+                    var rawLen = (typeof RAW_DATA !== 'undefined')
+                                 ? RAW_DATA.length : 0;
+                    var limLen = (typeof getLimitedData === 'function')
+                                 ? getLimitedData().length : 0;
+                    var cards = document.querySelectorAll('.card').length;
+                    console.log('🔍 Tab ' + dsId
+                                + ': tier=' + info.tier
+                                + ', RAW_DATA=' + rawLen
+                                + ', limited=' + limLen
+                                + ', cards=' + cards);
+                } catch(e) {
+                    console.warn('verify error:', e);
+                }
+            }, 300);
         });
     }
 
@@ -24942,6 +24977,7 @@ window.__switchRawData = function(datasetId) {
         bindAll();
     }
 
+    // Re-bind khi DOM thay đổi
     var _timer = null;
     var observer = new MutationObserver(function() {
         clearTimeout(_timer);
