@@ -800,7 +800,11 @@ def main():
     print("[PATCH 2] Them button tabs...")
     new_btns = ""
     for ds in new_datasets:
-        label = ds["name"] + " · " + str(ds["count"]) + " cau"
+        # Chỉ lấy số câu thực tế, KHÔNG lặp lại số trong tên file
+clean_name = re.sub(r'^\d+\s*', '', ds["name"]).strip()
+if not clean_name:
+    clean_name = ds["name"]
+label = clean_name + " · " + str(ds["count"]) + " câu"
         new_btns += (
             '\n        <button class="ds-btn ds-btn-primary" '
             'data-dataset="' + ds["id"] + '">\n'
