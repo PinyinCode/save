@@ -4,12 +4,15 @@ fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
 
 ĐẶC ĐIỂM:
   - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/ (TRỪ input.xlsx)
-  - Tên tab = TÊN FILE (normalize NFC — hiển thị đúng dấu tiếng Việt)
-  - Label tab = CHỈ tên file, KHÔNG thêm số câu
-  - XÓA tab mới khỏi dropdown "Chuyên ngành"
-  - CSS grid đều nhau cho dropdown Chuyên ngành
-  - CHỈ 1 TAB ACTIVE tại một thời điểm
-  - TIER LOCK + ONBOARDING giống tab tổng hợp
+  - Tên tab = tên file (normalize NFC — hiển thị đúng dấu tiếng Việt)
+  - Label = tên file (bỏ số đầu) + số câu thực tế
+  - Logic đọc Excel GIỐNG data_reader.py:
+      openpyxl, cột VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
+      Data bắt đầu từ dòng 2, tự động chuyển số Ả Rập → Hán (cn2an)
+  - TIER LOCK + ONBOARDING giống tab tổng hợp:
+      + Demo: 60-80 câu đầu (theo chủ đề đã chọn)
+      + Trial: 200-250 câu
+      + Active/Admin: full
   - Clone nút để XÓA event listener cũ của convert.py → không còn popup
   - KHÔNG can thiệp convert.py, ui_template.py, config.json
 
@@ -160,7 +163,6 @@ def _slugify(filename):
 
 
 def _display_name(filename):
-    """Lay ten file lam ten tab. KHONG bo so dau."""
     name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
     name = unicodedata.normalize("NFC", name)
     if name.islower() or name.isupper():
@@ -374,9 +376,6 @@ def build_js_override(ids_js):
     add("     2. Tab moi co onboarding + tier lock giong tab tonghop")
     add("     3. applyFilter() -> getLimitedData() -> cat cau theo tier")
     add("     4. Ho tro nut 'Doi' chu de (applyOnboardingSelection)")
-    add("     5. CHI 1 TAB ACTIVE tai mot thoi diem")
-    add("     6. Xoa tab moi khoi dropdown 'Chuyen nganh'")
-    add("     7. CSS grid deu nhau cho dropdown Chuyen nganh")
     add("   ================================================================")
     add("*/")
     add("(function() {")
@@ -459,7 +458,6 @@ def build_js_override(ids_js):
     add("            var sub = document.getElementById('dsSubWrap');")
     add("            if (sub) sub.style.display = 'none';")
     add("")
-    add("            // Xoa active khoi TAT CA (ds-btn + ds-sub-btn)")
     add("            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
     add("                b.classList.remove('active');")
     add("            });")
@@ -504,6 +502,9 @@ def build_js_override(ids_js):
     add("                if (typeof buildFilters === 'function') buildFilters();")
     add("                if (typeof applyFilter === 'function') applyFilter();")
     add("                if (typeof updateResultCount === 'function') updateResultCount();")
+    add("                if (typeof markCurrentDatasetActive === 'function') {")
+    add("                    markCurrentDatasetActive();")
+    add("                }")
     add("")
     add("                // Ve lai banner chu de")
     add("                if (savedTopics && savedTopics.length > 0")
@@ -520,12 +521,6 @@ def build_js_override(ids_js):
     add("                        console.warn('[fix.py] applyOnboarding error:', e2);")
     add("                    }")
     add("                }")
-    add("")
-    add("                // Dam bao CHI 1 TAB ACTIVE")
-    add("                document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
-    add("                    b.classList.remove('active');")
-    add("                });")
-    add("                this.classList.add('active');")
     add("")
     add("                console.log('[fix.py] applyFilter() done');")
     add("            } catch(err) {")
@@ -553,14 +548,12 @@ def build_js_override(ids_js):
     add("                                 ? getLimitedData().length : 0;")
     add("                    var cards = document.querySelectorAll('.card').length;")
     add("                    var lockBtn = document.querySelector('.load-more.locked');")
-    add("                    var activeTabs = document.querySelectorAll('.ds-btn.active').length;")
     add("                    console.log('[fix.py] VERIFY ' + dsId")
     add("                                + ': tier=' + info.tier")
     add("                                + ', RAW=' + rawLen")
     add("                                + ', limited=' + limLen")
     add("                                + ', cards=' + cards")
-    add("                                + ', lock=' + (lockBtn ? 'YES' : 'NO')")
-    add("                                + ', activeTabs=' + activeTabs);")
+    add("                                + ', lock=' + (lockBtn ? 'YES' : 'NO'));")
     add("                } catch(err) {")
     add("                    console.warn('[fix.py] verify error:', err);")
     add("                }")
@@ -569,40 +562,24 @@ def build_js_override(ids_js):
     add("    }")
     add("")
 
-    # ================= PATCH C: markCurrentDatasetActive (CHỈ 1 TAB ACTIVE) =================
+    # ================= PATCH C: markCurrentDatasetActive =================
     add("    /* ------------------------------------------------------------")
-    add("       PATCH C: markCurrentDatasetActive - CHI 1 TAB ACTIVE")
+    add("       PATCH C: markCurrentDatasetActive")
     add("       ------------------------------------------------------------ */")
     add("    function patchMarkActive() {")
     add("        if (window.__fixPyMarkPatched) return;")
+    add("        var origMark = window.markCurrentDatasetActive")
+    add("                    || (typeof markCurrentDatasetActive !== 'undefined'")
+    add("                        ? markCurrentDatasetActive : null);")
+    add("        if (typeof origMark !== 'function') return;")
     add("")
-    add("        // Override HOAN TOAN - khong goi origMark (tranh bug active 2 tab)")
     add("        window.markCurrentDatasetActive = function() {")
+    add("            origMark.apply(this, arguments);")
     add("            var cur = (typeof CURRENT_DATASET !== 'undefined')")
     add("                      ? CURRENT_DATASET : 'tonghop';")
-    add("")
-    add("            // Xoa active khoi TAT CA ds-btn va ds-sub-btn")
-    add("            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
-    add("                b.classList.remove('active');")
+    add("            document.querySelectorAll('.ds-btn[data-dataset]').forEach(function(b) {")
+    add("                b.classList.toggle('active', b.dataset.dataset === cur);")
     add("            });")
-    add("")
-    add("            // Chi active tab khop CURRENT_DATASET")
-    add("            if (cur === 'tonghop') {")
-    add("                var tonghopBtn = document.querySelector('.ds-btn[data-dataset=\"tonghop\"]');")
-    add("                if (tonghopBtn) tonghopBtn.classList.add('active');")
-    add("            } else {")
-    add("                // Tab moi (khong phai chuyen nganh)")
-    add("                var newBtn = document.querySelector('.ds-btn[data-dataset=\"' + cur + '\"]');")
-    add("                if (newBtn) {")
-    add("                    newBtn.classList.add('active');")
-    add("                } else {")
-    add("                    // Fallback: co the la chuyen nganh that")
-    add("                    var subBtn = document.querySelector('.ds-sub-btn[data-dataset=\"' + cur + '\"]');")
-    add("                    if (subBtn) subBtn.classList.add('active');")
-    add("                    var cnBtn = document.querySelector('.ds-btn[data-dataset-group=\"chuyen-nganh\"]');")
-    add("                    if (cnBtn && subBtn) cnBtn.classList.add('active');")
-    add("                }")
-    add("            }")
     add("        };")
     add("        window.__fixPyMarkPatched = true;")
     add("    }")
@@ -736,115 +713,11 @@ def build_js_override(ids_js):
     add("    }")
     add("")
 
-    # ================= PATCH E: Xoa tab moi khoi dropdown Chuyen nganh =================
-    add("    /* ------------------------------------------------------------")
-    add("       PATCH E: Xoa tab moi khoi dropdown Chuyen nganh")
-    add("       (convert.py tu cho TAT CA dataset vao dropdown)")
-    add("       ------------------------------------------------------------ */")
-    add("    function patchRemoveFromDropdown() {")
-    add("        if (window.__fixPyRemoveDropdownPatched) return;")
-    add("")
-    add("        function removeNow() {")
-    add("            var removed = 0;")
-    add("            NEW_IDS.forEach(function(dsId) {")
-    add("                var subBtn = document.querySelector('.ds-sub-btn[data-dataset=\"' + dsId + '\"]');")
-    add("                if (subBtn && subBtn.parentNode) {")
-    add("                    subBtn.parentNode.removeChild(subBtn);")
-    add("                    removed++;")
-    add("                }")
-    add("            });")
-    add("            if (removed > 0) {")
-    add("                console.log('[fix.py] Da xoa ' + removed + ' sub-btn khoi dropdown');")
-    add("            }")
-    add("        }")
-    add("")
-    add("        var origInit = window.initDatasetSelector")
-    add("                     || (typeof initDatasetSelector !== 'undefined'")
-    add("                         ? initDatasetSelector : null);")
-    add("")
-    add("        if (typeof origInit === 'function' && !origInit.__fixPyPatched) {")
-    add("            window.initDatasetSelector = function() {")
-    add("                var result = origInit.apply(this, arguments);")
-    add("                setTimeout(removeNow, 30);")
-    add("                return result;")
-    add("            };")
-    add("            window.initDatasetSelector.__fixPyPatched = true;")
-    add("            console.log('[fix.py] Da patch initDatasetSelector()');")
-    add("        }")
-    add("")
-    add("        removeNow();")
-    add("")
-    add("        var _timer = null;")
-    add("        var observer = new MutationObserver(function() {")
-    add("            clearTimeout(_timer);")
-    add("            _timer = setTimeout(removeNow, 100);")
-    add("        });")
-    add("        if (document.body) {")
-    add("            observer.observe(document.body, { childList: true, subtree: true });")
-    add("        }")
-    add("")
-    add("        window.__fixPyRemoveDropdownPatched = true;")
-    add("    }")
-    add("")
-
-    # ================= PATCH F: CSS grid dropdown Chuyen nganh =================
-    add("    /* ------------------------------------------------------------")
-    add("       PATCH F: CSS grid deu nhau cho dropdown Chuyen nganh")
-    add("       ------------------------------------------------------------ */")
-    add("    function patchSubGridCSS() {")
-    add("        if (window.__fixPySubGridCSSPatched) return;")
-    add("")
-    add("        var css = ''")
-    add("            + '/* FIX.PY: Dropdown Chuyen nganh - grid deu nhau */'")
-    add("            + '\\n.ds-sub-grid {'")
-    add("            + '\\n    display: grid !important;'")
-    add("            + '\\n    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;'")
-    add("            + '\\n    gap: .5rem !important;'")
-    add("            + '\\n}'")
-    add("            + '\\n@media (min-width: 600px) {'")
-    add("            + '\\n    .ds-sub-grid {'")
-    add("            + '\\n        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;'")
-    add("            + '\\n    }'")
-    add("            + '\\n}'")
-    add("            + '\\n@media (min-width: 900px) {'")
-    add("            + '\\n    .ds-sub-grid {'")
-    add("            + '\\n        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;'")
-    add("            + '\\n    }'")
-    add("            + '\\n}'")
-    add("            + '\\n@media (min-width: 1200px) {'")
-    add("            + '\\n    .ds-sub-grid {'")
-    add("            + '\\n        grid-template-columns: repeat(5, minmax(0, 1fr)) !important;'")
-    add("            + '\\n    }'")
-    add("            + '\\n}'")
-    add("            + '\\n.ds-sub-btn {'")
-    add("            + '\\n    width: 100% !important;'")
-    add("            + '\\n    justify-content: flex-start !important;'")
-    add("            + '\\n    min-width: 0 !important;'")
-    add("            + '\\n    overflow: hidden !important;'")
-    add("            + '\\n}'")
-    add("            + '\\n.ds-sub-btn span {'")
-    add("            + '\\n    overflow: hiddenCSS !important;'")
-    add("            +(); '\\n    text-overflow:")
- ellipsis !important;'")
-       add("            + '\\n    add white-space: nowrap !important;("'")
-    add("            + '\\n}';")
-    add("")
-    add("        var style = document.createElement('style');")
-    add("        style.id = 'fixPySubGridCSS';")
-    add("        style.textContent = css;")
-    add("        document.head.appendChild(style);")
-    add("")
-    add("        window.__fixPySubGridCSSPatched = true;")
-    add("        console.log('[fix.py] Da inject CSS grid cho dropdown');")
-    add("    }")
-    add("")
-
     # ================= INIT =================
     add("    function bindAll() {")
     add("        patchGetLimitedData();")
     add("        patchApplyOnboarding();")
-    add("        patchRemoveFromDropdown();")
-    add("        patchSubGrid        NEW_IDS.forEach(bindTab);")
+    add("        NEW_IDS.forEach(bindTab);")
     add("        patchMarkActive();")
     add("    }")
     add("")
@@ -893,9 +766,9 @@ def main():
         print("[fix.py] Khong co dataset nao. Giu nguyen index.html.")
         return
 
-    new inject_datasets = []
-    for += ds in datasets:
-        marker1 = '" '"id":"' + ds["id"]' + '"'
+    new_datasets = []
+    for ds in datasets:
+        marker1 = '"id":"' + ds["id"] + '"'
         marker2 = "'id': '" + ds["id"] + "'"
         marker3 = 'data-dataset="' + ds["id"] + '"'
         if marker1 in html or marker2 in html or marker3 in html:
@@ -923,7 +796,7 @@ def main():
 
     inject = ""
     for ds in new_datasets:
-        + ds["id"] + '":' + _escape_json_for_script(ds) + ','
+        inject += '"' + ds["id"] + '":' + _escape_json_for_script(ds) + ','
 
     html, n = pat_registry.subn(r'\1\2' + inject, html, count=1)
     if n == 0:
@@ -931,13 +804,15 @@ def main():
         sys.exit(1)
     print("   [OK] Da chen " + str(len(new_datasets)) + " entry")
 
-    # PATCH 2: Buttons — CHỈ DÙNG TÊN FILE
+    # PATCH 2: Buttons
     print("")
     print("[PATCH 2] Them button tabs...")
     new_btns = ""
     for ds in new_datasets:
-        # Label = CHỈ tên file, KHÔNG thêm số câu
-        label = ds["name"]
+        clean_name = re.sub(r'^\d+\s+', '', ds["name"]).strip()
+        if not clean_name:
+            clean_name = ds["name"]
+        label = clean_name + " · " + str(ds["count"]) + " cau"
         new_btns += (
             '\n        <button class="ds-btn ds-btn-primary" '
             'data-dataset="' + ds["id"] + '">\n'
@@ -1031,7 +906,7 @@ def main():
 
     # PATCH 4: JS binding
     print("")
-    print("[PATCH 4] JS binding (clone nut + tier lock + onboarding + remove dropdown + css grid)...")
+    print("[PATCH 4] JS binding (clone nut + tier lock + onboarding)...")
     ids_js = json.dumps([ds["id"] for ds in new_datasets])
     js = build_js_override(ids_js)
 
@@ -1054,12 +929,8 @@ def main():
     print("[fix.py] Da them " + str(len(new_datasets)) + " tab:")
     for ds in new_datasets:
         print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
-    print("[fix.py] Label tab: CHI dung ten file")
-    print("[fix.py] Xoa tab moi khoi dropdown Chuyen nganh")
-    print("[fix.py] CSS grid deu nhau cho dropdown")
     print("[fix.py] Layout: PC auto-fit - Mobile 2 cot")
     print("[fix.py] TICH HOP: Tier lock + Onboarding giong tab tonghop")
-    print("[fix.py] CHI 1 TAB ACTIVE tai mot thoi diem")
     print("=" * 62)
 
 
