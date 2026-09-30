@@ -7,12 +7,13 @@ fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
   - Tên tab = TÊN FILE (normalize NFC — hiển thị đúng dấu tiếng Việt)
   - Label tab = CHỈ tên file, KHÔNG thêm số câu
   - XÓA tab mới khỏi dropdown "Chuyên ngành"
-  - CSS grid đều nhau cho dropdown Chuyên ngành (nút nhỏ gọn)
+  - CSS grid với CỘT CỐ ĐỊNH cho dropdown Chuyên ngành
+    → MỌI Ô CÙNG KÍCH THƯỚC (không phân biệt nội dung dài/ngắn)
+    → TEXT tự động thu nhỏ để VỪA Ô (không bị cắt)
   - CHỈ 1 TAB ACTIVE tại một thời điểm
   - TIER LOCK + ONBOARDING giống tab tổng hợp
   - Clone nút để XÓA event listener cũ của convert.py → không còn popup
   - KHÔNG can thiệp convert.py, ui_template.py, config.json
-  - ⚡ CHỈ QUÉT sub-btn từ scripts/data (không quét data/ — đã do convert.py xử lý)
 
 Cách chạy:
     python scripts/convert.py    # Tạo index.html gốc
@@ -35,7 +36,6 @@ INDEX_HTML = "index.html"
 CONFIG_JSON = "config.json"
 DATA_DIR = "data"
 
-# File cần BỎ QUA khi quét data/ (vì đã là tab "Tổng hợp" trong convert.py)
 SKIP_FILES = {"input.xlsx", "input.xls", "input.csv"}
 
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
@@ -161,7 +161,6 @@ def _slugify(filename):
 
 
 def _display_name(filename):
-    """Lay ten file lam ten tab. KHONG bo so dau."""
     name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
     name = unicodedata.normalize("NFC", name)
     if name.islower() or name.isupper():
@@ -287,7 +286,7 @@ def _read_excel_rows(filepath):
 
 
 # =================================================================
-#  SCAN data/ — BO QUA input.xlsx
+#  SCAN data/
 # =================================================================
 def scan_data_dir():
     if not os.path.isdir(DATA_DIR):
@@ -359,7 +358,6 @@ def scan_data_dir():
 #  BUILD JS OVERRIDE
 # =================================================================
 def build_js_override(ids_js):
-    """Tra ve chuoi JS override hoan chinh - co onboarding + tier lock."""
     L = []
     add = L.append
 
@@ -368,15 +366,6 @@ def build_js_override(ids_js):
     add("/* ================================================================")
     add("   FIX.PY OVERRIDE - Bind tab moi + TIER LOCK + ONBOARDING")
     add("   ================================================================")
-    add("   Quy tac:")
-    add("     1. Clone nut de XOA event listener cu cua convert.py")
-    add("     2. Tab moi co onboarding + tier lock giong tab tonghop")
-    add("     3. applyFilter() -> getLimitedData() -> cat cau theo tier")
-    add("     4. Ho tro nut 'Doi' chu de (applyOnboardingSelection)")
-    add("     5. CHI 1 TAB ACTIVE tai mot thoi diem")
-    add("     6. Xoa tab moi khoi dropdown 'Chuyen nganh'")
-    add("     7. CSS grid deu nhau cho dropdown Chuyen nganh")
-    add("   ================================================================")
     add("*/")
     add("(function() {")
     add("    'use strict';")
@@ -384,9 +373,6 @@ def build_js_override(ids_js):
     add("")
 
     # ================= PATCH A: getLimitedData =================
-    add("    /* ------------------------------------------------------------")
-    add("       PATCH A: getLimitedData - ho tro onboarding cho tab moi")
-    add("       ------------------------------------------------------------ */")
     add("    function patchGetLimitedData() {")
     add("        if (window.__fixPyLimitedPatched) return;")
     add("        var origGet = window.getLimitedData")
@@ -431,9 +417,6 @@ def build_js_override(ids_js):
     add("")
 
     # ================= PATCH B: bindTab =================
-    add("    /* ------------------------------------------------------------")
-    add("       PATCH B: bindTab - CLONE nut + onboarding cho tab moi")
-    add("       ------------------------------------------------------------ */")
     add("    function bindTab(dsId) {")
     add("        var btn = document.querySelector('.ds-btn[data-dataset=\"' + dsId + '\"]');")
     add("        if (!btn) return;")
@@ -460,7 +443,6 @@ def build_js_override(ids_js):
     add("")
     add("            if (typeof window.__switchRawData === 'function') {")
     add("                window.__switchRawData(dsId);")
-    add("                console.log('[fix.py] __switchRawData(\"' + dsId + '\")');")
     add("            }")
     add("")
     add("            if (typeof state !== 'undefined' && state) {")
@@ -513,8 +495,6 @@ def build_js_override(ids_js):
     add("                    b.classList.remove('active');")
     add("                });")
     add("                this.classList.add('active');")
-    add("")
-    add("                console.log('[fix.py] applyFilter() done');")
     add("            } catch(err) {")
     add("                console.warn('[fix.py] re-render error:', err);")
     add("            }")
@@ -554,10 +534,7 @@ def build_js_override(ids_js):
     add("    }")
     add("")
 
-    # ================= PATCH C: markCurrentDatasetActive (CHỈ 1 TAB ACTIVE) =================
-    add("    /* ------------------------------------------------------------")
-    add("       PATCH C: markCurrentDatasetActive - CHI 1 TAB ACTIVE")
-    add("       ------------------------------------------------------------ */")
+    # ================= PATCH C: markCurrentDatasetActive =================
     add("    function patchMarkActive() {")
     add("        if (window.__fixPyMarkPatched) return;")
     add("")
@@ -588,10 +565,7 @@ def build_js_override(ids_js):
     add("    }")
     add("")
 
-    # ================= PATCH D: applyOnboardingSelection cho tab moi =================
-    add("    /* ------------------------------------------------------------")
-    add("       PATCH D: applyOnboardingSelection - ho tro tab moi")
-    add("       ------------------------------------------------------------ */")
+    # ================= PATCH D: applyOnboardingSelection =================
     add("    function patchApplyOnboarding() {")
     add("        if (window.__fixPyApplyOnbPatched) return;")
     add("        var origApply = window.applyOnboardingSelection")
@@ -712,11 +686,7 @@ def build_js_override(ids_js):
     add("    }")
     add("")
 
-    # ================= PATCH E: Xoa tab moi khoi dropdown Chuyen nganh =================
-    add("    /* ------------------------------------------------------------")
-    add("       PATCH E: Xoa tab moi khoi dropdown Chuyen nganh")
-    add("       (convert.py tu cho TAT CA dataset vao dropdown)")
-    add("       ------------------------------------------------------------ */")
+    # ================= PATCH E: Xoa tab moi khoi dropdown =================
     add("    function patchRemoveFromDropdown() {")
     add("        if (window.__fixPyRemoveDropdownPatched) return;")
     add("")
@@ -745,7 +715,6 @@ def build_js_override(ids_js):
     add("                return result;")
     add("            };")
     add("            window.initDatasetSelector.__fixPyPatched = true;")
-    add("            console.log('[fix.py] Da patch initDatasetSelector()');")
     add("        }")
     add("")
     add("        removeNow();")
@@ -763,19 +732,19 @@ def build_js_override(ids_js):
     add("    }")
     add("")
 
-    # ================= PATCH F: CSS grid deu nhau cho dropdown Chuyen nganh =================
+    # ================= PATCH F: CSS grid + text auto-fit =================
     add("    /* ------------------------------------------------------------")
-    add("       PATCH F: CSS grid deu nhau cho dropdown Chuyen nganh")
-    add("       (nut nho gon, kich thuoc dong nhat)")
+    add("       PATCH F: O CUNG KICH THUOC + TEXT TU DONG THU NHO DE VUA O")
     add("       ------------------------------------------------------------ */")
     add("    function patchSubGridCSS() {")
     add("        if (window.__fixPySubGridCSSPatched) return;")
     add("")
     add("        var css = [")
-    add("            '/* FIX.PY: Dropdown Chuyen nganh - grid deu nhau, nut nho gon */',")
+    add("            '/* FIX.PY: Dropdown Chuyen nganh - o CUNG kich thuoc */',")
+    add("            '/* Text tu dong thu nho de vua o (khong bi cat) */',")
     add("            '.ds-sub-grid {',")
     add("            '    display: grid !important;',")
-    add("            '    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;',")
+    add("            '    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;',")
     add("            '    gap: .5rem !important;',")
     add("            '    align-items: stretch !important;',")
     add("            '}',")
@@ -785,40 +754,58 @@ def build_js_override(ids_js):
     add("            '    justify-content: flex-start !important;',")
     add("            '    width: 100% !important;',")
     add("            '    min-width: 0 !important;',")
-    add("            '    min-height: 44px !important;',")
-    add("            '    padding: .5rem .85rem !important;',")
-    add("            '    font-size: .82rem !important;',")
+    add("            '    min-height: 40px !important;',")
+    add("            '    max-height: 40px !important;',")
+    add("            '    padding: .4rem .7rem !important;',")
+    add("            '    font-size: clamp(.62rem, 1.4vw, .82rem) !important;',")
     add("            '    border-radius: 50px !important;',")
     add("            '    box-sizing: border-box !important;',")
     add("            '    overflow: hidden !important;',")
-    add("            '    text-overflow: ellipsis !important;',")
-    add("            '    white-space: nowrap !important;',")
+    add("            '    line-height: 1.15 !important;',")
     add("            '}',")
     add("            '.ds-sub-btn i:first-child {',")
-    add("            '    font-size: .9rem !important;',")
+    add("            '    font-size: .82rem !important;',")
     add("            '    flex-shrink: 0 !important;',")
-    add("            '    margin-right: .1rem !important;',")
+    add("            '    margin-right: .3rem !important;',")
     add("            '}',")
     add("            '.ds-sub-btn span {',")
-    add("            '    overflow: hidden !important;',")
-    add("            '    text-overflow: ellipsis !important;',")
-    add("            '    white-space: nowrap !important;',")
+    add("            '    flex: 1 1 auto !important;',")
     add("            '    min-width: 0 !important;',")
+    add("            '    font-size: clamp(.6rem, 1.3vw, .78rem) !important;',")
+    add("            '    line-height: 1.15 !important;',")
+    add("            '    overflow: hidden !important;',")
+    add("            '    word-break: break-word !important;',")
+    add("            '    overflow-wrap: anywhere !important;',")
+    add("            '    hyphens: auto !important;',")
+    add("            '    display: -webkit-box !important;',")
+    add("            '    -webkit-line-clamp: 2 !important;',")
+    add("            '    -webkit-box-orient: vertical !important;',")
     add("            '}',")
     add("            '@media (max-width: 500px) {',")
     add("            '    .ds-sub-grid {',")
-    add("            '        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;',")
+    add("            '        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;',")
     add("            '        gap: .4rem !important;',")
     add("            '    }',")
     add("            '    .ds-sub-btn {',")
-    add("            '        font-size: .76rem !important;',")
-    add("            '        padding: .45rem .7rem !important;',")
-    add("            '        min-height: 40px !important;',")
+    add("            '        min-height: 38px !important;',")
+    add("            '        max-height: 38px !important;',")
+    add("            '        padding: .35rem .6rem !important;',")
+    add("            '        font-size: clamp(.58rem, 2.4vw, .72rem) !important;',")
+    add("            '    }',")
+    add("            '    .ds-sub-btn span {',")
+    add("            '        font-size: clamp(.56rem, 2.2vw, .68rem) !important;',")
+    add("            '    }',")
+    add("            '    .ds-sub-btn i:first-child {',")
+    add("            '        font-size: .75rem !important;',")
+    add("            '        margin-right: .25rem !important;',")
     add("            '    }',")
     add("            '}',")
     add("            '@media (max-width: 380px) {',")
     add("            '    .ds-sub-grid {',")
-    add("            '        grid-template-columns: 1fr 1fr !important;',")
+    add("            '        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;',")
+    add("            '    }',")
+    add("            '    .ds-sub-btn span {',")
+    add("            '        font-size: clamp(.54rem, 2.6vw, .64rem) !important;',")
     add("            '    }',")
     add("            '}'")
     add("        ].join('\\n');")
@@ -829,7 +816,7 @@ def build_js_override(ids_js):
     add("        document.head.appendChild(style);")
     add("")
     add("        window.__fixPySubGridCSSPatched = true;")
-    add("        console.log('[fix.py] Da inject CSS grid cho dropdown');")
+    add("        console.log('[fix.py] Da inject CSS grid (o deu nhau + text auto-fit)');")
     add("    }")
     add("")
 
@@ -919,13 +906,13 @@ def main():
     for ds in new_datasets:
         inject += '"' + ds["id"] + '":' + _escape_json_for_script(ds) + ','
 
-    html, n = pat_registry.subn(r'\1\2' + inject, html, count=1)
+-column    html, n = pat_registry.subn(r'\1\2' + inject, html, count=1)
     if n == 0:
         print("[X] Khong chen duoc registry")
         sys.exit(1)
     print("   [OK] Da chen " + str(len(new_datasets)) + " entry")
 
-    # PATCH 2: Buttons — CHỈ DÙNG TÊN FILE
+    # PATCH 2: Buttons
     print("")
     print("[PATCH 2] Them button tabs...")
     new_btns = ""
@@ -958,7 +945,7 @@ def main():
     css_lines.append("/* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB ==== */")
     css_lines.append("@media (max-width: 768px) {")
     css_lines.append("    .ds-main-row {")
-    css_lines.append("        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;")
+    css_lines.append("        grid-templates: repeat(2, minmax(0, 1fr)) !important;")
     css_lines.append("        gap: .5rem !important;")
     css_lines.append("    }")
     css_lines.append("}")
@@ -1049,7 +1036,7 @@ def main():
         print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
     print("[fix.py] Label tab: CHI dung ten file")
     print("[fix.py] Xoa tab moi khoi dropdown Chuyen nganh")
-    print("[fix.py] CSS grid deu nhau cho dropdown (nut nho gon)")
+    print("[fix.py] CSS grid: o cung kich thuoc + text auto-fit (clamp)")
     print("[fix.py] Layout: PC auto-fit - Mobile 2 cot")
     print("[fix.py] TICH HOP: Tier lock + Onboarding giong tab tonghop")
     print("[fix.py] CHI 1 TAB ACTIVE tai mot thoi diem")
