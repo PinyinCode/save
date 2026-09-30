@@ -8657,7 +8657,7 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
         
         <button class="ds-btn ds-btn-primary" data-dataset="1000-cau-giao-tiep">
             <i class="fas fa-comments"></i>
-            <span>Câu giao tiếp · 1060 cau</span>
+            <span>1000 Câu giao tiếp</span>
         </button>
     <button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">
             <i class="fas fa-industry"></i>
@@ -24810,6 +24810,9 @@ window.__switchRawData = function(datasetId) {
      2. Tab moi co onboarding + tier lock giong tab tonghop
      3. applyFilter() -> getLimitedData() -> cat cau theo tier
      4. Ho tro nut 'Doi' chu de (applyOnboardingSelection)
+     5. CHI 1 TAB ACTIVE tai mot thoi diem
+     6. Xoa tab moi khoi dropdown 'Chuyen nganh'
+     7. CSS grid deu nhau cho dropdown Chuyen nganh
    ================================================================
 */
 (function() {
@@ -24829,19 +24832,16 @@ window.__switchRawData = function(datasetId) {
             var currentDs = (typeof CURRENT_DATASET !== 'undefined')
                             ? CURRENT_DATASET : 'tonghop';
 
-            // Tab tonghop: goi ham goc
             if (currentDs === 'tonghop') {
                 return origGet.apply(this, arguments);
             }
 
-            // Tab moi: ap dung override + tier
             var info = (typeof getTierInfo === 'function')
                        ? getTierInfo() : {};
             if (info.tier === 'active') {
                 return RAW_DATA;
             }
 
-            // Onboarding override: loc theo RAW_DATA hien tai
             var override = window.__onboardingOverride;
             if (override && Array.isArray(override) && override.length > 0
                 && typeof state !== 'undefined' && state
@@ -24857,7 +24857,6 @@ window.__switchRawData = function(datasetId) {
                 }
             }
 
-            // Fallback: N cau dau
             var max2 = info.maxQuestions || 60;
             return RAW_DATA.slice(0, max2);
         };
@@ -24873,7 +24872,6 @@ window.__switchRawData = function(datasetId) {
         if (!btn) return;
         if (btn.__fixPyBound) return;
 
-        // Clone nut de xoa TAT CA event listener cu
         var cloned = btn.cloneNode(true);
         btn.parentNode.replaceChild(cloned, btn);
         cloned.__fixPyBound = true;
@@ -24893,13 +24891,11 @@ window.__switchRawData = function(datasetId) {
             });
             this.classList.add('active');
 
-            // 1. Doi RAW_DATA
             if (typeof window.__switchRawData === 'function') {
                 window.__switchRawData(dsId);
                 console.log('[fix.py] __switchRawData("' + dsId + '")');
             }
 
-            // 2. Reset filter state
             if (typeof state !== 'undefined' && state) {
                 state.search = '';
                 state.hsk = '';
@@ -24916,7 +24912,6 @@ window.__switchRawData = function(datasetId) {
                 if (cb) cb.classList.remove('show');
             } catch(err) {}
 
-            // 3. Ap dung onboarding override cho tab moi (neu co)
             var savedTopics = null;
             if (typeof loadOnboardingSelection === 'function') {
                 try {
@@ -24927,16 +24922,11 @@ window.__switchRawData = function(datasetId) {
                 } catch(e) {}
             }
 
-            // 4. Re-render (tier lock + onboarding)
             try {
                 if (typeof buildFilters === 'function') buildFilters();
                 if (typeof applyFilter === 'function') applyFilter();
                 if (typeof updateResultCount === 'function') updateResultCount();
-                if (typeof markCurrentDatasetActive === 'function') {
-                    markCurrentDatasetActive();
-                }
 
-                // Ve lai banner chu de
                 if (savedTopics && savedTopics.length > 0
                     && typeof applyOnboardingSelection === 'function') {
                     try {
@@ -24952,12 +24942,16 @@ window.__switchRawData = function(datasetId) {
                     }
                 }
 
+                document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
+                    b.classList.remove('active');
+                });
+                this.classList.add('active');
+
                 console.log('[fix.py] applyFilter() done');
             } catch(err) {
                 console.warn('[fix.py] re-render error:', err);
             }
 
-            // Scroll len dau
             setTimeout(function() {
                 var mainEl = document.getElementById('mainContent');
                 if (mainEl) {
@@ -24967,7 +24961,6 @@ window.__switchRawData = function(datasetId) {
                 }
             }, 100);
 
-            // VERIFY
             setTimeout(function() {
                 try {
                     var info = (typeof getTierInfo === 'function')
@@ -24978,12 +24971,14 @@ window.__switchRawData = function(datasetId) {
                                  ? getLimitedData().length : 0;
                     var cards = document.querySelectorAll('.card').length;
                     var lockBtn = document.querySelector('.load-more.locked');
+                    var activeTabs = document.querySelectorAll('.ds-btn.active').length;
                     console.log('[fix.py] VERIFY ' + dsId
                                 + ': tier=' + info.tier
                                 + ', RAW=' + rawLen
                                 + ', limited=' + limLen
                                 + ', cards=' + cards
-                                + ', lock=' + (lockBtn ? 'YES' : 'NO'));
+                                + ', lock=' + (lockBtn ? 'YES' : 'NO')
+                                + ', activeTabs=' + activeTabs);
                 } catch(err) {
                     console.warn('[fix.py] verify error:', err);
                 }
@@ -24992,22 +24987,33 @@ window.__switchRawData = function(datasetId) {
     }
 
     /* ------------------------------------------------------------
-       PATCH C: markCurrentDatasetActive
+       PATCH C: markCurrentDatasetActive - CHI 1 TAB ACTIVE
        ------------------------------------------------------------ */
     function patchMarkActive() {
         if (window.__fixPyMarkPatched) return;
-        var origMark = window.markCurrentDatasetActive
-                    || (typeof markCurrentDatasetActive !== 'undefined'
-                        ? markCurrentDatasetActive : null);
-        if (typeof origMark !== 'function') return;
 
         window.markCurrentDatasetActive = function() {
-            origMark.apply(this, arguments);
             var cur = (typeof CURRENT_DATASET !== 'undefined')
                       ? CURRENT_DATASET : 'tonghop';
-            document.querySelectorAll('.ds-btn[data-dataset]').forEach(function(b) {
-                b.classList.toggle('active', b.dataset.dataset === cur);
+
+            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
+                b.classList.remove('active');
             });
+
+            if (cur === 'tonghop') {
+                var tonghopBtn = document.querySelector('.ds-btn[data-dataset="tonghop"]');
+                if (tonghopBtn) tonghopBtn.classList.add('active');
+            } else {
+                var newBtn = document.querySelector('.ds-btn[data-dataset="' + cur + '"]');
+                if (newBtn) {
+                    newBtn.classList.add('active');
+                } else {
+                    var subBtn = document.querySelector('.ds-sub-btn[data-dataset="' + cur + '"]');
+                    if (subBtn) subBtn.classList.add('active');
+                    var cnBtn = document.querySelector('.ds-btn[data-dataset-group="chuyen-nganh"]');
+                    if (cnBtn && subBtn) cnBtn.classList.add('active');
+                }
+            }
         };
         window.__fixPyMarkPatched = true;
     }
@@ -25026,12 +25032,10 @@ window.__switchRawData = function(datasetId) {
             var currentDs = (typeof CURRENT_DATASET !== 'undefined')
                             ? CURRENT_DATASET : 'tonghop';
 
-            // Tab tonghop: goi ham goc
             if (currentDs === 'tonghop') {
                 return origApply.apply(this, arguments);
             }
 
-            // Tab moi: tu tinh override theo RAW_DATA hien tai
             var cfg = (typeof getOnboardingConfig === 'function')
                       ? getOnboardingConfig() : null;
             if (!cfg) return;
@@ -25102,7 +25106,6 @@ window.__switchRawData = function(datasetId) {
 
             window.__onboardingOverride = final;
 
-            // Reset filter + render
             if (typeof state !== 'undefined' && state) {
                 state.search = '';
                 state.hsk = '';
@@ -25118,7 +25121,6 @@ window.__switchRawData = function(datasetId) {
             if (typeof applyFilter === 'function') applyFilter();
             if (typeof updateResultCount === 'function') updateResultCount();
 
-            // Ve lai banner chu de
             if (typeof showOnboardingActiveBanner === 'function') {
                 showOnboardingActiveBanner(topics, final.length);
             }
@@ -25138,9 +25140,129 @@ window.__switchRawData = function(datasetId) {
         window.__fixPyApplyOnbPatched = true;
     }
 
+    /* ------------------------------------------------------------
+       PATCH E: Xoa tab moi khoi dropdown Chuyen nganh
+       (convert.py tu cho TAT CA dataset vao dropdown)
+       ------------------------------------------------------------ */
+    function patchRemoveFromDropdown() {
+        if (window.__fixPyRemoveDropdownPatched) return;
+
+        function removeNow() {
+            var removed = 0;
+            NEW_IDS.forEach(function(dsId) {
+                var subBtn = document.querySelector('.ds-sub-btn[data-dataset="' + dsId + '"]');
+                if (subBtn && subBtn.parentNode) {
+                    subBtn.parentNode.removeChild(subBtn);
+                    removed++;
+                }
+            });
+            if (removed > 0) {
+                console.log('[fix.py] Da xoa ' + removed + ' sub-btn khoi dropdown');
+            }
+        }
+
+        var origInit = window.initDatasetSelector
+                     || (typeof initDatasetSelector !== 'undefined'
+                         ? initDatasetSelector : null);
+
+        if (typeof origInit === 'function' && !origInit.__fixPyPatched) {
+            window.initDatasetSelector = function() {
+                var result = origInit.apply(this, arguments);
+                setTimeout(removeNow, 30);
+                return result;
+            };
+            window.initDatasetSelector.__fixPyPatched = true;
+            console.log('[fix.py] Da patch initDatasetSelector()');
+        }
+
+        removeNow();
+
+        var _timer = null;
+        var observer = new MutationObserver(function() {
+            clearTimeout(_timer);
+            _timer = setTimeout(removeNow, 100);
+        });
+        if (document.body) {
+            observer.observe(document.body, { childList: true, subtree: true });
+        }
+
+        window.__fixPyRemoveDropdownPatched = true;
+    }
+
+    /* ------------------------------------------------------------
+       PATCH F: CSS grid deu nhau cho dropdown Chuyen nganh
+       (nut nho gon, kich thuoc dong nhat)
+       ------------------------------------------------------------ */
+    function patchSubGridCSS() {
+        if (window.__fixPySubGridCSSPatched) return;
+
+        var css = [
+            '/* FIX.PY: Dropdown Chuyen nganh - grid deu nhau, nut nho gon */',
+            '.ds-sub-grid {',
+            '    display: grid !important;',
+            '    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;',
+            '    gap: .5rem !important;',
+            '    align-items: stretch !important;',
+            '}',
+            '.ds-sub-btn {',
+            '    display: inline-flex !important;',
+            '    align-items: center !important;',
+            '    justify-content: flex-start !important;',
+            '    width: 100% !important;',
+            '    min-width: 0 !important;',
+            '    min-height: 44px !important;',
+            '    padding: .5rem .85rem !important;',
+            '    font-size: .82rem !important;',
+            '    border-radius: 50px !important;',
+            '    box-sizing: border-box !important;',
+            '    overflow: hidden !important;',
+            '    text-overflow: ellipsis !important;',
+            '    white-space: nowrap !important;',
+            '}',
+            '.ds-sub-btn i:first-child {',
+            '    font-size: .9rem !important;',
+            '    flex-shrink: 0 !important;',
+            '    margin-right: .1rem !important;',
+            '}',
+            '.ds-sub-btn span {',
+            '    overflow: hidden !important;',
+            '    text-overflow: ellipsis !important;',
+            '    white-space: nowrap !important;',
+            '    min-width: 0 !important;',
+            '}',
+            '@media (max-width: 500px) {',
+            '    .ds-sub-grid {',
+            '        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;',
+            '        gap: .4rem !important;',
+            '    }',
+            '    .ds-sub-btn {',
+            '        font-size: .76rem !important;',
+            '        padding: .45rem .7rem !important;',
+            '        min-height: 40px !important;',
+            '    }',
+            '}',
+            '@media (max-width: 380px) {',
+            '    .ds-sub-grid {',
+            '        grid-template-columns: 1fr 1fr !important;',
+            '    }',
+            '}'
+        ].join('
+');
+
+        var style = document.createElement('style');
+        style.id = 'fixPySubGridCSS';
+        style.textContent = css;
+        document.head.appendChild(style);
+
+        window.__fixPySubGridCSSPatched = true;
+        console.log('[fix.py] Da inject CSS grid cho dropdown');
+    }
+
     function bindAll() {
         patchGetLimitedData();
         patchApplyOnboarding();
+        patchRemoveFromDropdown();
+        patchSubGridCSS();
         NEW_IDS.forEach(bindTab);
         patchMarkActive();
     }
@@ -25151,7 +25273,6 @@ window.__switchRawData = function(datasetId) {
         bindAll();
     }
 
-    // Re-bind khi DOM thay doi
     var _timer = null;
     var observer = new MutationObserver(function() {
         clearTimeout(_timer);
