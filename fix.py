@@ -2,23 +2,21 @@
 """
 fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
 
-Logic đọc Excel GIỐNG HỆT data_reader.py của convert.py:
-  - Dùng openpyxl, KHÔNG dùng pandas
-  - Cột theo VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
-  - Data bắt đầu từ dòng 2 (dòng 1 là header)
-  - Tự động chuyển số Ả Rập → số Hán (cn2an)
-
-Mục đích:
-  - Bất kỳ file .xlsx/.xls/.csv nào trong data/ → 1 tab riêng
+ĐẶC ĐIỂM:
+  - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/ (kể cả input.xlsx)
   - Tên tab = tên file (giống logic chuyên ngành trong convert.py)
+  - Logic đọc Excel giống HỆT data_reader.py:
+      openpyxl, cột theo VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
+      Data bắt đầu từ dòng 2, tự động chuyển số Ả Rập → Hán (cn2an)
   - KHÔNG can thiệp convert.py, ui_template.py, config.json
+  - Tier Demo/Expired/Trial vẫn "khoá 1 phần" như tab tổng hợp
 
 Cách chạy:
-  python scripts/convert.py    # Tạo index.html gốc
-  python fix.py                # Patch index.html — thêm tab từ data/
+    python scripts/convert.py    # Tạo index.html gốc
+    python fix.py                # Patch index.html — thêm tab từ data/
 
-Kết quả (ví dụ 2 file):
-  [Tổng hợp VPCX] [Input] [Giao Tiếp] [Chuyên ngành ▼] [Yêu thích]
+Kết quả (ví dụ 2 file trong data/):
+    [Input 1700 câu] [1000 Câu Giao Tiếp 1000 câu] [Chuyên ngành ▼] [Yêu thích]
 """
 import json
 import os
@@ -260,31 +258,14 @@ def _read_excel_rows(filepath):
     return rows
 
 
-def _load_config():
-    if not os.path.isfile(CONFIG_JSON):
-        return {}
-    try:
-        with open(CONFIG_JSON, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception:
-        return {}
-
-
 # ═══════════════════════════════════════════════════════════════════
-#  SCAN data/
+#  SCAN data/ — ĐỌC HẾT MỌI FILE
 # ═══════════════════════════════════════════════════════════════════
-def scan_data_dir(config):
-    """Quét data/ → list[dict] dataset entries."""
+def scan_data_dir():
+    """Quét data/ → list[dict] dataset entries — ĐỌC HẾT MỌI FILE."""
     if not os.path.isdir(DATA_DIR):
         print(f"⚠️  Không thấy '{DATA_DIR}/' — bỏ qua.")
         return []
-
-    # File cần bỏ qua (trùng excel_file trong config)
-    skip_abs = set()
-    excel_file = config.get("excel_file", "")
-    if excel_file:
-        skip_abs.add(os.path.abspath(excel_file))
-        skip_abs.add(os.path.abspath(os.path.join(DATA_DIR, os.path.basename(excel_file))))
 
     files = []
     for ext in ("*.xlsx", "*.xls", "*.csv"):
@@ -303,14 +284,9 @@ def scan_data_dir(config):
     for filepath in files:
         fname = os.path.basename(filepath)
 
-        # Bỏ file tạm Office
+        # Chỉ bỏ file tạm Office (~$...)
         if fname.startswith("~$"):
             print(f"   ⏭️  {fname} — file tạm")
-            continue
-
-        # Bỏ file trùng excel_file
-        if os.path.abspath(filepath) in skip_abs:
-            print(f"   ⏭️  {fname} — trùng excel_file, bỏ qua")
             continue
 
         print(f"   📄 {fname}")
@@ -359,18 +335,16 @@ def main():
         print(f"❌ Không thấy {INDEX_HTML}. Chạy convert.py trước.")
         sys.exit(1)
 
-    config = _load_config()
-
     with open(INDEX_HTML, "r", encoding="utf-8") as f:
         html = f.read()
 
-    datasets = scan_data_dir(config)
+    datasets = scan_data_dir()
 
     if not datasets:
-        print("\nℹ️  Không có dataset mới. Giữ nguyên index.html.")
+        print("\nℹ️  Không có dataset nào trong data/. Giữ nguyên index.html.")
         return
 
-    # Lọc bỏ dataset đã có trong HTML
+    # Lọc bỏ dataset đã có trong HTML (chạy lại nhiều lần)
     new_datasets = []
     for ds in datasets:
         if (f'"id":"{ds["id"]}"' in html
@@ -419,6 +393,7 @@ def main():
             f'        </button>\n    '
         )
 
+    # Chèn TRƯỚC nút chuyen-nganh
     pat_btn = re.compile(
         r'(\s*)(<button\s+class="[^"]*ds-btn[^"]*"\s+[^>]*data-dataset-group="chuyen-nganh")',
         re.MULTILINE
@@ -430,7 +405,7 @@ def main():
     print(f"   ✅ Đã chèn {len(new_datasets)} button")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 3: CSS layout
+    #  PATCH 3: CSS layout (auto-fit)
     # ═══════════════════════════════════════════════════════════════
     print("\n🔨 PATCH 3: CSS layout...")
     color_css = ""
@@ -502,19 +477,19 @@ def main():
         print("   ✅ Đã override CSS")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 4: JS binding
+    #  PATCH 4: JS binding + Fix getLimitedData
     # ═══════════════════════════════════════════════════════════════
-    print("\n🔨 PATCH 4: JS binding...")
+    print("\n🔨 PATCH 4: JS binding + patch getLimitedData...")
     ids_js = json.dumps([ds["id"] for ds in new_datasets])
 
-    js_override = f"""
+    js = f"""
 <script>
 /* ═══════════════════════════════════════════════════════════════════
    ★★ FIX.PY OVERRIDE: Bind tab mới + Fix getLimitedData ★★
    ═══════════════════════════════════════════════════════════════════ */
 (function() {{
     'use strict';
-    var NEW_IDS = {new_ids_js};
+    var NEW_IDS = {ids_js};
 
     /* ═══════════════════════════════════════════════════════════
        PATCH 1: getLimitedData — bỏ onboarding override cho tab mới
@@ -536,8 +511,7 @@ def main():
                 var savedOverride = window.__onboardingOverride;
                 window.__onboardingOverride = null;
                 try {{
-                    var result = origGet.apply(this, arguments);
-                    return result;
+                    return origGet.apply(this, arguments);
                 }} finally {{
                     window.__onboardingOverride = savedOverride;
                 }}
@@ -632,6 +606,20 @@ def main():
     print("   ✅ Đã inject JS")
 
     # ═══════════════════════════════════════════════════════════════
+    #  PATCH 5 (OPTIONAL): Xóa tab "Tổng hợp VPCX" cũ
+    #  BẬT bằng cách bỏ comment bên dưới nếu bạn muốn xóa tab tổng hợp.
+    #  Mặc định TẮT — giữ tab tổng hợp bên cạnh tab "Input".
+    # ═══════════════════════════════════════════════════════════════
+    # print("\n🔨 PATCH 5: Xóa tab Tổng hợp cũ...")
+    # pat_tonghop_btn = re.compile(
+    #     r'<button[^>]*data-dataset="tonghop"[^>]*>.*?</button>\s*',
+    #     re.DOTALL
+    # )
+    # html, n = pat_tonghop_btn.subn('', html)
+    # if n > 0:
+    #     print(f"   ✅ Đã xóa {n} nút tổng hợp")
+
+    # ═══════════════════════════════════════════════════════════════
     #  GHI FILE
     # ═══════════════════════════════════════════════════════════════
     with open(INDEX_HTML, "w", encoding="utf-8") as f:
@@ -645,6 +633,7 @@ def main():
     for ds in new_datasets:
         print(f"   • {ds['name']} ({ds['count']} câu)")
     print(f"🎨 Layout: PC auto-fit · Mobile 2 cột")
+    print(f"🔒 Tier: Demo/Trial/Expired khoá 1 phần như tab tổng hợp")
     print("=" * 62)
 
 
