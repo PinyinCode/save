@@ -54,7 +54,7 @@ import re
 import unicodedata
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 from config_loader import load_config, print_banner, CONFIG_FILE
 from data_reader import read_excel
 from ui_template import build_ui_css, build_ui_html, build_ui_js
@@ -141,8 +141,14 @@ print_banner(CONFIG)
 EXCEL_FILE = CONFIG["excel_file"]
 OUTPUT_HTML = CONFIG["output_html"]
 SHEET_INDEX = CONFIG["sheet_index"]
-DATA_DIR = CONFIG.get("data_dir", "data")
 
+# ═══════════════════════════════════════════════════════════════════
+#  ⭐ CHUYÊN NGÀNH chỉ đọc từ scripts/data/
+#  KHÔNG đọc data/ (data/ dành cho fix.py xử lý riêng)
+# ═══════════════════════════════════════════════════════════════════
+DATA_DIR = os.path.join(SCRIPT_DIR, "scripts", "data")
+
+print(f"📁 Chuyên ngành chỉ đọc từ: {DATA_DIR}")
 # ─── 1. Đọc dataset gốc ───
 data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
 print(f"📚 Tổng hợp: {len(data_tonghop)} câu")
