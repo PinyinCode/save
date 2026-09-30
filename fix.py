@@ -8,8 +8,10 @@ fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
   - Logic đọc Excel GIỐNG data_reader.py:
       openpyxl, cột VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
       Data bắt đầu từ dòng 2, tự động chuyển số Ả Rập → Hán (cn2an)
-  - TIER LOCK: Demo=60 câu, Trial=N, Active/Admin=full
-  - KHÔNG gọi switchDataset() — vì nó có tier check cho chuyên ngành
+  - TIER LOCK + ONBOARDING giống tab tổng hợp:
+      + Demo: 60-80 câu đầu (theo chủ đề đã chọn)
+      + Trial: 200-250 câu
+      + Active/Admin: full
   - Clone nút để XÓA event listener cũ của convert.py → không còn popup
   - KHÔNG can thiệp convert.py, ui_template.py, config.json
 
@@ -36,7 +38,7 @@ DATA_DIR = "data"
 
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
     os.chdir("..")
-    print("[fix.py] Phát hiện chạy từ scripts/ -> chuyển về root")
+    print("[fix.py] Phat hien chay tu scripts/ -> chuyen ve root")
 
 TAB_ICONS = [
     "fa-comments", "fa-file-alt", "fa-book", "fa-graduation-cap",
@@ -49,7 +51,7 @@ TAB_COLORS = [
 
 
 # =================================================================
-#  CHUYEN SO A RAP -> SO HAN (copy tu data_reader.py)
+#  CHUYEN SO A RAP -> SO HAN
 # =================================================================
 try:
     import cn2an
@@ -101,7 +103,6 @@ def _digits_to_chinese(digits_str):
 
 
 def convert_arabic_to_chinese(text):
-    """Chuyen so A Rap -> so Han (giong data_reader.py)."""
     if not text or not isinstance(text, str):
         return text
 
@@ -208,7 +209,6 @@ def _find_file_safe(filepath):
 
 
 def _read_excel_rows(filepath):
-    """Doc Excel -> list[dict] - GIONG data_reader.read_excel()."""
     real_path = _find_file_safe(filepath)
     if not real_path:
         print("      [X] Khong tim thay file: " + os.path.basename(filepath))
@@ -349,25 +349,23 @@ def scan_data_dir():
 
 
 # =================================================================
-#  BUILD JS OVERRIDE — dung list + join, tranh loi escape
+#  BUILD JS OVERRIDE
 # =================================================================
 def build_js_override(ids_js):
-    """Tra ve chuoi JS override hoan chinh."""
+    """Tra ve chuoi JS override hoan chinh - co onboarding + tier lock."""
     L = []
     add = L.append
 
     add("")
     add("<script>")
     add("/* ================================================================")
-    add("   FIX.PY OVERRIDE - Bind tab moi + TICH HOP TIER LOCK")
+    add("   FIX.PY OVERRIDE - Bind tab moi + TIER LOCK + ONBOARDING")
     add("   ================================================================")
     add("   Quy tac:")
     add("     1. Clone nut de XOA event listener cu cua convert.py")
-    add("        (tranh popup 'Chuyen nganh' khi click tab moi)")
-    add("     2. Doi RAW_DATA + reset state + goi applyFilter()")
-    add("     3. applyFilter() goi getLimitedData() -> CAT THEO TIER")
-    add("     4. KHONG goi switchDataset() (no co tier check -> popup)")
-    add("     5. KHONG override APP_TIER / APP_LIMITS")
+    add("     2. Tab moi co onboarding + tier lock giong tab tonghop")
+    add("     3. applyFilter() -> getLimitedData() -> cat cau theo tier")
+    add("     4. Ho tro nut 'Doi' chu de (applyOnboardingSelection)")
     add("   ================================================================")
     add("*/")
     add("(function() {")
@@ -375,9 +373,9 @@ def build_js_override(ids_js):
     add("    var NEW_IDS = " + ids_js + ";")
     add("")
 
-    # ================= PATCH A: patchGetLimitedData =================
+    # ================= PATCH A: getLimitedData =================
     add("    /* ------------------------------------------------------------")
-    add("       PATCH A: getLimitedData - bo onboarding override cho tab moi")
+    add("       PATCH A: getLimitedData - ho tro onboarding cho tab moi")
     add("       ------------------------------------------------------------ */")
     add("    function patchGetLimitedData() {")
     add("        if (window.__fixPyLimitedPatched) return;")
@@ -389,35 +387,46 @@ def build_js_override(ids_js):
     add("            var currentDs = (typeof CURRENT_DATASET !== 'undefined')")
     add("                            ? CURRENT_DATASET : 'tonghop';")
     add("")
+    add("            // Tab tonghop: goi ham goc")
     add("            if (currentDs === 'tonghop') {")
     add("                return origGet.apply(this, arguments);")
     add("            }")
     add("")
-    add("            var savedOverride = window.__onboardingOverride;")
-    add("            window.__onboardingOverride = null;")
-    add("            try {")
-    add("                var result = origGet.apply(this, arguments);")
-    add("                if (result.length === 0")
-    add("                    && typeof RAW_DATA !== 'undefined'")
-    add("                    && RAW_DATA.length > 0) {")
-    add("                    var info = (typeof getTierInfo === 'function')")
-    add("                               ? getTierInfo() : {};")
-    add("                    var max = info.maxQuestions || 60;")
-    add("                    result = RAW_DATA.slice(0, max);")
-    add("                }")
-    add("                return result;")
-    add("            } finally {")
-    add("                window.__onboardingOverride = savedOverride;")
+    add("            // Tab moi: ap dung override + tier")
+    add("            var info = (typeof getTierInfo === 'function')")
+    add("                       ? getTierInfo() : {};")
+    add("            if (info.tier === 'active') {")
+    add("                return RAW_DATA;")
     add("            }")
+    add("")
+    add("            // Onboarding override: loc theo RAW_DATA hien tai")
+    add("            var override = window.__onboardingOverride;")
+    add("            if (override && Array.isArray(override) && override.length > 0")
+    add("                && typeof state !== 'undefined' && state")
+    add("                && !state.search && !state.hsk && !state.subject) {")
+    add("                var currentStts = {};")
+    add("                RAW_DATA.forEach(function(r) { currentStts[r.stt] = true; });")
+    add("                var filtered = override.filter(function(r) {")
+    add("                    return currentStts[r.stt];")
+    add("                });")
+    add("                if (filtered.length > 0) {")
+    add("                    var max = info.maxQuestions || 60;")
+    add("                    return filtered.slice(0, max);")
+    add("                }")
+    add("            }")
+    add("")
+    add("            // Fallback: N cau dau")
+    add("            var max2 = info.maxQuestions || 60;")
+    add("            return RAW_DATA.slice(0, max2);")
     add("        };")
     add("")
     add("        window.__fixPyLimitedPatched = true;")
     add("    }")
     add("")
 
-    # ================= PATCH B: bindTab (CLONE) =================
+    # ================= PATCH B: bindTab =================
     add("    /* ------------------------------------------------------------")
-    add("       PATCH B: bindTab - CLONE nut de xoa listener cu")
+    add("       PATCH B: bindTab - CLONE nut + onboarding cho tab moi")
     add("       ------------------------------------------------------------ */")
     add("    function bindTab(dsId) {")
     add("        var btn = document.querySelector('.ds-btn[data-dataset=\"' + dsId + '\"]');")
@@ -429,7 +438,6 @@ def build_js_override(ids_js):
     add("        btn.parentNode.replaceChild(cloned, btn);")
     add("        cloned.__fixPyBound = true;")
     add("")
-    add("        // Gan listener MOI")
     add("        cloned.addEventListener('click', function(e) {")
     add("            e.stopImmediatePropagation();")
     add("            e.stopPropagation();")
@@ -451,7 +459,7 @@ def build_js_override(ids_js):
     add("                console.log('[fix.py] __switchRawData(\"' + dsId + '\")');")
     add("            }")
     add("")
-    add("            // 2. Reset state")
+    add("            // 2. Reset filter state")
     add("            if (typeof state !== 'undefined' && state) {")
     add("                state.search = '';")
     add("                state.hsk = '';")
@@ -468,12 +476,19 @@ def build_js_override(ids_js):
     add("                if (cb) cb.classList.remove('show');")
     add("            } catch(err) {}")
     add("")
-    add("            // 3. Xoa override + banner")
-    add("            window.__onboardingOverride = null;")
-    add("            var obBanner = document.getElementById('onboardingActiveBanner');")
-    add("            if (obBanner) obBanner.remove();")
+    add("            // 3. Ap dung onboarding override cho tab moi (neu co)")
+    add("            //    Khong xoa override - de user giu chu de da chon")
+    add("            var savedTopics = null;")
+    add("            if (typeof loadOnboardingSelection === 'function') {")
+    add("                try {")
+    add("                    var saved = loadOnboardingSelection();")
+    add("                    if (saved && saved.topics && saved.topics.length > 0) {")
+    add("                        savedTopics = saved.topics;")
+    add("                    }")
+    add("                } catch(e) {}")
+    add("            }")
     add("")
-    add("            // 4. Re-render (CO TIER LOCK)")
+    add("            // 4. Re-render (tier lock + onboarding)")
     add("            try {")
     add("                if (typeof buildFilters === 'function') buildFilters();")
     add("                if (typeof applyFilter === 'function') applyFilter();")
@@ -481,6 +496,23 @@ def build_js_override(ids_js):
     add("                if (typeof markCurrentDatasetActive === 'function') {")
     add("                    markCurrentDatasetActive();")
     add("                }")
+    add("")
+    add("                // Ve lai banner chu de")
+    add("                if (savedTopics && savedTopics.length > 0") 
+    add("                    && typeof applyOnboardingSelection === 'function') {")
+    add("                    try {")
+    add("                        var cfg = (typeof getOnboardingConfig === 'function')")
+    add("                                  ? getOnboardingConfig() : null;")
+    add("                        if (cfg) {")
+    add("                            var saved2 = loadOnboardingSelection();")
+    add("                            window.__onboardingAutoPicked = saved2 ? !!saved2.auto_picked : false;")
+    add("                            applyOnboardingSelection(savedTopics, false);")
+    add("                        }")
+    add("                    } catch(e2) {")
+    add("                        console.warn('[fix.py] applyOnboarding error:', e2);")
+    add("                    }")
+    add("                }")
+    add("")
     add("                console.log('[fix.py] applyFilter() done');")
     add("            } catch(err) {")
     add("                console.warn('[fix.py] re-render error:', err);")
@@ -544,9 +576,138 @@ def build_js_override(ids_js):
     add("    }")
     add("")
 
+    # ================= PATCH D: applyOnboardingSelection cho tab moi =================
+    add("    /* ------------------------------------------------------------")
+    add("       PATCH D: applyOnboardingSelection - ho tro tab moi")
+    add("       ------------------------------------------------------------ */")
+    add("    function patchApplyOnboarding() {")
+    add("        if (window.__fixPyApplyOnbPatched) return;")
+    add("        var origApply = window.applyOnboardingSelection")
+    add("                      || (typeof applyOnboardingSelection !== 'undefined'")
+    add("                          ? applyOnboardingSelection : null);")
+    add("        if (typeof origApply !== 'function') return;")
+    add("")
+    add("        window.applyOnboardingSelection = function(topics, scrollTop) {")
+    add("            var currentDs = (typeof CURRENT_DATASET !== 'undefined')")
+    add("                            ? CURRENT_DATASET : 'tonghop';")
+    add("")
+    add("            // Tab tonghop: goi ham goc")
+    add("            if (currentDs === 'tonghop') {")
+    add("                return origApply.apply(this, arguments);")
+    add("            }")
+    add("")
+    add("            // Tab moi: tu tinh override theo RAW_DATA hien tai")
+    add("            var cfg = (typeof getOnboardingConfig === 'function')")
+    add("                      ? getOnboardingConfig() : null;")
+    add("            if (!cfg) return;")
+    add("")
+    add("            var maxQ = cfg.max_questions;")
+    add("            var isUnlimitedQ = (maxQ === -1 || maxQ === Infinity);")
+    add("")
+    add("            var allowedHsk;")
+    add("            if (cfg.hsk_allowed && Array.isArray(cfg.hsk_allowed) && cfg.hsk_allowed.length > 0) {")
+    add("                allowedHsk = cfg.hsk_allowed.map(function(n) { return 'HSK' + n; });")
+    add("            } else {")
+    add("                allowedHsk = (typeof getAllowedHskList === 'function')")
+    add("                             ? getAllowedHskList()")
+    add("                             : ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];")
+    add("            }")
+    add("")
+    add("            var pool = RAW_DATA.filter(function(r) {")
+    add("                if (allowedHsk.indexOf(r.hsk) === -1) return false;")
+    add("                var s = (r.subject || '').trim();")
+    add("                return topics.indexOf(s) !== -1;")
+    add("            });")
+    add("")
+    add("            pool.sort(function(a, b) {")
+    add("                return (parseInt(a.stt) || 0) - (parseInt(b.stt) || 0);")
+    add("            });")
+    add("")
+    add("            var final = [];")
+    add("            if (isUnlimitedQ) {")
+    add("                final = pool.slice();")
+    add("            } else {")
+    add("                var maxPerTopic = (typeof getMaxPerTopic === 'function')")
+    add("                                 ? getMaxPerTopic(maxQ, RAW_DATA)")
+    add("                                 : Math.max(1, Math.ceil(maxQ / Math.max(1, topics.length)));")
+    add("                var topicCount = {};")
+    add("                var perHsk = Math.ceil(maxQ / allowedHsk.length);")
+    add("                var hskCount = {};")
+    add("                allowedHsk.forEach(function(h) { hskCount[h] = 0; });")
+    add("")
+    add("                for (var i = 0; i < pool.length && final.length < maxQ; i++) {")
+    add("                    var r = pool[i];")
+    add("                    var s = (r.subject || '').trim() || '__no_subject__';")
+    add("                    if ((topicCount[s] || 0) >= maxPerTopic) continue;")
+    add("                    if (r.hsk && hskCount[r.hsk] !== undefined && hskCount[r.hsk] >= perHsk) continue;")
+    add("                    final.push(r);")
+    add("                    topicCount[s] = (topicCount[s] || 0) + 1;")
+    add("                    if (r.hsk && hskCount[r.hsk] !== undefined) hskCount[r.hsk]++;")
+    add("                }")
+    add("")
+    add("                if (final.length < maxQ) {")
+    add("                    var usedIds = {};")
+    add("                    final.forEach(function(r) { usedIds[r.stt] = true; });")
+    add("                    for (var p = 0; p < pool.length && final.length < maxQ; p++) {")
+    add("                        var rp = pool[p];")
+    add("                        if (usedIds[rp.stt]) continue;")
+    add("                        var sp = (rp.subject || '').trim() || '__no_subject__';")
+    add("                        if ((topicCount[sp] || 0) >= maxPerTopic) continue;")
+    add("                        final.push(rp);")
+    add("                        usedIds[rp.stt] = true;")
+    add("                        topicCount[sp] = (topicCount[sp] || 0) + 1;")
+    add("                    }")
+    add("                }")
+    add("                if (final.length > maxQ) final = final.slice(0, maxQ);")
+    add("            }")
+    add("")
+    add("            final.sort(function(a, b) {")
+    add("                return (parseInt(a.stt) || 0) - (parseInt(b.stt) || 0);")
+    add("            });")
+    add("")
+    add("            window.__onboardingOverride = final;")
+    add("")
+    add("            // Reset filter + render")
+    add("            if (typeof state !== 'undefined' && state) {")
+    add("                state.search = '';")
+    add("                state.hsk = '';")
+    add("                state.subject = '';")
+    add("            }")
+    add("            try {")
+    add("                var si = document.getElementById('searchInput');")
+    add("                if (si) si.value = '';")
+    add("                var cb = document.getElementById('clearSearchBtn');")
+    add("                if (cb) cb.classList.remove('show');")
+    add("            } catch(e) {}")
+    add("")
+    add("            if (typeof applyFilter === 'function') applyFilter();")
+    add("            if (typeof updateResultCount === 'function') updateResultCount();")
+    add("")
+    add("            // Ve lai banner chu de")
+    add("            if (typeof showOnboardingActiveBanner === 'function') {")
+    add("                showOnboardingActiveBanner(topics, final.length);")
+    add("            }")
+    add("")
+    add("            if (scrollTop) {")
+    add("                setTimeout(function() {")
+    add("                    var mainEl = document.getElementById('mainContent');")
+    add("                    if (mainEl) {")
+    add("                        var yOffset = mainEl.getBoundingClientRect().top")
+    add("                                    + window.scrollY - 100;")
+    add("                        window.scrollTo({ top: yOffset, behavior: 'smooth' });")
+    add("                    }")
+    add("                }, 200);")
+    add("            }")
+    add("        };")
+    add("")
+    add("        window.__fixPyApplyOnbPatched = true;")
+    add("    }")
+    add("")
+
     # ================= INIT =================
     add("    function bindAll() {")
     add("        patchGetLimitedData();")
+    add("        patchApplyOnboarding();")
     add("        NEW_IDS.forEach(bindTab);")
     add("        patchMarkActive();")
     add("    }")
@@ -616,9 +777,7 @@ def main():
     for ds in new_datasets:
         print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
 
-    # =============================================================
-    #  PATCH 1: DATASET_REGISTRY
-    # =============================================================
+    # PATCH 1: DATASET_REGISTRY
     print("")
     print("[PATCH 1] Inject vao DATASET_REGISTRY...")
     pat_registry = re.compile(r'(var\s+DATASET_REGISTRY\s*=\s*)(\{)', re.MULTILINE)
@@ -636,9 +795,7 @@ def main():
         sys.exit(1)
     print("   [OK] Da chen " + str(len(new_datasets)) + " entry")
 
-    # =============================================================
-    #  PATCH 2: Buttons
-    # =============================================================
+    # PATCH 2: Buttons
     print("")
     print("[PATCH 2] Them button tabs...")
     new_btns = ""
@@ -662,9 +819,7 @@ def main():
         sys.exit(1)
     print("   [OK] Da chen " + str(len(new_datasets)) + " button")
 
-    # =============================================================
-    #  PATCH 3: CSS layout
-    # =============================================================
+    # PATCH 3: CSS layout
     print("")
     print("[PATCH 3] CSS layout...")
 
@@ -737,11 +892,9 @@ def main():
     else:
         print("   [OK] Da override CSS")
 
-    # =============================================================
-    #  PATCH 4: JS binding
-    # =============================================================
+    # PATCH 4: JS binding
     print("")
-    print("[PATCH 4] JS binding (clone nut + tier lock)...")
+    print("[PATCH 4] JS binding (clone nut + tier lock + onboarding)...")
     ids_js = json.dumps([ds["id"] for ds in new_datasets])
     js = build_js_override(ids_js)
 
@@ -752,9 +905,7 @@ def main():
         sys.exit(1)
     print("   [OK] Da inject JS")
 
-    # =============================================================
-    #  GHI FILE
-    # =============================================================
+    # GHI FILE
     with open(INDEX_HTML, "w", encoding="utf-8") as f:
         f.write(html)
 
@@ -767,7 +918,7 @@ def main():
     for ds in new_datasets:
         print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
     print("[fix.py] Layout: PC auto-fit - Mobile 2 cot")
-    print("[fix.py] TICH HOP TIER LOCK: Demo=60, Trial=N, Active=full")
+    print("[fix.py] TICH HOP: Tier lock + Onboarding giong tab tonghop")
     print("=" * 62)
 
 
