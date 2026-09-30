@@ -8544,7 +8544,7 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
 /* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB ==== */
 @media (max-width: 768px) {
     .ds-main-row {
-        grid-templates: repeat(2, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: .5rem !important;
     }
 }
@@ -24805,11 +24805,21 @@ window.__switchRawData = function(datasetId) {
 /* ================================================================
    FIX.PY OVERRIDE - Bind tab moi + TIER LOCK + ONBOARDING
    ================================================================
+   Quy tac:
+     1. Clone nut de XOA event listener cu cua convert.py
+     2. Tab moi co onboarding + tier lock giong tab tonghop
+     3. applyFilter() -> getLimitedData() -> cat cau theo tier
+     4. Ho tro nut 'Doi' chu de (applyOnboardingSelection)
+     5. CHI 1 TAB ACTIVE tai mot thoi diem
+   ================================================================
 */
 (function() {
     'use strict';
     var NEW_IDS = ["1000-cau-giao-tiep"];
 
+    /* ------------------------------------------------------------
+       PATCH A: getLimitedData - ho tro onboarding cho tab moi
+       ------------------------------------------------------------ */
     function patchGetLimitedData() {
         if (window.__fixPyLimitedPatched) return;
         var origGet = window.getLimitedData
@@ -24820,16 +24830,19 @@ window.__switchRawData = function(datasetId) {
             var currentDs = (typeof CURRENT_DATASET !== 'undefined')
                             ? CURRENT_DATASET : 'tonghop';
 
+            // Tab tonghop: goi ham goc
             if (currentDs === 'tonghop') {
                 return origGet.apply(this, arguments);
             }
 
+            // Tab moi: ap dung override + tier
             var info = (typeof getTierInfo === 'function')
                        ? getTierInfo() : {};
             if (info.tier === 'active') {
                 return RAW_DATA;
             }
 
+            // Onboarding override: loc theo RAW_DATA hien tai
             var override = window.__onboardingOverride;
             if (override && Array.isArray(override) && override.length > 0
                 && typeof state !== 'undefined' && state
@@ -24845,6 +24858,7 @@ window.__switchRawData = function(datasetId) {
                 }
             }
 
+            // Fallback: N cau dau
             var max2 = info.maxQuestions || 60;
             return RAW_DATA.slice(0, max2);
         };
@@ -24852,11 +24866,15 @@ window.__switchRawData = function(datasetId) {
         window.__fixPyLimitedPatched = true;
     }
 
+    /* ------------------------------------------------------------
+       PATCH B: bindTab - CLONE nut + onboarding cho tab moi
+       ------------------------------------------------------------ */
     function bindTab(dsId) {
         var btn = document.querySelector('.ds-btn[data-dataset="' + dsId + '"]');
         if (!btn) return;
         if (btn.__fixPyBound) return;
 
+        // Clone nut de xoa TAT CA event listener cu
         var cloned = btn.cloneNode(true);
         btn.parentNode.replaceChild(cloned, btn);
         cloned.__fixPyBound = true;
@@ -24871,15 +24889,19 @@ window.__switchRawData = function(datasetId) {
             var sub = document.getElementById('dsSubWrap');
             if (sub) sub.style.display = 'none';
 
+            // ═══ Xoa active khoi TAT CA (ds-btn + ds-sub-btn) ═══
             document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
                 b.classList.remove('active');
             });
             this.classList.add('active');
 
+            // 1. Doi RAW_DATA
             if (typeof window.__switchRawData === 'function') {
                 window.__switchRawData(dsId);
+                console.log('[fix.py] __switchRawData("' + dsId + '")');
             }
 
+            // 2. Reset filter state
             if (typeof state !== 'undefined' && state) {
                 state.search = '';
                 state.hsk = '';
@@ -24896,6 +24918,7 @@ window.__switchRawData = function(datasetId) {
                 if (cb) cb.classList.remove('show');
             } catch(err) {}
 
+            // 3. Ap dung onboarding override cho tab moi (neu co)
             var savedTopics = null;
             if (typeof loadOnboardingSelection === 'function') {
                 try {
@@ -24906,11 +24929,13 @@ window.__switchRawData = function(datasetId) {
                 } catch(e) {}
             }
 
+            // 4. Re-render (tier lock + onboarding)
             try {
                 if (typeof buildFilters === 'function') buildFilters();
                 if (typeof applyFilter === 'function') applyFilter();
                 if (typeof updateResultCount === 'function') updateResultCount();
 
+                // Ve lai banner chu de
                 if (savedTopics && savedTopics.length > 0
                     && typeof applyOnboardingSelection === 'function') {
                     try {
@@ -24926,14 +24951,18 @@ window.__switchRawData = function(datasetId) {
                     }
                 }
 
+                // ═══ Đảm bảo CHỈ 1 TAB ACTIVE ═══
                 document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
                     b.classList.remove('active');
                 });
                 this.classList.add('active');
+
+                console.log('[fix.py] applyFilter() done');
             } catch(err) {
                 console.warn('[fix.py] re-render error:', err);
             }
 
+            // Scroll len dau
             setTimeout(function() {
                 var mainEl = document.getElementById('mainContent');
                 if (mainEl) {
@@ -24943,6 +24972,7 @@ window.__switchRawData = function(datasetId) {
                 }
             }, 100);
 
+            // VERIFY
             setTimeout(function() {
                 try {
                     var info = (typeof getTierInfo === 'function')
@@ -24968,25 +24998,33 @@ window.__switchRawData = function(datasetId) {
         }, true);
     }
 
+    /* ------------------------------------------------------------
+       PATCH C: markCurrentDatasetActive - CHI 1 TAB ACTIVE
+       ------------------------------------------------------------ */
     function patchMarkActive() {
         if (window.__fixPyMarkPatched) return;
 
+        // Override HOAN TOAN - khong goi origMark (tranh bug active 2 tab)
         window.markCurrentDatasetActive = function() {
             var cur = (typeof CURRENT_DATASET !== 'undefined')
                       ? CURRENT_DATASET : 'tonghop';
 
+            // Xoa active khoi TAT CA ds-btn va ds-sub-btn
             document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
                 b.classList.remove('active');
             });
 
+            // Chi active tab khop CURRENT_DATASET
             if (cur === 'tonghop') {
                 var tonghopBtn = document.querySelector('.ds-btn[data-dataset="tonghop"]');
                 if (tonghopBtn) tonghopBtn.classList.add('active');
             } else {
+                // Tab moi (khong phai chuyen nganh)
                 var newBtn = document.querySelector('.ds-btn[data-dataset="' + cur + '"]');
                 if (newBtn) {
                     newBtn.classList.add('active');
                 } else {
+                    // Fallback: co the la chuyen nganh that
                     var subBtn = document.querySelector('.ds-sub-btn[data-dataset="' + cur + '"]');
                     if (subBtn) subBtn.classList.add('active');
                     var cnBtn = document.querySelector('.ds-btn[data-dataset-group="chuyen-nganh"]');
@@ -24997,6 +25035,9 @@ window.__switchRawData = function(datasetId) {
         window.__fixPyMarkPatched = true;
     }
 
+    /* ------------------------------------------------------------
+       PATCH D: applyOnboardingSelection - ho tro tab moi
+       ------------------------------------------------------------ */
     function patchApplyOnboarding() {
         if (window.__fixPyApplyOnbPatched) return;
         var origApply = window.applyOnboardingSelection
@@ -25008,10 +25049,12 @@ window.__switchRawData = function(datasetId) {
             var currentDs = (typeof CURRENT_DATASET !== 'undefined')
                             ? CURRENT_DATASET : 'tonghop';
 
+            // Tab tonghop: goi ham goc
             if (currentDs === 'tonghop') {
                 return origApply.apply(this, arguments);
             }
 
+            // Tab moi: tu tinh override theo RAW_DATA hien tai
             var cfg = (typeof getOnboardingConfig === 'function')
                       ? getOnboardingConfig() : null;
             if (!cfg) return;
@@ -25082,6 +25125,7 @@ window.__switchRawData = function(datasetId) {
 
             window.__onboardingOverride = final;
 
+            // Reset filter + render
             if (typeof state !== 'undefined' && state) {
                 state.search = '';
                 state.hsk = '';
@@ -25097,6 +25141,7 @@ window.__switchRawData = function(datasetId) {
             if (typeof applyFilter === 'function') applyFilter();
             if (typeof updateResultCount === 'function') updateResultCount();
 
+            // Ve lai banner chu de
             if (typeof showOnboardingActiveBanner === 'function') {
                 showOnboardingActiveBanner(topics, final.length);
             }
@@ -25116,6 +25161,10 @@ window.__switchRawData = function(datasetId) {
         window.__fixPyApplyOnbPatched = true;
     }
 
+    /* ------------------------------------------------------------
+       PATCH E: Xoa tab moi khoi dropdown Chuyen nganh
+       (convert.py tu cho TAT CA dataset vao dropdown)
+       ------------------------------------------------------------ */
     function patchRemoveFromDropdown() {
         if (window.__fixPyRemoveDropdownPatched) return;
 
@@ -25144,6 +25193,7 @@ window.__switchRawData = function(datasetId) {
                 return result;
             };
             window.initDatasetSelector.__fixPyPatched = true;
+            console.log('[fix.py] Da patch initDatasetSelector()');
         }
 
         removeNow();
@@ -25161,17 +25211,16 @@ window.__switchRawData = function(datasetId) {
     }
 
     /* ------------------------------------------------------------
-       PATCH F: O CUNG KICH THUOC + TEXT TU DONG THU NHO DE VUA O
+       PATCH F: CSS grid deu nhau + text auto-fit
        ------------------------------------------------------------ */
     function patchSubGridCSS() {
         if (window.__fixPySubGridCSSPatched) return;
 
         var css = [
-            '/* FIX.PY: Dropdown Chuyen nganh - o CUNG kich thuoc */',
-            '/* Text tu dong thu nho de vua o (khong bi cat) */',
+            '/* FIX.PY: Dropdown Chuyen nganh - o deu nhau */',
             '.ds-sub-grid {',
             '    display: grid !important;',
-            '    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)) !important;',
+            '    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;',
             '    gap: .5rem !important;',
             '    align-items: stretch !important;',
             '}',
@@ -25181,58 +25230,39 @@ window.__switchRawData = function(datasetId) {
             '    justify-content: flex-start !important;',
             '    width: 100% !important;',
             '    min-width: 0 !important;',
-            '    min-height: 40px !important;',
-            '    max-height: 40px !important;',
-            '    padding: .4rem .7rem !important;',
+            '    min-height: 44px !important;',
+            '    padding: .5rem .85rem !important;',
             '    font-size: clamp(.62rem, 1.4vw, .82rem) !important;',
             '    border-radius: 50px !important;',
             '    box-sizing: border-box !important;',
             '    overflow: hidden !important;',
-            '    line-height: 1.15 !important;',
             '}',
             '.ds-sub-btn i:first-child {',
-            '    font-size: .82rem !important;',
+            '    font-size: .9rem !important;',
             '    flex-shrink: 0 !important;',
-            '    margin-right: .3rem !important;',
+            '    margin-right: .35rem !important;',
             '}',
             '.ds-sub-btn span {',
             '    flex: 1 1 auto !important;',
             '    min-width: 0 !important;',
-            '    font-size: clamp(.6rem, 1.3vw, .78rem) !important;',
-            '    line-height: 1.15 !important;',
             '    overflow: hidden !important;',
-            '    word-break: break-word !important;',
-            '    overflow-wrap: anywhere !important;',
-            '    hyphens: auto !important;',
-            '    display: -webkit-box !important;',
-            '    -webkit-line-clamp: 2 !important;',
-            '    -webkit-box-orient: vertical !important;',
+            '    text-overflow: ellipsis !important;',
+            '    white-space: nowrap !important;',
             '}',
             '@media (max-width: 500px) {',
             '    .ds-sub-grid {',
-            '        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)) !important;',
+            '        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;',
             '        gap: .4rem !important;',
             '    }',
             '    .ds-sub-btn {',
-            '        min-height: 38px !important;',
-            '        max-height: 38px !important;',
-            '        padding: .35rem .6rem !important;',
-            '        font-size: clamp(.58rem, 2.4vw, .72rem) !important;',
-            '    }',
-            '    .ds-sub-btn span {',
-            '        font-size: clamp(.56rem, 2.2vw, .68rem) !important;',
-            '    }',
-            '    .ds-sub-btn i:first-child {',
-            '        font-size: .75rem !important;',
-            '        margin-right: .25rem !important;',
+            '        font-size: clamp(.58rem, 2.4vw, .74rem) !important;',
+            '        padding: .45rem .65rem !important;',
+            '        min-height: 40px !important;',
             '    }',
             '}',
             '@media (max-width: 380px) {',
             '    .ds-sub-grid {',
-            '        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;',
-            '    }',
-            '    .ds-sub-btn span {',
-            '        font-size: clamp(.54rem, 2.6vw, .64rem) !important;',
+            '        grid-template-columns: 1fr 1fr !important;',
             '    }',
             '}'
         ].join('
@@ -25244,7 +25274,7 @@ window.__switchRawData = function(datasetId) {
         document.head.appendChild(style);
 
         window.__fixPySubGridCSSPatched = true;
-        console.log('[fix.py] Da inject CSS grid (o deu nhau + text auto-fit)');
+        console.log('[fix.py] Da inject CSS grid cho dropdown');
     }
 
     function bindAll() {
@@ -25262,6 +25292,7 @@ window.__switchRawData = function(datasetId) {
         bindAll();
     }
 
+    // Re-bind khi DOM thay doi
     var _timer = null;
     var observer = new MutationObserver(function() {
         clearTimeout(_timer);
