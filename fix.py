@@ -617,48 +617,48 @@ def main():
             });
             this.classList.add('active');
 
-            if (typeof window.__switchRawData === 'function') {
-                window.__switchRawData(dsId);
-            } else if (typeof DATASET_REGISTRY !== 'undefined'
-                       && DATASET_REGISTRY[dsId]) {
-                if (typeof RAW_DATA !== 'undefined') {
-                    window.RAW_DATA = DATASET_REGISTRY[dsId].data || [];
+            // ═══════════════════════════════════════════════════════
+            //  GOI switchDataset() GOC — DE CO TIER LOCK
+            //  (khong dung __switchRawData vi no bypass tier)
+            // ═══════════════════════════════════════════════════════
+            var switchFn = window.switchDataset
+                        || (typeof switchDataset !== 'undefined' ? switchDataset : null);
+
+            if (typeof switchFn === 'function') {
+                switchFn(dsId);
+                console.log('[fix.py] Da goi switchDataset("' + dsId + '")');
+            } else {
+                console.warn('[fix.py] Khong tim thay switchDataset - fallback');
+                if (typeof window.__switchRawData === 'function') {
+                    window.__switchRawData(dsId);
                 }
-                if (typeof CURRENT_DATASET !== 'undefined') {
-                    window.CURRENT_DATASET = dsId;
+                if (typeof state !== 'undefined' && state) {
+                    state.search = '';
+                    state.hsk = '';
+                    state.subject = '';
                 }
+                try {
+                    var searchInput = document.getElementById('searchInput');
+                    var hskFilter = document.getElementById('hskFilter');
+                    var subjectFilter = document.getElementById('subjectFilter');
+                    if (searchInput) searchInput.value = '';
+                    if (hskFilter) hskFilter.value = '';
+                    if (subjectFilter) subjectFilter.value = '';
+                    var clearBtn = document.getElementById('clearSearchBtn');
+                    if (clearBtn) clearBtn.classList.remove('show');
+                } catch(err) {}
+
+                if (typeof buildFilters === 'function') buildFilters();
+                if (typeof applyFilter === 'function') applyFilter();
+                if (typeof updateResultCount === 'function') updateResultCount();
             }
 
-            if (typeof state !== 'undefined' && state) {
-                state.search = '';
-                state.hsk = '';
-                state.subject = '';
-            }
-            try {
-                var searchInput = document.getElementById('searchInput');
-                var hskFilter = document.getElementById('hskFilter');
-                var subjectFilter = document.getElementById('subjectFilter');
-                if (searchInput) searchInput.value = '';
-                if (hskFilter) hskFilter.value = '';
-                if (subjectFilter) subjectFilter.value = '';
-                var clearBtn = document.getElementById('clearSearchBtn');
-                if (clearBtn) clearBtn.classList.remove('show');
-            } catch(err) {}
-
+            // Xoa onboarding override + banner
             window.__onboardingOverride = null;
             var obBanner = document.getElementById('onboardingActiveBanner');
             if (obBanner) obBanner.remove();
 
-            try {
-                if (typeof applyFilter === 'function') applyFilter();
-                if (typeof updateResultCount === 'function') updateResultCount();
-                if (typeof markCurrentDatasetActive === 'function') {
-                    markCurrentDatasetActive();
-                }
-            } catch(err) {
-                console.warn('[fix.py] re-render error:', err);
-            }
-
+            // Scroll len dau
             setTimeout(function() {
                 var mainEl = document.getElementById('mainContent');
                 if (mainEl) {
@@ -668,6 +668,7 @@ def main():
                 }
             }, 100);
 
+            // VERIFY sau 400ms
             setTimeout(function() {
                 try {
                     var info = (typeof getTierInfo === 'function')
@@ -677,18 +678,19 @@ def main():
                     var limLen = (typeof getLimitedData === 'function')
                                  ? getLimitedData().length : 0;
                     var cards = document.querySelectorAll('.card').length;
-                    console.log('[fix.py] Tab ' + dsId
+                    var lockBtn = document.querySelector('.load-more.locked');
+                    console.log('[fix.py] VERIFY ' + dsId
                                 + ': tier=' + info.tier
-                                + ', RAW_DATA=' + rawLen
+                                + ', RAW=' + rawLen
                                 + ', limited=' + limLen
-                                + ', cards=' + cards);
+                                + ', cards=' + cards
+                                + ', lock=' + (lockBtn ? 'YES' : 'NO'));
                 } catch(err) {
                     console.warn('[fix.py] verify error:', err);
                 }
-            }, 300);
+            }, 400);
         }, true);
     }
-
     /* ------------------------------------------------------------
        PATCH 3: markCurrentDatasetActive
        ------------------------------------------------------------ */
