@@ -1,20 +1,23 @@
 # -*- coding: utf-8 -*-
 """
-fix.py - Auto-scan data/ va them MOI file Excel thanh tab rieng.
+fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
 
-DAC DIEM:
-  - Doc HET moi file .xlsx/.xls/.csv trong data/
-  - Ten tab = ten file (normalize NFC - hien thi dung dau tieng Viet)
-  - Logic doc Excel GIONG data_reader.py:
-      openpyxl, cot VI TRI: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
-      Data bat dau tu dong 2, tu dong chuyen so A Rap -> Han (cn2an)
-  - Tier Demo/Expired/Trial van "khoa 1 phan" nhu tab tong hop
-  - Click tab moi KHONG bi chan boi popup "Chuyen nganh"
-  - KHONG can thiep convert.py, ui_template.py, config.json
+ĐẶC ĐIỂM:
+  - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/
+  - Tên tab = tên file (normalize NFC — hiển thị đúng dấu tiếng Việt)
+  - Logic đọc Excel GIỐNG data_reader.py:
+      openpyxl, cột VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
+      Data bắt đầu từ dòng 2, tự động chuyển số Ả Rập → Hán (cn2an)
+  - TÍCH HỢP TIER LOCK giống tab tổng hợp:
+      + Click tab mới → gọi switchDataset() → applyFilter() → getLimitedData()
+      + Demo/Trial/Expired tự động cắt câu theo APP_LIMITS
+      + Active/Admin xem full
+  - KHÔNG can thiệp convert.py, ui_template.py, config.json
+  - KHÔNG override APP_TIER/APP_LIMITS/publishTierState
 
-Cach chay:
-    python scripts/convert.py    # Tao index.html goc
-    python fix.py                # Patch index.html - them tab tu data/
+Cách chạy:
+    python scripts/convert.py    # Tạo index.html gốc
+    python fix.py                # Patch index.html — thêm tab từ data/
 """
 import json
 import os
@@ -158,12 +161,6 @@ def _slugify(filename):
 
 
 def _display_name(filename):
-    """
-    Ten tab hien thi:
-      'input.xlsx'              -> 'Input'
-      '1000_Cau_giao_tiep.xlsx' -> '1000 Cau Giao Tiep'
-    Normalize NFC de hien thi dung dau tieng Viet.
-    """
     name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
     name = unicodedata.normalize("NFC", name)
     if name.islower() or name.isupper():
@@ -189,21 +186,16 @@ def _js_str(s):
 
 
 def _find_file_safe(filepath):
-    """Tim file voi ten chinh xac tren filesystem - xu ly NFD/NFC mismatch."""
     if os.path.isfile(filepath):
         return filepath
-
     dirname = os.path.dirname(filepath) or "."
     basename = os.path.basename(filepath)
-
     if not os.path.isdir(dirname):
         return None
-
     variants = set()
     variants.add(basename)
     variants.add(unicodedata.normalize("NFC", basename))
     variants.add(unicodedata.normalize("NFD", basename))
-
     try:
         for fname in os.listdir(dirname):
             fname_nfc = unicodedata.normalize("NFC", fname)
@@ -215,16 +207,11 @@ def _find_file_safe(filepath):
                     return os.path.join(dirname, fname)
     except Exception:
         pass
-
     return None
 
 
 def _read_excel_rows(filepath):
-    """
-    Doc Excel -> list[dict] - GIONG data_reader.read_excel().
-    Cot theo VI TRI: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin.
-    Data bat dau tu dong 2.
-    """
+    """Doc Excel -> list[dict] - GIONG data_reader.read_excel()."""
     real_path = _find_file_safe(filepath)
     if not real_path:
         print("      [X] Khong tim thay file: " + os.path.basename(filepath))
@@ -303,7 +290,6 @@ def _read_excel_rows(filepath):
 #  SCAN data/
 # =================================================================
 def scan_data_dir():
-    """Quet data/ -> list[dict] dataset entries."""
     if not os.path.isdir(DATA_DIR):
         print("[fix.py] Khong thay thu muc '" + DATA_DIR + "/' - bo qua.")
         return []
@@ -387,7 +373,6 @@ def main():
         print("[fix.py] Khong co dataset nao. Giu nguyen index.html.")
         return
 
-    # Loc bo dataset da co trong HTML
     new_datasets = []
     for ds in datasets:
         marker1 = '"id":"' + ds["id"] + '"'
@@ -455,15 +440,11 @@ def main():
     print("   [OK] Da chen " + str(len(new_datasets)) + " button")
 
     # =============================================================
-    #  PATCH 3: CSS layout
-    # =============================================================
-    # =============================================================
-    #  PATCH 3: CSS layout
+    #  PATCH 3: CSS layout (dung list + join, tranh loi escape)
     # =============================================================
     print("")
     print("[PATCH 3] CSS layout...")
 
-    # Dung list + join de tranh loi escape \n khi paste
     css_lines = []
     css_lines.append("")
     css_lines.append("/* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB ==== */")
@@ -535,215 +516,241 @@ def main():
 
     # =============================================================
     #  PATCH 4: JS binding
+    #
+    #  ═══ TICH HOP TIER LOCK GIỐNG TAB TỔNG HỢP ═══
+    #
+    #  Quy tắc:
+    #    1. Gọi switchDataset() — hàm gốc có tier check
+    #    2. KHÔNG gọi __switchRawData() trực tiếp (bypass tier)
+    #    3. KHÔNG override APP_TIER/APP_LIMITS
+    #    4. Chỉ dùng onboarding override cho tab tonghop
     # =============================================================
     print("")
-    print("[PATCH 4] JS binding (chan popup + fix getLimitedData)...")
+    print("[PATCH 4] JS binding (tich hop tier lock)...")
     ids_js = json.dumps([ds["id"] for ds in new_datasets])
 
-    js = """
-<script>
-/* =================================================================
-   FIX.PY OVERRIDE - Bind tab moi + Chan popup tier-check
-   ================================================================= */
-(function() {
-    'use strict';
-    var NEW_IDS = """ + ids_js + """;
+    # ═══════════════════════════════════════════════════════════════
+    #  JS OVERRIDE — Dùng list + join để tránh lỗi escape
+    # ═══════════════════════════════════════════════════════════════
+    js_parts = []
 
-    /* ------------------------------------------------------------
-       PATCH 1: getLimitedData - bo onboarding override cho tab moi
-       ------------------------------------------------------------ */
-    function patchGetLimitedData() {
-        if (window.__fixPyLimitedPatched) return;
-        var origGet = window.getLimitedData
-                    || (typeof getLimitedData !== 'undefined' ? getLimitedData : null);
-        if (typeof origGet !== 'function') return;
+    js_parts.append("")
+    js_parts.append("<script>")
+    js_parts.append("/* =================================================================")
+    js_parts.append("   FIX.PY OVERRIDE - Bind tab moi + TICH HOP TIER LOCK")
+    js_parts.append("   =================================================================")
+    js_parts.append("   Quy tac:")
+    js_parts.append("     1. Goi switchDataset() -> applyFilter() -> getLimitedData()")
+    js_parts.append("     2. KHONG goi __switchRawData() truc tiep (bypass tier)")
+    js_parts.append("     3. KHONG override APP_TIER / APP_LIMITS / publishTierState")
+    js_parts.append("     4. Chi dung onboarding override cho tab tonghop")
+    js_parts.append("   =================================================================")
+    js_parts.append("*/")
+    js_parts.append("(function() {")
+    js_parts.append("    'use strict';")
+    js_parts.append("    var NEW_IDS = " + ids_js + ";")
+    js_parts.append("")
 
-        window.getLimitedData = function() {
-            var currentDs = (typeof CURRENT_DATASET !== 'undefined')
-                            ? CURRENT_DATASET : 'tonghop';
+    # ═══ PATCH A: patchGetLimitedData — chỉ bỏ override cho tab mới ═══
+    js_parts.append("    /* ------------------------------------------------------------")
+    js_parts.append("       PATCH A: getLimitedData — bo onboarding override cho tab moi")
+    js_parts.append("       (Vi override thuoc tab tonghop -> filter se ra 0 cau)")
+    js_parts.append("       ------------------------------------------------------------ */")
+    js_parts.append("    function patchGetLimitedData() {")
+    js_parts.append("        if (window.__fixPyLimitedPatched) return;")
+    js_parts.append("        var origGet = window.getLimitedData")
+    js_parts.append("                    || (typeof getLimitedData !== 'undefined' ? getLimitedData : null);")
+    js_parts.append("        if (typeof origGet !== 'function') return;")
+    js_parts.append("")
+    js_parts.append("        window.getLimitedData = function() {")
+    js_parts.append("            var currentDs = (typeof CURRENT_DATASET !== 'undefined')")
+    js_parts.append("                            ? CURRENT_DATASET : 'tonghop';")
+    js_parts.append("")
+    js_parts.append("            // Tab tonghop: giu nguyen logic goc")
+    js_parts.append("            if (currentDs === 'tonghop') {")
+    js_parts.append("                return origGet.apply(this, arguments);")
+    js_parts.append("            }")
+    js_parts.append("")
+    js_parts.append("            // Tab moi: tam bo override, goi logic goc")
+    js_parts.append("            var savedOverride = window.__onboardingOverride;")
+    js_parts.append("            window.__onboardingOverride = null;")
+    js_parts.append("            try {")
+    js_parts.append("                var result = origGet.apply(this, arguments);")
+    js_parts.append("")
+    js_parts.append("                // Fallback: neu rong (HSK khong match)")
+    js_parts.append("                if (result.length === 0")
+    js_parts.append("                    && typeof RAW_DATA !== 'undefined'")
+    js_parts.append("                    && RAW_DATA.length > 0) {")
+    js_parts.append("                    var info = (typeof getTierInfo === 'function')")
+    js_parts.append("                               ? getTierInfo() : {};")
+    js_parts.append("                    var max = info.maxQuestions || 60;")
+    js_parts.append("                    result = RAW_DATA.slice(0, max);")
+    js_parts.append("                }")
+    js_parts.append("                return result;")
+    js_parts.append("            } finally {")
+    js_parts.append("                window.__onboardingOverride = savedOverride;")
+    js_parts.append("            }")
+    js_parts.append("        };")
+    js_parts.append("")
+    js_parts.append("        window.__fixPyLimitedPatched = true;")
+    js_parts.append("    }")
+    js_parts.append("")
 
-            if (currentDs !== 'tonghop') {
-                var savedOverride = window.__onboardingOverride;
-                window.__onboardingOverride = null;
+    # ═══ PATCH B: bindTab — GỌI switchDataset() để có tier lock ═══
+    js_parts.append("    /* ------------------------------------------------------------")
+    js_parts.append("       PATCH B: bindTab — GOI switchDataset() GOC")
+    js_parts.append("       switchDataset() se goi applyFilter() -> getLimitedData()")
+    js_parts.append("       -> cat cau theo tier (Demo=60, Trial=N, Active=full)")
+    js_parts.append("       ------------------------------------------------------------ */")
+    js_parts.append("    function bindTab(dsId) {")
+    js_parts.append("        var btn = document.querySelector('.ds-btn[data-dataset=\"' + dsId + '\"]');")
+    js_parts.append("        if (!btn || btn.__fixPyBound) return;")
+    js_parts.append("        btn.__fixPyBound = true;")
+    js_parts.append("")
+    js_parts.append("        btn.addEventListener('click', function(e) {")
+    js_parts.append("            e.stopImmediatePropagation();")
+    js_parts.append("            e.stopPropagation();")
+    js_parts.append("            e.preventDefault();")
+    js_parts.append("")
+    js_parts.append("            console.log('[fix.py] click tab ' + dsId);")
+    js_parts.append("")
+    js_parts.append("            var sub = document.getElementById('dsSubWrap');")
+    js_parts.append("            if (sub) sub.style.display = 'none';")
+    js_parts.append("")
+    js_parts.append("            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
+    js_parts.append("                b.classList.remove('active');")
+    js_parts.append("            });")
+    js_parts.append("            this.classList.add('active');")
+    js_parts.append("")
+    js_parts.append("            // ═══════════════════════════════════════════════")
+    js_parts.append("            //  GOI switchDataset() GOC - DE CO TIER LOCK")
+    js_parts.append("            // ═══════════════════════════════════════════════")
+    js_parts.append("            var switchFn = window.switchDataset")
+    js_parts.append("                        || (typeof switchDataset !== 'undefined' ? switchDataset : null);")
+    js_parts.append("")
+    js_parts.append("            if (typeof switchFn === 'function') {")
+    js_parts.append("                switchFn(dsId);")
+    js_parts.append("                console.log('[fix.py] Da goi switchDataset(\"' + dsId + '\")');")
+    js_parts.append("            } else {")
+    js_parts.append("                console.warn('[fix.py] Khong tim thay switchDataset - fallback');")
+    js_parts.append("                // Fallback: tu lam giong switchDataset")
+    js_parts.append("                if (typeof window.__switchRawData === 'function') {")
+    js_parts.append("                    window.__switchRawData(dsId);")
+    js_parts.append("                }")
+    js_parts.append("                if (typeof state !== 'undefined' && state) {")
+    js_parts.append("                    state.search = '';")
+    js_parts.append("                    state.hsk = '';")
+    js_parts.append("                    state.subject = '';")
+    js_parts.append("                }")
+    js_parts.append("                try {")
+    js_parts.append("                    var si = document.getElementById('searchInput');")
+    js_parts.append("                    var hf = document.getElementById('hskFilter');")
+    js_parts.append("                    var sf = document.getElementById('subjectFilter');")
+    js_parts.append("                    if (si) si.value = '';")
+    js_parts.append("                    if (hf) hf.value = '';")
+    js_parts.append("                    if (sf) sf.value = '';")
+    js_parts.append("                } catch(err) {}")
+    js_parts.append("                if (typeof buildFilters === 'function') buildFilters();")
+    js_parts.append("                if (typeof applyFilter === 'function') applyFilter();")
+    js_parts.append("            }")
+    js_parts.append("")
+    js_parts.append("            // Xoa onboarding override + banner")
+    js_parts.append("            window.__onboardingOverride = null;")
+    js_parts.append("            var obBanner = document.getElementById('onboardingActiveBanner');")
+    js_parts.append("            if (obBanner) obBanner.remove();")
+    js_parts.append("")
+    js_parts.append("            // Scroll len dau")
+    js_parts.append("            setTimeout(function() {")
+    js_parts.append("                var mainEl = document.getElementById('mainContent');")
+    js_parts.append("                if (mainEl) {")
+    js_parts.append("                    var yOffset = mainEl.getBoundingClientRect().top")
+    js_parts.append("                                + window.scrollY - 100;")
+    js_parts.append("                    window.scrollTo({ top: yOffset, behavior: 'smooth' });")
+    js_parts.append("                }")
+    js_parts.append("            }, 100);")
+    js_parts.append("")
+    js_parts.append("            // VERIFY sau 400ms")
+    js_parts.append("            setTimeout(function() {")
+    js_parts.append("                try {")
+    js_parts.append("                    var info = (typeof getTierInfo === 'function')")
+    js_parts.append("                               ? getTierInfo() : {};")
+    js_parts.append("                    var rawLen = (typeof RAW_DATA !== 'undefined')")
+    js_parts.append("                                 ? RAW_DATA.length : 0;")
+    js_parts.append("                    var limLen = (typeof getLimitedData === 'function')")
+    js_parts.append("                                 ? getLimitedData().length : 0;")
+    js_parts.append("                    var cards = document.querySelectorAll('.card').length;")
+    js_parts.append("                    var lockBtn = document.querySelector('.load-more.locked');")
+    js_parts.append("                    console.log('[fix.py] VERIFY ' + dsId")
+    js_parts.append("                                + ': tier=' + info.tier")
+    js_parts.append("                                + ', RAW=' + rawLen")
+    js_parts.append("                                + ', limited=' + limLen")
+    js_parts.append("                                + ', cards=' + cards")
+    js_parts.append("                                + ', lock=' + (lockBtn ? 'YES' : 'NO'));")
+    js_parts.append("                } catch(err) {")
+    js_parts.append("                    console.warn('[fix.py] verify error:', err);")
+    js_parts.append("                }")
+    js_parts.append("            }, 400);")
+    js_parts.append("        }, true);")
+    js_parts.append("    }")
+    js_parts.append("")
 
-                try {
-                    var result = origGet.apply(this, arguments);
+    # ═══ PATCH C: markCurrentDatasetActive ═══
+    js_parts.append("    /* ------------------------------------------------------------")
+    js_parts.append("       PATCH C: markCurrentDatasetActive")
+    js_parts.append("       ------------------------------------------------------------ */")
+    js_parts.append("    function patchMarkActive() {")
+    js_parts.append("        if (window.__fixPyMarkPatched) return;")
+    js_parts.append("        var origMark = window.markCurrentDatasetActive")
+    js_parts.append("                    || (typeof markCurrentDatasetActive !== 'undefined'")
+    js_parts.append("                        ? markCurrentDatasetActive : null);")
+    js_parts.append("        if (typeof origMark !== 'function') return;")
+    js_parts.append("")
+    js_parts.append("        window.markCurrentDatasetActive = function() {")
+    js_parts.append("            origMark.apply(this, arguments);")
+    js_parts.append("            var cur = (typeof CURRENT_DATASET !== 'undefined')")
+    js_parts.append("                      ? CURRENT_DATASET : 'tonghop';")
+    js_parts.append("            document.querySelectorAll('.ds-btn[data-dataset]').forEach(function(b) {")
+    js_parts.append("                b.classList.toggle('active', b.dataset.dataset === cur);")
+    js_parts.append("            });")
+    js_parts.append("        };")
+    js_parts.append("        window.__fixPyMarkPatched = true;")
+    js_parts.append("    }")
+    js_parts.append("")
 
-                    if (result.length === 0
-                        && typeof RAW_DATA !== 'undefined'
-                        && RAW_DATA.length > 0) {
-                        console.warn('[fix.py] getLimitedData() rong cho tab '
-                                     + currentDs + ' - dung fallback');
-                        var info = (typeof getTierInfo === 'function')
-                                   ? getTierInfo() : {};
-                        var max = info.maxQuestions || 60;
-                        result = RAW_DATA.slice(0, max);
-                        console.log('[fix.py] Fallback: lay ' + result.length + ' cau dau');
-                    }
+    # ═══ INIT ═══
+    js_parts.append("    function bindAll() {")
+    js_parts.append("        patchGetLimitedData();")
+    js_parts.append("        NEW_IDS.forEach(bindTab);")
+    js_parts.append("        patchMarkActive();")
+    js_parts.append("    }")
+    js_parts.append("")
+    js_parts.append("    if (document.readyState === 'loading') {")
+    js_parts.append("        document.addEventListener('DOMContentLoaded', bindAll);")
+    js_parts.append("    } else {")
+    js_parts.append("        bindAll();")
+    js_parts.append("    }")
+    js_parts.append("")
+    js_parts.append("    var _timer = null;")
+    js_parts.append("    var observer = new MutationObserver(function() {")
+    js_parts.append("        clearTimeout(_timer);")
+    js_parts.append("        _timer = setTimeout(bindAll, 200);")
+    js_parts.append("    });")
+    js_parts.append("    if (document.body) {")
+    js_parts.append("        observer.observe(document.body, { childList: true, subtree: true });")
+    js_parts.append("    }")
+    js_parts.append("")
+    js_parts.append("    console.log('[fix.py] Da bind ' + NEW_IDS.length + ' tab:', NEW_IDS);")
+    js_parts.append("})();")
+    js_parts.append("</script>")
 
-                    return result;
-                } finally {
-                    window.__onboardingOverride = savedOverride;
-                }
-            }
-
-            return origGet.apply(this, arguments);
-        };
-
-        window.__fixPyLimitedPatched = true;
-        console.log('[fix.py] Da patch getLimitedData()');
-    }
-
-    /* ------------------------------------------------------------
-       PATCH 2: Bind click - CAPTURE PHASE
-       ------------------------------------------------------------ */
-    function bindTab(dsId) {
-        var btn = document.querySelector('.ds-btn[data-dataset="' + dsId + '"]');
-        if (!btn || btn.__fixPyBound) return;
-        btn.__fixPyBound = true;
-
-        btn.addEventListener('click', function(e) {
-            e.stopImmediatePropagation();
-            e.stopPropagation();
-            e.preventDefault();
-
-            console.log('[fix.py] click tab ' + dsId);
-
-            var sub = document.getElementById('dsSubWrap');
-            if (sub) sub.style.display = 'none';
-
-            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
-                b.classList.remove('active');
-            });
-            this.classList.add('active');
-
-            // ═══════════════════════════════════════════════════════
-            //  GOI switchDataset() GOC — DE CO TIER LOCK
-            //  (khong dung __switchRawData vi no bypass tier)
-            // ═══════════════════════════════════════════════════════
-            var switchFn = window.switchDataset
-                        || (typeof switchDataset !== 'undefined' ? switchDataset : null);
-
-            if (typeof switchFn === 'function') {
-                switchFn(dsId);
-                console.log('[fix.py] Da goi switchDataset("' + dsId + '")');
-            } else {
-                console.warn('[fix.py] Khong tim thay switchDataset - fallback');
-                if (typeof window.__switchRawData === 'function') {
-                    window.__switchRawData(dsId);
-                }
-                if (typeof state !== 'undefined' && state) {
-                    state.search = '';
-                    state.hsk = '';
-                    state.subject = '';
-                }
-                try {
-                    var searchInput = document.getElementById('searchInput');
-                    var hskFilter = document.getElementById('hskFilter');
-                    var subjectFilter = document.getElementById('subjectFilter');
-                    if (searchInput) searchInput.value = '';
-                    if (hskFilter) hskFilter.value = '';
-                    if (subjectFilter) subjectFilter.value = '';
-                    var clearBtn = document.getElementById('clearSearchBtn');
-                    if (clearBtn) clearBtn.classList.remove('show');
-                } catch(err) {}
-
-                if (typeof buildFilters === 'function') buildFilters();
-                if (typeof applyFilter === 'function') applyFilter();
-                if (typeof updateResultCount === 'function') updateResultCount();
-            }
-
-            // Xoa onboarding override + banner
-            window.__onboardingOverride = null;
-            var obBanner = document.getElementById('onboardingActiveBanner');
-            if (obBanner) obBanner.remove();
-
-            // Scroll len dau
-            setTimeout(function() {
-                var mainEl = document.getElementById('mainContent');
-                if (mainEl) {
-                    var yOffset = mainEl.getBoundingClientRect().top
-                                + window.scrollY - 100;
-                    window.scrollTo({ top: yOffset, behavior: 'smooth' });
-                }
-            }, 100);
-
-            // VERIFY sau 400ms
-            setTimeout(function() {
-                try {
-                    var info = (typeof getTierInfo === 'function')
-                               ? getTierInfo() : {};
-                    var rawLen = (typeof RAW_DATA !== 'undefined')
-                                 ? RAW_DATA.length : 0;
-                    var limLen = (typeof getLimitedData === 'function')
-                                 ? getLimitedData().length : 0;
-                    var cards = document.querySelectorAll('.card').length;
-                    var lockBtn = document.querySelector('.load-more.locked');
-                    console.log('[fix.py] VERIFY ' + dsId
-                                + ': tier=' + info.tier
-                                + ', RAW=' + rawLen
-                                + ', limited=' + limLen
-                                + ', cards=' + cards
-                                + ', lock=' + (lockBtn ? 'YES' : 'NO'));
-                } catch(err) {
-                    console.warn('[fix.py] verify error:', err);
-                }
-            }, 400);
-        }, true);
-    }
-    /* ------------------------------------------------------------
-       PATCH 3: markCurrentDatasetActive
-       ------------------------------------------------------------ */
-    function patchMarkActive() {
-        if (window.__fixPyMarkPatched) return;
-        var origMark = window.markCurrentDatasetActive
-                    || (typeof markCurrentDatasetActive !== 'undefined'
-                        ? markCurrentDatasetActive : null);
-        if (typeof origMark !== 'function') return;
-
-        window.markCurrentDatasetActive = function() {
-            origMark.apply(this, arguments);
-            var cur = (typeof CURRENT_DATASET !== 'undefined')
-                      ? CURRENT_DATASET : 'tonghop';
-            document.querySelectorAll('.ds-btn[data-dataset]').forEach(function(b) {
-                b.classList.toggle('active', b.dataset.dataset === cur);
-            });
-        };
-        window.__fixPyMarkPatched = true;
-    }
-
-    function bindAll() {
-        patchGetLimitedData();
-        NEW_IDS.forEach(bindTab);
-        patchMarkActive();
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', bindAll);
-    } else {
-        bindAll();
-    }
-
-    var _timer = null;
-    var observer = new MutationObserver(function() {
-        clearTimeout(_timer);
-        _timer = setTimeout(bindAll, 200);
-    });
-    if (document.body) {
-        observer.observe(document.body, { childList: true, subtree: true });
-    }
-
-    console.log('[fix.py] Da bind ' + NEW_IDS.length + ' tab:', NEW_IDS);
-})();
-</script>
-"""
+    js = chr(10).join(js_parts)
 
     pat_body = re.compile(r'(\s*)(</body>)', re.IGNORECASE)
     html, n = pat_body.subn(r'\1' + js + r'\1\2', html, count=1)
     if n == 0:
         print("[X] Khong tim thay </body>")
         sys.exit(1)
-    print("   [OK] Da inject JS")
+    print("   [OK] Da inject JS voi tier lock")
 
     # =============================================================
     #  GHI FILE
@@ -760,8 +767,7 @@ def main():
     for ds in new_datasets:
         print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
     print("[fix.py] Layout: PC auto-fit - Mobile 2 cot")
-    print("[fix.py] Tier: Demo/Trial/Expired khoa 1 phan")
-    print("[fix.py] Chan popup 'Chuyen nganh' cho tab moi")
+    print("[fix.py] TICH HOP TIER LOCK: Demo=60, Trial=N, Active=full")
     print("=" * 62)
 
 
