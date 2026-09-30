@@ -8657,7 +8657,7 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
         
         <button class="ds-btn ds-btn-primary" data-dataset="1000-cau-giao-tiep">
             <i class="fas fa-comments"></i>
-            <span>1000 Câu giao tiếp</span>
+            <span>Câu giao tiếp · 1060 cau</span>
         </button>
     <button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">
             <i class="fas fa-industry"></i>
@@ -24810,7 +24810,6 @@ window.__switchRawData = function(datasetId) {
      2. Tab moi co onboarding + tier lock giong tab tonghop
      3. applyFilter() -> getLimitedData() -> cat cau theo tier
      4. Ho tro nut 'Doi' chu de (applyOnboardingSelection)
-     5. CHI 1 TAB ACTIVE tai mot thoi diem
    ================================================================
 */
 (function() {
@@ -24889,7 +24888,6 @@ window.__switchRawData = function(datasetId) {
             var sub = document.getElementById('dsSubWrap');
             if (sub) sub.style.display = 'none';
 
-            // ═══ Xoa active khoi TAT CA (ds-btn + ds-sub-btn) ═══
             document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
                 b.classList.remove('active');
             });
@@ -24934,6 +24932,9 @@ window.__switchRawData = function(datasetId) {
                 if (typeof buildFilters === 'function') buildFilters();
                 if (typeof applyFilter === 'function') applyFilter();
                 if (typeof updateResultCount === 'function') updateResultCount();
+                if (typeof markCurrentDatasetActive === 'function') {
+                    markCurrentDatasetActive();
+                }
 
                 // Ve lai banner chu de
                 if (savedTopics && savedTopics.length > 0
@@ -24950,12 +24951,6 @@ window.__switchRawData = function(datasetId) {
                         console.warn('[fix.py] applyOnboarding error:', e2);
                     }
                 }
-
-                // ═══ Đảm bảo CHỈ 1 TAB ACTIVE ═══
-                document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
-                    b.classList.remove('active');
-                });
-                this.classList.add('active');
 
                 console.log('[fix.py] applyFilter() done');
             } catch(err) {
@@ -24983,14 +24978,12 @@ window.__switchRawData = function(datasetId) {
                                  ? getLimitedData().length : 0;
                     var cards = document.querySelectorAll('.card').length;
                     var lockBtn = document.querySelector('.load-more.locked');
-                    var activeTabs = document.querySelectorAll('.ds-btn.active').length;
                     console.log('[fix.py] VERIFY ' + dsId
                                 + ': tier=' + info.tier
                                 + ', RAW=' + rawLen
                                 + ', limited=' + limLen
                                 + ', cards=' + cards
-                                + ', lock=' + (lockBtn ? 'YES' : 'NO')
-                                + ', activeTabs=' + activeTabs);
+                                + ', lock=' + (lockBtn ? 'YES' : 'NO'));
                 } catch(err) {
                     console.warn('[fix.py] verify error:', err);
                 }
@@ -24999,38 +24992,22 @@ window.__switchRawData = function(datasetId) {
     }
 
     /* ------------------------------------------------------------
-       PATCH C: markCurrentDatasetActive - CHI 1 TAB ACTIVE
+       PATCH C: markCurrentDatasetActive
        ------------------------------------------------------------ */
     function patchMarkActive() {
         if (window.__fixPyMarkPatched) return;
+        var origMark = window.markCurrentDatasetActive
+                    || (typeof markCurrentDatasetActive !== 'undefined'
+                        ? markCurrentDatasetActive : null);
+        if (typeof origMark !== 'function') return;
 
-        // Override HOAN TOAN - khong goi origMark (tranh bug active 2 tab)
         window.markCurrentDatasetActive = function() {
+            origMark.apply(this, arguments);
             var cur = (typeof CURRENT_DATASET !== 'undefined')
                       ? CURRENT_DATASET : 'tonghop';
-
-            // Xoa active khoi TAT CA ds-btn va ds-sub-btn
-            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
-                b.classList.remove('active');
+            document.querySelectorAll('.ds-btn[data-dataset]').forEach(function(b) {
+                b.classList.toggle('active', b.dataset.dataset === cur);
             });
-
-            // Chi active tab khop CURRENT_DATASET
-            if (cur === 'tonghop') {
-                var tonghopBtn = document.querySelector('.ds-btn[data-dataset="tonghop"]');
-                if (tonghopBtn) tonghopBtn.classList.add('active');
-            } else {
-                // Tab moi (khong phai chuyen nganh)
-                var newBtn = document.querySelector('.ds-btn[data-dataset="' + cur + '"]');
-                if (newBtn) {
-                    newBtn.classList.add('active');
-                } else {
-                    // Fallback: co the la chuyen nganh that
-                    var subBtn = document.querySelector('.ds-sub-btn[data-dataset="' + cur + '"]');
-                    if (subBtn) subBtn.classList.add('active');
-                    var cnBtn = document.querySelector('.ds-btn[data-dataset-group="chuyen-nganh"]');
-                    if (cnBtn && subBtn) cnBtn.classList.add('active');
-                }
-            }
         };
         window.__fixPyMarkPatched = true;
     }
