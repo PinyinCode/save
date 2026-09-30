@@ -24841,15 +24841,13 @@ window.__switchRawData = function(datasetId) {
 
 <script>
 /* ================================================================
-   FIX.PY OVERRIDE - Bind tab moi + TICH HOP TIER LOCK
+   FIX.PY OVERRIDE - Bind tab moi + TIER LOCK + ONBOARDING
    ================================================================
    Quy tac:
      1. Clone nut de XOA event listener cu cua convert.py
-        (tranh popup 'Chuyen nganh' khi click tab moi)
-     2. Doi RAW_DATA + reset state + goi applyFilter()
-     3. applyFilter() goi getLimitedData() -> CAT THEO TIER
-     4. KHONG goi switchDataset() (no co tier check -> popup)
-     5. KHONG override APP_TIER / APP_LIMITS
+     2. Tab moi co onboarding + tier lock giong tab tonghop
+     3. applyFilter() -> getLimitedData() -> cat cau theo tier
+     4. Ho tro nut 'Doi' chu de (applyOnboardingSelection)
    ================================================================
 */
 (function() {
@@ -24857,7 +24855,7 @@ window.__switchRawData = function(datasetId) {
     var NEW_IDS = ["1000-cau-giao-tiep", "input"];
 
     /* ------------------------------------------------------------
-       PATCH A: getLimitedData - bo onboarding override cho tab moi
+       PATCH A: getLimitedData - ho tro onboarding cho tab moi
        ------------------------------------------------------------ */
     function patchGetLimitedData() {
         if (window.__fixPyLimitedPatched) return;
@@ -24869,33 +24867,44 @@ window.__switchRawData = function(datasetId) {
             var currentDs = (typeof CURRENT_DATASET !== 'undefined')
                             ? CURRENT_DATASET : 'tonghop';
 
+            // Tab tonghop: goi ham goc
             if (currentDs === 'tonghop') {
                 return origGet.apply(this, arguments);
             }
 
-            var savedOverride = window.__onboardingOverride;
-            window.__onboardingOverride = null;
-            try {
-                var result = origGet.apply(this, arguments);
-                if (result.length === 0
-                    && typeof RAW_DATA !== 'undefined'
-                    && RAW_DATA.length > 0) {
-                    var info = (typeof getTierInfo === 'function')
-                               ? getTierInfo() : {};
-                    var max = info.maxQuestions || 60;
-                    result = RAW_DATA.slice(0, max);
-                }
-                return result;
-            } finally {
-                window.__onboardingOverride = savedOverride;
+            // Tab moi: ap dung override + tier
+            var info = (typeof getTierInfo === 'function')
+                       ? getTierInfo() : {};
+            if (info.tier === 'active') {
+                return RAW_DATA;
             }
+
+            // Onboarding override: loc theo RAW_DATA hien tai
+            var override = window.__onboardingOverride;
+            if (override && Array.isArray(override) && override.length > 0
+                && typeof state !== 'undefined' && state
+                && !state.search && !state.hsk && !state.subject) {
+                var currentStts = {};
+                RAW_DATA.forEach(function(r) { currentStts[r.stt] = true; });
+                var filtered = override.filter(function(r) {
+                    return currentStts[r.stt];
+                });
+                if (filtered.length > 0) {
+                    var max = info.maxQuestions || 60;
+                    return filtered.slice(0, max);
+                }
+            }
+
+            // Fallback: N cau dau
+            var max2 = info.maxQuestions || 60;
+            return RAW_DATA.slice(0, max2);
         };
 
         window.__fixPyLimitedPatched = true;
     }
 
     /* ------------------------------------------------------------
-       PATCH B: bindTab - CLONE nut de xoa listener cu
+       PATCH B: bindTab - CLONE nut + onboarding cho tab moi
        ------------------------------------------------------------ */
     function bindTab(dsId) {
         var btn = document.querySelector('.ds-btn[data-dataset="' + dsId + '"]');
@@ -24907,7 +24916,6 @@ window.__switchRawData = function(datasetId) {
         btn.parentNode.replaceChild(cloned, btn);
         cloned.__fixPyBound = true;
 
-        // Gan listener MOI
         cloned.addEventListener('click', function(e) {
             e.stopImmediatePropagation();
             e.stopPropagation();
@@ -24929,7 +24937,7 @@ window.__switchRawData = function(datasetId) {
                 console.log('[fix.py] __switchRawData("' + dsId + '")');
             }
 
-            // 2. Reset state
+            // 2. Reset filter state
             if (typeof state !== 'undefined' && state) {
                 state.search = '';
                 state.hsk = '';
@@ -24946,12 +24954,19 @@ window.__switchRawData = function(datasetId) {
                 if (cb) cb.classList.remove('show');
             } catch(err) {}
 
-            // 3. Xoa override + banner
-            window.__onboardingOverride = null;
-            var obBanner = document.getElementById('onboardingActiveBanner');
-            if (obBanner) obBanner.remove();
+            // 3. Ap dung onboarding override cho tab moi (neu co)
+            //    Khong xoa override - de user giu chu de da chon
+            var savedTopics = null;
+            if (typeof loadOnboardingSelection === 'function') {
+                try {
+                    var saved = loadOnboardingSelection();
+                    if (saved && saved.topics && saved.topics.length > 0) {
+                        savedTopics = saved.topics;
+                    }
+                } catch(e) {}
+            }
 
-            // 4. Re-render (CO TIER LOCK)
+            // 4. Re-render (tier lock + onboarding)
             try {
                 if (typeof buildFilters === 'function') buildFilters();
                 if (typeof applyFilter === 'function') applyFilter();
@@ -24959,6 +24974,23 @@ window.__switchRawData = function(datasetId) {
                 if (typeof markCurrentDatasetActive === 'function') {
                     markCurrentDatasetActive();
                 }
+
+                // Ve lai banner chu de
+                if (savedTopics && savedTopics.length > 0
+                    && typeof applyOnboardingSelection === 'function') {
+                    try {
+                        var cfg = (typeof getOnboardingConfig === 'function')
+                                  ? getOnboardingConfig() : null;
+                        if (cfg) {
+                            var saved2 = loadOnboardingSelection();
+                            window.__onboardingAutoPicked = saved2 ? !!saved2.auto_picked : false;
+                            applyOnboardingSelection(savedTopics, false);
+                        }
+                    } catch(e2) {
+                        console.warn('[fix.py] applyOnboarding error:', e2);
+                    }
+                }
+
                 console.log('[fix.py] applyFilter() done');
             } catch(err) {
                 console.warn('[fix.py] re-render error:', err);
@@ -25019,8 +25051,135 @@ window.__switchRawData = function(datasetId) {
         window.__fixPyMarkPatched = true;
     }
 
+    /* ------------------------------------------------------------
+       PATCH D: applyOnboardingSelection - ho tro tab moi
+       ------------------------------------------------------------ */
+    function patchApplyOnboarding() {
+        if (window.__fixPyApplyOnbPatched) return;
+        var origApply = window.applyOnboardingSelection
+                      || (typeof applyOnboardingSelection !== 'undefined'
+                          ? applyOnboardingSelection : null);
+        if (typeof origApply !== 'function') return;
+
+        window.applyOnboardingSelection = function(topics, scrollTop) {
+            var currentDs = (typeof CURRENT_DATASET !== 'undefined')
+                            ? CURRENT_DATASET : 'tonghop';
+
+            // Tab tonghop: goi ham goc
+            if (currentDs === 'tonghop') {
+                return origApply.apply(this, arguments);
+            }
+
+            // Tab moi: tu tinh override theo RAW_DATA hien tai
+            var cfg = (typeof getOnboardingConfig === 'function')
+                      ? getOnboardingConfig() : null;
+            if (!cfg) return;
+
+            var maxQ = cfg.max_questions;
+            var isUnlimitedQ = (maxQ === -1 || maxQ === Infinity);
+
+            var allowedHsk;
+            if (cfg.hsk_allowed && Array.isArray(cfg.hsk_allowed) && cfg.hsk_allowed.length > 0) {
+                allowedHsk = cfg.hsk_allowed.map(function(n) { return 'HSK' + n; });
+            } else {
+                allowedHsk = (typeof getAllowedHskList === 'function')
+                             ? getAllowedHskList()
+                             : ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
+            }
+
+            var pool = RAW_DATA.filter(function(r) {
+                if (allowedHsk.indexOf(r.hsk) === -1) return false;
+                var s = (r.subject || '').trim();
+                return topics.indexOf(s) !== -1;
+            });
+
+            pool.sort(function(a, b) {
+                return (parseInt(a.stt) || 0) - (parseInt(b.stt) || 0);
+            });
+
+            var final = [];
+            if (isUnlimitedQ) {
+                final = pool.slice();
+            } else {
+                var maxPerTopic = (typeof getMaxPerTopic === 'function')
+                                 ? getMaxPerTopic(maxQ, RAW_DATA)
+                                 : Math.max(1, Math.ceil(maxQ / Math.max(1, topics.length)));
+                var topicCount = {};
+                var perHsk = Math.ceil(maxQ / allowedHsk.length);
+                var hskCount = {};
+                allowedHsk.forEach(function(h) { hskCount[h] = 0; });
+
+                for (var i = 0; i < pool.length && final.length < maxQ; i++) {
+                    var r = pool[i];
+                    var s = (r.subject || '').trim() || '__no_subject__';
+                    if ((topicCount[s] || 0) >= maxPerTopic) continue;
+                    if (r.hsk && hskCount[r.hsk] !== undefined && hskCount[r.hsk] >= perHsk) continue;
+                    final.push(r);
+                    topicCount[s] = (topicCount[s] || 0) + 1;
+                    if (r.hsk && hskCount[r.hsk] !== undefined) hskCount[r.hsk]++;
+                }
+
+                if (final.length < maxQ) {
+                    var usedIds = {};
+                    final.forEach(function(r) { usedIds[r.stt] = true; });
+                    for (var p = 0; p < pool.length && final.length < maxQ; p++) {
+                        var rp = pool[p];
+                        if (usedIds[rp.stt]) continue;
+                        var sp = (rp.subject || '').trim() || '__no_subject__';
+                        if ((topicCount[sp] || 0) >= maxPerTopic) continue;
+                        final.push(rp);
+                        usedIds[rp.stt] = true;
+                        topicCount[sp] = (topicCount[sp] || 0) + 1;
+                    }
+                }
+                if (final.length > maxQ) final = final.slice(0, maxQ);
+            }
+
+            final.sort(function(a, b) {
+                return (parseInt(a.stt) || 0) - (parseInt(b.stt) || 0);
+            });
+
+            window.__onboardingOverride = final;
+
+            // Reset filter + render
+            if (typeof state !== 'undefined' && state) {
+                state.search = '';
+                state.hsk = '';
+                state.subject = '';
+            }
+            try {
+                var si = document.getElementById('searchInput');
+                if (si) si.value = '';
+                var cb = document.getElementById('clearSearchBtn');
+                if (cb) cb.classList.remove('show');
+            } catch(e) {}
+
+            if (typeof applyFilter === 'function') applyFilter();
+            if (typeof updateResultCount === 'function') updateResultCount();
+
+            // Ve lai banner chu de
+            if (typeof showOnboardingActiveBanner === 'function') {
+                showOnboardingActiveBanner(topics, final.length);
+            }
+
+            if (scrollTop) {
+                setTimeout(function() {
+                    var mainEl = document.getElementById('mainContent');
+                    if (mainEl) {
+                        var yOffset = mainEl.getBoundingClientRect().top
+                                    + window.scrollY - 100;
+                        window.scrollTo({ top: yOffset, behavior: 'smooth' });
+                    }
+                }, 200);
+            }
+        };
+
+        window.__fixPyApplyOnbPatched = true;
+    }
+
     function bindAll() {
         patchGetLimitedData();
+        patchApplyOnboarding();
         NEW_IDS.forEach(bindTab);
         patchMarkActive();
     }
