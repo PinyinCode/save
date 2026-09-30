@@ -4,16 +4,14 @@ fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
 
 ĐẶC ĐIỂM:
   - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/ (TRỪ input.xlsx)
-  - Tên tab = tên file (normalize NFC — hiển thị đúng dấu tiếng Việt)
-  - Label = tên file (bỏ số đầu) + số câu thực tế
+  - Tên tab = TÊN FILE (normalize NFC — hiển thị đúng dấu tiếng Việt)
+  - Label tab = CHỈ tên file, KHÔNG thêm số câu
   - Logic đọc Excel GIỐNG data_reader.py:
       openpyxl, cột VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
       Data bắt đầu từ dòng 2, tự động chuyển số Ả Rập → Hán (cn2an)
-  - TIER LOCK + ONBOARDING giống tab tổng hợp:
-      + Demo: 60-80 câu đầu (theo chủ đề đã chọn)
-      + Trial: 200-250 câu
-      + Active/Admin: full
+  - TIER LOCK + ONBOARDING giống tab tổng hợp
   - Clone nút để XÓA event listener cũ của convert.py → không còn popup
+  - CHỈ 1 TAB ACTIVE tại một thời điểm
   - KHÔNG can thiệp convert.py, ui_template.py, config.json
 
 Cách chạy:
@@ -163,6 +161,7 @@ def _slugify(filename):
 
 
 def _display_name(filename):
+    """Lay ten file lam ten tab. KHONG bo so dau."""
     name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
     name = unicodedata.normalize("NFC", name)
     if name.islower() or name.isupper():
@@ -376,6 +375,7 @@ def build_js_override(ids_js):
     add("     2. Tab moi co onboarding + tier lock giong tab tonghop")
     add("     3. applyFilter() -> getLimitedData() -> cat cau theo tier")
     add("     4. Ho tro nut 'Doi' chu de (applyOnboardingSelection)")
+    add("     5. CHI 1 TAB ACTIVE tai mot thoi diem")
     add("   ================================================================")
     add("*/")
     add("(function() {")
@@ -458,6 +458,7 @@ def build_js_override(ids_js):
     add("            var sub = document.getElementById('dsSubWrap');")
     add("            if (sub) sub.style.display = 'none';")
     add("")
+    add("            // ═══ Xoa active khoi TAT CA (ds-btn + ds-sub-btn) ═══")
     add("            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
     add("                b.classList.remove('active');")
     add("            });")
@@ -502,9 +503,6 @@ def build_js_override(ids_js):
     add("                if (typeof buildFilters === 'function') buildFilters();")
     add("                if (typeof applyFilter === 'function') applyFilter();")
     add("                if (typeof updateResultCount === 'function') updateResultCount();")
-    add("                if (typeof markCurrentDatasetActive === 'function') {")
-    add("                    markCurrentDatasetActive();")
-    add("                }")
     add("")
     add("                // Ve lai banner chu de")
     add("                if (savedTopics && savedTopics.length > 0")
@@ -521,6 +519,12 @@ def build_js_override(ids_js):
     add("                        console.warn('[fix.py] applyOnboarding error:', e2);")
     add("                    }")
     add("                }")
+    add("")
+    add("                // ═══ Đảm bảo CHỈ 1 TAB ACTIVE ═══")
+    add("                document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
+    add("                    b.classList.remove('active');")
+    add("                });")
+    add("                this.classList.add('active');")
     add("")
     add("                console.log('[fix.py] applyFilter() done');")
     add("            } catch(err) {")
@@ -548,12 +552,14 @@ def build_js_override(ids_js):
     add("                                 ? getLimitedData().length : 0;")
     add("                    var cards = document.querySelectorAll('.card').length;")
     add("                    var lockBtn = document.querySelector('.load-more.locked');")
+    add("                    var activeTabs = document.querySelectorAll('.ds-btn.active').length;")
     add("                    console.log('[fix.py] VERIFY ' + dsId")
     add("                                + ': tier=' + info.tier")
     add("                                + ', RAW=' + rawLen")
     add("                                + ', limited=' + limLen")
     add("                                + ', cards=' + cards")
-    add("                                + ', lock=' + (lockBtn ? 'YES' : 'NO'));")
+    add("                                + ', lock=' + (lockBtn ? 'YES' : 'NO')")
+    add("                                + ', activeTabs=' + activeTabs);")
     add("                } catch(err) {")
     add("                    console.warn('[fix.py] verify error:', err);")
     add("                }")
@@ -562,24 +568,40 @@ def build_js_override(ids_js):
     add("    }")
     add("")
 
-    # ================= PATCH C: markCurrentDatasetActive =================
+    # ================= PATCH C: markCurrentDatasetActive (CHỈ 1 TAB ACTIVE) =================
     add("    /* ------------------------------------------------------------")
-    add("       PATCH C: markCurrentDatasetActive")
+    add("       PATCH C: markCurrentDatasetActive - CHI 1 TAB ACTIVE")
     add("       ------------------------------------------------------------ */")
     add("    function patchMarkActive() {")
     add("        if (window.__fixPyMarkPatched) return;")
-    add("        var origMark = window.markCurrentDatasetActive")
-    add("                    || (typeof markCurrentDatasetActive !== 'undefined'")
-    add("                        ? markCurrentDatasetActive : null);")
-    add("        if (typeof origMark !== 'function') return;")
     add("")
+    add("        // Override HOAN TOAN - khong goi origMark (tranh bug active 2 tab)")
     add("        window.markCurrentDatasetActive = function() {")
-    add("            origMark.apply(this, arguments);")
     add("            var cur = (typeof CURRENT_DATASET !== 'undefined')")
     add("                      ? CURRENT_DATASET : 'tonghop';")
-    add("            document.querySelectorAll('.ds-btn[data-dataset]').forEach(function(b) {")
-    add("                b.classList.toggle('active', b.dataset.dataset === cur);")
+    add("")
+    add("            // Xoa active khoi TAT CA ds-btn va ds-sub-btn")
+    add("            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
+    add("                b.classList.remove('active');")
     add("            });")
+    add("")
+    add("            // Chi active tab khop CURRENT_DATASET")
+    add("            if (cur === 'tonghop') {")
+    add("                var tonghopBtn = document.querySelector('.ds-btn[data-dataset=\"tonghop\"]');")
+    add("                if (tonghopBtn) tonghopBtn.classList.add('active');")
+    add("            } else {")
+    add("                // Tab moi (khong phai chuyen nganh)")
+    add("                var newBtn = document.querySelector('.ds-btn[data-dataset=\"' + cur + '\"]');")
+    add("                if (newBtn) {")
+    add("                    newBtn.classList.add('active');")
+    add("                } else {")
+    add("                    // Fallback: co the la chuyen nganh that")
+    add("                    var subBtn = document.querySelector('.ds-sub-btn[data-dataset=\"' + cur + '\"]');")
+    add("                    if (subBtn) subBtn.classList.add('active');")
+    add("                    var cnBtn = document.querySelector('.ds-btn[data-dataset-group=\"chuyen-nganh\"]');")
+    add("                    if (cnBtn && subBtn) cnBtn.classList.add('active');")
+    add("                }")
+    add("            }")
     add("        };")
     add("        window.__fixPyMarkPatched = true;")
     add("    }")
@@ -804,15 +826,13 @@ def main():
         sys.exit(1)
     print("   [OK] Da chen " + str(len(new_datasets)) + " entry")
 
-    # PATCH 2: Buttons
+    # PATCH 2: Buttons — CHỈ DÙNG TÊN FILE, KHÔNG THÊM SỐ CÂU
     print("")
     print("[PATCH 2] Them button tabs...")
     new_btns = ""
     for ds in new_datasets:
-        clean_name = re.sub(r'^\d+\s+', '', ds["name"]).strip()
-        if not clean_name:
-            clean_name = ds["name"]
-        label = clean_name + " · " + str(ds["count"]) + " cau"
+        # ═══ Label = CHỈ tên file, KHÔNG thêm số câu ═══
+        label = ds["name"]
         new_btns += (
             '\n        <button class="ds-btn ds-btn-primary" '
             'data-dataset="' + ds["id"] + '">\n'
@@ -929,8 +949,10 @@ def main():
     print("[fix.py] Da them " + str(len(new_datasets)) + " tab:")
     for ds in new_datasets:
         print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
+    print("[fix.py] Label tab: CHI dung ten file (khong them so cau)")
     print("[fix.py] Layout: PC auto-fit - Mobile 2 cot")
     print("[fix.py] TICH HOP: Tier lock + Onboarding giong tab tonghop")
+    print("[fix.py] CHI 1 TAB ACTIVE tai mot thoi diem")
     print("=" * 62)
 
 
