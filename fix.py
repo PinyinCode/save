@@ -230,22 +230,22 @@ def _read_excel_rows(filepath):
     """
     real_path = _find_file_safe(filepath)
     if not real_path:
-        print(f"      ❌ Không tìm thấy file: {os.path.basename(filepath)}")
+        print("      ❌ Không tìm thấy file: " + os.path.basename(filepath))
         return []
 
     try:
         wb = openpyxl.load_workbook(real_path, data_only=True)
     except Exception as e:
-        print(f"      ❌ Không load được: {type(e).__name__}: {e}")
+        print("      ❌ Không load được: " + type(e).__name__ + ": " + str(e))
         return []
 
     try:
         ws = wb.worksheets[0]
     except Exception as e:
-        print(f"      ❌ Không có sheet: {e}")
+        print("      ❌ Không có sheet: " + str(e))
         return []
 
-    print(f"      📊 {ws.title} - {ws.max_row} dòng, {ws.max_column} cột")
+    print("      📊 " + ws.title + " - " + str(ws.max_row) + " dòng, " + str(ws.max_column) + " cột")
 
     COL_STT     = 0
     COL_HSK     = 1
@@ -258,26 +258,20 @@ def _read_excel_rows(filepath):
 
     rows = []
     converted_count = 0
-    total_rows = 0
     skipped_empty = 0
 
     for row in ws.iter_rows(min_row=DATA_START, values_only=True):
-        total_rows += 1
-
         if not row or len(row) <= max(COL_VI, COL_ZH):
             skipped_empty += 1
             continue
 
-        stt     = row[COL_STT]     if COL_STT     < len(row) and row[COL_STT]     is not None else ""
-        hsk     = _clean(row[COL_HSK])     if COL_HSK     < len(row) else ""
-        topic   = _clean(row[COL_TOPIC])   if COL_TOPIC   < len(row) else ""
+        stt     = row[COL_STT] if COL_STT < len(row) and row[COL_STT] is not None else ""
+        hsk     = _clean(row[COL_HSK]) if COL_HSK < len(row) else ""
+        topic   = _clean(row[COL_TOPIC]) if COL_TOPIC < len(row) else ""
         subject = _clean(row[COL_SUBJECT]) if COL_SUBJECT < len(row) else ""
-        vi      = _clean(row[COL_VI])      if COL_VI      < len(row) else ""
-        zh      = _clean(row[COL_ZH])      if COL_ZH      < len(row) else ""
-        pinyin
-
-
-  = _clean(row[COL_PINYIN])  if COL_PINYIN  < len(row) else ""
+        vi      = _clean(row[COL_VI]) if COL_VI < len(row) else ""
+        zh      = _clean(row[COL_ZH]) if COL_ZH < len(row) else ""
+clean(row[COL_PINYIN]) if COL_PINYIN < len(row) else ""
 
         if not vi and not zh:
             skipped_empty += 1
@@ -298,12 +292,11 @@ def _read_excel_rows(filepath):
             "pinyin":  pinyin,
         })
 
-    print(f"      ✅ {len(rows)} câu (bỏ qua {skipped_empty} dòng rỗng)")
+    print("      ✅ " + str(len(rows)) + " câu (bỏ qua " + str(skipped_empty) + " dòng rỗng)")
     if converted_count > 0:
-        print(f"      🔄 Chuyển số Ả Rập → Hán: {converted_count} câu")
+        print("      🔄 Chuyển số Ả Rập → Hán: " + str(converted_count) + " câu")
 
     return rows
-#  SCAN data/
 # ═══════════════════════════════════════════════════════════════════
 def scan_data_dir():
     """Quét data/ → list[dict] dataset entries."""
