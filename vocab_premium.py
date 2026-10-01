@@ -670,7 +670,7 @@ def build_vocab_modal_html():
             <div class="vocab-upgrade-features">
                 <div class="vocab-upgrade-feature">
                     <i class="fas fa-book"></i>
-                    <span>Toàn bộ từ vựng HSK 1–9 (~5000 từ)</span>
+                    <span>Toàn bộ từ vựng HSK 1–9 (~11700 từ)</span>
                 </div>
                 <div class="vocab-upgrade-feature">
                     <i class="fas fa-lightbulb"></i>
@@ -700,13 +700,7 @@ def build_vocab_modal_html():
 #  JS OVERRIDE
 # ═══════════════════════════════════════════════════════════════
 def build_vocab_js_override(vocab_id="tu-vung"):
-    """
-    JS module cho tab Từ vựng Premium.
-
-    FIX:
-    - Set __fixPyBound = true để fix.py KHÔNG clone nút
-    - Tự xử lý click hoàn toàn (không phụ thuộc fix.py)
-    """
+    """JS module cho tab Từ vựng Premium."""
     js = r"""
 /* VOCAB PREMIUM MODULE */
 (function() {
@@ -715,7 +709,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     var VOCAB_ID = '__VOCAB_ID__';
     var _done = new WeakSet();
 
-    /* ═══ PHAN QUYEN ═══ */
     function canAccessVocab() {
         if (typeof currentUser === 'undefined' || !currentUser) return false;
         if (currentUser.role === 'admin') return true;
@@ -749,7 +742,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         return null;
     }
 
-    /* ═══ CAP NHAT TRANG THAI KHOA ═══ */
     function updateTabLockState() {
         var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
         if (!btn) return;
@@ -769,7 +761,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         }
     }
 
-    /* ═══ MODAL NANG CAP ═══ */
     function openUpgradeModal() {
         var modal = document.getElementById('vocabUpgradeModal');
         if (!modal) return;
@@ -871,7 +862,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         }
     });
 
-    /* ═══ PINYIN HIGHLIGHT ═══ */
     function highlightPinyin(text) {
         if (!text) return '';
         return text.replace(
@@ -880,7 +870,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         );
     }
 
-    /* ═══ BLOCK BO THU ═══ */
     function buildRadicalBlock(radical) {
         if (!radical) return '';
         var zh = _esc(radical.zh || '');
@@ -896,7 +885,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         }
 
         var html = '<div class="card-radical">';
-        html += '<div class="card-radical-label">🖌️ BỘ THỦ</div>';
+        html += '<div class="card-radical-label">BỘ THỦ</div>';
         html += '<div class="card-radical-body">';
         if (zh) html += '<div class="card-radical-box">' + zh + '</div>';
         html += '<div class="card-radical-info">';
@@ -906,7 +895,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         return html;
     }
 
-    /* ═══ BLOCK MEO NHO ═══ */
     function buildMnemonicBlock(text) {
         if (!text || !text.trim()) return '';
         var safe = _esc(text);
@@ -915,12 +903,11 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         safe = safe.replace(/→/g, '<span class="arrow">→</span>');
         safe = safe.replace(/\(([^)]+)\)/g, '(<span class="hint">$1</span>)');
         return '<div class="card-mnemonic">'
-            + '<div class="card-mnemonic-label">💡 MẸO NHỚ</div>'
+            + '<div class="card-mnemonic-label">MẸO NHỚ</div>'
             + '<div class="card-mnemonic-body">' + safe + '</div>'
             + '</div>';
     }
 
-    /* ═══ INJECT VAO CARD ═══ */
     function enhanceCards() {
         if (!_isVocabMode()) return;
         if (!canAccessVocab()) return;
@@ -961,7 +948,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         });
     }
 
-    /* ═══ OBSERVER ═══ */
     function setupObserver() {
         var wrapper = document.getElementById('mobileWrapper');
         if (!wrapper) { setTimeout(setupObserver, 400); return; }
@@ -974,12 +960,10 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         enhanceCards();
     }
 
-    /* ═══ BIND TAB - FIX CHIN.styleH ═══ */
-    function bindTabIf.displayNeeded() {
-        var btn = document.querySelector =('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
+    function bindTabIfNeeded() {
+        var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
         if (!btn || btn.__vocabPremiumBound) return;
 
-        /* ⭐ QUAN TRONG: Set flag de fix.py KHONG clone nut nay */
         btn.__fixPyBound = true;
         btn.__vocabPremiumBound = true;
 
@@ -988,18 +972,16 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             e.stopPropagation();
             e.preventDefault();
 
-            /* KIEM TRA QUYEN */
             if (!canAccessVocab()) {
                 console.log('[vocab] khong co quyen - mo modal');
                 openUpgradeModal();
                 return;
             }
 
-            /* CO QUYEN - SWITCH DATASET */
             console.log('[vocab] co quyen - switch to tu-vung');
 
             var sub = document.getElementById('dsSubWrap');
-            if (sub) sub 'none';
+            if (sub) sub.style.display = 'none';
 
             document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
                 b.classList.remove('active');
@@ -1054,7 +1036,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         console.log('[vocab] bound tab click');
     }
 
-    /* ═══ WATCH TIER ═══ */
     var _lastTier = null;
     function watchTier() {
         var key = '';
@@ -1073,7 +1054,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         }
     }
 
-    /* ═══ INIT ═══ */
     function init() {
         bindTabIfNeeded();
         updateTabLockState();
