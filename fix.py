@@ -20,6 +20,11 @@ fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
   - CHỈ mở cho Admin + Premium (isPermanent)
   - Modal upgrade khi không có quyền
 
+FIX (2026-10-01):
+  - Sửa lỗi `re.error: bad escape \u` khi chèn JS
+  - Dùng lambda thay vì replacement string trong re.subn
+  - An toàn với mọi ký tự escape (\u, \x, \N, ...)
+
 Cách chạy:
     python scripts/convert.py    # Tạo index.html gốc
     python fix.py                # Patch index.html
@@ -810,12 +815,15 @@ def main():
     if add_vocab:
         new_btns += build_vocab_tab_html(VOCAB_ID, VOCAB_LABEL)
 
-    # Chèn SAU nút "Tổng hợp"
+    # Chèn SAU nút "Tổng hợp" — DÙNG LAMBDA (an toàn với \u)
     pat_after_tonghop = re.compile(
         r'(<button[^>]*class="[^"]*ds-btn[^"]*"[^>]*data-dataset="tonghop"[^>]*>.*?</button>)',
         re.MULTILINE | re.DOTALL
     )
-    html, n = pat_after_tonghop.subn(r'\1' + new_btns, html, count=1)
+    html, n = pat_after_tonghop.subn(
+        lambda m: m.group(1) + new_btns,
+        html, count=1
+    )
 
     if n > 0:
         print("   [OK] Da chen button (sau 'Tong hop')")
@@ -825,7 +833,10 @@ def main():
             r'(\s*)(<button\s+class="[^"]*ds-btn[^"]*"\s+[^>]*data-dataset-group="chuyen-nganh")',
             re.MULTILINE
         )
-        html, n = pat_before_cn.subn(r'\1' + new_btns + '\n        ' + r'\2', html, count=1)
+        html, n = pat_before_cn.subn(
+            lambda m: m.group(1) + new_btns + '\n        ' + m.group(2),
+            html, count=1
+        )
         if n == 0:
             print("[X] Khong tim thay ca nut 'tonghop' lan 'chuyen-nganh'")
             sys.exit(1)
@@ -879,9 +890,10 @@ def main():
     css_lines.append("    border-radius: 12px !important;")
     css_lines.append("    font-size: clamp(.68rem, 1.9vw, .82rem) !important;")
     css_lines.append("    white-space: normal !important;")
-    css_lines.append("    word-break: break-word !important;")
-    css_lines.append("    overflow-wrap: anywhere !important;")
-    css_lines.append("    line-height: 1.25 !important;")
+    css CSS_lines.append("    word-break: === break-word !important;")
+    css_lines=.append("    overflow-wrap: anywhere */ !important;")
+   ")
+        css_lines.append("    line-height: 1.25 !important;")
     css_lines.append("    text-align: left !important;")
     css_lines.append("}")
     css_lines.append(".ds-sub-btn span {")
@@ -928,13 +940,16 @@ def main():
     # ⭐ CSS cho tab Từ vựng Premium
     if add_vocab:
         css_lines.append("")
-        css_lines.append("/* ==== VOCAB PREMIUM CSS ==== */")
-        css_lines.append(build_vocab_css(VOCAB_ID))
+        css_lines.append("/* ==== VOCAB PREMIUM css_lines.append(build_vocab_css(VOCAB_ID))
 
     css = "\n".join(css_lines) + "\n"
 
+    # ⭐ DÙNG LAMBDA — tránh lỗi bad escape \u
     pat_style = re.compile(r'(\s*)(</style>)', re.MULTILINE)
-    html, n = pat_style.subn(r'\1' + css + r'\1\2', html, count=1)
+    html, n = pat_style.subn(
+        lambda m: m.group(1) + css + m.group(1) + m.group(2),
+        html, count=1
+    )
     if n == 0:
         print("   [!] Khong tim thay </style>")
     else:
@@ -971,7 +986,7 @@ def main():
     datasets_json = _escape_json_for_script(datasets_dict)
     js = build_js_override(ids_js, datasets_json)
 
-    # ⭐ JS riêng cho module Từ vựng Premium (bind lock + inject block)
+    # ⭐ JS riêng cho module Từ vựng Premium
     if add_vocab:
         js += build_vocab_js_override(VOCAB_ID)
 
@@ -980,8 +995,12 @@ def main():
     if add_vocab:
         modal_html = build_vocab_modal_html()
 
+    # ⭐ DÙNG LAMBDA — tránh lỗi bad escape \u (ĐÂY LÀ CHỖ BỊ LỖI)
     pat_body = re.compile(r'(\s*)(</body>)', re.MULTILINE)
-    html, n = pat_body.subn(r'\1' + modal_html + '\n' + js + r'\1\2', html, count=1)
+    html, n = pat_body.subn(
+        lambda m: m.group(1) + modal_html + '\n' + js + m.group(1) + m.group(2),
+        html, count=1
+    )
     if n == 0:
         print("[X] Khong tim thay </body>")
         sys.exit(1)
