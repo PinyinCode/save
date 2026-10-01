@@ -12,6 +12,9 @@ on:
       - 'scripts/config.json'
       # ⭐ FIX.PY — chạy sau convert.py để thêm tab từ data/
       - 'fix.py'
+      # ⭐ VOCAB PREMIUM — module từ vựng
+      - 'vocab_premium.py'
+      - 'vocab_data/**'
       - 'requirements.txt'
       # Workflow tự nó
       - '.github/workflows/convert.yml'
@@ -53,6 +56,31 @@ jobs:
           python -c "import jieba;   print('✅ jieba OK')"
           python -c "import pandas;  print('✅ pandas', pandas.__version__)"
 
+      # ⭐ VERIFY MODULE TỪ VỰNG
+      - name: Verify vocab modules
+        run: |
+          echo "=== Kiểm tra module từ vựng ==="
+          
+          if [ -f vocab_premium.py ]; then
+            echo "✅ Có file vocab_premium.py"
+            python -c "from vocab_premium import read_vocab_excel, build_vocab_css, build_vocab_tab_html, build_vocab_modal_html, build_vocab_js_override; print('✅ vocab_premium imports OK')" || {
+              echo "❌ Lỗi import vocab_premium"
+              exit 1
+            }
+          else
+            echo "⚠️  Không có vocab_premium.py — tab Từ vựng sẽ không xuất hiện"
+          fi
+          
+          if [ -d vocab_data ]; then
+            echo "✅ Có thư mục vocab_data/"
+            ls -la vocab_data/
+            python -c "from vocab_data.radicals_db import RADICALS; print('✅ radicals_db OK (' + str(len(RADICALS)) + ' bộ thủ)')" || echo "⚠️ radicals_db lỗi"
+            python -c "from vocab_data.radical_analyzer import get_radical_for_word; print('✅ radical_analyzer OK')" || echo "⚠️ radical_analyzer lỗi"
+            python -c "from vocab_data.mnemonic_generator import generate_mnemonic; print('✅ mnemonic_generator OK')" || echo "⚠️ mnemonic_generator lỗi"
+          else
+            echo "⚠️  Không có vocab_data/ — tab Từ vựng sẽ không có mẹo nhớ/bộ thủ"
+          fi
+
       - name: List files
         run: |
           echo "=== Root ==="
@@ -66,6 +94,9 @@ jobs:
           echo ""
           echo "=== scripts/data/ (cho convert.py) ==="
           ls -la scripts/data/ || echo "No scripts/data folder"
+          echo ""
+          echo "=== vocab_data/ ==="
+          ls -la vocab_data/ 2>/dev/null || echo "No vocab_data folder"
 
       - name: Test cn2an conversion
         run: |
@@ -86,7 +117,7 @@ jobs:
         run: python scripts/convert.py
 
       # ═══════════════════════════════════════════════════════════════
-      #  VERIFY sau convert — CHỈ check những gì BẮT BUỘC phải có
+      #  VERIFY sau convert
       # ═══════════════════════════════════════════════════════════════
       - name: Verify index.html after convert
         run: |
@@ -99,7 +130,6 @@ jobs:
           echo "📦 index.html size: $SIZE bytes"
           echo ""
 
-          # ─── Ngưỡng kích thước tối thiểu (tránh file rỗng) ───
           if [ "$SIZE" -lt 500000 ]; then
             echo "❌ index.html quá nhỏ (< 500KB) — có thể lỗi build"
             exit 1
@@ -107,7 +137,6 @@ jobs:
           echo "✅ Size OK (> 500KB)"
           echo ""
 
-          # ─── Core infrastructure — BẮT BUỘC ───
           echo "=== Check core infrastructure (BẮT BUỘC) ==="
           REQUIRED=(
             "RAW_DATA"
@@ -126,7 +155,6 @@ jobs:
           done
           echo ""
 
-          # ─── HTML structure — thẻ script phải cân bằng ───
           echo "=== Check HTML structure ==="
           OPEN_SCRIPT=$(grep -o "<script" index.html | wc -l)
           CLOSE_SCRIPT=$(grep -o "</script>" index.html | wc -l)
@@ -137,25 +165,6 @@ jobs:
             exit 1
           fi
           echo "  ✅ Thẻ script cân bằng"
-          echo ""
-
-          # ─── Optional features — WARNING only, KHÔNG fail ───
-          echo "=== Check optional features (warning) ==="
-          OPTIONAL=(
-            "renewalModal"
-            "dropdownRenewBtn"
-            "tiktokBar"
-            "zaloBtn"
-            "grantTrialIfNew"
-            "initRenewalUI"
-          )
-          for el in "${OPTIONAL[@]}"; do
-            if grep -q "$el" index.html; then
-              echo "  ✅ $el"
-            else
-              echo "  ⚠️  $el not found (có thể không cần)"
-            fi
-          done
 
       # ═══════════════════════════════════════════════════════════════
       #  BƯỚC 2: Patch — thêm tab riêng cho MỌI file trong data/
@@ -175,7 +184,6 @@ jobs:
         run: |
           echo "=== Kiểm tra bộ dữ liệu trong index.html ==="
 
-          # Dataset gốc (convert.py tạo)
           if grep -q '"tonghop"' index.html; then
             echo "  ✅ dataset 'tonghop' found"
           else
@@ -203,20 +211,58 @@ jobs:
             echo "  ℹ️  Không có thư mục data/"
           fi
 
-          # Kiểm tra tab Giao tiếp (nếu có file)
+          # Kiểm tra tab Giao tiếp
           if [ -f "data/Giao_tiếp.xlsx" ] || [ -f "data/giao-tiep.xlsx" ] || [ -f "data/Giao_tiep.xlsx" ]; then
             if grep -q '"giaotiep"' index.html; then
-              echo "  ✅ Tab 'Giao Tiếp' (dataset id 'giaotiep') found"
+              echo "  ✅ Tab 'Giao Tiếp' found"
             else
-              echo "  ⚠️  Tab 'Giao Tiếp' MISSING — kiểm tra log fix.py"
+              echo "  ⚠️  Tab 'Giao Tiếp' MISSING"
             fi
           fi
 
-          # Kiểm tra CSS override auto-fit từ fix.py
           if grep -q 'FIX.PY: AUTO-FIT LAYOUT' index.html; then
             echo "  ✅ CSS override từ fix.py có mặt"
           else
-            echo "  ℹ️  Không có CSS override (có thể do data/ trống)"
+            echo "  ℹ️  Không có CSS override"
+          fi
+
+          # ⭐ KIỂM TRA TAB TỪ VỰNG PREMIUM
+          if [ -f "data/tu_vung_hsk.xlsx" ]; then
+            echo ""
+            echo "=== Kiểm tra tab Từ vựng Premium ==="
+            
+            if grep -q 'data-dataset="tu-vung"' index.html; then
+              echo "  ✅ Tab 'Từ vựng Premium' found"
+            else
+              echo "  ⚠️  Tab 'Từ vựng' MISSING — kiểm tra log fix.py"
+            fi
+            
+            if grep -q 'vocab-upgrade-modal' index.html; then
+              echo "  ✅ Modal upgrade Premium found"
+            else
+              echo "  ⚠️  Modal upgrade MISSING"
+            fi
+            
+            if grep -q 'card-radical' index.html; then
+              echo "  ✅ CSS block Bộ thủ found"
+            else
+              echo "  ⚠️  CSS Bộ thủ MISSING"
+            fi
+            
+            if grep -q 'card-mnemonic' index.html; then
+              echo "  ✅ CSS block Mẹo nhớ found"
+            else
+              echo "  ⚠️  CSS Mẹo nhớ MISSING"
+            fi
+            
+            if grep -q 'vocab-locked' index.html; then
+              echo "  ✅ CSS tab locked found"
+            else
+              echo "  ⚠️  CSS tab locked MISSING"
+            fi
+          else
+            echo ""
+            echo "  ℹ️  Không có file data/tu_vung_hsk.xlsx — bỏ qua verify tab Từ vựng"
           fi
 
       - name: Verify numbers converted
@@ -250,7 +296,7 @@ jobs:
           fi
 
       # ═══════════════════════════════════════════════════════════════
-      #  UPLOAD ARTIFACT (Duy nhất 1 bước chuẩn bị & upload cho Pages)
+      #  UPLOAD ARTIFACT
       # ═══════════════════════════════════════════════════════════════
       - name: Prepare Pages artifact
         run: |
