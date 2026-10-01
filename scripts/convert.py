@@ -141,7 +141,7 @@ print_banner(CONFIG)
 EXCEL_FILE = CONFIG["excel_file"]
 OUTPUT_HTML = CONFIG["output_html"]
 SHEET_INDEX = CONFIG["sheet_index"]
-DATA_DIR = CONFIG.get("data_dir", "data/scripts")
+DATA_DIR = CONFIG.get("data_dir", "data")
 
 # ─── 1. Đọc dataset gốc ───
 data_tonghop = read_excel(EXCEL_FILE, SHEET_INDEX)
