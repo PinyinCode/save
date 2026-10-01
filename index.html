@@ -8541,19 +8541,15 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
 }
 
 
-/* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB ==== */
-@media (max-width: 500px) {
-    .ds-main-row {
-        grid-template-columns: 1fr !important;
-        gap: .5rem !important;
-    }
-}
-@media (min-width: 501px) and (max-width: 768px) {
+/* ==== FIX.PY: AUTO-FIT LAYOUT CHO 4 TAB ==== */
+/* Mobile (< 769px): luon 2 cot x 2 hang */
+@media (max-width: 768px) {
     .ds-main-row {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: .5rem !important;
     }
 }
+/* Desktop (>= 769px): 4 cot ngang */
 @media (min-width: 769px) {
     .ds-main-row {
         grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
