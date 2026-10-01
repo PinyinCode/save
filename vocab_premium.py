@@ -1,25 +1,22 @@
 # -*- coding: utf-8 -*-
 """
 Module TỪ VỰNG PREMIUM — cắm vào fix.py.
-
-Cung cấp:
-  1. read_vocab_excel()     — đọc file Excel từ vựng (11 cột)
-  2. build_vocab_css()      — CSS cho tab crown + block
-  3. build_vocab_js_override() — JS inject 2 block + lock
-  4. can_access_vocab()     — helper cho fix.py
+Tự sinh bộ thủ + mẹo nhớ từ module vocab_data/.
 """
 
 import os
 import re
-import sys
 import json
-import unicodedata
 
 import openpyxl
 
+# ⬇️⬇️⬇️ TỰ SINH MẸO NHỚ + BỘ THỦ
+from vocab_data.mnemonic_generator import generate_mnemonic
+from vocab_data.radical_analyzer import get_radical_for_word
+
 
 # ═══════════════════════════════════════════════════════════════
-#  1. ĐỌC FILE EXCEL TỪ VỰNG (11 cột)
+#  CLEAN
 # ═══════════════════════════════════════════════════════════════
 def _clean(s):
     if s is None:
@@ -48,11 +45,11 @@ def _normalize_hsk(sheet_name):
 
 
 def _is_hsk_sheet(name):
-    return name and name.strip().upper().startswith("HSK")
+    return bool(name and name.strip().upper().startswith("HSK"))
 
 
-def _parse_radical(raw):
-    """Parse cột bộ thủ: '心|tim|4|Cảm xúc, tình cảm'"""
+def _parse_radical_raw(raw):
+    """Parse cột M nếu có: '心|tim|4|Cảm xúc'"""
     if not raw:
         return None
     text = _clean(raw)
@@ -71,23 +68,11 @@ def _parse_radical(raw):
     return {"zh": "", "pinyin": "", "strokes": "", "meaning": text}
 
 
+# ═══════════════════════════════════════════════════════════════
+#  ĐỌC FILE EXCEL
+# ═══════════════════════════════════════════════════════════════
 def read_vocab_excel(excel_file, start_row=3):
-    """
-    Đọc file từ vựng HSK nhiều sheet.
-    Cấu trúc:
-        A: STT
-        B: Từ Hán
-        C: Phiên âm
-        D: (icon)
-        E: Loại từ
-        F: Nghĩa VN
-        G,H: (icon)
-        I: Câu ví dụ
-        J: Phiên âm câu
-        K: Nghĩa câu
-        L: Mẹo nhớ        ⭐ tuỳ chọn
-        M: Bộ thủ         ⭐ tuỳ chọn
-    """
+    """Đọc file từ vựng HSK nhiều sheet."""
     print("\n[VOCAB] Đang đọc: " + excel_file)
     if not os.path.exists(excel_file):
         print("   [X] Không tìm thấy file")
@@ -109,22 +94,39 @@ def read_vocab_excel(excel_file, start_row=3):
           + ", ".join(target_sheets))
 
     all_data = []
+    total_mnemonic_generated = 0
+    total_radical_generated = 0
+
     for sheet_name in target_sheets:
         try:
             ws = wb[sheet_name]
             hsk = _normalize_hsk(sheet_name)
-            rows = _read_vocab_sheet(ws, hsk, sheet_name, start_row)
+            rows, n_mn, n_rd = _read_vocab_sheet(ws, hsk, sheet_name, start_row)
             all_data.extend(rows)
-            print("      " + sheet_name + ": " + str(len(rows)) + " từ")
+            total_mnemonic_generated += n_mn
+            total_radical_generated += n_rd
+
+            msg = "      " + sheet_name + ": " + str(len(rows)) + " từ"
+            if n_mn > 0:
+                msg += " (💡 " + str(n_mn) + " mẹo)"
+            if n_rd > 0:
+                msg += " (🖌️ " + str(n_rd) + " bộ thủ)"
+            print(msg)
         except Exception as e:
             print("      [X] Lỗi sheet " + sheet_name + ": " + str(e))
 
     wb.close()
     print("   [OK] Tổng: " + str(len(all_data)) + " từ vựng")
+    if total_mnemonic_generated > 0:
+        print("   💡 Tự sinh mẹo nhớ: " + str(total_mnemonic_generated) + " từ")
+    if total_radical_generated > 0:
+        print("   🖌️ Tự tìm bộ thủ: " + str(total_radical_generated) + " từ")
+
     return all_data
 
 
 def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
+    """Đọc 1 sheet + tự sinh mẹo nhớ/bộ thủ."""
     COL_STT = 0
     COL_ZH = 1
     COL_PINYIN = 2
@@ -138,6 +140,8 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
 
     data = []
     empty_count = 0
+    n_mnemonic_generated = 0
+    n_radical_generated = 0
 
     for row in ws.iter_rows(min_row=start_row, values_only=True):
         if not row:
@@ -161,34 +165,70 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
             continue
 
         stt_raw = row[COL_STT] if COL_STT < len(row) and row[COL_STT] is not None else ""
+        pinyin = _clean_pinyin(row[COL_PINYIN]) if COL_PINYIN < len(row) else ""
+        vi = _clean(row[COL_VI]) if COL_VI < len(row) else ""
+
+        # ═══ MẸO NHỚ ═══
+        mnemonic = ""
+        if COL_MNEMONIC < len(row):
+            mnemonic = _clean(row[COL_MNEMONIC])
+        if not mnemonic:
+            # ⭐ Tự sinh
+            try:
+                mnemonic = generate_mnemonic(zh, pinyin, vi)
+                if mnemonic:
+                    n_mnemonic_generated += 1
+            except Exception:
+                mnemonic = ""
+
+        # ═══ BỘ THỦ ═══
+        radical = None
+        if COL_RADICAL < len(row):
+            radical = _parse_radical_raw(row[COL_RADICAL])
+        if not radical:
+            # ⭐ Tự tìm
+            try:
+                radical = get_radical_for_word(zh)
+                if radical:
+                    n_radical_generated += 1
+            except Exception:
+                radical = None
 
         data.append({
             "stt": str(stt_raw).strip(),
             "hsk": hsk,
             "topic": "Từ vựng",
             "subject": _clean(row[COL_LOAI_TU]) if COL_LOAI_TU < len(row) else "",
-            "vi": _clean(row[COL_VI]) if COL_VI < len(row) else "",
+            "vi": vi,
             "zh": zh,
-            "pinyin": _clean_pinyin(row[COL_PINYIN]) if COL_PINYIN < len(row) else "",
+            "pinyin": pinyin,
             "vi_du_zh": _clean(row[COL_VI_DU_ZH]) if COL_VI_DU_ZH < len(row) else "",
             "vi_du_pinyin": _clean_pinyin(row[COL_VI_DU_PINYIN]) if COL_VI_DU_PINYIN < len(row) else "",
             "vi_du_vi": _clean(row[COL_VI_DU_VI]) if COL_VI_DU_VI < len(row) else "",
-            "mnemonic": _clean(row[COL_MNEMONIC]) if COL_MNEMONIC < len(row) else "",
-            "radical": _parse_radical(row[COL_RADICAL]) if COL_RADICAL < len(row) else None,
+            "mnemonic": mnemonic,
+            "radical": radical,
             "source_sheet": sheet_name,
         })
 
-    return data
+    return data, n_mnemonic_generated, n_radical_generated
 
 
 # ═══════════════════════════════════════════════════════════════
-#  2. CSS
+#  CSS
 # ═══════════════════════════════════════════════════════════════
 def build_vocab_css(vocab_id="tu-vung"):
-    """CSS cho tab Premium + block + pinyin highlight."""
-    return r"""
+    """Trả về CSS — dùng nguyên CSS đã gửi ở tin nhắn trước."""
+    # (Giữ nguyên toàn bộ CSS như tin trước)
+    return open(os.path.join(os.path.dirname(__file__),
+                             "vocab_premium.css"),
+                encoding="utf-8").read() if False else _VOCAB_CSS.replace(
+        "__VOCAB_ID__", vocab_id)
+
+
+# CSS nhúng trực tiếp
+_VOCAB_CSS = r"""
 /* ═══════════════════════════════════════════════════════════════
-   👑 TAB TỪ VỰNG PREMIUM — CROWN + BADGE
+   👑 TAB TỪ VỰNG PREMIUM
    ═══════════════════════════════════════════════════════════════ */
 .ds-btn[data-dataset="__VOCAB_ID__"] {
     background: linear-gradient(135deg,
@@ -345,9 +385,7 @@ def build_vocab_css(vocab_id="tu-vung"):
     50%      { transform: scale(1.12); }
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   🖌️ BLOCK BỘ THỦ
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══ Block Bộ thủ ═══ */
 .card-radical {
     margin-top: .7rem;
     padding: .7rem .85rem;
@@ -412,9 +450,7 @@ def build_vocab_css(vocab_id="tu-vung"):
     font-size: .8rem; color: var(--text-2); line-height: 1.4;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   💡 BLOCK MẸO NHỚ
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══ Block Mẹo nhớ ═══ */
 .card-mnemonic {
     margin-top: .7rem;
     padding: .7rem .85rem;
@@ -452,9 +488,7 @@ def build_vocab_css(vocab_id="tu-vung"):
 }
 [data-theme="dark"] .card-mnemonic-body .hint { color: #fcd34d; }
 
-/* ═══════════════════════════════════════════════════════════════
-   🎨 PINYIN HIGHLIGHT
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══ Pinyin highlight ═══ */
 .pinyin-hl {
     background: linear-gradient(180deg,
         transparent 55%,
@@ -469,9 +503,7 @@ def build_vocab_css(vocab_id="tu-vung"):
     color: #fde68a;
 }
 
-/* ═══════════════════════════════════════════════════════════════
-   🎁 UPGRADE MODAL
-   ═══════════════════════════════════════════════════════════════ */
+/* ═══ Modal upgrade ═══ */
 .vocab-upgrade-modal {
     position: fixed; inset: 0;
     background: rgba(15, 23, 42, .85);
@@ -611,11 +643,11 @@ def build_vocab_css(vocab_id="tu-vung"):
     .vocab-upgrade-title { font-size: 1.15rem; }
     .vocab-upgrade-price { font-size: 1.15rem; }
 }
-""".replace("__VOCAB_ID__", vocab_id)
+"""
 
 
 # ═══════════════════════════════════════════════════════════════
-#  3. HTML — MODAL UPGRADE + TAB BUTTON
+#  HTML
 # ═══════════════════════════════════════════════════════════════
 def build_vocab_tab_html(vocab_id="tu-vung", label="Từ vựng HSK"):
     return (
@@ -638,9 +670,7 @@ def build_vocab_modal_html():
             <div class="vocab-upgrade-subtitle" id="vocabUpgradeSubtitle">
                 Dành riêng cho thành viên Premium
             </div>
-            <div class="vocab-upgrade-price">
-                💎 1.000.000đ
-            </div>
+            <div class="vocab-upgrade-price">💎 1.000.000đ</div>
         </div>
         <div class="vocab-upgrade-body">
             <div class="vocab-upgrade-features">
@@ -673,19 +703,13 @@ def build_vocab_modal_html():
 
 
 # ═══════════════════════════════════════════════════════════════
-#  4. JS OVERRIDE — inject block + lock
+#  JS OVERRIDE
 # ═══════════════════════════════════════════════════════════════
 def build_vocab_js_override(vocab_id="tu-vung"):
-    """
-    JS patch cho fix.py.
-    - Bind tab click → kiểm tra quyền → mở modal hoặc switch dataset
-    - Inject block Bộ thủ + Mẹo nhớ vào card
-    - Highlight pinyin
-    - Update lock state realtime
-    """
+    """JS patch — giữ nguyên như tin trước."""
     return r"""
 /* ═══════════════════════════════════════════════════════════════
-   👑 VOCAB PREMIUM MODULE (patch cho fix.py)
+   👑 VOCAB PREMIUM MODULE
    ═══════════════════════════════════════════════════════════════ */
 (function() {
     'use strict';
@@ -693,29 +717,13 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     var VOCAB_ID = '__VOCAB_ID__';
     var _done = new WeakSet();
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  PHÂN QUYỀN                                              */
-    /* ─────────────────────────────────────────────────────── */
     function canAccessVocab() {
         if (typeof currentUser === 'undefined' || !currentUser) return false;
         if (currentUser.role === 'admin') return true;
-        // Chỉ Premium (isPermanent = true, mua gói 1tr)
         if (currentUser.isPermanent === true) return true;
         return false;
     }
 
-    function getTierLabel() {
-        if (typeof currentUser === 'undefined' || !currentUser) return 'Chưa đăng nhập';
-        if (currentUser.role === 'admin') return '👑 Admin';
-        if (currentUser.isPermanent === true) return '💎 Premium (vĩnh viễn)';
-        if (currentUser.isTrial || currentUser.tier === 'trial') return '🎁 Trial (3 ngày)';
-        if (currentUser.isExpiredOnly || currentUser.tier === 'expired') return '❌ Đã hết hạn';
-        return '👤 Gói thường';
-    }
-
-    /* ─────────────────────────────────────────────────────── */
-    /*  HELPERS                                                  */
-    /* ─────────────────────────────────────────────────────── */
     function _esc(s) {
         return (typeof escapeHtml === 'function')
             ? escapeHtml(s) : String(s == null ? '' : s);
@@ -728,14 +736,12 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     function _findRecord(stt) {
         if (stt == null) return null;
         var s = String(stt);
-        // Ưu tiên FIXPY_DATASETS
         if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
             var list = window.FIXPY_DATASETS[VOCAB_ID].data || [];
             for (var i = 0; i < list.length; i++) {
                 if (String(list[i].stt) === s) return list[i];
             }
         }
-        // Fallback RAW_DATA
         if (typeof RAW_DATA !== 'undefined' && RAW_DATA) {
             for (var j = 0; j < RAW_DATA.length; j++) {
                 if (String(RAW_DATA[j].stt) === s) return RAW_DATA[j];
@@ -744,13 +750,9 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         return null;
     }
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  UPDATE TAB LOCK STATE                                    */
-    /* ─────────────────────────────────────────────────────── */
     function updateTabLockState() {
         var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
         if (!btn) return;
-
         var can = canAccessVocab();
         var oldLock = btn.querySelector('.vocab-lock-icon');
         if (oldLock) oldLock.remove();
@@ -760,28 +762,23 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             btn.title = '👑 Từ vựng HSK 1-9 — Premium (đã mở khóa)';
         } else {
             btn.classList.add('vocab-locked');
-            actions btn.title = '👑 Từ vựng HSK — Chỉ dành cho Premium (1.000.000đ)';
+            btn.title = '👑 Từ vựng HSK — Chỉ dành cho Premium (1.000.000đ)';
             var lock = document.createElement('i');
             lock.className = 'fas fa-lock vocab-lock-icon';
             btn.appendChild(lock);
         }
     }
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  MODAL UPGRADE                                            */
-    /* ─────────────────────────────────────────────────────── */
     function openUpgradeModal() {
         var modal = document.getElementById('vocabUpgradeModal');
         if (!modal) return;
-
         var titleEl = document.getElementById('vocabUpgradeTitle');
         var subEl = document.getElementById('vocabUpgradeSubtitle');
         var actionsEl = document.getElementById('vocabUpgradeActions');
 
         var tier = 'demo';
-El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
-            if =
- (currentUser.isTrial || current                   User.tier === 'trial') tier = 'trial';
+        if (typeof currentUser !== 'undefined' && currentUser) {
+            if (currentUser.isTrial || currentUser.tier === 'trial') tier = 'trial';
             else if (currentUser.isExpiredOnly || currentUser.tier === 'expired') tier = 'expired';
             else tier = 'active';
         }
@@ -814,7 +811,8 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
             if (titleEl) titleEl.textContent = 'Tài khoản đã hết hạn';
             if (subEl) subEl.textContent = 'Mua gói Premium 1 triệu để sở hữu vĩnh viễn';
             if (actionsEl) {
-                '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeRenew()">' +
+                actionsEl.innerHTML =
+                    '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeRenew()">' +
                         '<i class="fas fa-crown"></i> Mua Premium 1 triệu' +
                     '</button>' +
                     '<button class="vocab-upgrade-btn secondary" onclick="vocabUpgradeClose()">' +
@@ -822,7 +820,6 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
                     '</button>';
             }
         } else {
-            // Active nhưng không permanent (1m/3m/1y)
             if (titleEl) titleEl.textContent = 'Nâng cấp lên Premium';
             if (subEl) subEl.textContent = 'Chỉ gói Premium mới mở được Từ vựng HSK';
             if (actionsEl) {
@@ -846,28 +843,21 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
         document.body.style.overflow = '';
     }
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  GLOBAL HANDLERS                                          */
-    /* ─────────────────────────────────────────────────────── */
     window.vocabUpgradeClose = closeUpgradeModal;
-
     window.vocabUpgradeLogin = function() {
         closeUpgradeModal();
         if (typeof showLoginModal === 'function') showLoginModal();
     };
-
     window.vocabUpgradeRenew = function() {
         closeUpgradeModal();
         if (typeof openRenewalModal === 'function') {
             openRenewalModal();
-            // Tự chọn gói "forever" (Premium 1tr)
             setTimeout(function() {
                 if (typeof selectPackage === 'function') selectPackage('forever');
             }, 300);
         }
     };
 
-    // Click ngoài đóng modal
     document.addEventListener('click', function(e) {
         var modal = document.getElementById('vocabUpgradeModal');
         if (!modal || !modal.classList.contains('show')) return;
@@ -880,9 +870,6 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
         }
     });
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  PINYIN HIGHLIGHT                                         */
-    /* ─────────────────────────────────────────────────────── */
     function highlightPinyin(text) {
         if (!text) return '';
         return text.replace(
@@ -891,9 +878,6 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
         );
     }
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  BUILD BLOCKS                                             */
-    /* ─────────────────────────────────────────────────────── */
     function buildRadicalBlock(radical) {
         if (!radical) return '';
         var zh = _esc(radical.zh || '');
@@ -932,9 +916,6 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
             + '</div>';
     }
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  INJECT VÀO CARD                                          */
-    /* ─────────────────────────────────────────────────────── */
     function enhanceCards() {
         if (!_isVocabMode()) return;
         if (!canAccessVocab()) return;
@@ -950,13 +931,11 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
             var body = card.querySelector('.card-body');
             if (!body) return;
 
-            // Xóa cũ
             var oldR = body.querySelector('.card-radical');
             if (oldR) oldR.remove();
             var oldM = body.querySelector('.card-mnemonic');
             if (oldM) oldM.remove();
 
-            // Chèn Bộ thủ (trước ví dụ)
             var anchor = body.querySelector('.card-vocab-example');
             if (r.radical) {
                 var htmlR = buildRadicalBlock(r.radical);
@@ -964,12 +943,10 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
                 else body.insertAdjacentHTML('beforeend', htmlR);
             }
 
-            // Chèn Mẹo nhớ (cuối)
             if (r.mnemonic) {
                 body.insertAdjacentHTML('beforeend', buildMnemonicBlock(r.mnemonic));
             }
 
-            // Highlight pinyin
             var pyEl = body.querySelector('.card-vocab-example-pinyin')
                     || body.querySelector('.card-pinyin');
             if (pyEl && !pyEl.dataset.hlDone) {
@@ -979,9 +956,6 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
         });
     }
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  MUTATION OBSERVER                                        */
-    /* ─────────────────────────────────────────────────────── */
     function setupObserver() {
         var wrapper = document.getElementById('mobileWrapper');
         if (!wrapper) { setTimeout(setupObserver, 400); return; }
@@ -990,22 +964,16 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
             if (timer) clearTimeout(timer);
             timer = setTimeout(enhanceCards, 80);
         });
-        observer.observe(wrapper, { childList: true, subtree: true });
+        observer.angobserve(wrapper, { childList: Hy true**, subtree: true });
         enhanceCards();
-    }
+ +    }
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  BIND TAB CLICK — chỉ chạy nếu chưa có ai bind             */
-    /* ─────────────────────────────────────────────────────── */
-    function bindTabIfNeeded() {
-        var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
-        if (!btn) return;
-        if (btn.__vocabPremiumBound) return;
+    function bindTabIfNeeded bi() {
+        var btn = document.querySelector('.dsến-btn[data-dataset="' thể + VOCAB_ID + '"]');
+        if (!btn || btn.__vocabPremiumBound) return;
         btn.__vocabPremiumBound = true;
 
-        // Dùng capture phase → chạy TRƯỚC fix.py bindTab
         btn.addEventListener('click', function(e) {
-            // Chỉ xử lý nếu chưa có quyền
             if (!canAccessVocab()) {
                 e.stopImmediatePropagation();
                 e.stopPropagation();
@@ -1013,15 +981,9 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
                 openUpgradeModal();
                 return;
             }
-            // Có quyền → để fix.py bindTab xử lý (switch dataset)
-        }, true);  // ⭐ capture = true
-
-        console.log('👑 Vocab Premium: bound tab click (capture)');
+        }, true);
     }
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  WATCH TIER CHANGES                                       */
-    /* ─────────────────────────────────────────────────────── */
     var _lastTier = null;
     function watchTier() {
         var key = '';
@@ -1039,9 +1001,6 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
         }
     }
 
-    /* ─────────────────────────────────────────────────────── */
-    /*  INIT                                                     */
-    /* ─────────────────────────────────────────────────────── */
     function init() {
         bindTabIfNeeded();
         updateTabLockState();
@@ -1056,7 +1015,6 @@ El        if (typeof currentUser !== 'undefined.innerHTML' && currentUser) {
         setTimeout(init, 600);
     }
 
-    // Expose cho fix.py
     window.vocabUpdateLockState = updateTabLockState;
 
 })();
