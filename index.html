@@ -8617,37 +8617,35 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
     }
 }
 
+/* Force style giống tab Tổng hợp cho tab 1000-cau-giao-tiep */
 .ds-btn[data-dataset="1000-cau-giao-tiep"] {
-    background: linear-gradient(135deg,
-        color-mix(in srgb, #0891b2 12%, var(--surface)),
-        color-mix(in srgb, #0891b2 4%, var(--surface))) !important;
-    border-color: color-mix(in srgb, #0891b2 40%, var(--border)) !important;
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text) !important;
 }
-.ds-btn[data-dataset="1000-cau-giao-tiep"] i:first-child { color: #0891b2 !important; }
+.ds-btn[data-dataset="1000-cau-giao-tiep"] i:first-child {
+    color: var(--primary) !important;
+}
 .ds-btn[data-dataset="1000-cau-giao-tiep"]:hover {
-    border-color: #0891b2 !important;
-    background: linear-gradient(135deg,
-        color-mix(in srgb, #0891b2 20%, var(--surface)),
-        color-mix(in srgb, #0891b2 8%, var(--surface))) !important;
+    border-color: var(--primary) !important;
+    background: var(--primary-light) !important;
 }
 .ds-btn[data-dataset="1000-cau-giao-tiep"].active {
-    background: linear-gradient(135deg, #0891b2,
-        color-mix(in srgb, #0891b2 72%, #000)) !important;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
     color: #fff !important;
-    border-color: #0891b2 !important;
-    box-shadow: 0 4px 12px color-mix(in srgb, #0891b2 40%, transparent) !important;
+    border-color: transparent !important;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, .35) !important;
 }
-.ds-btn[data-dataset="1000-cau-giao-tiep"].active i:first-child { color: #fff !important; }
+.ds-btn[data-dataset="1000-cau-giao-tiep"].active i:first-child {
+    color: #fff !important;
+}
 [data-theme="dark"] .ds-btn[data-dataset="1000-cau-giao-tiep"] {
-    background: linear-gradient(135deg,
-        color-mix(in srgb, #0891b2 20%, var(--surface)),
-        color-mix(in srgb, #0891b2 8%, var(--surface))) !important;
-    border-color: color-mix(in srgb, #0891b2 50%, var(--border)) !important;
+    background: var(--surface) !important;
+    border-color: var(--border) !important;
 }
 [data-theme="dark"] .ds-btn[data-dataset="1000-cau-giao-tiep"].active {
-    background: linear-gradient(135deg, #0891b2,
-        color-mix(in srgb, #0891b2 72%, #000)) !important;
-    border-color: #0891b2 !important;
+    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;
+    border-color: transparent !important;
 }
 
 
