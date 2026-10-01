@@ -191,4 +191,181 @@ MANUAL_DECOMPOSITIONS = {
     "耳": ["耳"],
     "鼻": ["鼻"],
 
-    # ═══ HSK
+    # ═══ HSK 2 ═══
+    "晴": ["日", "青"],
+    "阴": ["⻖", "月"],
+    "雪": ["⻗", "彐"],
+    "风": ["风"],
+    "雨": ["雨"],
+    "云": ["二", "厶"],
+    "冰": ["冫", "水"],
+    "问": ["门", "口"],
+    "答": ["⺮", "合"],
+    "知": ["矢", "口"],
+    "道": ["辶", "首"],
+    "认": ["讠", "人"],
+    "识": ["讠", "只"],
+    "记": ["讠", "己"],
+    "忘": ["亡", "心"],
+    "思": ["田", "心"],
+    "念": ["人", "一", "心"],
+    "怕": ["忄", "白"],
+    "忙": ["忄", "亡"],
+    "累": ["田", "糸"],
+    "病": ["疒", "丙"],
+
+    # ═══ HSK 3 ═══
+    "喜": ["口", "士", "口", "丷", "一"],
+    "欢": ["又", "欠"],
+    "乐": ["乐"],
+    "悲": ["非", "心"],
+    "怒": ["女", "又", "心"],
+    "惊": ["忄", "京"],
+    "静": ["青", "争"],
+    "安": ["宀", "女"],
+    "全": ["人", "王"],
+    "完": ["宀", "元"],
+    "清": ["氵", "青"],
+    "洗": ["氵", "先"],
+    "漂": ["氵", "票"],
+    "亮": ["亠", "口", "冖", "几"],
+    "暗": ["日", "音"],
+
+    # ═══ HSK 4+ ═══
+    "环": ["王", "不"],
+    "境": ["土", "竟"],
+    "保": ["亻", "呆"],
+    "护": ["扌", "户"],
+    "污": ["氵", "亏"],
+    "染": ["氵", "九", "木"],
+    "发": ["癶", "又"],
+    "展": ["尸", "共", "𧘇"],
+    "进": ["辶", "井"],
+    "步": ["止", "少"],
+    "退": ["辶", "艮"],
+    "改": ["己", "攵"],
+    "变": ["亦", "又"],
+    "化": ["亻", "匕"],
+    "传": ["亻", "专"],
+    "统": ["纟", "充"],
+    "结": ["纟", "吉"],
+    "果": ["日", "木"],
+    "实": ["宀", "头"],
+    "现": ["王", "见"],
+    "代": ["亻", "弋"],
+}
+
+
+def _split_components(char):
+    """
+    Phân tích chữ thành các bộ thủ.
+    Ưu tiên MANUAL_DECOMPOSITIONS → fallback tra trực tiếp.
+    """
+    # ═══ 1. Tra bảng thủ công ═══
+    if char in MANUAL_DECOMPOSITIONS:
+        parts = MANUAL_DECOMPOSITIONS[char]
+        result = []
+        for part in parts:
+            info = get_radical_info(part)
+            if info:
+                result.append({
+                    "zh": part,
+                    "pinyin": info.get("pinyin", ""),
+                    "strokes": info.get("strokes", ""),
+                    "meaning": info.get("meaning", ""),
+                    "position": _get_position(part),
+                })
+        if result:
+            return result
+
+    # ═══ 2. Fallback: tự thử tìm bộ thủ trong chữ ═══
+    # (Không hoàn hảo nhưng là best-effort)
+    for radical in sorted(RADICALS.keys(), key=lambda x: -len(x)):
+        # Bỏ qua radical 1 ký tự trùng chính nó
+        if radical == char:
+            continue
+        # Thử tìm radical trong mã Unicode của char
+        # (Chỉ là heuristic, không chính xác tuyệt đối)
+        # Skip — không thể làm chính xác bằng Python
+        pass
+
+    return []
+
+
+# ═══════════════════════════════════════════════════════════════
+#  API CHÍNH — PHÂN TÍCH TỪ
+# ═══════════════════════════════════════════════════════════════
+def find_components(hanzi):
+    """Tìm tất cả bộ thủ trong 1 từ (có thể nhiều chữ)."""
+    if not hanzi:
+        return []
+
+    components = []
+    seen = set()
+
+    # Với mỗi chữ Hán trong từ
+    for ch in hanzi:
+        if not ('\u4e00' <= ch <= '\u9fff'):
+            continue
+
+        # Tìm thành phần của chữ này
+        comps = find_components_in_char(ch)
+        for c in comps:
+            key = c["zh"]
+            if key in seen:
+                continue
+            seen.add(key)
+            components.append(c)
+
+    return components
+
+
+def analyze_word(zh):
+    """
+    Phân tích toàn bộ từ.
+    Returns:
+    {
+        "chars": [...],           # Danh sách chữ Hán
+        "components": [...],      # Tất cả bộ thủ tìm được
+        "main_radical": {...}     # Bộ thủ chính (để hiển thị)
+    }
+    """
+    if not zh:
+        return {"chars": [], "components": [], "main_radical": None}
+
+    # Tách chữ
+    chars = [c for c in zh if '\u4e00' <= c <= '\u9fff']
+
+    # Tìm tất cả thành phần
+    all_components = find_components(zh)
+
+    # ═══ Chọn bộ thủ chính ═══
+    main = None
+    if chars:
+        # Ưu tiên chữ đầu
+        first_comps = find_components_in_char(chars[0])
+        if first_comps:
+            # Ưu tiên bộ thủ có vị trí "left" (thường là bộ chính)
+            left_comps = [c for c in first_comps if c.get("position") == "left"]
+            if left_comps:
+                main = left_comps[0]
+            else:
+                # Chọn bộ thủ có số nét lớn nhất (thường quan trọng nhất)
+                main = max(
+                    first_comps,
+                    key=lambda c: c.get("strokes") or 0
+                )
+        elif all_components:
+            main = all_components[0]
+
+    return {
+        "chars": chars,
+        "components": all_components,
+        "main_radical": main,
+    }
+
+
+def get_radical_for_word(zh):
+    """Helper — trả về bộ thủ chính của từ."""
+    result = analyze_word(zh)
+    return result.get("main_radical")
