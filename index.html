@@ -8541,17 +8541,23 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
 }
 
 
-/* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB TRÊN HÀNG CHÍNH ==== */
+/* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB ==== */
 @media (max-width: 768px) {
     .ds-main-row {
         grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
         gap: .5rem !important;
     }
 }
-@media (min-width: 769px) {
+@media (min-width: 769px) and (max-width: 1100px) {
     .ds-main-row {
-        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
         gap: .55rem !important;
+    }
+}
+@media (min-width: 1101px) {
+    .ds-main-row {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+        gap: .6rem !important;
     }
 }
 
@@ -8652,7 +8658,6 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
             <i class="fas fa-comments"></i>
             <span>1000 Câu giao tiếp</span>
         </button>
-    
         <button class="ds-btn ds-btn-primary" data-dataset-group="chuyen-nganh" id="dsChuyenNganhBtn">
             <i class="fas fa-industry"></i>
             <span>Chuyên ngành</span>
