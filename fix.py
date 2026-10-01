@@ -871,26 +871,21 @@ def main():
 
     css_lines = []
     css_lines.append("")
-    css_lines.append("/* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB ==== */")
-    css_lines.append("@media (max-width: 500px) {")
-    css_lines.append("    .ds-main-row {")
-    css_lines.append("        grid-template-columns: 1fr !important;")
-    css_lines.append("        gap: .5rem !important;")
-    css_lines.append("    }")
-    css_lines.append("}")
-    css_lines.append("@media (min-width: 501px) and (max-width: 768px) {")
+    css_lines.append("/* ==== FIX.PY: AUTO-FIT LAYOUT CHO 4 TAB ==== */")
+    css_lines.append("/* Mobile (< 769px): luon 2 cot x 2 hang */")
+    css_lines.append("@media (max-width: 768px) {")
     css_lines.append("    .ds-main-row {")
     css_lines.append("        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;")
     css_lines.append("        gap: .5rem !important;")
     css_lines.append("    }")
     css_lines.append("}")
+    css_lines.append("/* Desktop (>= 769px): 4 cot ngang */")
     css_lines.append("@media (min-width: 769px) {")
     css_lines.append("    .ds-main-row {")
     css_lines.append("        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;")
     css_lines.append("        gap: .55rem !important;")
     css_lines.append("    }")
     css_lines.append("}")
-
     for ds in new_datasets:
         c = ds["color"]
         i = ds["id"]
