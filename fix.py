@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""
+r"""
 fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
 + TỰ ĐỘNG thêm tab TỪ VỰNG PREMIUM (👑) từ data/tu_vung_hsk.xlsx
 
