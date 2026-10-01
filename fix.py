@@ -1,23 +1,28 @@
 # -*- coding: utf-8 -*-
 """
 fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
++ TỰ ĐỘNG thêm tab TỪ VỰNG PREMIUM (👑) từ data/tu_vung_hsk.xlsx
 
 ĐẶC ĐIỂM:
   - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/ (TRỪ input.xlsx)
   - Tên tab = TÊN FILE (normalize NFC — hiển thị đúng dấu tiếng Việt)
   - Label tab = CHỈ tên file, KHÔNG thêm số câu
-  - Logic đọc Excel GIỐNG data_reader.py:
-      openpyxl, cột VỊ TRÍ: 0=STT, 1=HSK, 2=Topic, 3=Subject, 4=Vi, 5=Zh, 6=Pinyin
-      Data bắt đầu từ dòng 2, tự động chuyển số Ả Rập → Hán (cn2an)
+  - Logic đọc Excel GIỐNG data_reader.py
   - TIER LOCK + ONBOARDING giống tab tổng hợp
-  - Clone nút để XÓA event listener cũ của convert.py → không còn popup
+  - Clone nút để XÓA event listener cũ → không còn popup
   - CHỈ 1 TAB ACTIVE tại một thời điểm
-  - KHÔNG inject vào DATASET_REGISTRY → dropdown "Chuyên ngành" KHÔNG thấy
+  - KHÔNG inject vào DATASET_REGISTRY
   - KHÔNG can thiệp convert.py, ui_template.py, config.json
+
+  ⭐ TỪ VỰNG PREMIUM (mới):
+  - Đọc file data/tu_vung_hsk.xlsx (11 cột A-K)
+  - Tự sinh mẹo nhớ + bộ thủ từ vocab_data/
+  - CHỈ mở cho Admin + Premium (isPermanent)
+  - Modal upgrade khi không có quyền
 
 Cách chạy:
     python scripts/convert.py    # Tạo index.html gốc
-    python fix.py                # Patch index.html — thêm tab từ data/
+    python fix.py                # Patch index.html
 """
 import json
 import os
@@ -39,6 +44,11 @@ DATA_DIR = "data"
 # File cần BỎ QUA khi quét data/ (vì đã là tab "Tổng hợp" trong convert.py)
 SKIP_FILES = {"input.xlsx", "input.xls", "input.csv"}
 
+# ⭐ File TỪ VỰNG PREMIUM (đặt cùng cấp input.xlsx)
+VOCAB_FILE = os.path.join(DATA_DIR, "tu_vung_hsk.xlsx")
+VOCAB_ID = "tu-vung"
+VOCAB_LABEL = "Từ vựng HSK"
+
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
     os.chdir("..")
     print("[fix.py] Phat hien chay tu scripts/ -> chuyen ve root")
@@ -51,6 +61,25 @@ TAB_COLORS = [
     "#0891b2", "#dc2626", "#059669", "#d97706",
     "#7c3aed", "#db2777", "#0284c7", "#65a30d",
 ]
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  ⭐ IMPORT MODULE TỪ VỰNG PREMIUM (có try/except để không crash)
+# ═══════════════════════════════════════════════════════════════════
+try:
+    from vocab_premium import (
+        read_vocab_excel,
+        build_vocab_css,
+        build_vocab_tab_html,
+        build_vocab_modal_html,
+        build_vocab_js_override,
+    )
+    HAS_VOCAB_MODULE = True
+    print("[fix.py] ✅ Đã load module vocab_premium")
+except ImportError as e:
+    HAS_VOCAB_MODULE = False
+    print("[fix.py] ⚠️  Không load được vocab_premium: " + str(e))
+    print("[fix.py] → Tab Từ vựng Premium sẽ KHÔNG được thêm")
 
 
 # =================================================================
@@ -162,7 +191,6 @@ def _slugify(filename):
 
 
 def _display_name(filename):
-    """Lay ten file lam ten tab. KHONG bo so dau."""
     name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
     name = unicodedata.normalize("NFC", name)
     if name.islower() or name.isupper():
@@ -288,7 +316,7 @@ def _read_excel_rows(filepath):
 
 
 # =================================================================
-#  SCAN data/ — BO QUA input.xlsx
+#  SCAN data/ — BO QUA input.xlsx VÀ tu_vung_hsk.xlsx
 # =================================================================
 def scan_data_dir():
     if not os.path.isdir(DATA_DIR):
@@ -310,17 +338,23 @@ def scan_data_dir():
     datasets = []
     used_ids = set()
 
+    # ⭐ Tên file từ vựng để bỏ qua khi quét tab thường
+    vocab_basename = os.path.basename(VOCAB_FILE).lower()
+
     for filepath in files:
         fname = os.path.basename(filepath)
 
-        # Bo file tam Office
         if fname.startswith("~$"):
             print("   [skip] " + fname + " - file tam")
             continue
 
-        # ═══ BO QUA input.xlsx (đã là tab Tổng hợp) ═══
         if fname.lower() in SKIP_FILES:
             print("   [skip] " + fname + " - da la tab Tong hop")
+            continue
+
+        # ⭐ BỎ QUA file từ vựng (sẽ tạo tab Premium riêng)
+        if fname.lower() == vocab_basename:
+            print("   [skip] " + fname + " - se tao tab Tu vung Premium rieng")
             continue
 
         print("   [file] " + fname)
@@ -351,7 +385,7 @@ def scan_data_dir():
             "count": len(rows),
             "source": fname,
             "type": "main",
-            "group": "fixpy",  # ⭐ Đánh dấu nguồn gốc
+            "group": "fixpy",
         })
         print("   [OK] " + fname + " -> tab '" + display
               + "' (" + str(len(rows)) + " cau)")
@@ -363,13 +397,7 @@ def scan_data_dir():
 #  BUILD JS OVERRIDE
 # =================================================================
 def build_js_override(ids_js, datasets_json):
-    """Tra ve chuoi JS override hoan chinh - co onboarding + tier lock.
-    
-    FIX: 
-      - KHÔNG inject vào DATASET_REGISTRY (tránh dropdown "Chuyên ngành" thấy)
-      - Dùng FIXPY_DATASETS riêng
-      - Patch __switchRawData để xử lý cả 2 nguồn
-    """
+    """Tra ve chuoi JS override - co onboarding + tier lock."""
     L = []
     add = L.append
 
@@ -378,33 +406,17 @@ def build_js_override(ids_js, datasets_json):
     add("/* ================================================================")
     add("   FIX.PY OVERRIDE - Bind tab moi + TIER LOCK + ONBOARDING")
     add("   ================================================================")
-    add("   Quy tac:")
-    add("     1. FIXPY_DATASETS: tách riêng, KHÔNG inject DATASET_REGISTRY")
-    add("        → dropdown 'Chuyên ngành' KHÔNG thấy tab '1000 Câu giao tiếp'")
-    add("     2. Patch __switchRawData: xử lý cả registry + FIXPY")
-    add("     3. Clone nut de XOA event listener cu cua convert.py")
-    add("     4. Tab moi co onboarding + tier lock giong tab tonghop")
-    add("     5. CHI 1 TAB ACTIVE tai mot thoi diem")
-    add("   ================================================================")
     add("*/")
     add("(function() {")
     add("    'use strict';")
     add("    var NEW_IDS = " + ids_js + ";")
     add("")
-    
-    # ═══════════════════════════════════════════════════════════════
-    #  FIXPY_DATASETS: tách riêng khỏi DATASET_REGISTRY
-    # ═══════════════════════════════════════════════════════════════
-    add("    /* ------------------------------------------------------------")
-    add("       FIXPY_DATASETS: Chứa datasets của fix.py")
-    add("       KHÔNG inject vào DATASET_REGISTRY để dropdown 'Chuyên ngành'")
-    add("       không hiển thị nhầm.")
-    add("       ------------------------------------------------------------ */")
+
+    # FIXPY_DATASETS
     add("    window.FIXPY_DATASETS = " + datasets_json + ";")
     add("")
-    add("    /* ------------------------------------------------------------")
-    add("       Patch __switchRawData - xử lý cả DATASET_REGISTRY + FIXPY_DATASETS")
-    add("       ------------------------------------------------------------ */")
+
+    # Patch __switchRawData
     add("    function patchSwitchRawData() {")
     add("        if (window.__fixPySwitchPatched) return;")
     add("        var origSwitch = window.__switchRawData;")
@@ -412,9 +424,7 @@ def build_js_override(ids_js, datasets_json):
     add("            setTimeout(patchSwitchRawData, 100);")
     add("            return;")
     add("        }")
-    add("")
     add("        window.__switchRawData = function(datasetId) {")
-    add("            // Ưu tiên FIXPY_DATASETS trước")
     add("            if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[datasetId]) {")
     add("                RAW_DATA = window.FIXPY_DATASETS[datasetId].data || [];")
     add("                CURRENT_DATASET = datasetId;")
@@ -422,42 +432,32 @@ def build_js_override(ids_js, datasets_json):
     add("                            datasetId, '->', RAW_DATA.length, 'cau');")
     add("                return true;")
     add("            }")
-    add("            // Fallback: gọi hàm gốc (xử lý DATASET_REGISTRY)")
     add("            return origSwitch.apply(this, arguments);")
     add("        };")
     add("        window.__fixPySwitchPatched = true;")
-    add("        console.log('[fix.py] Đã patch __switchRawData');")
     add("    }")
     add("    patchSwitchRawData();")
     add("")
-    add("    /* ------------------------------------------------------------")
-    add("       Patch markCurrentDatasetActive - CHỈ 1 TAB ACTIVE")
-    add("       ------------------------------------------------------------ */")
+
+    # Patch markCurrentDatasetActive
     add("    function patchMarkActive() {")
     add("        if (window.__fixPyMarkPatched) return;")
-    add("")
     add("        window.markCurrentDatasetActive = function() {")
     add("            var cur = (typeof CURRENT_DATASET !== 'undefined')")
     add("                      ? CURRENT_DATASET : 'tonghop';")
-    add("")
     add("            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
     add("                b.classList.remove('active');")
     add("            });")
-    add("")
     add("            if (cur === 'tonghop') {")
     add("                var tonghopBtn = document.querySelector('.ds-btn[data-dataset=\"tonghop\"]');")
     add("                if (tonghopBtn) tonghopBtn.classList.add('active');")
     add("                return;")
     add("            }")
-    add("")
-    add("            // Nếu là FIXPY_DATASET (tab cấp 1)")
     add("            if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[cur]) {")
     add("                var fxBtn = document.querySelector('.ds-btn[data-dataset=\"' + cur + '\"]');")
     add("                if (fxBtn) fxBtn.classList.add('active');")
     add("                return;")
     add("            }")
-    add("")
-    add("            // Fallback: chuyên ngành thật")
     add("            var subBtn = document.querySelector('.ds-sub-btn[data-dataset=\"' + cur + '\"]');")
     add("            if (subBtn) subBtn.classList.add('active');")
     add("            var cnBtn = document.querySelector('.ds-btn[data-dataset-group=\"chuyen-nganh\"]');")
@@ -467,35 +467,26 @@ def build_js_override(ids_js, datasets_json):
     add("    }")
     add("")
 
-    # ================= PATCH A: getLimitedData =================
-    add("    /* ------------------------------------------------------------")
-    add("       PATCH A: getLimitedData - ho tro onboarding cho tab moi")
-    add("       ------------------------------------------------------------ */")
+    # Patch getLimitedData
     add("    function patchGetLimitedData() {")
     add("        if (window.__fixPyLimitedPatched) return;")
     add("        var origGet = window.getLimitedData")
     add("                    || (typeof getLimitedData !== 'undefined' ? getLimitedData : null);")
     add("        if (typeof origGet !== 'function') return;")
-    add("")
     add("        window.getLimitedData = function() {")
     add("            var currentDs = (typeof CURRENT_DATASET !== 'undefined')")
     add("                            ? CURRENT_DATASET : 'tonghop';")
-    add("")
-    add("            // Tab tonghop hoặc chuyên ngành → gọi hàm gốc")
     add("            if (currentDs === 'tonghop') {")
     add("                return origGet.apply(this, arguments);")
     add("            }")
     add("            if (!window.FIXPY_DATASETS || !window.FIXPY_DATASETS[currentDs]) {")
     add("                return origGet.apply(this, arguments);")
     add("            }")
-    add("")
-    add("            // Tab mới (fix.py): áp dụng override + tier")
     add("            var info = (typeof getTierInfo === 'function')")
     add("                       ? getTierInfo() : {};")
     add("            if (info.tier === 'active') {")
     add("                return RAW_DATA;")
     add("            }")
-    add("")
     add("            var override = window.__onboardingOverride;")
     add("            if (override && Array.isArray(override) && override.length > 0")
     add("                && typeof state !== 'undefined' && state")
@@ -510,48 +501,35 @@ def build_js_override(ids_js, datasets_json):
     add("                    return filtered.slice(0, max);")
     add("                }")
     add("            }")
-    add("")
     add("            var max2 = info.maxQuestions || 60;")
     add("            return RAW_DATA.slice(0, max2);")
     add("        };")
-    add("")
     add("        window.__fixPyLimitedPatched = true;")
     add("    }")
     add("")
 
-    # ================= PATCH B: bindTab =================
-    add("    /* ------------------------------------------------------------")
-    add("       PATCH B: bindTab - CLONE nut + onboarding cho tab moi")
-    add("       ------------------------------------------------------------ */")
+    # bindTab
     add("    function bindTab(dsId) {")
     add("        var btn = document.querySelector('.ds-btn[data-dataset=\"' + dsId + '\"]');")
     add("        if (!btn) return;")
     add("        if (btn.__fixPyBound) return;")
-    add("")
-    add("        // Clone nut de xoa TAT CA event listener cu")
     add("        var cloned = btn.cloneNode(true);")
     add("        btn.parentNode.replaceChild(cloned, btn);")
     add("        cloned.__fixPyBound = true;")
-    add("")
     add("        cloned.addEventListener('click', function(e) {")
     add("            e.stopImmediatePropagation();")
     add("            e.stopPropagation();")
     add("            e.preventDefault();")
-    add("")
     add("            console.log('[fix.py] click tab ' + dsId);")
-    add("")
     add("            var sub = document.getElementById('dsSubWrap');")
     add("            if (sub) sub.style.display = 'none';")
-    add("")
     add("            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
     add("                b.classList.remove('active');")
     add("            });")
     add("            this.classList.add('active');")
-    add("")
     add("            if (typeof window.__switchRawData === 'function') {")
     add("                window.__switchRawData(dsId);")
     add("            }")
-    add("")
     add("            if (typeof state !== 'undefined' && state) {")
     add("                state.search = '';")
     add("                state.hsk = '';")
@@ -567,7 +545,6 @@ def build_js_override(ids_js, datasets_json):
     add("                var cb = document.getElementById('clearSearchBtn');")
     add("                if (cb) cb.classList.remove('show');")
     add("            } catch(err) {}")
-    add("")
     add("            var savedTopics = null;")
     add("            if (typeof loadOnboardingSelection === 'function') {")
     add("                try {")
@@ -577,12 +554,10 @@ def build_js_override(ids_js, datasets_json):
     add("                    }")
     add("                } catch(e) {}")
     add("            }")
-    add("")
     add("            try {")
     add("                if (typeof buildFilters === 'function') buildFilters();")
     add("                if (typeof applyFilter === 'function') applyFilter();")
     add("                if (typeof updateResultCount === 'function') updateResultCount();")
-    add("")
     add("                if (savedTopics && savedTopics.length > 0")
     add("                    && typeof applyOnboardingSelection === 'function') {")
     add("                    try {")
@@ -597,16 +572,13 @@ def build_js_override(ids_js, datasets_json):
     add("                        console.warn('[fix.py] applyOnboarding error:', e2);")
     add("                    }")
     add("                }")
-    add("")
     add("                document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
     add("                    b.classList.remove('active');")
     add("                });")
     add("                this.classList.add('active');")
-    add("")
     add("            } catch(err) {")
     add("                console.warn('[fix.py] re-render error:', err);")
     add("            }")
-    add("")
     add("            setTimeout(function() {")
     add("                var mainEl = document.getElementById('mainContent');")
     add("                if (mainEl) {")
@@ -619,33 +591,24 @@ def build_js_override(ids_js, datasets_json):
     add("    }")
     add("")
 
-    # ================= PATCH D: applyOnboardingSelection cho tab moi =================
-    add("    /* ------------------------------------------------------------")
-    add("       PATCH D: applyOnboardingSelection - ho tro tab moi")
-    add("       ------------------------------------------------------------ */")
+    # patchApplyOnboarding
     add("    function patchApplyOnboarding() {")
     add("        if (window.__fixPyApplyOnbPatched) return;")
     add("        var origApply = window.applyOnboardingSelection")
     add("                      || (typeof applyOnboardingSelection !== 'undefined'")
     add("                          ? applyOnboardingSelection : null);")
     add("        if (typeof origApply !== 'function') return;")
-    add("")
     add("        window.applyOnboardingSelection = function(topics, scrollTop) {")
     add("            var currentDs = (typeof CURRENT_DATASET !== 'undefined')")
     add("                            ? CURRENT_DATASET : 'tonghop';")
-    add("")
-    add("            // Chỉ override khi đang ở tab mới của fix.py")
     add("            if (!window.FIXPY_DATASETS || !window.FIXPY_DATASETS[currentDs]) {")
     add("                return origApply.apply(this, arguments);")
     add("            }")
-    add("")
     add("            var cfg = (typeof getOnboardingConfig === 'function')")
     add("                      ? getOnboardingConfig() : null;")
     add("            if (!cfg) return;")
-    add("")
     add("            var maxQ = cfg.max_questions;")
     add("            var isUnlimitedQ = (maxQ === -1 || maxQ === Infinity);")
-    add("")
     add("            var allowedHsk;")
     add("            if (cfg.hsk_allowed && Array.isArray(cfg.hsk_allowed) && cfg.hsk_allowed.length > 0) {")
     add("                allowedHsk = cfg.hsk_allowed.map(function(n) { return 'HSK' + n; });")
@@ -654,17 +617,14 @@ def build_js_override(ids_js, datasets_json):
     add("                             ? getAllowedHskList()")
     add("                             : ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];")
     add("            }")
-    add("")
     add("            var pool = RAW_DATA.filter(function(r) {")
     add("                if (allowedHsk.indexOf(r.hsk) === -1) return false;")
     add("                var s = (r.subject || '').trim();")
     add("                return topics.indexOf(s) !== -1;")
     add("            });")
-    add("")
     add("            pool.sort(function(a, b) {")
     add("                return (parseInt(a.stt) || 0) - (parseInt(b.stt) || 0);")
     add("            });")
-    add("")
     add("            var final = [];")
     add("            if (isUnlimitedQ) {")
     add("                final = pool.slice();")
@@ -676,7 +636,6 @@ def build_js_override(ids_js, datasets_json):
     add("                var perHsk = Math.ceil(maxQ / allowedHsk.length);")
     add("                var hskCount = {};")
     add("                allowedHsk.forEach(function(h) { hskCount[h] = 0; });")
-    add("")
     add("                for (var i = 0; i < pool.length && final.length < maxQ; i++) {")
     add("                    var r = pool[i];")
     add("                    var s = (r.subject || '').trim() || '__no_subject__';")
@@ -686,7 +645,6 @@ def build_js_override(ids_js, datasets_json):
     add("                    topicCount[s] = (topicCount[s] || 0) + 1;")
     add("                    if (r.hsk && hskCount[r.hsk] !== undefined) hskCount[r.hsk]++;")
     add("                }")
-    add("")
     add("                if (final.length < maxQ) {")
     add("                    var usedIds = {};")
     add("                    final.forEach(function(r) { usedIds[r.stt] = true; });")
@@ -702,13 +660,10 @@ def build_js_override(ids_js, datasets_json):
     add("                }")
     add("                if (final.length > maxQ) final = final.slice(0, maxQ);")
     add("            }")
-    add("")
     add("            final.sort(function(a, b) {")
     add("                return (parseInt(a.stt) || 0) - (parseInt(b.stt) || 0);")
     add("            });")
-    add("")
     add("            window.__onboardingOverride = final;")
-    add("")
     add("            if (typeof state !== 'undefined' && state) {")
     add("                state.search = '';")
     add("                state.hsk = '';")
@@ -720,14 +675,11 @@ def build_js_override(ids_js, datasets_json):
     add("                var cb = document.getElementById('clearSearchBtn');")
     add("                if (cb) cb.classList.remove('show');")
     add("            } catch(e) {}")
-    add("")
     add("            if (typeof applyFilter === 'function') applyFilter();")
     add("            if (typeof updateResultCount === 'function') updateResultCount();")
-    add("")
     add("            if (typeof showOnboardingActiveBanner === 'function') {")
     add("                showOnboardingActiveBanner(topics, final.length);")
     add("            }")
-    add("")
     add("            if (scrollTop) {")
     add("                setTimeout(function() {")
     add("                    var mainEl = document.getElementById('mainContent');")
@@ -739,12 +691,11 @@ def build_js_override(ids_js, datasets_json):
     add("                }, 200);")
     add("            }")
     add("        };")
-    add("")
     add("        window.__fixPyApplyOnbPatched = true;")
     add("    }")
     add("")
 
-    # ================= INIT =================
+    # INIT
     add("    function bindAll() {")
     add("        patchSwitchRawData();")
     add("        patchGetLimitedData();")
@@ -790,48 +741,62 @@ def main():
     with open(INDEX_HTML, "r", encoding="utf-8") as f:
         html = f.read()
 
+    # ═══════════════════════════════════════════════════════════════
+    #  SCAN tab thường từ data/
+    # ═══════════════════════════════════════════════════════════════
     datasets = scan_data_dir()
 
-    if not datasets:
+    # ═══════════════════════════════════════════════════════════════
+    #  ⭐ ĐỌC FILE TỪ VỰNG PREMIUM
+    # ═══════════════════════════════════════════════════════════════
+    vocab_data = []
+    vocab_real_path = None
+    if HAS_VOCAB_MODULE:
         print("")
-        print("[fix.py] Khong co dataset nao. Giu nguyen index.html.")
-        return
-
-    new_datasets = []
-    for ds in datasets:
-        marker1 = '"id":"' + ds["id"] + '"'
-        marker2 = "'id': '" + ds["id"] + "'"
-        marker3 = 'data-dataset="' + ds["id"] + '"'
-        if marker1 in html or marker2 in html or marker3 in html:
-            print("   [skip] '" + ds["id"] + "' da co trong HTML")
+        print("[VOCAB] Kiem tra file tu vung: " + VOCAB_FILE)
+        vocab_real_path = _find_file_safe(VOCAB_FILE)
+        if vocab_real_path:
+            print("[VOCAB] Tim thay: " + os.path.basename(vocab_real_path))
+            vocab_data = read_vocab_excel(vocab_real_path)
+            if not vocab_data:
+                print("[VOCAB] [!] File rong hoac loi")
         else:
-            new_datasets.append(ds)
+            print("[VOCAB] Khong co file tu vung - bo qua")
 
-    if not new_datasets:
+    # ═══════════════════════════════════════════════════════════════
+    #  KIỂM TRA CÓ GÌ MỚI CẦN PATCH KHÔNG
+    # ═══════════════════════════════════════════════════════════════
+    all_new = []
+    for ds in datasets:
+        marker = 'data-dataset="' + ds["id"] + '"'
+        if marker not in html:
+            all_new.append(ds)
+        else:
+            print("   [skip] '" + ds["id"] + "' da co trong HTML")
+
+    # ⭐ Kiểm tra tab từ vựng đã có chưa
+    vocab_exists_in_html = 'data-dataset="' + VOCAB_ID + '"' in html
+    add_vocab = bool(vocab_data) and not vocab_exists_in_html
+
+    if not all_new and not add_vocab:
         print("")
-        print("[fix.py] Tat ca dataset da co - khong can patch.")
+        print("[fix.py] Tat ca da co - khong can patch.")
         return
 
     print("")
-    print("[fix.py] Se them " + str(len(new_datasets)) + " tab:")
-    for ds in new_datasets:
-        print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
+    print("[fix.py] Se them:")
+    for ds in all_new:
+        print("   - [tab] " + ds["name"] + " (" + str(ds["count"]) + " cau)")
+    if add_vocab:
+        print("   - [👑 PREMIUM] " + VOCAB_LABEL + " (" + str(len(vocab_data)) + " tu)")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 1: BỎ - KHÔNG inject vào DATASET_REGISTRY
-    #  → Dropdown "Chuyên ngành" sẽ KHÔNG thấy tab "1000 Câu giao tiếp"
+    #  PATCH 2: BUTTONS
     # ═══════════════════════════════════════════════════════════════
     print("")
-    print("[PATCH 1] BỎ QUA - Không inject vào DATASET_REGISTRY (fix bug dropdown)")
-    print("   → Sẽ dùng window.FIXPY_DATASETS riêng trong JS override")
-
-    # ═══════════════════════════════════════════════════════════════
-    #  PATCH 2: Buttons — chèn SAU nút "Tổng hợp" (cấp 1)
-    # ═══════════════════════════════════════════════════════════════
-    print("")
-    print("[PATCH 2] Them button tabs (cấp 1 - sau 'Tổng hợp')...")
+    print("[PATCH 2] Them button tabs...")
     new_btns = ""
-    for ds in new_datasets:
+    for ds in all_new:
         label = ds["name"]
         new_btns += (
             '\n        <button class="ds-btn ds-btn-primary" '
@@ -841,7 +806,11 @@ def main():
             '        </button>'
         )
 
-    # Ưu tiên 1: Chèn SAU nút "Tổng hợp"
+    # ⭐ Thêm tab Từ vựng Premium
+    if add_vocab:
+        new_btns += build_vocab_tab_html(VOCAB_ID, VOCAB_LABEL)
+
+    # Chèn SAU nút "Tổng hợp"
     pat_after_tonghop = re.compile(
         r'(<button[^>]*class="[^"]*ds-btn[^"]*"[^>]*data-dataset="tonghop"[^>]*>.*?</button>)',
         re.MULTILINE | re.DOTALL
@@ -849,9 +818,8 @@ def main():
     html, n = pat_after_tonghop.subn(r'\1' + new_btns, html, count=1)
 
     if n > 0:
-        print("   [OK] Da chen " + str(len(new_datasets)) + " button (sau 'Tong hop')")
+        print("   [OK] Da chen button (sau 'Tong hop')")
     else:
-        # Fallback: chèn trước nút "chuyen-nganh"
         print("   [!] Khong thay nut 'tonghop' -> fallback truoc 'chuyen-nganh'")
         pat_before_cn = re.compile(
             r'(\s*)(<button\s+class="[^"]*ds-btn[^"]*"\s+[^>]*data-dataset-group="chuyen-nganh")',
@@ -861,30 +829,33 @@ def main():
         if n == 0:
             print("[X] Khong tim thay ca nut 'tonghop' lan 'chuyen-nganh'")
             sys.exit(1)
-        print("   [OK] Da chen " + str(len(new_datasets)) + " button (fallback)")
+        print("   [OK] Da chen button (fallback)")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 3: CSS layout cho 4 tab cấp 1
+    #  PATCH 3: CSS
     # ═══════════════════════════════════════════════════════════════
     print("")
-    print("[PATCH 3] CSS layout 4 tab cap 1...")
+    print("[PATCH 3] CSS layout...")
 
     css_lines = []
     css_lines.append("")
-    css_lines.append("/* ==== FIX.PY: AUTO-FIT LAYOUT CHO 4 TAB ==== */")
-    css_lines.append("/* Mobile (< 769px): luon 2 cot x 2 hang */")
+    css_lines.append("/* ==== FIX.PY: AUTO-FIT LAYOUT ==== */")
     css_lines.append("@media (max-width: 768px) {")
     css_lines.append("    .ds-main-row {")
     css_lines.append("        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;")
     css_lines.append("        gap: .5rem !important;")
     css_lines.append("    }")
     css_lines.append("}")
-    css_lines.append("/* Desktop (>= 769px): 4 cot ngang */")
-  # ═══════════════════════════════════════════════════════════
-    #  FIX LAYOUT TAB CON "CHỌN NGÀNH" - GRID ĐỀU, KÍCH THƯỚC BẰNG NHAU
-    # ═══════════════════════════════════════════════════════════
+    css_lines.append("@media (min-width: 769px) {")
+    css_lines.append("    .ds-main-row {")
+    css_lines.append("        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;")
+    css_lines.append("        gap: .55rem !important;")
+    css_lines.append("    }")
+    css_lines.append("}")
+
+    # Grid cho tab con chuyên ngành
     css_lines.append("")
-    css_lines.append("/* ==== FIX.PY: GRID ĐỀU CHO TAB CON CHUYÊN NGÀNH ==== */")
+    css_lines.append("/* ==== GRID ĐỀU CHO TAB CON CHUYÊN NGÀNH ==== */")
     css_lines.append(".ds-sub-grid {")
     css_lines.append("    display: grid !important;")
     css_lines.append("    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;")
@@ -892,14 +863,10 @@ def main():
     css_lines.append("    align-items: stretch !important;")
     css_lines.append("}")
     css_lines.append("@media (min-width: 600px) {")
-    css_lines.append("    .ds-sub-grid {")
-    css_lines.append("        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;")
-    css_lines.append("    }")
+    css_lines.append("    .ds-sub-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }")
     css_lines.append("}")
     css_lines.append("@media (min-width: 900px) {")
-    css_lines.append("    .ds-sub-grid {")
-    css_lines.append("        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;")
-    css_lines.append("    }")
+    css_lines.append("    .ds-sub-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }")
     css_lines.append("}")
     css_lines.append(".ds-sub-btn {")
     css_lines.append("    width: 100% !important;")
@@ -917,56 +884,27 @@ def main():
     css_lines.append("    line-height: 1.25 !important;")
     css_lines.append("    text-align: left !important;")
     css_lines.append("}")
-    css_lines.append(".ds-sub-btn i:first-child {")
-    css_lines.append("    flex-shrink: 0 !important;")
-    css_lines.append("    font-size: clamp(.8rem, 1.6vw, .95rem) !important;")
-    css_lines.append("}")
     css_lines.append(".ds-sub-btn span {")
     css_lines.append("    flex: 1 1 auto !important;")
     css_lines.append("    min-width: 0 !important;")
-    css_lines.append("    white-space: normal !important;")
-    css_lines.append("    overflow-wrap: anywhere !important;")
-    css_lines.append("    word-break: break-word !important;")
     css_lines.append("    display: -webkit-box !important;")
     css_lines.append("    -webkit-line-clamp: 2 !important;")
     css_lines.append("    -webkit-box-orient: vertical !important;")
     css_lines.append("    overflow: hidden !important;")
-    css_lines.append("    text-overflow: ellipsis !important;")
     css_lines.append("}")
-    # Mobile nhỏ: text nhỏ hơn nữa để không tràn
-    css_lines.append("@media (max-width: 400px) {")
-    css_lines.append("    .ds-sub-btn {")
-    css_lines.append("        font-size: .68rem !important;")
-    css_lines.append("        padding: .5rem .55rem !important;")
-    css_lines.append("        gap: .35rem !important;")
-    css_lines.append("    }")
-    css_lines.append("    .ds-sub-btn i:first-child {")
-    css_lines.append("        font-size: .78rem !important;")
-    css_lines.append("    }")
-    css_lines.append("}")
-    css_lines.append("@media (min-width: 769px) {")
-    css_lines.append("    .ds-main-row {")
-    css_lines.append("        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;")
-    css_lines.append("        gap: .55rem !important;")
-    css_lines.append("    }")
-    css_lines.append("}")
-    # ═══════════════════════════════════════════════════════════
-    #  FORCE STYLE GIỐNG TAB "TỔNG HỢP" CHO TẤT CẢ TAB FIX.PY
-    #  → Đồng bộ màu, không dùng TAB_COLORS riêng
-    # ═══════════════════════════════════════════════════════════
-    for ds in new_datasets:
+
+    # Force style tab thường giống "Tổng hợp"
+    for ds in all_new:
         i = ds["id"]
         sel = '.ds-btn[data-dataset="' + i + '"]'
         css_lines.append("")
-        css_lines.append("/* Force style giống tab Tổng hợp cho tab " + i + " */")
+        css_lines.append("/* Style cho tab " + i + " */")
         css_lines.append(sel + " {")
         css_lines.append("    background: var(--surface) !important;")
         css_lines.append("    border-color: var(--border) !important;")
         css_lines.append("    color: var(--text) !important;")
         css_lines.append("}")
-        css_lines.append(sel + " i:first-child {")
-        css_lines.append("    color: var(--primary) !important;")
-        css_lines.append("}")
+        css_lines.append(sel + " i:first-child { color: var(--primary) !important; }")
         css_lines.append(sel + ":hover {")
         css_lines.append("    border-color: var(--primary) !important;")
         css_lines.append("    background: var(--primary-light) !important;")
@@ -977,9 +915,7 @@ def main():
         css_lines.append("    border-color: transparent !important;")
         css_lines.append("    box-shadow: 0 4px 12px rgba(124, 58, 237, .35) !important;")
         css_lines.append("}")
-        css_lines.append(sel + ".active i:first-child {")
-        css_lines.append("    color: #fff !important;")
-        css_lines.append("}")
+        css_lines.append(sel + ".active i:first-child { color: #fff !important; }")
         css_lines.append('[data-theme="dark"] ' + sel + " {")
         css_lines.append("    background: var(--surface) !important;")
         css_lines.append("    border-color: var(--border) !important;")
@@ -989,50 +925,88 @@ def main():
         css_lines.append("    border-color: transparent !important;")
         css_lines.append("}")
 
+    # ⭐ CSS cho tab Từ vựng Premium
+    if add_vocab:
+        css_lines.append("")
+        css_lines.append("/* ==== VOCAB PREMIUM CSS ==== */")
+        css_lines.append(build_vocab_css(VOCAB_ID))
+
     css = "\n".join(css_lines) + "\n"
 
     pat_style = re.compile(r'(\s*)(</style>)', re.MULTILINE)
     html, n = pat_style.subn(r'\1' + css + r'\1\2', html, count=1)
     if n == 0:
-        print("   [!] Khong tim thay </style> - bo qua CSS")
+        print("   [!] Khong tim thay </style>")
     else:
-        print("   [OK] Da override CSS")
+        print("   [OK] Da inject CSS")
 
     # ═══════════════════════════════════════════════════════════════
-    #  PATCH 4: JS binding (dùng FIXPY_DATASETS)
+    #  PATCH 4: JS
     # ═══════════════════════════════════════════════════════════════
     print("")
-    print("[PATCH 4] JS binding (FIXPY_DATASETS + clone nut + tier lock)...")
-    ids_js = json.dumps([ds["id"] for ds in new_datasets])
+    print("[PATCH 4] JS binding...")
 
-    # Build dict FIXPY_DATASETS
+    # IDs cho tab thường
+    ids_js = json.dumps([ds["id"] for ds in all_new])
+
+    # Dict datasets cho JS
     datasets_dict = {}
-    for ds in new_datasets:
+    for ds in all_new:
         datasets_dict[ds["id"]] = ds
-    datasets_json = _escape_json_for_script(datasets_dict)
 
+    # ⭐ THÊM VOCAB VÀO FIXPY_DATASETS
+    if add_vocab:
+        datasets_dict[VOCAB_ID] = {
+            "id": VOCAB_ID,
+            "name": VOCAB_LABEL,
+            "icon": "fa-book",
+            "color": "#f59e0b",
+            "data": vocab_data,
+            "count": len(vocab_data),
+            "source": os.path.basename(vocab_real_path),
+            "type": "premium",
+            "group": "fixpy",
+        }
+
+    datasets_json = _escape_json_for_script(datasets_dict)
     js = build_js_override(ids_js, datasets_json)
 
+    # ⭐ JS riêng cho module Từ vựng Premium (bind lock + inject block)
+    if add_vocab:
+        js += build_vocab_js_override(VOCAB_ID)
+
+    # ⭐ Modal upgrade HTML
+    modal_html = ""
+    if add_vocab:
+        modal_html = build_vocab_modal_html()
+
     pat_body = re.compile(r'(\s*)(</body>)', re.MULTILINE)
-    html, n = pat_body.subn(r'\1' + js + r'\1\2', html, count=1)
+    html, n = pat_body.subn(r'\1' + modal_html + '\n' + js + r'\1\2', html, count=1)
     if n == 0:
         print("[X] Khong tim thay </body>")
         sys.exit(1)
-    print("   [OK] Da inject JS")
+    print("   [OK] Da inject JS + modal")
 
     # GHI FILE
     with open(INDEX_HTML, "w", encoding="utf-8") as f:
         f.write(html)
 
     size_kb = os.path.getsize(INDEX_HTML) / 1024
+
     print("")
     print("=" * 62)
     print("[fix.py] HOAN TAT! Da patch " + INDEX_HTML)
     print("[fix.py] Kich thuoc: " + str(round(size_kb, 1)) + " KB")
-    print("[fix.py] Da them " + str(len(new_datasets)) + " tab:")
-    for ds in new_datasets:
-        print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
-    print("[fix.py] Label tab: CHI dung ten file (khong them so cau)")
+
+    if all_new:
+        print("[fix.py] Tab thuong da them:")
+        for ds in all_new:
+            print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
+
+    if add_vocab:
+        print("[fix.py] 👑 Tab Tu vung PREMIUM: " + str(len(vocab_data)) + " tu")
+        print("[fix.py]    (chi Admin + Premium moi mo duoc)")
+
     print("[fix.py] Layout: PC 4 cot - Mobile 2 cot")
     print("[fix.py] CHI 1 TAB ACTIVE tai mot thoi diem")
     print("[fix.py] Dropdown 'Chuyen nganh' KHONG hien thi tab fix.py")
