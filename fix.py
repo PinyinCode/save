@@ -952,15 +952,22 @@ def main():
         }
 
     datasets_json = _escape_json_for_script(datasets_dict)
+
+    # ═══ Module fix.py chính (đã có <script> bên trong) ═══
     js = build_js_override(ids_js, datasets_json)
 
+    # ═══ Module vocab_premium (JS thuần - PHẢI wrap <script> riêng) ═══
     if add_vocab:
+        js += '\n<script>\n'
         js += build_vocab_js_override(VOCAB_ID)
+        js += '\n</script>\n'
 
+    # ═══ Modal HTML cho vocab (chèn trước JS) ═══
     modal_html = ""
     if add_vocab:
         modal_html = build_vocab_modal_html()
 
+    # ═══ Inject vào HTML trước </body> ═══
     pat_body = re.compile(r'(\s*)(</body>)', re.MULTILINE)
     html, n = pat_body.subn(
         lambda m: m.group(1) + modal_html + '\n' + js + m.group(1) + m.group(2),
@@ -970,7 +977,6 @@ def main():
         print("[X] Khong tim thay </body>")
         sys.exit(1)
     print("   [OK] Da inject JS + modal")
-
     # ═══ GHI FILE ═══
     with open(INDEX_HTML, "w", encoding="utf-8") as f:
         f.write(html)
