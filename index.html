@@ -8622,9 +8622,7 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
 
 /* VOCAB PREMIUM CSS */
 
-/* ═══════════════════════════════════════════════════════════════
-   👑 TAB TỪ VỰNG PREMIUM
-   ═══════════════════════════════════════════════════════════════ */
+/* TAB TU VUNG PREMIUM */
 .ds-btn[data-dataset="tu-vung"] {
     background: linear-gradient(135deg,
         rgba(251, 191, 36, .12) 0%,
@@ -8780,7 +8778,7 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
     50%      { transform: scale(1.12); }
 }
 
-/* ═══ Block Bộ thủ ═══ */
+/* BLOCK BO THU */
 .card-radical {
     margin-top: .7rem;
     padding: .7rem .85rem;
@@ -8845,7 +8843,7 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
     font-size: .8rem; color: var(--text-2); line-height: 1.4;
 }
 
-/* ═══ Block Mẹo nhớ ═══ */
+/* BLOCK MEO NHO */
 .card-mnemonic {
     margin-top: .7rem;
     padding: .7rem .85rem;
@@ -8883,7 +8881,7 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
 }
 [data-theme="dark"] .card-mnemonic-body .hint { color: #fcd34d; }
 
-/* ═══ Pinyin highlight ═══ */
+/* PINYIN HIGHLIGHT */
 .pinyin-hl {
     background: linear-gradient(180deg,
         transparent 55%,
@@ -8898,7 +8896,7 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
     color: #fde68a;
 }
 
-/* ═══ Modal upgrade ═══ */
+/* MODAL UPGRADE */
 .vocab-upgrade-modal {
     position: fixed; inset: 0;
     background: rgba(15, 23, 42, .85);
@@ -25722,15 +25720,14 @@ window.__switchRawData = function(datasetId) {
     console.log('[fix.py] Da bind ' + NEW_IDS.length + ' tab:', NEW_IDS);
 })();
 </script>
-/* ═══════════════════════════════════════════════════════════════
-   👑 VOCAB PREMIUM MODULE
-   ═══════════════════════════════════════════════════════════════ */
+/* VOCAB PREMIUM MODULE */
 (function() {
     'use strict';
 
     var VOCAB_ID = 'tu-vung';
     var _done = new WeakSet();
 
+    /* ═══ PHAN QUYEN ═══ */
     function canAccessVocab() {
         if (typeof currentUser === 'undefined' || !currentUser) return false;
         if (currentUser.role === 'admin') return true;
@@ -25764,6 +25761,7 @@ window.__switchRawData = function(datasetId) {
         return null;
     }
 
+    /* ═══ CAP NHAT TRANG THAI KHOA ═══ */
     function updateTabLockState() {
         var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
         if (!btn) return;
@@ -25773,16 +25771,17 @@ window.__switchRawData = function(datasetId) {
 
         if (can) {
             btn.classList.remove('vocab-locked');
-            btn.title = '👑 Từ vựng HSK 1-9 — Premium (đã mở khóa)';
+            btn.title = 'Tu vung HSK 1-9 - Premium (da mo khoa)';
         } else {
             btn.classList.add('vocab-locked');
-            btn.title = '👑 Từ vựng HSK — Chỉ dành cho Premium (1.000.000đ)';
+            btn.title = 'Tu vung HSK - Chi danh cho Premium (1.000.000d)';
             var lock = document.createElement('i');
             lock.className = 'fas fa-lock vocab-lock-icon';
             btn.appendChild(lock);
         }
     }
 
+    /* ═══ MODAL NANG CAP ═══ */
     function openUpgradeModal() {
         var modal = document.getElementById('vocabUpgradeModal');
         if (!modal) return;
@@ -25798,51 +25797,51 @@ window.__switchRawData = function(datasetId) {
         }
 
         if (tier === 'demo') {
-            if (titleEl) titleEl.textContent = 'Đăng nhập để mua Premium';
-            if (subEl) subEl.textContent = 'Gói Premium 1 triệu — Mở khóa Từ vựng HSK vĩnh viễn';
+            if (titleEl) titleEl.textContent = 'Dang nhap de mua Premium';
+            if (subEl) subEl.textContent = 'Goi Premium 1 trieu - Mo khoa Tu vung HSK vinh vien';
             if (actionsEl) {
                 actionsEl.innerHTML =
                     '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeLogin()">' +
-                        '<i class="fas fa-sign-in-alt"></i> Đăng nhập' +
+                        '<i class="fas fa-sign-in-alt"></i> Dang nhap' +
                     '</button>' +
                     '<button class="vocab-upgrade-btn secondary" onclick="vocabUpgradeClose()">' +
-                        'Để sau' +
+                        'De sau' +
                     '</button>';
             }
         } else if (tier === 'trial') {
-            if (titleEl) titleEl.textContent = 'Nâng cấp lên Premium';
-            if (subEl) subEl.textContent = 'Sở hữu Từ vựng HSK vĩnh viễn với gói Premium';
+            if (titleEl) titleEl.textContent = 'Nang cap len Premium';
+            if (subEl) subEl.textContent = 'So huu Tu vung HSK vinh vien voi goi Premium';
             if (actionsEl) {
                 actionsEl.innerHTML =
                     '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeRenew()">' +
-                        '<i class="fas fa-crown"></i> Mua Premium 1 triệu' +
+                        '<i class="fas fa-crown"></i> Mua Premium 1 trieu' +
                     '</button>' +
                     '<button class="vocab-upgrade-btn secondary" onclick="vocabUpgradeClose()">' +
-                        'Để sau' +
+                        'De sau' +
                     '</button>';
             }
         } else if (tier === 'expired') {
-            if (titleEl) titleEl.textContent = 'Tài khoản đã hết hạn';
-            if (subEl) subEl.textContent = 'Mua gói Premium 1 triệu để sở hữu vĩnh viễn';
+            if (titleEl) titleEl.textContent = 'Tai khoan da het han';
+            if (subEl) subEl.textContent = 'Mua goi Premium 1 trieu de so huu vinh vien';
             if (actionsEl) {
                 actionsEl.innerHTML =
                     '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeRenew()">' +
-                        '<i class="fas fa-crown"></i> Mua Premium 1 triệu' +
+                        '<i class="fas fa-crown"></i> Mua Premium 1 trieu' +
                     '</button>' +
                     '<button class="vocab-upgrade-btn secondary" onclick="vocabUpgradeClose()">' +
-                        'Để sau' +
+                        'De sau' +
                     '</button>';
             }
         } else {
-            if (titleEl) titleEl.textContent = 'Nâng cấp lên Premium';
-            if (subEl) subEl.textContent = 'Chỉ gói Premium mới mở được Từ vựng HSK';
+            if (titleEl) titleEl.textContent = 'Nang cap len Premium';
+            if (subEl) subEl.textContent = 'Chi goi Premium moi mo duoc Tu vung HSK';
             if (actionsEl) {
                 actionsEl.innerHTML =
                     '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeRenew()">' +
-                        '<i class="fas fa-crown"></i> Nâng cấp Premium 1 triệu' +
+                        '<i class="fas fa-crown"></i> Nang cap Premium 1 trieu' +
                     '</button>' +
                     '<button class="vocab-upgrade-btn secondary" onclick="vocabUpgradeClose()">' +
-                        'Để sau' +
+                        'De sau' +
                     '</button>';
             }
         }
@@ -25884,6 +25883,7 @@ window.__switchRawData = function(datasetId) {
         }
     });
 
+    /* ═══ PINYIN HIGHLIGHT ═══ */
     function highlightPinyin(text) {
         if (!text) return '';
         return text.replace(
@@ -25892,6 +25892,7 @@ window.__switchRawData = function(datasetId) {
         );
     }
 
+    /* ═══ BLOCK BO THU ═══ */
     function buildRadicalBlock(radical) {
         if (!radical) return '';
         var zh = _esc(radical.zh || '');
@@ -25903,7 +25904,7 @@ window.__switchRawData = function(datasetId) {
         if (zh) {
             nameLine = '<span class="char">' + zh + '</span>';
             if (py) nameLine += ' <span class="pinyin">(' + py + ')</span>';
-            if (st) nameLine += ' — ' + st + ' nét';
+            if (st) nameLine += ' - ' + st + ' net';
         }
 
         var html = '<div class="card-radical">';
@@ -25917,6 +25918,7 @@ window.__switchRawData = function(datasetId) {
         return html;
     }
 
+    /* ═══ BLOCK MEO NHO ═══ */
     function buildMnemonicBlock(text) {
         if (!text || !text.trim()) return '';
         var safe = _esc(text);
@@ -25930,6 +25932,7 @@ window.__switchRawData = function(datasetId) {
             + '</div>';
     }
 
+    /* ═══ INJECT VAO CARD ═══ */
     function enhanceCards() {
         if (!_isVocabMode()) return;
         if (!canAccessVocab()) return;
@@ -25970,6 +25973,7 @@ window.__switchRawData = function(datasetId) {
         });
     }
 
+    /* ═══ OBSERVER ═══ */
     function setupObserver() {
         var wrapper = document.getElementById('mobileWrapper');
         if (!wrapper) { setTimeout(setupObserver, 400); return; }
@@ -25978,26 +25982,91 @@ window.__switchRawData = function(datasetId) {
             if (timer) clearTimeout(timer);
             timer = setTimeout(enhanceCards, 80);
         });
-        observer.angobserve(wrapper, { childList: Hy true**, subtree: true });
+        observer.observe(wrapper, { childList: true, subtree: true });
         enhanceCards();
- +    }
+    }
 
-    function bindTabIfNeeded bi() {
-        var btn = document.querySelector('.dsến-btn[data-dataset="' thể + VOCAB_ID + '"]');
+    /* ═══ BIND TAB - FIX CHIN.styleH ═══ */
+    function bindTabIf.displayNeeded() {
+        var btn = document.querySelector =('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
         if (!btn || btn.__vocabPremiumBound) return;
+
+        /* ⭐ QUAN TRONG: Set flag de fix.py KHONG clone nut nay */
+        btn.__fixPyBound = true;
         btn.__vocabPremiumBound = true;
 
         btn.addEventListener('click', function(e) {
+            e.stopImmediatePropagation();
+            e.stopPropagation();
+            e.preventDefault();
+
+            /* KIEM TRA QUYEN */
             if (!canAccessVocab()) {
-                e.stopImmediatePropagation();
-                e.stopPropagation();
-                e.preventDefault();
+                console.log('[vocab] khong co quyen - mo modal');
                 openUpgradeModal();
                 return;
             }
+
+            /* CO QUYEN - SWITCH DATASET */
+            console.log('[vocab] co quyen - switch to tu-vung');
+
+            var sub = document.getElementById('dsSubWrap');
+            if (sub) sub 'none';
+
+            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            this.classList.add('active');
+
+            if (typeof window.__switchRawData === 'function') {
+                window.__switchRawData(VOCAB_ID);
+            }
+
+            if (typeof state !== 'undefined' && state) {
+                state.search = '';
+                state.hsk = '';
+                state.subject = '';
+            }
+            try {
+                var si = document.getElementById('searchInput');
+                var hf = document.getElementById('hskFilter');
+                var sf = document.getElementById('subjectFilter');
+                if (si) si.value = '';
+                if (hf) hf.value = '';
+                if (sf) sf.value = '';
+                var cb = document.getElementById('clearSearchBtn');
+                if (cb) cb.classList.remove('show');
+            } catch(err) {}
+
+            try {
+                if (typeof buildFilters === 'function') buildFilters();
+                if (typeof applyFilter === 'function') applyFilter();
+                if (typeof updateResultCount === 'function') updateResultCount();
+            } catch(err) {
+                console.warn('[vocab] re-render error:', err);
+            }
+
+            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            this.classList.add('active');
+
+            setTimeout(function() {
+                var mainEl = document.getElementById('mainContent');
+                if (mainEl) {
+                    var yOffset = mainEl.getBoundingClientRect().top + window.scrollY - 100;
+                    window.scrollTo({ top: yOffset, behavior: 'smooth' });
+                }
+            }, 100);
+
+            setTimeout(enhanceCards, 300);
+
         }, true);
+
+        console.log('[vocab] bound tab click');
     }
 
+    /* ═══ WATCH TIER ═══ */
     var _lastTier = null;
     function watchTier() {
         var key = '';
@@ -26012,15 +26081,17 @@ window.__switchRawData = function(datasetId) {
         if (key !== _lastTier) {
             _lastTier = key;
             updateTabLockState();
+            bindTabIfNeeded();
         }
     }
 
+    /* ═══ INIT ═══ */
     function init() {
         bindTabIfNeeded();
         updateTabLockState();
         setupObserver();
         setInterval(watchTier, 1000);
-        console.log('👑 Vocab Premium module ready');
+        console.log('[vocab] module ready');
     }
 
     if (document.readyState === 'loading') {
