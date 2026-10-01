@@ -1,33 +1,26 @@
 # -*- coding: utf-8 -*-
 r"""
-fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
-+ TỰ ĐỘNG thêm tab TỪ VỰNG PREMIUM (👑) từ data/tu_vung_hsk.xlsx
+fix.py - Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
++ TỰ ĐỘNG thêm tab TỪ VỰNG PREMIUM từ data/tu_vung_hsk.xlsx
 
 ĐẶC ĐIỂM:
   - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/ (TRỪ input.xlsx)
-  - Tên tab = TÊN FILE (normalize NFC — hiển thị đúng dấu tiếng Việt)
+  - Tên tab = TÊN FILE (normalize NFC - hiển thị đúng dấu tiếng Việt)
   - Label tab = CHỈ tên file, KHÔNG thêm số câu
-  - Logic đọc Excel GIỐNG data_reader.py
   - TIER LOCK + ONBOARDING giống tab tổng hợp
-  - Clone nút để XÓA event listener cũ → không còn popup
+  - Clone nút để XÓA event listener cũ - không còn popup
   - CHỈ 1 TAB ACTIVE tại một thời điểm
   - KHÔNG inject vào DATASET_REGISTRY
-  - KHÔNG can thiệp convert.py, ui_template.py, config.json
 
-  ⭐ TỪ VỰNG PREMIUM (mới):
+  TỪ VỰNG PREMIUM (mới):
   - Đọc file data/tu_vung_hsk.xlsx (11 cột A-K)
   - Tự sinh mẹo nhớ + bộ thủ từ vocab_data/
   - CHỈ mở cho Admin + Premium (isPermanent)
   - Modal upgrade khi không có quyền
 
-FIX (2026-10-01):
-  - Sửa lỗi `re.error: bad escape \u` khi chèn JS
-  - Dùng lambda thay vì replacement string trong re.subn
-  - An toàn với mọi ký tự escape (\u, \x, \N, ...)
-
 Cách chạy:
-    python scripts/convert.py    # Tạo index.html gốc
-    python fix.py                # Patch index.html
+    python scripts/convert.py
+    python fix.py
 """
 import json
 import os
@@ -46,10 +39,8 @@ INDEX_HTML = "index.html"
 CONFIG_JSON = "config.json"
 DATA_DIR = "data"
 
-# File cần BỎ QUA khi quét data/ (vì đã là tab "Tổng hợp" trong convert.py)
 SKIP_FILES = {"input.xlsx", "input.xls", "input.csv"}
 
-# ⭐ File TỪ VỰNG PREMIUM (đặt cùng cấp input.xlsx)
 VOCAB_FILE = os.path.join(DATA_DIR, "tu_vung_hsk.xlsx")
 VOCAB_ID = "tu-vung"
 VOCAB_LABEL = "Từ vựng HSK"
@@ -68,9 +59,9 @@ TAB_COLORS = [
 ]
 
 
-# ═══════════════════════════════════════════════════════════════════
-#  ⭐ IMPORT MODULE TỪ VỰNG PREMIUM (có try/except để không crash)
-# ═══════════════════════════════════════════════════════════════════
+# =================================================================
+#  IMPORT MODULE TỪ VỰNG PREMIUM
+# =================================================================
 try:
     from vocab_premium import (
         read_vocab_excel,
@@ -80,11 +71,10 @@ try:
         build_vocab_js_override,
     )
     HAS_VOCAB_MODULE = True
-    print("[fix.py] ✅ Đã load module vocab_premium")
+    print("[fix.py] OK - Da load module vocab_premium")
 except ImportError as e:
     HAS_VOCAB_MODULE = False
-    print("[fix.py] ⚠️  Không load được vocab_premium: " + str(e))
-    print("[fix.py] → Tab Từ vựng Premium sẽ KHÔNG được thêm")
+    print("[fix.py] WARN - Khong load duoc vocab_premium: " + str(e))
 
 
 # =================================================================
@@ -321,7 +311,7 @@ def _read_excel_rows(filepath):
 
 
 # =================================================================
-#  SCAN data/ — BO QUA input.xlsx VÀ tu_vung_hsk.xlsx
+#  SCAN data/
 # =================================================================
 def scan_data_dir():
     if not os.path.isdir(DATA_DIR):
@@ -343,7 +333,6 @@ def scan_data_dir():
     datasets = []
     used_ids = set()
 
-    # ⭐ Tên file từ vựng để bỏ qua khi quét tab thường
     vocab_basename = os.path.basename(VOCAB_FILE).lower()
 
     for filepath in files:
@@ -357,7 +346,6 @@ def scan_data_dir():
             print("   [skip] " + fname + " - da la tab Tong hop")
             continue
 
-        # ⭐ BỎ QUA file từ vựng (sẽ tạo tab Premium riêng)
         if fname.lower() == vocab_basename:
             print("   [skip] " + fname + " - se tao tab Tu vung Premium rieng")
             continue
@@ -402,26 +390,20 @@ def scan_data_dir():
 #  BUILD JS OVERRIDE
 # =================================================================
 def build_js_override(ids_js, datasets_json):
-    """Tra ve chuoi JS override - co onboarding + tier lock."""
     L = []
     add = L.append
 
     add("")
     add("<script>")
-    add("/* ================================================================")
-    add("   FIX.PY OVERRIDE - Bind tab moi + TIER LOCK + ONBOARDING")
-    add("   ================================================================")
-    add("*/")
+    add("/* FIX.PY OVERRIDE - Bind tab moi + TIER LOCK + ONBOARDING */")
     add("(function() {")
     add("    'use strict';")
     add("    var NEW_IDS = " + ids_js + ";")
     add("")
 
-    # FIXPY_DATASETS
     add("    window.FIXPY_DATASETS = " + datasets_json + ";")
     add("")
 
-    # Patch __switchRawData
     add("    function patchSwitchRawData() {")
     add("        if (window.__fixPySwitchPatched) return;")
     add("        var origSwitch = window.__switchRawData;")
@@ -444,7 +426,6 @@ def build_js_override(ids_js, datasets_json):
     add("    patchSwitchRawData();")
     add("")
 
-    # Patch markCurrentDatasetActive
     add("    function patchMarkActive() {")
     add("        if (window.__fixPyMarkPatched) return;")
     add("        window.markCurrentDatasetActive = function() {")
@@ -472,7 +453,6 @@ def build_js_override(ids_js, datasets_json):
     add("    }")
     add("")
 
-    # Patch getLimitedData
     add("    function patchGetLimitedData() {")
     add("        if (window.__fixPyLimitedPatched) return;")
     add("        var origGet = window.getLimitedData")
@@ -513,7 +493,6 @@ def build_js_override(ids_js, datasets_json):
     add("    }")
     add("")
 
-    # bindTab
     add("    function bindTab(dsId) {")
     add("        var btn = document.querySelector('.ds-btn[data-dataset=\"' + dsId + '\"]');")
     add("        if (!btn) return;")
@@ -596,7 +575,6 @@ def build_js_override(ids_js, datasets_json):
     add("    }")
     add("")
 
-    # patchApplyOnboarding
     add("    function patchApplyOnboarding() {")
     add("        if (window.__fixPyApplyOnbPatched) return;")
     add("        var origApply = window.applyOnboardingSelection")
@@ -700,7 +678,6 @@ def build_js_override(ids_js, datasets_json):
     add("    }")
     add("")
 
-    # INIT
     add("    function bindAll() {")
     add("        patchSwitchRawData();")
     add("        patchGetLimitedData();")
@@ -732,152 +709,38 @@ def build_js_override(ids_js, datasets_json):
 
 
 # =================================================================
-#  MAIN
+#  BUILD CSS LAYOUT
 # =================================================================
-def main():
-    print("=" * 62)
-    print("[fix.py] Auto-scan data/ -> them tab rieng cho moi file")
-    print("=" * 62)
-
-    if not os.path.isfile(INDEX_HTML):
-        print("[X] Khong thay " + INDEX_HTML + ". Chay convert.py truoc.")
-        sys.exit(1)
-
-    with open(INDEX_HTML, "r", encoding="utf-8") as f:
-        html = f.read()
-
-    # ═══════════════════════════════════════════════════════════════
-    #  SCAN tab thường từ data/
-    # ═══════════════════════════════════════════════════════════════
-    datasets = scan_data_dir()
-
-    # ═══════════════════════════════════════════════════════════════
-    #  ⭐ ĐỌC FILE TỪ VỰNG PREMIUM
-    # ═══════════════════════════════════════════════════════════════
-    vocab_data = []
-    vocab_real_path = None
-    if HAS_VOCAB_MODULE:
-        print("")
-        print("[VOCAB] Kiem tra file tu vung: " + VOCAB_FILE)
-        vocab_real_path = _find_file_safe(VOCAB_FILE)
-        if vocab_real_path:
-            print("[VOCAB] Tim thay: " + os.path.basename(vocab_real_path))
-            vocab_data = read_vocab_excel(vocab_real_path)
-            if not vocab_data:
-                print("[VOCAB] [!] File rong hoac loi")
-        else:
-            print("[VOCAB] Khong co file tu vung - bo qua")
-
-    # ═══════════════════════════════════════════════════════════════
-    #  KIỂM TRA CÓ GÌ MỚI CẦN PATCH KHÔNG
-    # ═══════════════════════════════════════════════════════════════
-    all_new = []
-    for ds in datasets:
-        marker = 'data-dataset="' + ds["id"] + '"'
-        if marker not in html:
-            all_new.append(ds)
-        else:
-            print("   [skip] '" + ds["id"] + "' da co trong HTML")
-
-    # ⭐ Kiểm tra tab từ vựng đã có chưa
-    vocab_exists_in_html = 'data-dataset="' + VOCAB_ID + '"' in html
-    add_vocab = bool(vocab_data) and not vocab_exists_in_html
-
-    if not all_new and not add_vocab:
-        print("")
-        print("[fix.py] Tat ca da co - khong can patch.")
-        return
-
-    print("")
-    print("[fix.py] Se them:")
-    for ds in all_new:
-        print("   - [tab] " + ds["name"] + " (" + str(ds["count"]) + " cau)")
-    if add_vocab:
-        print("   - [👑 PREMIUM] " + VOCAB_LABEL + " (" + str(len(vocab_data)) + " tu)")
-
-    # ═══════════════════════════════════════════════════════════════
-    #  PATCH 2: BUTTONS
-    # ═══════════════════════════════════════════════════════════════
-    print("")
-    print("[PATCH 2] Them button tabs...")
-    new_btns = ""
-    for ds in all_new:
-        label = ds["name"]
-        new_btns += (
-            '\n        <button class="ds-btn ds-btn-primary" '
-            'data-dataset="' + ds["id"] + '">\n'
-            '            <i class="fas ' + ds["icon"] + '"></i>\n'
-            '            <span>' + _js_str(label) + '</span>\n'
-            '        </button>'
-        )
-
-    # ⭐ Thêm tab Từ vựng Premium
-    if add_vocab:
-        new_btns += build_vocab_tab_html(VOCAB_ID, VOCAB_LABEL)
-
-    # Chèn SAU nút "Tổng hợp" — DÙNG LAMBDA (an toàn với \u)
-    pat_after_tonghop = re.compile(
-        r'(<button[^>]*class="[^"]*ds-btn[^"]*"[^>]*data-dataset="tonghop"[^>]*>.*?</button>)',
-        re.MULTILINE | re.DOTALL
-    )
-    html, n = pat_after_tonghop.subn(
-        lambda m: m.group(1) + new_btns,
-        html, count=1
-    )
-
-    if n > 0:
-        print("   [OK] Da chen button (sau 'Tong hop')")
-    else:
-        print("   [!] Khong thay nut 'tonghop' -> fallback truoc 'chuyen-nganh'")
-        pat_before_cn = re.compile(
-            r'(\s*)(<button\s+class="[^"]*ds-btn[^"]*"\s+[^>]*data-dataset-group="chuyen-nganh")',
-            re.MULTILINE
-        )
-        html, n = pat_before_cn.subn(
-            lambda m: m.group(1) + new_btns + '\n        ' + m.group(2),
-            html, count=1
-        )
-        if n == 0:
-            print("[X] Khong tim thay ca nut 'tonghop' lan 'chuyen-nganh'")
-            sys.exit(1)
-        print("   [OK] Da chen button (fallback)")
-
-    # ═══════════════════════════════════════════════════════════════
-    #  PATCH 3: CSS
-    # ═══════════════════════════════════════════════════════════════
-    print("")
-    print("[PATCH 3] CSS layout...")
-
+def build_layout_css(new_datasets, add_vocab):
     css_lines = []
     css_lines.append("")
-    css_lines.append("/* ==== FIX.PY: AUTO-FIT LAYOUT ==== */")
+    css_lines.append("/* FIX.PY: AUTO-FIT LAYOUT */")
     css_lines.append("@media (max-width: 768px) {")
     css_lines.append("    .ds-main-row {")
-    css_lines.append("        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;")
+    css_lines.append("        grid-template-columns: repeat(2, minmax(0, 1fr) ) !important;")
     css_lines.append("        gap: .5rem !important;")
     css_lines.append("    }")
     css_lines.append("}")
     css_lines.append("@media (min-width: 769px) {")
     css_lines.append("    .ds-main-row {")
-    css_lines.append("        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;")
+    css_lines.append("        grid-template-columns: repeat(4, minmax(0, 1fr) ) !important;")
     css_lines.append("        gap: .55rem !important;")
     css_lines.append("    }")
     css_lines.append("}")
 
-    # Grid cho tab con chuyên ngành
     css_lines.append("")
-    css_lines.append("/* ==== GRID ĐỀU CHO TAB CON CHUYÊN NGÀNH ==== */")
+    css_lines.append("/* GRID DEU CHO TAB CON CHUYEN NGANH */")
     css_lines.append(".ds-sub-grid {")
     css_lines.append("    display: grid !important;")
-    css_lines.append("    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;")
+    css_lines.append("    grid-template-columns: repeat(2, minmax(0, 1fr) ) !important;")
     css_lines.append("    gap: .55rem !important;")
     css_lines.append("    align-items: stretch !important;")
     css_lines.append("}")
     css_lines.append("@media (min-width: 600px) {")
-    css_lines.append("    .ds-sub-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }")
+    css_lines.append("    .ds-sub-grid { grid-template-columns: repeat(3, minmax(0, 1fr) ) !important; }")
     css_lines.append("}")
     css_lines.append("@media (min-width: 900px) {")
-    css_lines.append("    .ds-sub-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }")
+    css_lines.append("    .ds-sub-grid { grid-template-columns: repeat(4, minmax(0, 1fr) ) !important; }")
     css_lines.append("}")
     css_lines.append(".ds-sub-btn {")
     css_lines.append("    width: 100% !important;")
@@ -890,10 +753,9 @@ def main():
     css_lines.append("    border-radius: 12px !important;")
     css_lines.append("    font-size: clamp(.68rem, 1.9vw, .82rem) !important;")
     css_lines.append("    white-space: normal !important;")
-    css CSS_lines.append("    word-break: === break-word !important;")
-    css_lines=.append("    overflow-wrap: anywhere */ !important;")
-   ")
-        css_lines.append("    line-height: 1.25 !important;")
+    css_lines.append("    word-break: break-word !important;")
+    css_lines.append("    overflow-wrap: anywhere !important;")
+    css_lines.append("    line-height: 1.25 !important;")
     css_lines.append("    text-align: left !important;")
     css_lines.append("}")
     css_lines.append(".ds-sub-btn span {")
@@ -905,8 +767,7 @@ def main():
     css_lines.append("    overflow: hidden !important;")
     css_lines.append("}")
 
-    # Force style tab thường giống "Tổng hợp"
-    for ds in all_new:
+    for ds in new_datasets:
         i = ds["id"]
         sel = '.ds-btn[data-dataset="' + i + '"]'
         css_lines.append("")
@@ -937,14 +798,124 @@ def main():
         css_lines.append("    border-color: transparent !important;")
         css_lines.append("}")
 
-    # ⭐ CSS cho tab Từ vựng Premium
     if add_vocab:
         css_lines.append("")
-        css_lines.append("/* ==== VOCAB PREMIUM css_lines.append(build_vocab_css(VOCAB_ID))
+        css_lines.append("/* VOCAB PREMIUM CSS */")
+        css_lines.append(build_vocab_css(VOCAB_ID))
 
-    css = "\n".join(css_lines) + "\n"
+    return "\n".join(css_lines) + "\n"
 
-    # ⭐ DÙNG LAMBDA — tránh lỗi bad escape \u
+
+# =================================================================
+#  MAIN
+# =================================================================
+def main():
+    print("=" * 62)
+    print("[fix.py] Auto-scan data/ -> them tab rieng cho moi file")
+    print("=" * 62)
+
+    if not os.path.isfile(INDEX_HTML):
+        print("[X] Khong thay " + INDEX_HTML + ". Chay convert.py truoc.")
+        sys.exit(1)
+
+    with open(INDEX_HTML, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    # ═══ SCAN tab thường ═══
+    datasets = scan_data_dir()
+
+    # ═══ ĐỌC FILE TỪ VỰNG PREMIUM ═══
+    vocab_data = []
+    vocab_real_path = None
+    if HAS_VOCAB_MODULE:
+        print("")
+        print("[VOCAB] Kiem tra file tu vung: " + VOCAB_FILE)
+        vocab_real_path = _find_file_safe(VOCAB_FILE)
+        if vocab_real_path:
+            print("[VOCAB] Tim thay: " + os.path.basename(vocab_real_path))
+            vocab_data = read_vocab_excel(vocab_real_path)
+            if not vocab_data:
+                print("[VOCAB] [!] File rong hoac loi")
+        else:
+            print("[VOCAB] Khong co file tu vung - bo qua")
+
+    # ═══ KIỂM TRA CÓ GÌ MỚI ═══
+    all_new = []
+    for ds in datasets:
+        marker = 'data-dataset="' + ds["id"] + '"'
+        if marker not in html:
+            all_new.append(ds)
+        else:
+            print("   [skip] '" + ds["id"] + "' da co trong HTML")
+
+    vocab_exists_in_html = 'data-dataset="' + VOCAB_ID + '"' in html
+    add_vocab = bool(vocab_data) and not vocab_exists_in_html
+
+    if not all_new and not add_vocab:
+        print("")
+        print("[fix.py] Tat ca da co - khong can patch.")
+        return
+
+    print("")
+    print("[fix.py] Se them:")
+    for ds in all_new:
+        print("   - [tab] " + ds["name"] + " (" + str(ds["count"]) + " cau)")
+    if add_vocab:
+        print("   - [PREMIUM] " + VOCAB_LABEL + " (" + str(len(vocab_data)) + " tu)")
+
+    # ═══════════════════════════════════════════════════════════
+    #  PATCH 2: BUTTONS
+    # ═══════════════════════════════════════════════════════════
+    print("")
+    print("[PATCH 2] Them button tabs...")
+    new_btns = ""
+    for ds in all_new:
+        label = ds["name"]
+        new_btns += (
+            '\n        <button class="ds-btn ds-btn-primary" '
+            'data-dataset="' + ds["id"] + '">\n'
+            '            <i class="fas ' + ds["icon"] + '"></i>\n'
+            '            <span>' + _js_str(label) + '</span>\n'
+            '        </button>'
+        )
+
+    if add_vocab:
+        new_btns += build_vocab_tab_html(VOCAB_ID, VOCAB_LABEL)
+
+    pat_after_tonghop = re.compile(
+        r'(<button[^>]*class="[^"]*ds-btn[^"]*"[^>]*data-dataset="tonghop"[^>]*>.*?</button>)',
+        re.MULTILINE | re.DOTALL
+    )
+    html, n = pat_after_tonghop.subn(
+        lambda m: m.group(1) + new_btns,
+        html, count=1
+    )
+
+    if n > 0:
+        print("   [OK] Da chen button (sau 'Tong hop')")
+    else:
+        print("   [!] Khong thay nut 'tonghop' -> fallback truoc 'chuyen-nganh'")
+        pat_before_cn = re.compile(
+            r'(\s*)(<button\s+class="[^"]*ds-btn[^"]*"\s+[^>]*data-dataset-group="chuyen-nganh")',
+            re.MULTILINE
+        )
+        html, n = pat_before_cn.subn(
+            lambda m: m.group(1) + new_btns + '\n        ' + m.group(2),
+            html, count=1
+        )
+        if n == 0:
+            print("[X] Khong tim thay ca nut 'tonghop' lan 'chuyen-nganh'")
+            sys.exit(1)
+        print("   [OK] Da chen button (fallback)")
+
+    # ═══════════════════════════════════════════════════════════
+    #  PATCH 3: CSS
+    # ═══════════════════════════════════════════════════════════
+    print("")
+    print("[PATCH 3] CSS layout...")
+
+    css = build_layout_css(all_new, add_vocab)
+
     pat_style = re.compile(r'(\s*)(</style>)', re.MULTILINE)
     html, n = pat_style.subn(
         lambda m: m.group(1) + css + m.group(1) + m.group(2),
@@ -955,21 +926,18 @@ def main():
     else:
         print("   [OK] Da inject CSS")
 
-    # ═══════════════════════════════════════════════════════════════
+    # ═══════════════════════════════════════════════════════════
     #  PATCH 4: JS
-    # ═══════════════════════════════════════════════════════════════
+    # ═══════════════════════════════════════════════════════════
     print("")
     print("[PATCH 4] JS binding...")
 
-    # IDs cho tab thường
     ids_js = json.dumps([ds["id"] for ds in all_new])
 
-    # Dict datasets cho JS
     datasets_dict = {}
     for ds in all_new:
         datasets_dict[ds["id"]] = ds
 
-    # ⭐ THÊM VOCAB VÀO FIXPY_DATASETS
     if add_vocab:
         datasets_dict[VOCAB_ID] = {
             "id": VOCAB_ID,
@@ -986,16 +954,13 @@ def main():
     datasets_json = _escape_json_for_script(datasets_dict)
     js = build_js_override(ids_js, datasets_json)
 
-    # ⭐ JS riêng cho module Từ vựng Premium
     if add_vocab:
         js += build_vocab_js_override(VOCAB_ID)
 
-    # ⭐ Modal upgrade HTML
     modal_html = ""
     if add_vocab:
         modal_html = build_vocab_modal_html()
 
-    # ⭐ DÙNG LAMBDA — tránh lỗi bad escape \u (ĐÂY LÀ CHỖ BỊ LỖI)
     pat_body = re.compile(r'(\s*)(</body>)', re.MULTILINE)
     html, n = pat_body.subn(
         lambda m: m.group(1) + modal_html + '\n' + js + m.group(1) + m.group(2),
@@ -1006,7 +971,7 @@ def main():
         sys.exit(1)
     print("   [OK] Da inject JS + modal")
 
-    # GHI FILE
+    # ═══ GHI FILE ═══
     with open(INDEX_HTML, "w", encoding="utf-8") as f:
         f.write(html)
 
@@ -1023,12 +988,11 @@ def main():
             print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
 
     if add_vocab:
-        print("[fix.py] 👑 Tab Tu vung PREMIUM: " + str(len(vocab_data)) + " tu")
+        print("[fix.py] Tab Tu vung PREMIUM: " + str(len(vocab_data)) + " tu")
         print("[fix.py]    (chi Admin + Premium moi mo duoc)")
 
     print("[fix.py] Layout: PC 4 cot - Mobile 2 cot")
     print("[fix.py] CHI 1 TAB ACTIVE tai mot thoi diem")
-    print("[fix.py] Dropdown 'Chuyen nganh' KHONG hien thi tab fix.py")
     print("=" * 62)
 
 
