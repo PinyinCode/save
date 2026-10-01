@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-fix.py — Auto-scan data/ và thêm MỌI file Excel thành TAB TRÊN TRANG CHỦ.
+fix.py — Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
 
 ĐẶC ĐIỂM:
   - Đọc HẾT mọi file .xlsx/.xls/.csv trong data/ (TRỪ input.xlsx)
@@ -14,31 +14,9 @@ fix.py — Auto-scan data/ và thêm MỌI file Excel thành TAB TRÊN TRANG CH�
   - CHỈ 1 TAB ACTIVE tại một thời điểm
   - KHÔNG can thiệp convert.py, ui_template.py, config.json
 
-✅ VỊ TRÍ FILE:
-   repo-root/
-   ├── index.html              ← OUTPUT (convert.py + fix.py ghi)
-   ├── fix.py                  ← FILE NÀY
-   ├── data/                   ← fix.py quét (KHÔNG phải chuyên ngành)
-   │   ├── 1000 Câu giao tiếp.xlsx
-   │   ├── HSK 1.xlsx
-   │   └── ...
-   └── scripts/
-       ├── convert.py          ← Script build chính (chạy TRƯỚC)
-       ├── config.json
-       └── data/               ← Chuyên ngành (convert.py quét, KHÔNG đọc ở đây)
-           ├── Giày da/
-           ├── Kế toán/
-           └── ...
-
-✅ FIX (2026-09-30):
-   - Path resolve theo SCRIPT_DIR (không phụ thuộc CWD)
-   - Chèn tab vào HÀNG CHÍNH (sau nút "Yêu thích")
-     → KHÔNG nhét vào dropdown Chuyên ngành
-   - CSS auto-fit cho nhiều tab
-
 Cách chạy:
-    python scripts/convert.py    # Tạo index.html gốc (chạy TRƯỚC)
-    python fix.py                # Patch index.html — thêm tab vào hàng chính
+    python scripts/convert.py    # Tạo index.html gốc
+    python fix.py                # Patch index.html — thêm tab từ data/
 """
 import json
 import os
@@ -51,24 +29,18 @@ import openpyxl
 
 
 # =================================================================
-#  ⭐ CONFIG — resolve theo vị trí file script
+#  CONFIG
 # =================================================================
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))    # = repo-root/
+INDEX_HTML = "index.html"
+CONFIG_JSON = "config.json"
+DATA_DIR = "data"
 
-DATA_DIR    = os.environ.get("FIX_DATA_DIR",
-                             os.path.join(SCRIPT_DIR, "data"))
-INDEX_HTML  = os.environ.get("FIX_INDEX_HTML",
-                             os.path.join(SCRIPT_DIR, "index.html"))
-CONFIG_JSON = os.environ.get("FIX_CONFIG_JSON",
-                             os.path.join(SCRIPT_DIR, "config.json"))
-
-# File cần BỎ QUA khi quét data/ (đã là tab "Tổng hợp" trong convert.py)
+# File cần BỎ QUA khi quét data/ (vì đã là tab "Tổng hợp" trong convert.py)
 SKIP_FILES = {"input.xlsx", "input.xls", "input.csv"}
 
-print("[fix.py] SCRIPT_DIR  = " + SCRIPT_DIR)
-print("[fix.py] DATA_DIR    = " + DATA_DIR + "  (chỉ data/ root)")
-print("[fix.py] INDEX_HTML  = " + INDEX_HTML)
-
+if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
+    os.chdir("..")
+    print("[fix.py] Phat hien chay tu scripts/ -> chuyen ve root")
 
 TAB_ICONS = [
     "fa-comments", "fa-file-alt", "fa-book", "fa-graduation-cap",
@@ -799,7 +771,7 @@ def build_js_override(ids_js):
 # =================================================================
 def main():
     print("=" * 62)
-    print("[fix.py] Auto-scan data/ -> them tab vao HANG CHINH")
+    print("[fix.py] Auto-scan data/ -> them tab rieng cho moi file")
     print("=" * 62)
 
     if not os.path.isfile(INDEX_HTML):
@@ -854,11 +826,10 @@ def main():
         sys.exit(1)
     print("   [OK] Da chen " + str(len(new_datasets)) + " entry")
 
-    # ═══════════════════════════════════════════════════════════════
-    #  ⭐ PATCH 2: Buttons — CHÈN VÀO HÀNG CHÍNH (không vào dropdown CN)
-    # ═══════════════════════════════════════════════════════════════
+  # PATCH 2: Buttons — CHỈ DÙNG TÊN FILE, KHÔNG THÊM SỐ CÂU
+    # ═══ FIX: Chèn vào CẤP 1 (cạnh "Tổng hợp"), KHÔNG chèn vào dropdown ═══
     print("")
-    print("[PATCH 2] Them button tabs vao HANG CHINH...")
+    print("[PATCH 2] Them button tabs (cap 1 - canh 'Tong hop')...")
     new_btns = ""
     for ds in new_datasets:
         # ═══ Label = CHỈ tên file, KHÔNG thêm số câu ═══
@@ -868,39 +839,30 @@ def main():
             'data-dataset="' + ds["id"] + '">\n'
             '            <i class="fas ' + ds["icon"] + '"></i>\n'
             '            <span>' + _js_str(label) + '</span>\n'
-            '        </button>\n    '
+            '        </button>'
         )
 
-    # ─── Ưu tiên 1: Chèn SAU nút "Yêu thích" ───
-    _pat_after_fav = re.compile(
-        r'(<button[^>]*data-dataset="yeu-thich"[^>]*>.*?</button>)',
-        re.DOTALL
+    # ─── ƯU TIÊN 1: Chèn SAU nút "Tổng hợp" (cấp 1) ───
+    pat_after_tonghop = re.compile(
+        r'(<button[^>]*class="[^"]*ds-btn[^"]*"[^>]*data-dataset="tonghop"[^>]*>.*?</button>)',
+        re.MULTILINE | re.DOTALL
     )
-    html, n = _pat_after_fav.subn(r'\1' + new_btns, html, count=1)
+    html, n = pat_after_tonghop.subn(r'\1' + new_btns, html, count=1)
 
-    if n == 0:
-        # ─── Ưu tiên 2: Chèn SAU nút "Tổng hợp" ───
-        print("   [!] Không tìm thấy nút 'yeu-thich', thử 'tonghop'")
-        _pat_after_tonghop = re.compile(
-            r'(<button[^>]*data-dataset="tonghop"[^>]*>.*?</button>)',
-            re.DOTALL
+    if n > 0:
+        print("   [OK] Da chen " + str(len(new_datasets)) + " button (sau 'Tong hop')")
+    else:
+        # ─── FALLBACK: Chèn TRƯỚC nút "chuyen-nganh" nhưng ở CẤP 1 ───
+        print("   [!] Khong thay nut 'tonghop' -> thu fallback...")
+        pat_before_cn = re.compile(
+            r'(\s*)(<button\s+class="[^"]*ds-btn[^"]*"\s+[^>]*data-dataset-group="chuyen-nganh")',
+            re.MULTILINE
         )
-        html, n = _pat_after_tonghop.subn(r'\1' + new_btns, html, count=1)
-
-    if n == 0:
-        # ─── Ưu tiên 3: Chèn SAU nút Chuyên ngành (cuối hàng chính) ───
-        print("   [!] Không tìm thấy nút 'tonghop', thử 'chuyen-nganh'")
-        _pat_after_cn = re.compile(
-            r'(<button[^>]*data-dataset-group="chuyen-nganh"[^>]*>.*?</button>)',
-            re.DOTALL
-        )
-        html, n = _pat_after_cn.subn(r'\1' + new_btns, html, count=1)
-
-    if n == 0:
-        print("[X] Không tìm thấy nút neo (yeu-thich / tonghop / chuyen-nganh)")
-        sys.exit(1)
-
-    print("   [OK] Đã chèn " + str(len(new_datasets)) + " button vào HÀNG CHÍNH")
+        html, n = pat_before_cn.subn(r'\1' + new_btns + '\n        ' + r'\2', html, count=1)
+        if n == 0:
+            print("[X] Khong tim thay ca nut 'tonghop' lan 'chuyen-nganh'")
+            sys.exit(1)
+        print("   [OK] Da chen " + str(len(new_datasets)) + " button (fallback)")
 
     # PATCH 3: CSS layout
     print("")
@@ -908,25 +870,26 @@ def main():
 
     css_lines = []
     css_lines.append("")
-    css_lines.append("/* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB TRÊN HÀNG CHÍNH ==== */")
-
-    # Mobile: 2 cột
+    css_lines.append("/* ==== FIX.PY: AUTO-FIT LAYOUT CHO N TAB ==== */")
     css_lines.append("@media (max-width: 768px) {")
     css_lines.append("    .ds-main-row {")
     css_lines.append("        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;")
     css_lines.append("        gap: .5rem !important;")
     css_lines.append("    }")
     css_lines.append("}")
-
-    # Tablet + PC nhỏ: auto-fit
-    css_lines.append("@media (min-width: 769px) {")
+    css_lines.append("@media (min-width: 769px) and (max-width: 1100px) {")
     css_lines.append("    .ds-main-row {")
-    css_lines.append("        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)) !important;")
+    css_lines.append("        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;")
     css_lines.append("        gap: .55rem !important;")
     css_lines.append("    }")
     css_lines.append("}")
+    css_lines.append("@media (min-width: 1101px) {")
+    css_lines.append("    .ds-main-row {")
+    css_lines.append("        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;")
+    css_lines.append("        gap: .6rem !important;")
+    css_lines.append("    }")
+    css_lines.append("}")
 
-    # Style màu sắc cho từng tab
     for ds in new_datasets:
         c = ds["color"]
         i = ds["id"]
@@ -996,12 +959,11 @@ def main():
     print("=" * 62)
     print("[fix.py] HOAN TAT! Da patch " + INDEX_HTML)
     print("[fix.py] Kich thuoc: " + str(round(size_kb, 1)) + " KB")
-    print("[fix.py] Da them " + str(len(new_datasets)) + " tab VAO HANG CHINH:")
+    print("[fix.py] Da them " + str(len(new_datasets)) + " tab:")
     for ds in new_datasets:
         print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
     print("[fix.py] Label tab: CHI dung ten file (khong them so cau)")
-    print("[fix.py] Vị trí: SAU nút Yêu thích (hàng chính, không phải dropdown CN)")
-    print("[fix.py] Layout: Mobile 2 cột - PC auto-fit")
+    print("[fix.py] Layout: PC auto-fit - Mobile 2 cot")
     print("[fix.py] TICH HOP: Tier lock + Onboarding giong tab tonghop")
     print("[fix.py] CHI 1 TAB ACTIVE tai mot thoi diem")
     print("=" * 62)
