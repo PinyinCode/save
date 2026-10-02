@@ -889,11 +889,77 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     var VOCAB_ID = '__VOCAB_ID__';
     var _done = new WeakSet();
 
+    // ⭐ Mở tab cho TẤT CẢ tier
     function canAccessVocab() {
+        return true;
+    }
+
+    // ⭐ Chỉ Premium/Admin xem FULL
+    function canViewFullVocab() {
         if (typeof currentUser === 'undefined' || !currentUser) return false;
         if (currentUser.role === 'admin') return true;
         if (currentUser.isPermanent === true) return true;
         return false;
+    }
+
+    // ⭐ Đọc max_questions từ ONBOARDING_CONFIG theo tier
+    function getMaxVocabWords() {
+        // Admin → Full
+        if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
+            return Infinity;
+        }
+
+        // Premium (isPermanent) → Full
+        if (typeof currentUser !== 'undefined' && currentUser && currentUser.isPermanent === true) {
+            return Infinity;
+        }
+
+        // Lấy key tier
+        var key = 'demo';
+        if (typeof currentUser !== 'undefined' && currentUser) {
+            if (currentUser.isTrial || currentUser.tier === 'trial') key = 'trial';
+            else if (currentUser.isExpiredOnly || currentUser.tier === 'expired') key = 'demo';
+            else if (currentUser.tier === 'active') key = 'active';
+        }
+
+        // Đọc từ ONBOARDING_CONFIG
+        if (typeof ONBOARDING_CONFIG !== 'undefined' && ONBOARDING_CONFIG) {
+            var cfg = ONBOARDING_CONFIG[key];
+            if (cfg && typeof cfg.max_questions === 'number') {
+                var mq = cfg.max_questions;
+                // -1 = không giới hạn
+                if (mq === -1 || mq === Infinity) return Infinity;
+                return Math.max(0, mq);
+            }
+        }
+
+        // Fallback
+        return 20;
+    }
+
+    // ⭐ Giới hạn data
+    function limitVocabData() {
+        var max = getMaxVocabWords();
+
+        var fullList = [];
+        if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
+            fullList = window.FIXPY_DATASETS[VOCAB_ID].data || [];
+        }
+        if (!fullList.length) return;
+
+        if (max === Infinity) {
+            try {
+                if (typeof RAW_DATA !== 'undefined') RAW_DATA = fullList;
+            } catch(e) {}
+            console.log('[vocab] Full: ' + fullList.length);
+            return;
+        }
+
+        var limited = fullList.slice(0, max);
+        try {
+            if (typeof RAW_DATA !== 'undefined') RAW_DATA = limited;
+        } catch(e) {}
+        console.log('[vocab] Limited to ' + max + ' words');
     }
 
     function _esc(s) {
@@ -925,19 +991,15 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     function updateTabLockState() {
         var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
         if (!btn) return;
-        var can = canAccessVocab();
+        btn.classList.remove('vocab-locked');
         var oldLock = btn.querySelector('.vocab-lock-icon');
         if (oldLock) oldLock.remove();
 
-        if (can) {
-            btn.classList.remove('vocab-locked');
-            btn.title = 'Tu vung HSK 1-9 - Premium (da mo khoa)';
+        var max = getMaxVocabWords();
+        if (max === Infinity) {
+            btn.title = 'Tu vung HSK 1-9 - Full (Premium/Admin)';
         } else {
-            btn.classList.add('vocab-locked');
-            btn.title = 'Tu vung HSK - Chi danh cho Premium (1.000.000d)';
-            var lock = document.createElement('i');
-            lock.className = 'fas fa-lock vocab-lock-icon';
-            btn.appendChild(lock);
+            btn.title = 'Tu vung HSK - Xem thu ' + max + ' tu';
         }
     }
 
@@ -1152,13 +1214,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             e.stopPropagation();
             e.preventDefault();
 
-            if (!canAccessVocab()) {
-                console.log('[vocab] khong co quyen - mo modal');
-                openUpgradeModal();
-                return;
-            }
-
-            console.log('[vocab] co quyen - switch to tu-vung');
+            console.log('[vocab] switch to tu-vung');
 
             var sub = document.getElementById('dsSubWrap');
             if (sub) sub.style.display = 'none';
@@ -1171,6 +1227,9 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             if (typeof window.__switchRawData === 'function') {
                 window.__switchRawData(VOCAB_ID);
             }
+
+            // ⭐ Giới hạn số từ theo tier
+            limitVocabData();
 
             if (typeof state !== 'undefined' && state) {
                 state.search = '';
@@ -1226,7 +1285,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         window.loadPracticeFull = function(stt) {
             var result = orig.apply(this, arguments);
 
-            if (_isVocabMode() && canAccessVocab()) {
+            if (_isVocabMode() && canViewFullVocab()) {
                 var r = _findRecord(stt);
                 if (r && r.vi_du_zh) {
                     try {
@@ -1543,7 +1602,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
 
         var observer = new MutationObserver(function() {
             if (!_isVocabMode()) return;
-            if (!canAccessVocab()) return;
+            if (!canViewFullVocab()) return;
 
             var stt = null;
             try { stt = window.pfCurrentStt; } catch(e) {}
