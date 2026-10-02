@@ -26844,6 +26844,14 @@ window.__switchRawData = function(datasetId) {
             });
             result = result.filter(function(r) {
                 var h = (r.hsk || '').toString().toUpperCase().trim();
+                if (!h) return true;
+
+                // ⭐ Check HSK7-9 trực tiếp
+                if (h === 'HSK7-9' || h === 'HSK7-9') {
+                    return allowSet['HSK7-9'] === true;
+                }
+
+                // ⭐ Extract số cho HSK1-6
                 var num = h.replace(/[^0-9]/g, '');
                 if (!num) return true;
                 return allowSet['HSK' + num] === true || allowSet[num] === true;
@@ -26984,8 +26992,7 @@ window.__switchRawData = function(datasetId) {
         console.log('[vocab-patch] subject lock patched');
     }
 
-    /* ⭐ Watch đổi tab — tự động lock/unlock */
-    /* ⭐ Watch đổi tab — tự động lock/unlock (main + practice full) */
+   /* ⭐ Watch đổi tab — tự động lock/unlock + thêm HSK7-9 khi vocab */
     function watchVocabMode() {
         var isVocab = (typeof CURRENT_DATASET !== 'undefined') && CURRENT_DATASET === VOCAB_ID;
 
@@ -26996,10 +27003,12 @@ window.__switchRawData = function(datasetId) {
             document.body.removeAttribute('data-vocab-mode');
         }
 
-        // ⭐ Danh sách TẤT CẢ ô chủ đề cần lock (main + full)
+        // ═══════════════════════════════════════════════════════════
+        //  ⭐ LOCK ô Chủ đề (main + full)
+        // ═══════════════════════════════════════════════════════════
         var selects = [
-            document.getElementById('subjectFilter'),      // màn hình chính
-            document.getElementById('pfSubjectFilter')     // practice full
+            document.getElementById('subjectFilter'),
+            document.getElementById('pfSubjectFilter')
         ];
 
         selects.forEach(function(sf) {
@@ -27018,6 +27027,36 @@ window.__switchRawData = function(datasetId) {
                 sf.title = '';
             }
         });
+
+        // ═══════════════════════════════════════════════════════════
+        //  ⭐ THÊM/XÓA option HSK7-9 ở ô HSK
+        // ═══════════════════════════════════════════════════════════
+        var hskSelects = [
+            document.getElementById('hskFilter'),      // main
+            document.getElementById('pfHskFilter')      // practice full
+        ];
+
+        hskSelects.forEach(function(hf) {
+            if (!hf) return;
+
+            var hsk79 = hf.querySelector('option[value="HSK7-9"]');
+            var has79 = !!hsk79;
+
+            if (isVocab && !has79) {
+                // ⭐ THÊM option HSK7-9
+                var opt = document.createElement('option');
+                opt.value = 'HSK7-9';
+                opt.textContent = 'HSK7-9';
+                hf.appendChild(opt);
+            } else if (!isVocab && has79) {
+                // ⭐ XÓA option HSK7-9 khi rời vocab
+                // Nhưng chỉ xóa nếu nó đang không được chọn
+                if (hf.value === 'HSK7-9') {
+                    hf.value = '';
+                }
+                hsk79.remove();
+            }
+        });
     }
     window.getVocabAccess = getVocabAccess;
     window.vocabUpdateLockState = updateTabLockState;
@@ -27034,7 +27073,32 @@ window.__switchRawData = function(datasetId) {
         window.vocabUpdateLockState = updateTabLockState;
 
         // ═══════════════════════════════════════════════════════════
-        //  ⭐ OVERRIDE pfBuildFilterOptions — lock pfSubjectFilter khi ở vocab
+        //  ⭐ OVERRIDE buildFilters — thêm HSK7-9 khi vocab
+        // ═══════════════════════════════════════════════════════════
+        if (!window.__vocabBuildFiltersPatched && typeof window.buildFilters === 'function') {
+            window.__vocabBuildFiltersPatched = true;
+            var origBuildFilters = window.buildFilters;
+            window.buildFilters = function() {
+                var result = origBuildFilters.apply(this, arguments);
+
+                // Sau khi build xong → thêm HSK7-9 nếu vocab mode
+                if (_isVocabMode()) {
+                    var hf = document.getElementById('hskFilter');
+                    if (hf && !hf.querySelector('option[value="HSK7-9"]')) {
+                        var opt = document.createElement('option');
+                        opt.value = 'HSK7-9';
+                        opt.textContent = 'HSK7-9';
+                        hf.appendChild(opt);
+                    }
+                }
+
+                return result;
+            };
+            console.log('[vocab-patch] buildFilters patched');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  ⭐ OVERRIDE pfBuildFilterOptions — thêm HSK7-9 + lock subject
         // ═══════════════════════════════════════════════════════════
         if (!window.__vocabPfFilterPatched && typeof window.pfBuildFilterOptions === 'function') {
             window.__vocabPfFilterPatched = true;
@@ -27042,8 +27106,17 @@ window.__switchRawData = function(datasetId) {
             window.pfBuildFilterOptions = function() {
                 var result = origPfBuild.apply(this, arguments);
 
-                // Sau khi build xong → lock nếu đang ở vocab mode
                 if (_isVocabMode()) {
+                    // Thêm HSK7-9
+                    var pfHf = document.getElementById('pfHskFilter');
+                    if (pfHf && !pfHf.querySelector('option[value="HSK7-9"]')) {
+                        var opt = document.createElement('option');
+                        opt.value = 'HSK7-9';
+                        opt.textContent = 'HSK7-9';
+                        pfHf.appendChild(opt);
+                    }
+
+                    // Lock subject
                     var pfSubj = document.getElementById('pfSubjectFilter');
                     if (pfSubj) {
                         pfSubj.disabled = true;
@@ -27092,7 +27165,7 @@ window.__switchRawData = function(datasetId) {
             if (_isVocabMode()) injectVocabWarningBanner();
         }, 2000);
 
-        // ⭐ Watch mode chạy liên tục — lock/unlock ô chủ đề (main + full)
+        // ⭐ Watch mode chạy liên tục
         watchVocabMode();
         setInterval(watchVocabMode, 800);
 
