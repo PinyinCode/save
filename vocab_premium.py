@@ -14,6 +14,53 @@ from vocab_data.mnemonic_generator import generate_mnemonic
 from vocab_data.radical_analyzer import get_radical_for_word
 
 
+# ═══════════════════════════════════════════════════════════════════
+#  ⭐ JIEBA — tách từ tiếng Trung
+# ═══════════════════════════════════════════════════════════════════
+try:
+    import jieba
+    HAS_JIEBA = True
+    print("[VOCAB] OK - Da load jieba")
+except ImportError:
+    HAS_JIEBA = False
+    print("[VOCAB] WARN - Khong co jieba, se tach tung chu don")
+    print("   Cai: pip install jieba")
+
+
+def _split_chinese_words(text):
+    """
+    Tách câu tiếng Trung thành các TỪ (không phải từng chữ đơn).
+    - Dùng jieba nếu có
+    - Chỉ giữ chữ Hán (bỏ dấu câu, số, chữ Latin)
+    - Fallback: tách từng chữ đơn nếu không có jieba
+    """
+    if not text:
+        return []
+    text = text.strip()
+    if not text:
+        return []
+
+    words = []
+    if HAS_JIEBA:
+        try:
+            for seg in jieba.cut(text):
+                seg = seg.strip()
+                # Chỉ giữ segment là chữ Hán thuần
+                if seg and re.match(r'^[\u4e00-\u9fff]+$', seg):
+                    words.append(seg)
+            if words:
+                return words
+        except Exception as e:
+            print("      [WARN] jieba error: " + str(e))
+
+    # Fallback: tách từng chữ Hán đơn
+    for c in text:
+        if '\u4e00' <= c <= '\u9fff':
+            words.append(c)
+
+    return words
+
+
 def _clean(s):
     if s is None:
         return ""
@@ -177,6 +224,12 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
             except Exception:
                 radical = None
 
+        # ⭐ LẤY DỮ LIỆU VÍ DỤ + TÁCH TỪ BẰNG JIEBA
+        vi_du_zh = _clean(row[COL_VI_DU_ZH]) if COL_VI_DU_ZH < len(row) else ""
+        vi_du_pinyin = _clean_pinyin(row[COL_VI_DU_PINYIN]) if COL_VI_DU_PINYIN < len(row) else ""
+        vi_du_vi = _clean(row[COL_VI_DU_VI]) if COL_VI_DU_VI < len(row) else ""
+        vi_du_words = _split_chinese_words(vi_du_zh)
+
         data.append({
             "stt": str(stt_raw).strip(),
             "hsk": hsk,
@@ -185,14 +238,14 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
             "vi": vi,
             "zh": zh,
             "pinyin": pinyin,
-            "vi_du_zh": _clean(row[COL_VI_DU_ZH]) if COL_VI_DU_ZH < len(row) else "",
-            "vi_du_pinyin": _clean_pinyin(row[COL_VI_DU_PINYIN]) if COL_VI_DU_PINYIN < len(row) else "",
-            "vi_du_vi": _clean(row[COL_VI_DU_VI]) if COL_VI_DU_VI < len(row) else "",
+            "vi_du_zh": vi_du_zh,
+            "vi_du_pinyin": vi_du_pinyin,
+            "vi_du_vi": vi_du_vi,
+            "vi_du_words": vi_du_words,   # ⭐ FIELD MỚI
             "mnemonic": mnemonic,
             "radical": radical,
             "source_sheet": sheet_name,
         })
-
     return data, n_mnemonic_generated, n_radical_generated
 def build_vocab_css(vocab_id="tu-vung"):
     css = r"""
@@ -1390,12 +1443,15 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         var pinyin = _esc(r.vi_du_pinyin || '');
         var vi = _esc(r.vi_du_vi || '');
 
-        // ⭐ Tách câu thành các từ
-        var chars = [];
-        for (var i = 0; i < zh.length; i++) {
-            var c = zh[i];
-            if (c >= '\u4e00' && c <= '\u9fff') {
-                chars.push(c);
+        // ⭐ DÙNG vi_du_words từ Python (jieba đã tách sẵn)
+        var chars = (r && Array.isArray(r.vi_du_words)) ? r.vi_du_words : [];
+        if (chars.length === 0) {
+            // Fallback: tách từng chữ Hán đơn
+            for (var i = 0; i < zh.length; i++) {
+                var c = zh[i];
+                if (c >= '\u4e00' && c <= '\u9fff') {
+                    chars.push(c);
+                }
             }
         }
 
