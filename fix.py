@@ -321,29 +321,9 @@ def build_vocab_js_patch():
         main.insertBefore(banner, main.firstChild);
     }
 
+    // ⭐ bindVocabPatch ĐÃ BỎ — vocab_premium.py tự xử lý click
     function bindVocabPatch() {
-        var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
-        if (!btn || btn.__vocabPatchBound) return;
-        btn.__vocabPatchBound = true;
-
-        btn.addEventListener('click', function() {
-            setTimeout(function() {
-                var acc = getVocabAccess();
-                if (!acc.allowed) return;
-
-                if (_isVocabMode() && window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
-                    var full = window.FIXPY_DATASETS[VOCAB_ID].data || [];
-                    var limited = applyVocabLimits(full, acc);
-                    if (limited.length !== full.length) {
-                        RAW_DATA = limited;
-                        if (typeof applyFilter === 'function') applyFilter();
-                        if (typeof updateResultCount === 'function') updateResultCount();
-                    }
-                }
-                updateTabLockState();
-                injectVocabWarningBanner();
-            }, 400);
-        }, false);
+        return;   // no-op
     }
 
     window.getVocabAccess = getVocabAccess;
@@ -353,7 +333,35 @@ def build_vocab_js_patch():
     function patchLoop() {
         if (typeof window.vocabUpgradeRenew === 'function') {
             window.vocabUpdateLockState = updateTabLockState;
-            bindVocabPatch();
+
+            // ⭐ Không gọi bindVocabPatch() nữa — vocab_premium.py tự lo click
+            // bindVocabPatch();
+
+            // ⭐ Nhưng VẪN apply giới hạn HSK + số câu SAU khi switch
+            var vocabBtn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
+            if (vocabBtn && !vocabBtn.__vocabLimitHooked) {
+                vocabBtn.__vocabLimitHooked = true;
+                vocabBtn.addEventListener('click', function() {
+                    // Chạy SAU vocab_premium.py (delay 500ms)
+                    setTimeout(function() {
+                        var acc = getVocabAccess();
+                        if (!acc.allowed) return;
+                        if (_isVocabMode() && window.FIXPY_DATASETS &&
+                            window.FIXPY_DATASETS[VOCAB_ID]) {
+                            var full = window.FIXPY_DATASETS[VOCAB_ID].data || [];
+                            var limited = applyVocabLimits(full, acc);
+                            if (limited.length !== full.length) {
+                                RAW_DATA = limited;
+                                if (typeof applyFilter === 'function') applyFilter();
+                                if (typeof updateResultCount === 'function') updateResultCount();
+                            }
+                        }
+                        updateTabLockState();
+                        injectVocabWarningBanner();
+                    }, 500);
+                }, false);
+            }
+
             updateTabLockState();
             setInterval(function() {
                 if (_isVocabMode()) injectVocabWarningBanner();
@@ -362,9 +370,7 @@ def build_vocab_js_patch():
             return;
         }
         setTimeout(patchLoop, 300);
-    }
-    setTimeout(patchLoop, 800);
-})();
+    })();
 """
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
     os.chdir("..")
