@@ -1156,12 +1156,6 @@ html_output = (HTML_SHELL
     .replace("__TELEGRAM_BOT_TOKEN__", _js_str(telegram_bot_token))
     .replace("__TELEGRAM_CHAT_ID__",   _js_str(telegram_chat_id))
 )
-# ⭐ INJECT VOCAB PREMIUM (không đụng config)
-try:
-    from vocab_patch import inject_vocab
-    html_output = inject_vocab(html_output, CONFIG)
-except Exception as _e:
-    print(f"⚠️  Vocab skip: {_e}")
 
 with open(OUTPUT_HTML, "w", encoding="utf-8") as f:
     f.write(html_output)
