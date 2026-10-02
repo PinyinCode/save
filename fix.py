@@ -437,6 +437,7 @@ def build_vocab_js_patch():
         setInterval(watchVocabMode, 800);
 
         console.log('[vocab-patch] ready — onboarding-based');
+          }
     setTimeout(patchLoop, 800);
 })();
 """
