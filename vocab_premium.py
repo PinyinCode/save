@@ -3,10 +3,11 @@ r"""
 Module TỪ VỰNG PREMIUM - cắm vào fix.py.
 Tự sinh bộ thủ + mẹo nhớ từ module vocab_data/.
 
-FIX (2026-10-01):
+FIX (2026-10-02):
   - Set flag __fixPyBound để fix.py KHÔNG clone nút
   - Tự xử lý click hoàn toàn (không phụ thuộc fix.py)
   - Tab luôn phản hồi dù có quyền hay không
+  - Hook loadPracticeFull -> hiển thị câu ví dụ trong Practice Full
 """
 
 import os
@@ -220,7 +221,7 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
 #  CSS
 # ═══════════════════════════════════════════════════════════════
 def build_vocab_css(vocab_id="tu-vung"):
-    """CSS cho tab Premium + block + pinyin highlight."""
+    """CSS cho tab Premium + block + pinyin highlight + Practice Full example."""
     css = r"""
 /* TAB TU VUNG PREMIUM */
 .ds-btn[data-dataset="__VOCAB_ID__"] {
@@ -496,6 +497,77 @@ def build_vocab_css(vocab_id="tu-vung"):
     color: #fde68a;
 }
 
+/* ═══ VÍ DỤ TRONG PRACTICE FULL ═══ */
+.pf-vocab-example {
+    margin-top: 1rem;
+    padding: .85rem 1rem;
+    background: linear-gradient(135deg,
+        rgba(8, 145, 178, .08),
+        rgba(6, 182, 212, .04));
+    border-left: 4px solid #0891b2;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    animation: pfVocabIn .4s ease-out;
+}
+@keyframes pfVocabIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+[data-theme="dark"] .pf-vocab-example {
+    background: linear-gradient(135deg,
+        rgba(8, 145, 178, .18),
+        rgba(6, 182, 212, .1));
+    border-left-color: #22d3ee;
+}
+.pf-vocab-example-label {
+    font-size: .68rem;
+    font-weight: 800;
+    color: #0891b2;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+}
+[data-theme="dark"] .pf-vocab-example-label { color: #22d3ee; }
+.pf-vocab-example-zh {
+    font-family: var(--font-zh);
+    font-size: clamp(1.05rem, 2.2vw, 1.4rem);
+    font-weight: 600;
+    color: var(--text);
+    line-height: 1.5;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+}
+.pf-vocab-example-zh .audio-btn-mini {
+    width: 28px; height: 28px;
+    border-radius: 50%; border: none;
+    background: rgba(8, 145, 178, .15);
+    color: #0891b2; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: .75rem; transition: all .18s;
+    flex-shrink: 0;
+}
+.pf-vocab-example-zh .audio-btn-mini:hover {
+    background: #0891b2; color: #fff;
+    transform: scale(1.15);
+}
+.pf-vocab-example-pinyin {
+    font-size: clamp(.85rem, 1.4vw, 1rem);
+    font-style: italic; color: #0891b2;
+    font-weight: 500; line-height: 1.4;
+}
+[data-theme="dark"] .pf-vocab-example-pinyin { color: #22d3ee; }
+.pf-vocab-example-vi {
+    font-size: clamp(.9rem, 1.5vw, 1.05rem);
+    color: var(--text-2);
+    line-height: 1.5; font-weight: 500;
+}
+
 /* MODAL UPGRADE */
 .vocab-upgrade-modal {
     position: fixed; inset: 0;
@@ -635,6 +707,10 @@ def build_vocab_css(vocab_id="tu-vung"):
     .vocab-upgrade-icon { width: 60px; height: 60px; font-size: 1.65rem; }
     .vocab-upgrade-title { font-size: 1.15rem; }
     .vocab-upgrade-price { font-size: 1.15rem; }
+    .pf-vocab-example { padding: .7rem .85rem; margin-top: .85rem; }
+    .pf-vocab-example-zh { font-size: 1rem; }
+    .pf-vocab-example-pinyin { font-size: .8rem; }
+    .pf-vocab-example-vi { font-size: .85rem; }
 }
 """
     return css.replace("__VOCAB_ID__", vocab_id)
@@ -801,9 +877,9 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             }
         } else if (tier === 'expired') {
             if (titleEl) titleEl.textContent = 'Tai khoan da het han';
-            if (subEl) subEl.textContent = 'Mua goi Premium 1 trieu de so huu vinh vien';
+            if (subEl) subEl.textContent = 'Mua goi Premium 1 trieuEl de so huu vinh vien';
             if (actionsEl) {
-                actionsEl.innerHTML =
+                actions.innerHTML =
                     '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeRenew()">' +
                         '<i class="fas fa-crown"></i> Mua Premium 1 trieu' +
                     '</button>' +
@@ -1023,8 +1099,8 @@ def build_vocab_js_override(vocab_id="tu-vung"):
 
             setTimeout(function() {
                 var mainEl = document.getElementById('mainContent');
-                if (mainEl) {
-                    var yOffset = mainEl.getBoundingClientRect().top + window.scrollY - 100;
+                if (mainrollEl) {
+                    var yOffset = mainEl.getBoundingClientRectY().top + window.sc - 100;
                     window.scrollTo({ top: yOffset, behavior: 'smooth' });
                 }
             }, 100);
@@ -1034,6 +1110,64 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         }, true);
 
         console.log('[vocab] bound tab click');
+    }
+
+    /* ═══ HOOK loadPracticeFull — hiển thị câu ví dụ ═══ */
+    function hookPracticeFull() {
+        if (typeof window.loadPracticeFull !== 'function') {
+            return false;
+        }
+        if (window.loadPracticeFull.__vocabHooked) return true;
+
+        var orig = window.loadPracticeFull;
+        window.loadPracticeFull = function(stt) {
+            var result = orig.apply(this, arguments);
+
+            if (!_isVocabMode() || !canAccessVocab()) return result;
+
+            setTimeout(function() {
+                var r = _findRecord(stt);
+                if (!r) return;
+
+                var old = document.querySelector('.pf-vocab-example');
+                if (old) old.remove();
+
+                if (!r.vi_du_zh) return;
+
+                var anchor = document.getElementById('pfAnswer');
+                if (!anchor) return;
+
+                var html = buildPFExampleBlock(r);
+                if (html) anchor.insertAdjacentHTML('afterend', html);
+            }, 100);
+
+            return result;
+        };
+        window.loadPracticeFull.__vocabHooked = true;
+        console.log('[vocab] hooked loadPracticeFull');
+        return true;
+    }
+
+    function buildPFExampleBlock(r) {
+        var zh = _esc(r.vi_du_zh || '');
+        if (!zh) return '';
+
+        var zhJs = (typeof escapeJs === 'function')
+            ? escapeJs(r.vi_du_zh || '') : '';
+        var pinyin = _esc(r.vi_du_pinyin || '');
+        var vi = _esc(r.vi_du_vi || '');
+
+        var html = '<div class="pf-vocab-example">';
+        html += '<div class="pf-vocab-example-label">📝 Ví dụ minh họa</div>';
+        html += '<div class="pf-vocab-example-zh">' + zh;
+        if (zhJs && typeof speakText === 'function') {
+            html += ' <button class="audio-btn-mini" onclick="speakText(\'' + zhJs + '\', this, event)" title="Nghe"><i class="fas fa-volume-up"></i></button>';
+        }
+        html += '</div>';
+        if (pinyin) html += '<div class="pf-vocab-example-pinyin">' + highlightPinyin(pinyin) + '</div>';
+        if (vi) html += '<div class="pf-vocab-example-vi">' + vi + '</div>';
+        html += '</div>';
+        return html;
     }
 
     var _lastTier = null;
@@ -1059,6 +1193,15 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         updateTabLockState();
         setupObserver();
         setInterval(watchTier, 1000);
+
+        // Hook loadPracticeFull (chờ hàm có sẵn)
+        var tries = 0;
+        var t = setInterval(function() {
+            tries++;
+            if (hookPracticeFull() || tries > 20) clearInterval(t);
+        }, 250);
+        hookPracticeFull();
+
         console.log('[vocab] module ready');
     }
 
