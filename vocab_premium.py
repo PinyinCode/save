@@ -1058,21 +1058,30 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                     }
 
                     setTimeout(function() {
+                        // ⭐ Ẩn ô "Chủ đề" khi ở tab Từ vựng
+                        var pfSubjectChip = document.getElementById('pfSubjectChip');
+                        if (pfSubjectChip) pfSubjectChip.style.display = 'none';
+
+                        // Reset input
                         var pfInput = document.getElementById('pfInput');
                         if (pfInput) pfInput.value = '';
 
+                        // Reset char preview
                         var pfPreview = document.getElementById('pfPreview');
                         if (pfPreview) pfPreview.innerHTML = '';
 
+                        // Reset status
                         var pfStatus = document.getElementById('pfStatus');
                         if (pfStatus) {
                             pfStatus.textContent = '';
                             pfStatus.className = 'practice-full-status';
                         }
 
+                        // Xóa block ví dụ cũ
                         var oldExample = document.querySelector('.pf-vocab-example');
                         if (oldExample) oldExample.remove();
 
+                        // Hook nút "Gợi ý" để hiện block ví dụ
                         var hintBtn = document.getElementById('pfHintBtn');
                         if (hintBtn && !hintBtn.__vocabHooked) {
                             hintBtn.__vocabHooked = true;
