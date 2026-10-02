@@ -845,11 +845,32 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     var _done = new WeakSet();
 
     function canAccessVocab() {
-        if (typeof currentUser === 'undefined' || !currentUser) return false;
-        if (currentUser.role === 'admin') return true;
-        if (currentUser.isPermanent === true) return true;
-        return false;
+    // Đọc tier từ ONBOARDING_CONFIG (nếu có)
+    var cfg = (typeof ONBOARDING_CONFIG !== 'undefined' && ONBOARDING_CONFIG) || {};
+    
+    // Admin → OK
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
+        return true;
     }
+    // Premium → OK
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.isPermanent === true) {
+        return true;
+    }
+    
+    // Xác định tier
+    var tier = 'demo';
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        if (currentUser.isTrial || currentUser.tier === 'trial') tier = 'trial';
+        else if (currentUser.isExpiredOnly || currentUser.tier === 'expired') tier = 'expired';
+        else tier = 'active';
+    }
+    
+    // Expired → KHÓA
+    if (tier === 'expired') return false;
+    
+    // Demo / Trial / Active → MỞ (giới hạn HSK + số câu do patch lo)
+    return true;
+}
 
     function _esc(s) {
         return (typeof escapeHtml === 'function')
@@ -878,23 +899,23 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     }
 
     function updateTabLockState() {
-        var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
-        if (!btn) return;
-        var can = canAccessVocab();
-        var oldLock = btn.querySelector('.vocab-lock-icon');
-        if (oldLock) oldLock.remove();
+    var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
+    if (!btn) return;
+    var can = canAccessVocab();
+    var oldLock = btn.querySelector('.vocab-lock-icon');
+    if (oldLock) oldLock.remove();
 
-        if (can) {
-            btn.classList.remove('vocab-locked');
-            btn.title = 'Tu vung HSK 1-9 - Premium (da mo khoa)';
-        } else {
-            btn.classList.add('vocab-locked');
-            btn.title = 'Tu vung HSK - Chi danh cho Premium (1.000.000d)';
-            var lock = document.createElement('i');
-            lock.className = 'fas fa-lock vocab-lock-icon';
-            btn.appendChild(lock);
-        }
+    if (can) {
+        btn.classList.remove('vocab-locked');
+        btn.title = 'Tu vung HSK - da mo khoa';
+    } else {
+        btn.classList.add('vocab-locked');
+        btn.title = 'Tu vung HSK - het han';
+        var lock = document.createElement('i');
+        lock.className = 'fas fa-lock vocab-lock-icon';
+        btn.appendChild(lock);
     }
+}
 
     function openUpgradeModal() {
         var modal = document.getElementById('vocabUpgradeModal');
@@ -1099,8 +1120,8 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
         if (!btn || btn.__vocabPremiumBound) return;
 
-        btn.__fixPyBound = true;
         btn.__vocabPremiumBound = true;
+        // ⭐ KHÔNG set __fixPyBound — để fix.py không bị nhầm
 
         btn.addEventListener('click', function(e) {
             e.stopImmediatePropagation();
@@ -1110,28 +1131,27 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             if (!canAccessVocab()) {
                 console.log('[vocab] khong co quyen - mo modal');
                 openUpgradeModal();
-                return;
+                return false;
             }
 
-            console.log('[vocab] co quyen - switch to tu-vung');
+            console.log('[vocab] switch to tu-vung');
 
-            var sub = document.getElementById('dsSubWrap');
-            if (sub) sub.style.display = 'none';
+            // ═══════════════════════════════════════════════════════
+            //  ⭐ BƯỚC 1: CLEAR TẤT CẢ STATE CỦA CÁC TAB KHÁC
+            // ═══════════════════════════════════════════════════════
 
-            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
-                b.classList.remove('active');
-            });
-            this.classList.add('active');
+            // 1a. Clear onboarding override
+            window.__onboardingOverride = null;
+            window.__onboardingAutoPicked = false;
 
-            if (typeof window.__switchRawData === 'function') {
-                window.__switchRawData(VOCAB_ID);
-            }
-
+            // 1b. Clear state filter
             if (typeof state !== 'undefined' && state) {
                 state.search = '';
                 state.hsk = '';
                 state.subject = '';
             }
+
+            // 1c. Clear input elements
             try {
                 var si = document.getElementById('searchInput');
                 var hf = document.getElementById('hskFilter');
@@ -1143,19 +1163,64 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                 if (cb) cb.classList.remove('show');
             } catch(err) {}
 
+            // 1d. Ẩn sub-wrap (nếu đang mở chuyên ngành)
+            var subWrap = document.getElementById('dsSubWrap');
+            if (subWrap) {
+                subWrap.style.display = 'none';
+                subWrap.classList.remove('show');
+            }
+
+            // 1e. ⭐ XÓA banner onboarding của tab trước (nếu có)
+            var oldOnbBanner = document.getElementById('onboardingActiveBanner');
+            if (oldOnbBanner) oldOnbBanner.remove();
+            var oldAnyBanner = document.querySelectorAll('[id*="onboarding"][id*="banner"]');
+            oldAnyBanner.forEach(function(b) {
+                if (b.id !== 'vocabWarningBanner') b.remove();
+            });
+
+            // 1f. ⭐ Remove vocab warning cũ (nếu có)
+            var oldVWarn = document.getElementById('vocabWarningBanner');
+            if (oldVWarn) oldVWarn.remove();
+
+            // 1g. ⭐ Reset filter dropdown options về mặc định (nếu có hàm)
             try {
                 if (typeof buildFilters === 'function') buildFilters();
+            } catch(err) {}
+
+            // ═══════════════════════════════════════════════════════
+            //  ⭐ BƯỚC 2: SET ACTIVE TAB (CHỈ VOCAB)
+            // ═══════════════════════════════════════════════════════
+            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
+                b.classList.remove('active');
+            });
+            this.classList.add('active');
+
+            // ═══════════════════════════════════════════════════════
+            //  ⭐ BƯỚC 3: SWITCH DATA SANG VOCAB
+            // ═══════════════════════════════════════════════════════
+            var switchOk = false;
+            if (typeof window.__switchRawData === 'function') {
+                switchOk = window.__switchRawData(VOCAB_ID);
+                console.log('[vocab] switch result:', switchOk,
+                            '| RAW_DATA.length:', RAW_DATA.length,
+                            '| CURRENT_DATASET:', CURRENT_DATASET);
+            } else {
+                console.error('[vocab] __switchRawData KHÔNG TỒN TẠI!');
+            }
+
+            // ═══════════════════════════════════════════════════════
+            //  ⭐ BƯỚC 4: APPLY FILTER + UPDATE COUNT
+            // ═══════════════════════════════════════════════════════
+            try {
                 if (typeof applyFilter === 'function') applyFilter();
                 if (typeof updateResultCount === 'function') updateResultCount();
             } catch(err) {
                 console.warn('[vocab] re-render error:', err);
             }
 
-            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
-                b.classList.remove('active');
-            });
-            this.classList.add('active');
-
+            // ═══════════════════════════════════════════════════════
+            //  ⭐ BƯỚC 5: SCROLL + ENHANCE
+            // ═══════════════════════════════════════════════════════
             setTimeout(function() {
                 var mainEl = document.getElementById('mainContent');
                 if (mainEl) {
@@ -1164,9 +1229,15 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                 }
             }, 100);
 
-            setTimeout(enhanceCards, 300);
+            // Enhance cards + hiện banner cảnh báo (do fix.py inject)
+            setTimeout(function() {
+                if (typeof enhanceCards === 'function') enhanceCards();
+                if (typeof window.vocabInjectWarning === 'function') {
+                    try { window.vocabInjectWarning(); } catch(e) {}
+                }
+            }, 300);
 
-        }, true);
+        }, true);   // ⭐ useCapture = true để chặn trước fix.py
 
         console.log('[vocab] bound tab click');
     }
