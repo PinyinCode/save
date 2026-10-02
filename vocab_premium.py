@@ -241,6 +241,7 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
     """
     Đọc 1 sheet vocab HSK.
     - start_row: đã được tự động phát hiện.
+    - stt unique: prefix sheet name để tránh trùng giữa các sheet.
     """
     COL_STT = 0
     COL_ZH = 1
@@ -257,6 +258,9 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
     empty_count = 0
     n_mnemonic_generated = 0
     n_radical_generated = 0
+
+    # ⭐ PREFIX SHEET NAME (VD: "HSK1", "HSK-7-9-1")
+    sheet_clean = re.sub(r'[^A-Za-z0-9]+', '-', sheet_name).strip('-')
 
     for row in ws.iter_rows(min_row=start_row, values_only=True):
         if not row:
@@ -277,10 +281,14 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
 
         # Skip row header còn sót
         if zh.lower() in ("từ tiếng trung", "汉字", "từ vựng", "từ", "hsk",
-                          "汉语", "chữ hán"):
+                          "汉语", "chữ hán", "tiếng trung"):
             continue
 
-        stt_raw = row[COL_STT] if COL_STT < len(row) and row[COL_STT] is not None else ""
+        # ⭐ STT GỐC + STT UNIQUE
+        stt_raw_val = row[COL_STT] if COL_STT < len(row) and row[COL_STT] is not None else ""
+        stt_str = str(stt_raw_val).strip()
+        stt_unique = (sheet_clean + "-" + stt_str) if stt_str else ""
+
         pinyin = _clean_pinyin(row[COL_PINYIN]) if COL_PINYIN < len(row) else ""
         vi = _clean(row[COL_VI]) if COL_VI < len(row) else ""
 
@@ -315,7 +323,8 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
         vi_du_words = _split_chinese_words(vi_du_zh)
 
         data.append({
-            "stt": str(stt_raw).strip(),
+            "stt": stt_unique,                       # ⬅️ UNIQUE (VD: HSK1-1)
+            "stt_original": stt_str,                 # ⬅️ GỐC (VD: 1)
             "hsk": hsk,
             "topic": "Từ vựng",
             "subject": _clean(row[COL_LOAI_TU]) if COL_LOAI_TU < len(row) else "",
@@ -1221,6 +1230,11 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             if (oldR) oldR.remove();
             var oldM = body.querySelector('.card-mnemonic');
             if (oldM) oldM.remove();
+            // ⭐ Update số thứ tự hiển thị (dùng stt_original)
+            var sttEl = card.querySelector('.card-stt');
+            if (sttEl && r.stt_original) {
+                sttEl.textContent = r.stt_original;
+            }
 
             var anchor = body.querySelector('.card-vocab-example');
             if (r.radical) {
@@ -1494,8 +1508,9 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             for (var i = 0; i < limit; i++) {
                 var r = list[i];
                 var vi = (r.vi || '').substring(0, 45);
-                var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
-                             ? '#' + String(r.stt).trim() + ' · '
+                var sttDisplay = r.stt_original || r.stt;
+                var sttRaw = (sttDisplay !== undefined && sttDisplay !== null && String(sttDisplay).trim() !== '')
+                             ? '#' + String(sttDisplay).trim() + ' · '
                              : '';
                 var label = sttRaw + 'Câu ' + (i + 1) + ': ' + vi;
                 html += '<option value="' + _esc(r.stt) + '">' + _esc(label) + '</option>';
