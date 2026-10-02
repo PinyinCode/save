@@ -26092,65 +26092,99 @@ window.__switchRawData = function(datasetId) {
 
         var orig = window.loadPracticeFull;
         window.loadPracticeFull = function(stt) {
+            // ═══════════════════════════════════════════════════════
+            //  BƯỚC 1: GỌI HÀM GỐC TRƯỚC (để nó gán pfCurrentAnswer = từ vựng)
+            // ═══════════════════════════════════════════════════════
+            var result = orig.apply(this, arguments);
+
+            // ═══════════════════════════════════════════════════════
+            //  BƯỚC 2: SAU ĐÓ GHI ĐÈ pfCurrentAnswer = CÂU VÍ DỤ
+            //  + Ghi đè pfVi = nghĩa câu ví dụ
+            //  + Reset input + preview + status
+            // ═══════════════════════════════════════════════════════
             if (_isVocabMode() && canAccessVocab()) {
                 var r = _findRecord(stt);
                 if (r && r.vi_du_zh) {
+                    // Ghi đè biến toàn cục
                     try {
-                        if (typeof pfCurrentAnswer !== 'undefined') {
-                            pfCurrentAnswer = r.vi_du_zh;
-                            pfCurrentVi = r.vi_du_vi;
-                            pfCurrentPinyin = r.vi_du_pinyin;
+                        if (typeof window.pfCurrentAnswer !== 'undefined') {
+                            window.pfCurrentAnswer = r.vi_du_zh;
                         }
-                    } catch(e) {
-                        console.warn('[vocab] Khong doi duoc pfCurrentAnswer:', e);
-                    }
+                        if (typeof window.pfCurrentVi !== 'undefined') {
+                            window.pfCurrentVi = r.vi_du_vi;
+                        }
+                        if (typeof window.pfCurrentPinyin !== 'undefined') {
+                            window.pfCurrentPinyin = r.vi_du_pinyin;
+                        }
+                    } catch(e) {}
+
+                    // Cập nhật UI sau khi DOM render
+                    setTimeout(function() {
+                        // 1. Đổi pfVi = nghĩa câu ví dụ
+                        var pfViEl = document.getElementById('pfVi');
+                        if (pfViEl && r.vi_du_vi) {
+                            pfViEl.textContent = r.vi_du_vi;
+                        }
+
+                        // 2. Reset input (user gõ lại câu mới)
+                        var pfInput = document.getElementById('pfInput');
+                        if (pfInput) {
+                            pfInput.value = '';
+                        }
+
+                        // 3. Reset char preview
+                        var pfPreview = document.getElementById('pfPreview');
+                        if (pfPreview) {
+                            pfPreview.innerHTML = '';
+                        }
+
+                        // 4. Reset status
+                        var pfStatus = document.getElementById('pfStatus');
+                        if (pfStatus) {
+                            pfStatus.textContent = '';
+                            pfStatus.className = 'practice-full-status';
+                        }
+
+                        // 5. Xóa block ví dụ cũ
+                        var oldExample = document.querySelector('.pf-vocab-example');
+                        if (oldExample) oldExample.remove();
+
+                        // 6. Hook nút "Xem đáp án" (chỉ 1 lần)
+                        var revealBtn = document.getElementById('pfRevealBtn');
+                        if (revealBtn && !revealBtn.__vocabHooked) {
+                            revealBtn.__vocabHooked = true;
+                            revealBtn.addEventListener('click', function(ev) {
+                                setTimeout(function() {
+                                    if (!_isVocabMode()) return;
+                                    if (!canAccessVocab()) return;
+
+                                    var answerEl = document.getElementById('pfAnswer');
+                                    if (!answerEl) return;
+                                    if (!answerEl.classList.contains('show')) return;
+
+                                    // Xóa block cũ
+                                    var oldEx = document.querySelector('.pf-vocab-example');
+                                    if (oldEx) oldEx.remove();
+
+                                    // Tìm record từ pfCurrentStt
+                                    var currentStt = null;
+                                    try {
+                                        currentStt = window.pfCurrentStt;
+                                    } catch(e) {}
+                                    if (!currentStt) return;
+
+                                    var rec = _findRecord(currentStt);
+                                    if (!rec || !rec.vi_du_zh) return;
+
+                                    var html = buildPFExampleBlock(rec);
+                                    if (html) {
+                                        answerEl.insertAdjacentHTML('afterend', html);
+                                    }
+                                }, 150);
+                            });
+                        }
+                    }, 100);
                 }
-            }
-
-            var result = orig.apply(this, arguments);
-
-            if (_isVocabMode() && canAccessVocab()) {
-                setTimeout(function() {
-                    var r = _findRecord(stt);
-                    if (!r) return;
-
-                    var pfViEl = document.getElementById('pfVi');
-                    if (pfViEl && r.vi_du_vi) {
-                        pfViEl.textContent = r.vi_du_vi;
-                    }
-
-                    var oldExample = document.querySelector('.pf-vocab-example');
-                    if (oldExample) oldExample.remove();
-
-                    var revealBtn = document.getElementById('pfRevealBtn');
-                    if (revealBtn && !revealBtn.__vocabHooked) {
-                        revealBtn.__vocabHooked = true;
-                        revealBtn.addEventListener('click', function(ev) {
-                            setTimeout(function() {
-                                if (!_isVocabMode()) return;
-                                if (!canAccessVocab()) return;
-
-                                var answerEl = document.getElementById('pfAnswer');
-                                if (!answerEl) return;
-                                if (!answerEl.classList.contains('show')) return;
-
-                                var oldEx = document.querySelector('.pf-vocab-example');
-                                if (oldEx) oldEx.remove();
-
-                                var currentStt = (typeof pfCurrentStt !== 'undefined')
-                                    ? pfCurrentStt : null;
-                                if (!currentStt) return;
-                                var rec = _findRecord(currentStt);
-                                if (!rec || !rec.vi_du_zh) return;
-
-                                var html = buildPFExampleBlock(rec);
-                                if (html) {
-                                    answerEl.insertAdjacentHTML('afterend', html);
-                                }
-                            }, 150);
-                        });
-                    }
-                }, 50);
             }
 
             return result;
