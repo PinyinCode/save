@@ -1219,11 +1219,13 @@ function setupPfViWatcher() {
     }, 250);
     hookPracticeFull();
 
-    // ⭐ Setup watcher cho pfVi
+    // Setup watcher cho pfVi
     setTimeout(setupPfViWatcher, 1000);
     setInterval(setupPfViWatcher, 2000);
 
     console.log('[vocab] module ready');
+}
+
 })();
 """
     return js.replace("__VOCAB_ID__", vocab_id)
