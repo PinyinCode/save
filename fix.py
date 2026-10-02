@@ -368,7 +368,15 @@ def build_vocab_js_patch():
         var sf = document.getElementById('subjectFilter');
         if (!sf) return;
 
-        if (isVocab && !sf.disabled){
+        // ⭐ SET cờ body
+        if (isVocab) {
+            document.body.setAttribute('data-vocab-mode', '1');
+        } else {
+            document.body.removeAttribute('data-vocab-mode');
+        }
+
+        // ⭐ Lock/Unlock ô chủ đề
+        if (isVocab && !sf.disabled) {
             sf.disabled = true;
             sf.value = '';
             sf.style.opacity = '0.5';
@@ -381,50 +389,56 @@ def build_vocab_js_patch():
             sf.title = '';
         }
     }
-
     window.getVocabAccess = getVocabAccess;
     window.vocabUpdateLockState = updateTabLockState;
     window.vocabInjectWarning = injectVocabWarningBanner;
 
     function patchLoop() {
-        if (typeof window.vocabUpgradeRenew === 'function') {
-            window.vocabUpdateLockState = updateTabLockState;
-            patchSubjectLock();                    // ⭐ THÊM DÒNG NÀY
-
-            var vocabBtn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
-            if (vocabBtn && !vocabBtn.__vocabLimitHooked) {
-                vocabBtn.__vocabLimitHooked = true;
-                vocabBtn.addEventListener('click', function() {
-                    setTimeout(function() {
-                        var acc = getVocabAccess();
-                        if (!acc.allowed) return;
-                        if (_isVocabMode() && window.FIXPY_DATASETS &&
-                            window.FIXPY_DATASETS[VOCAB_ID]) {
-                            var full = window.FIXPY_DATASETS[VOCAB_ID].data || [];
-                            var limited = applyVocabLimits(full, acc);
-                            if (limited.length !== full.length) {
-                                RAW_DATA = limited;
-                                if (typeof applyFilter === 'function') applyFilter();
-                                if (typeof updateResultCount === 'function') updateResultCount();
-                            }
-                        }
-                        updateTabLockState();
-                        injectVocabWarningBanner();
-                        watchVocabMode();       // ⭐ THÊM DÒNG NÀY
-                    }, 500);
-                }, false);
-            }
-
-            updateTabLockState();
-            setInterval(function() {
-                if (_isVocabMode()) injectVocabWarningBanner();
-            }, 2000);
-            setInterval(watchVocabMode, 800);      // ⭐ THÊM DÒNG NÀY
-            console.log('[vocab-patch] ready — onboarding-based');
+        // ⭐ Chỉ cần DOM ready + tab vocab tồn tại là đủ
+        var vocabBtn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
+        if (!vocabBtn) {
+            setTimeout(patchLoop, 300);
             return;
         }
-        setTimeout(patchLoop, 300);
+
+        window.vocabUpdateLockState = updateTabLockState;
+        // patchSubjectLock();                     // ⬅️ ĐÃ BỎ
+
+        if (!vocabBtn.__vocabLimitHooked) {
+            vocabBtn.__vocabLimitHooked = true;
+            vocabBtn.addEventListener('click', function() {
+                setTimeout(function() {
+                    var acc = getVocabAccess();
+                    if (!acc.allowed) return;
+                    if (_isVocabMode() && window.FIXPY_DATASETS &&
+                        window.FIXPY_DATASETS[VOCAB_ID]) {
+                        var full = window.FIXPY_DATASETS[VOCAB_ID].data || [];
+                        var limited = applyVocabLimits(full, acc);
+                        if (limited.length !== full.length) {
+                            RAW_DATA = limited;
+                            if (typeof applyFilter === 'function') applyFilter();
+                            if (typeof updateResultCount === 'function') updateResultCount();
+                        }
+                    }
+                    updateTabLockState();
+                    injectVocabWarningBanner();
+                    watchVocabMode();
+                }, 500);
+            }, false);
+        }
+
+        updateTabLockState();
+        setInterval(function() {
+            if (_isVocabMode()) injectVocabWarning },Banner();
+        2000);
+
+        // ⭐ Watch mode chạy liên tục
+        watchVocabMode();
+        setInterval(watchVocabMode, 800);
+
+        console.log('[vocab-patch] ready — onboarding-based');
     }
+    setTimeout(patchLoop, 800);
 })();
 """
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
