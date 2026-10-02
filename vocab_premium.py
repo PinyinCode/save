@@ -1120,7 +1120,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
         if (!btn || btn.__vocabPremiumBound) return;
 
-        btn.__fixPyBound = true;
+      
         btn.__vocabPremiumBound = true;
 
         btn.addEventListener('click', function(e) {
