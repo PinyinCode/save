@@ -194,7 +194,7 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
         })
 
     return data, n_mnemonic_generated, n_radical_generated
-  def build_vocab_css(vocab_id="tu-vung"):
+def build_vocab_css(vocab_id="tu-vung"):
     css = r"""
 /* TAB TU VUNG PREMIUM */
 .ds-btn[data-dataset="__VOCAB_ID__"] {
