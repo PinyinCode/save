@@ -3994,7 +3994,7 @@ function getAllowedHskList() {
     var info = getTierInfo();
     var max = info.maxHSK;
     if (max === Infinity || max >= 6 || info.tier === 'active') {
-        return ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];
+        return ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6','HSK7-9'];
     }
     var list = [];
     for (var i = 1; i <= max; i++) list.push('HSK' + i);
