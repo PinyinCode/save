@@ -240,26 +240,45 @@ def read_vocab_excel(excel_file, start_row=3):
 def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
     """
     Đọc 1 sheet vocab HSK.
-    - start_row: đã được tự động phát hiện.
+    - Tự động phát hiện cấu trúc cột dựa trên loại sheet (HSK1-6 vs HSK7-9).
     - stt unique: prefix sheet name để tránh trùng giữa các sheet.
     """
-    COL_STT = 0
-    COL_ZH = 1
-    COL_PINYIN = 2
-    COL_LOAI_TU = 4
-    COL_VI = 5
-    COL_VI_DU_ZH = 8
-    COL_VI_DU_PINYIN = 9
-    COL_VI_DU_VI = 10
-    COL_MNEMONIC = 11
-    COL_RADICAL = 12
+    # ⭐ PHÁT HIỆN LOẠI SHEET
+    is_hsk79 = ('7' in hsk and '9' in hsk) or ('HSK7' in hsk) or ('HSK8' in hsk) or ('HSK9' in hsk)
+
+    if is_hsk79:
+        # ═══ HSK 7-9: A-STT, B-汉语, C-PINYIN, D-发音, E-Nghĩa ═══
+        COL_STT = 0
+        COL_ZH = 1
+        COL_PINYIN = 2
+        COL_LOAI_TU = -1        # ⬅️ Không có
+        COL_VI = 4              # ⬅️ Nghĩa ở cột E
+        COL_VI_DU_ZH = -1       # ⬅️ Không có
+        COL_VI_DU_PINYIN = -1
+        COL_VI_DU_VI = -1
+        COL_MNEMONIC = -1
+        COL_RADICAL = -1
+        print("      [COLS] HSK 7-9 mode (nghĩa ở cột E)")
+    else:
+        # ═══ HSK 1-6: A-STT, B-汉语, C-PINYIN, D-Phát âm, E-Loại từ, F-Nghĩa ═══
+        COL_STT = 0
+        COL_ZH = 1
+        COL_PINYIN = 2
+        COL_LOAI_TU = 4         # ⬅️ Loại từ ở cột E
+        COL_VI = 5              # ⬅️ Nghĩa ở cột F
+        COL_VI_DU_ZH = 8
+        COL_VI_DU_PINYIN = 9
+        COL_VI_DU_VI = 10
+        COL_MNEMONIC = 11
+        COL_RADICAL = 12
+        print("      [COLS] HSK 1-6 mode (nghĩa ở cột F)")
 
     data = []
     empty_count = 0
     n_mnemonic_generated = 0
     n_radical_generated = 0
 
-    # ⭐ PREFIX SHEET NAME (VD: "HSK1", "HSK-7-9-1")
+    # ⭐ PREFIX SHEET NAME
     sheet_clean = re.sub(r'[^A-Za-z0-9]+', '-', sheet_name).strip('-')
 
     for row in ws.iter_rows(min_row=start_row, values_only=True):
@@ -289,12 +308,13 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
         stt_str = str(stt_raw_val).strip()
         stt_unique = (sheet_clean + "-" + stt_str) if stt_str else ""
 
-        pinyin = _clean_pinyin(row[COL_PINYIN]) if COL_PINYIN < len(row) else ""
-        vi = _clean(row[COL_VI]) if COL_VI < len(row) else ""
+        # ⭐ Đọc các cột (an toàn với index âm)
+        pinyin = _clean_pinyin(row[COL_PINYIN]) if COL_PINYIN >= 0 and COL_PINYIN < len(row) else ""
+        vi = _clean(row[COL_VI]) if COL_VI >= 0 and COL_VI < len(row) else ""
 
         # ⭐ MẸO NHỚ
         mnemonic = ""
-        if COL_MNEMONIC < len(row):
+        if COL_MNEMONIC >= 0 and COL_MNEMONIC < len(row):
             mnemonic = _clean(row[COL_MNEMONIC])
         if not mnemonic:
             try:
@@ -306,7 +326,7 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
 
         # ⭐ BỘ THỦ
         radical = None
-        if COL_RADICAL < len(row):
+        if COL_RADICAL >= 0 and COL_RADICAL < len(row):
             radical = _parse_radical_raw(row[COL_RADICAL])
         if not radical:
             try:
@@ -317,17 +337,17 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
                 radical = None
 
         # ⭐ VÍ DỤ + TÁCH TỪ BẰNG JIEBA
-        vi_du_zh = _clean(row[COL_VI_DU_ZH]) if COL_VI_DU_ZH < len(row) else ""
-        vi_du_pinyin = _clean_pinyin(row[COL_VI_DU_PINYIN]) if COL_VI_DU_PINYIN < len(row) else ""
-        vi_du_vi = _clean(row[COL_VI_DU_VI]) if COL_VI_DU_VI < len(row) else ""
+        vi_du_zh = _clean(row[COL_VI_DU_ZH]) if COL_VI_DU_ZH >= 0 and COL_VI_DU_ZH < len(row) else ""
+        vi_du_pinyin = _clean_pinyin(row[COL_VI_DU_PINYIN]) if COL_VI_DU_PINYIN >= 0 and COL_VI_DU_PINYIN < len(row) else ""
+        vi_du_vi = _clean(row[COL_VI_DU_VI]) if COL_VI_DU_VI >= 0 and COL_VI_DU_VI < len(row) else ""
         vi_du_words = _split_chinese_words(vi_du_zh)
 
         data.append({
-            "stt": stt_unique,                       # ⬅️ UNIQUE (VD: HSK1-1)
-            "stt_original": stt_str,                 # ⬅️ GỐC (VD: 1)
+            "stt": stt_unique,
+            "stt_original": stt_str,
             "hsk": hsk,
             "topic": "Từ vựng",
-            "subject": _clean(row[COL_LOAI_TU]) if COL_LOAI_TU < len(row) else "",
+            "subject": _clean(row[COL_LOAI_TU]) if COL_LOAI_TU >= 0 and COL_LOAI_TU < len(row) else "",
             "vi": vi,
             "zh": zh,
             "pinyin": pinyin,
