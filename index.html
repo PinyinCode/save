@@ -26170,6 +26170,56 @@ window.__switchRawData = function(datasetId) {
         console.log('[vocab] hooked loadPracticeFull');
         return true;
     }
+    /* ⭐ Giới hạn dropdown "Câu:" tránh lag */
+    function hookPfBuildQuickNav() {
+        if (typeof window.pfBuildQuickNav !== 'function') return;
+        if (window.pfBuildQuickNav.__vocabLimited) return;
+
+        var orig = window.pfBuildQuickNav;
+        window.pfBuildQuickNav = function() {
+            // Chỉ override khi ở tab từ vựng
+            if (!_isVocabMode()) {
+                return orig.apply(this, arguments);
+            }
+
+            var sel = document.getElementById('pfQuickNav');
+            if (!sel) return;
+
+            var MAX_OPTIONS = 500;
+            var list = (typeof filtered !== 'undefined') ? filtered : [];
+
+            var total = list.length;
+            var limit = Math.min(total, MAX_OPTIONS);
+
+            var html = '<option value="">-- Chọn câu (' + total + ') --</option>';
+
+            for (var i = 0; i < limit; i++) {
+                var r = list[i];
+                var vi = (r.vi || '').substring(0, 45);
+                var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
+                             ? '#' + String(r.stt).trim() + ' · '
+                             : '';
+                var label = sttRaw + 'Câu ' + (i + 1) + ': ' + vi;
+                html += '<option value="' + _esc(r.stt) + '">' + _esc(label) + '</option>';
+            }
+
+            if (total > MAX_OPTIONS) {
+                html += '<option value="" disabled>-- Còn ' + (total - MAX_OPTIONS) + ' câu nữa, dùng nút ▶ --</option>';
+            }
+
+            sel.innerHTML = html;
+
+            try {
+                if (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) {
+                    sel.value = pfCurrentStt;
+                }
+            } catch(e) {}
+        };
+
+        window.pfBuildQuickNav.__vocabLimited = true;
+        console.log('[vocab] pfBuildQuickNav limited to 500 options');
+    }
+
 
     function buildPFExampleBlock(r) {
         var zh = _esc(r.vi_du_zh || '');
@@ -26248,6 +26298,7 @@ window.__switchRawData = function(datasetId) {
         updateTabLockState();
         setupObserver();
         setInterval(watchTier, 1000);
+        hookPfBuildQuickNav();
 
         var tries = 0;
         var t = setInterval(function() {
