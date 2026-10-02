@@ -325,53 +325,159 @@ def build_vocab_js_patch():
     function bindVocabPatch() {
         return;   // no-op
     }
+    /* ⭐ LOCK ô Chủ đề khi ở tab Từ vựng */
+    function patchSubjectLock() {
+        if (window.__vocabSubjectLockPatched) return;
+        if (typeof window.buildFilters !== 'function') {
+            setTimeout(patchSubjectLock, 200);
+            return;
+        }
+        var orig = window.buildFilters;
+        window.buildFilters = function() {
+            var result = orig.apply(this, arguments);
 
+            try {
+                var sf = document.getElementById('subjectFilter');
+                if (!sf) return result;
+
+                if (_isVocabMode()) {
+                    // Vocab mode → LOCK ô chủ đề
+                    sf.disabled = true;
+                    sf.value = '';
+                    sf.style.opacity = '0.5';
+                    sf.style.cursor = 'not-allowed';
+                    sf.title = 'Không khả dụng cho Từ vựng';
+                } else {
+                    // Tab khác → mở lại
+                    sf.disabled = false;
+                    sf.style.opacity = '';
+                    sf.style.cursor = '';
+                    sf.title = '';
+                }
+            } catch(e) {}
+
+            return result;
+        };
+        window.__vocabSubjectLockPatched = true;
+        console.log('[vocab-patch] subject lock patched');
+    }
+
+    /* ⭐ Watch đổi tab — tự động lock/unlock */
+    /* ⭐ Watch đổi tab — tự động lock/unlock (main + practice full) */
+    function watchVocabMode() {
+        var isVocab = (typeof CURRENT_DATASET !== 'undefined') && CURRENT_DATASET === VOCAB_ID;
+
+        // ⭐ SET cờ body
+        if (isVocab) {
+            document.body.setAttribute('data-vocab-mode', '1');
+        } else {
+            document.body.removeAttribute('data-vocab-mode');
+        }
+
+        // ⭐ Danh sách TẤT CẢ ô chủ đề cần lock (main + full)
+        var selects = [
+            document.getElementById('subjectFilter'),      // màn hình chính
+            document.getElementById('pfSubjectFilter')     // practice full
+        ];
+
+        selects.forEach(function(sf) {
+            if (!sf) return;
+
+            if (isVocab && !sf.disabled) {
+                sf.disabled = true;
+                sf.value = '';
+                sf.style.opacity = '0.5';
+                sf.style.cursor = 'not-allowed';
+                sf.title = 'Không khả dụng cho Từ vựng';
+            } else if (!isVocab && sf.disabled) {
+                sf.disabled = false;
+                sf.style.opacity = '';
+                sf.style.cursor = '';
+                sf.title = '';
+            }
+        });
+    }
     window.getVocabAccess = getVocabAccess;
     window.vocabUpdateLockState = updateTabLockState;
     window.vocabInjectWarning = injectVocabWarningBanner;
 
     function patchLoop() {
-        if (typeof window.vocabUpgradeRenew === 'function') {
-            window.vocabUpdateLockState = updateTabLockState;
-
-            // ⭐ Không gọi bindVocabPatch() nữa — vocab_premium.py tự lo click
-            // bindVocabPatch();
-
-            // ⭐ Nhưng VẪN apply giới hạn HSK + số câu SAU khi switch
-            var vocabBtn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
-            if (vocabBtn && !vocabBtn.__vocabLimitHooked) {
-                vocabBtn.__vocabLimitHooked = true;
-                vocabBtn.addEventListener('click', function() {
-                    // Chạy SAU vocab_premium.py (delay 500ms)
-                    setTimeout(function() {
-                        var acc = getVocabAccess();
-                        if (!acc.allowed) return;
-                        if (_isVocabMode() && window.FIXPY_DATASETS &&
-                            window.FIXPY_DATASETS[VOCAB_ID]) {
-                            var full = window.FIXPY_DATASETS[VOCAB_ID].data || [];
-                            var limited = applyVocabLimits(full, acc);
-                            if (limited.length !== full.length) {
-                                RAW_DATA = limited;
-                                if (typeof applyFilter === 'function') applyFilter();
-                                if (typeof updateResultCount === 'function') updateResultCount();
-                            }
-                        }
-                        updateTabLockState();
-                        injectVocabWarningBanner();
-                    }, 500);
-                }, false);
-            }
-
-            updateTabLockState();
-            setInterval(function() {
-                if (_isVocabMode()) injectVocabWarningBanner();
-            }, 2000);
-            console.log('[vocab-patch] ready — onboarding-based');
+        // ⭐ Chỉ cần DOM ready + tab vocab tồn tại là đủ
+        var vocabBtn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
+        if (!vocabBtn) {
+            setTimeout(patchLoop, 300);
             return;
         }
-        setTimeout(patchLoop, 300);
+
+        window.vocabUpdateLockState = updateTabLockState;
+
+        // ═══════════════════════════════════════════════════════════
+        //  ⭐ OVERRIDE pfBuildFilterOptions — lock pfSubjectFilter khi ở vocab
+        // ═══════════════════════════════════════════════════════════
+        if (!window.__vocabPfFilterPatched && typeof window.pfBuildFilterOptions === 'function') {
+            window.__vocabPfFilterPatched = true;
+            var origPfBuild = window.pfBuildFilterOptions;
+            window.pfBuildFilterOptions = function() {
+                var result = origPfBuild.apply(this, arguments);
+
+                // Sau khi build xong → lock nếu đang ở vocab mode
+                if (_isVocabMode()) {
+                    var pfSubj = document.getElementById('pfSubjectFilter');
+                    if (pfSubj) {
+                        pfSubj.disabled = true;
+                        pfSubj.value = '';
+                        pfSubj.style.opacity = '0.5';
+                        pfSubj.style.cursor = 'not-allowed';
+                        pfSubj.title = 'Không khả dụng cho Từ vựng';
+                    }
+                }
+
+                return result;
+            };
+            console.log('[vocab-patch] pfBuildFilterOptions patched');
         }
-    })();
+
+        // ═══════════════════════════════════════════════════════════
+        //  Hook click tab vocab — apply giới hạn HSK + số câu
+        // ═══════════════════════════════════════════════════════════
+        if (!vocabBtn.__vocabLimitHooked) {
+            vocabBtn.__vocabLimitHooked = true;
+            vocabBtn.addEventListener('click', function() {
+                setTimeout(function() {
+                    var acc = getVocabAccess();
+                    if (!acc.allowed) return;
+                    if (_isVocabMode() && window.FIXPY_DATASETS &&
+                        window.FIXPY_DATASETS[VOCAB_ID]) {
+                        var full = window.FIXPY_DATASETS[VOCAB_ID].data || [];
+                        var limited = applyVocabLimits(full, acc);
+                        if (limited.length !== full.length) {
+                            RAW_DATA = limited;
+                            if (typeof applyFilter === 'function') applyFilter();
+                            if (typeof updateResultCount === 'function') updateResultCount();
+                        }
+                    }
+                    updateTabLockState();
+                    injectVocabWarningBanner();
+                    watchVocabMode();
+                }, 500);
+            }, false);
+        }
+
+        updateTabLockState();
+
+        // ⭐ Refresh banner mỗi 2s
+        setInterval(function() {
+            if (_isVocabMode()) injectVocabWarningBanner();
+        }, 2000);
+
+        // ⭐ Watch mode chạy liên tục — lock/unlock ô chủ đề (main + full)
+        watchVocabMode();
+        setInterval(watchVocabMode, 800);
+
+        console.log('[vocab-patch] ready — onboarding-based');
+    }
+    setTimeout(patchLoop, 800);
+})();
 """
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
     os.chdir("..")
