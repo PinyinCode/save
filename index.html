@@ -9060,8 +9060,53 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
     .pf-vocab-example { padding: .7rem .85rem; margin-top: .85rem; }
     .pf-vocab-example-zh { font-size: 1rem; }
     .pf-vocab-example-pinyin { font-size: .8rem; }
-    .pf-vocab-example-vi { font-size: .85rem; }
+    .pf-vocab-example-vi { font-size: .
 }
+/* ⭐ Label tĩnh thay dropdown "Bộ dữ liệu" trong Practice Full */
+.pf-dataset-static-label {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .45rem .85rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg,
+        rgba(251, 191, 36, .15),
+        rgba(245, 158, 11, .1));
+    border: 1.5px solid rgba(245, 158, 11, .4);
+    color: #92400e;
+    font-size: clamp(.78rem, .95vw, .88rem);
+    font-weight: 800;
+    letter-spacing: .02em;
+    white-space: nowrap;
+    box-shadow:
+        0 1px 3px rgba(245, 158, 11, .15),
+        inset 0 1px 0 rgba(255, 255, 255, .5);
+    cursor: default;
+    user-select: none;
+}
+[data-theme="dark"] .pf-dataset-static-label {
+    background: linear-gradient(135deg,
+        rgba(251, 191, 36, .22),
+        rgba(245, 158, 11, .15));
+    border-color: rgba(245, 158, 11, .55);
+    color: #fcd34d;
+    box-shadow:
+        0 1px 3px rgba(0, 0, 0, .3),
+        inset 0 1px 0 rgba(255, 255, 255, .08);
+}
+
+/* Đảm bảo row dataset vẫn có padding đẹp */
+.pf-dataset-row {
+    gap: .5rem;
+}
+
+@media (max-width: 500px) {
+    .pf-dataset-static-label {
+        font-size: .72rem;
+        padding: .4rem .7rem;
+    }
+}
+
 
 
 
@@ -26113,9 +26158,23 @@ window.__switchRawData = function(datasetId) {
                     }
 
                     setTimeout(function() {
-                        // ⭐ Ẩn ô "Chủ đề" khi ở tab Từ vựng
+                        // ⭐ 1. Ẩn ô "Chủ đề"
                         var pfSubjectChip = document.getElementById('pfSubjectChip');
                         if (pfSubjectChip) pfSubjectChip.style.display = 'none';
+
+                        // ⭐ 2. Thay dropdown "Bộ dữ liệu" bằng label tĩnh
+                        var pfDatasetSelect = document.getElementById('pfDatasetSelect');
+                        if (pfDatasetSelect && !pfDatasetSelect.__vocabStaticified) {
+                            pfDatasetSelect.__vocabStaticified = true;
+                            pfDatasetSelect.style.display = 'none';
+
+                            // Tạo label tĩnh thay thế
+                            var label = document.createElement('div');
+                            label.className = 'pf-dataset-static-label';
+                            label.innerHTML = '📚 Từ vựng HSK (11745 câu)';
+                            label.title = 'Đang ở bộ dữ liệu Từ vựng — không đổi được';
+                            pfDatasetSelect.parentNode.insertBefore(label, pfDatasetSelect);
+                        }
 
                         // Reset input
                         var pfInput = document.getElementById('pfInput');
