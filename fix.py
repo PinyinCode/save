@@ -430,14 +430,13 @@ def build_vocab_js_patch():
         updateTabLockState();
         setInterval(function() {
             if (_isVocabMode()) injectVocabWarningBanner();
-        2000);
+        }, 2000);
 
         // ⭐ Watch mode chạy liên tục
         watchVocabMode();
         setInterval(watchVocabMode, 800);
 
         console.log('[vocab-patch] ready — onboarding-based');
-    }
     setTimeout(patchLoop, 800);
 })();
 """
