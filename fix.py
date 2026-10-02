@@ -368,7 +368,7 @@ def build_vocab_js_patch():
         var sf = document.getElementById('subjectFilter');
         if (!sf) return;
 
-        if (isVocab && !sf.disabled)G {
+        if (isVocab && !sf.disabled){
             sf.disabled = true;
             sf.value = '';
             sf.style.opacity = '0.5';
@@ -425,7 +425,7 @@ def build_vocab_js_patch():
         }
         setTimeout(patchLoop, 300);
     }
-    })();
+})();
 """
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
     os.chdir("..")
