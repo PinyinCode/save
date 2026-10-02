@@ -25978,11 +25978,32 @@ window.__switchRawData = function(datasetId) {
     var _done = new WeakSet();
 
     function canAccessVocab() {
-        if (typeof currentUser === 'undefined' || !currentUser) return false;
-        if (currentUser.role === 'admin') return true;
-        if (currentUser.isPermanent === true) return true;
-        return false;
+    // Đọc tier từ ONBOARDING_CONFIG (nếu có)
+    var cfg = (typeof ONBOARDING_CONFIG !== 'undefined' && ONBOARDING_CONFIG) || {};
+    
+    // Admin → OK
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
+        return true;
     }
+    // Premium → OK
+    if (typeof currentUser !== 'undefined' && currentUser && currentUser.isPermanent === true) {
+        return true;
+    }
+    
+    // Xác định tier
+    var tier = 'demo';
+    if (typeof currentUser !== 'undefined' && currentUser) {
+        if (currentUser.isTrial || currentUser.tier === 'trial') tier = 'trial';
+        else if (currentUser.isExpiredOnly || currentUser.tier === 'expired') tier = 'expired';
+        else tier = 'active';
+    }
+    
+    // Expired → KHÓA
+    if (tier === 'expired') return false;
+    
+    // Demo / Trial / Active → MỞ (giới hạn HSK + số câu do patch lo)
+    return true;
+}
 
     function _esc(s) {
         return (typeof escapeHtml === 'function')
@@ -26011,23 +26032,23 @@ window.__switchRawData = function(datasetId) {
     }
 
     function updateTabLockState() {
-        var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
-        if (!btn) return;
-        var can = canAccessVocab();
-        var oldLock = btn.querySelector('.vocab-lock-icon');
-        if (oldLock) oldLock.remove();
+    var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
+    if (!btn) return;
+    var can = canAccessVocab();
+    var oldLock = btn.querySelector('.vocab-lock-icon');
+    if (oldLock) oldLock.remove();
 
-        if (can) {
-            btn.classList.remove('vocab-locked');
-            btn.title = 'Tu vung HSK 1-9 - Premium (da mo khoa)';
-        } else {
-            btn.classList.add('vocab-locked');
-            btn.title = 'Tu vung HSK - Chi danh cho Premium (1.000.000d)';
-            var lock = document.createElement('i');
-            lock.className = 'fas fa-lock vocab-lock-icon';
-            btn.appendChild(lock);
-        }
+    if (can) {
+        btn.classList.remove('vocab-locked');
+        btn.title = 'Tu vung HSK - da mo khoa';
+    } else {
+        btn.classList.add('vocab-locked');
+        btn.title = 'Tu vung HSK - het han';
+        var lock = document.createElement('i');
+        lock.className = 'fas fa-lock vocab-lock-icon';
+        btn.appendChild(lock);
     }
+}
 
     function openUpgradeModal() {
         var modal = document.getElementById('vocabUpgradeModal');
