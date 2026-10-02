@@ -363,10 +363,9 @@ def build_vocab_js_patch():
     }
 
     /* ⭐ Watch đổi tab — tự động lock/unlock */
+    /* ⭐ Watch đổi tab — tự động lock/unlock (main + practice full) */
     function watchVocabMode() {
         var isVocab = (typeof CURRENT_DATASET !== 'undefined') && CURRENT_DATASET === VOCAB_ID;
-        var sf = document.getElementById('subjectFilter');
-        if (!sf) return;
 
         // ⭐ SET cờ body
         if (isVocab) {
@@ -375,19 +374,28 @@ def build_vocab_js_patch():
             document.body.removeAttribute('data-vocab-mode');
         }
 
-        // ⭐ Lock/Unlock ô chủ đề
-        if (isVocab && !sf.disabled) {
-            sf.disabled = true;
-            sf.value = '';
-            sf.style.opacity = '0.5';
-            sf.style.cursor = 'not-allowed';
-            sf.title = 'Không khả dụng cho Từ vựng';
-        } else if (!isVocab && sf.disabled) {
-            sf.disabled = false;
-            sf.style.opacity = '';
-            sf.style.cursor = '';
-            sf.title = '';
-        }
+        // ⭐ Danh sách TẤT CẢ ô chủ đề cần lock (main + full)
+        var selects = [
+            document.getElementById('subjectFilter'),      // màn hình chính
+            document.getElementById('pfSubjectFilter')     // practice full
+        ];
+
+        selects.forEach(function(sf) {
+            if (!sf) return;
+
+            if (isVocab && !sf.disabled) {
+                sf.disabled = true;
+                sf.value = '';
+                sf.style.opacity = '0.5';
+                sf.style.cursor = 'not-allowed';
+                sf.title = 'Không khả dụng cho Từ vựng';
+            } else if (!isVocab && sf.disabled) {
+                sf.disabled = false;
+                sf.style.opacity = '';
+                sf.style.cursor = '';
+                sf.title = '';
+            }
+        });
     }
     window.getVocabAccess = getVocabAccess;
     window.vocabUpdateLockState = updateTabLockState;
@@ -402,8 +410,36 @@ def build_vocab_js_patch():
         }
 
         window.vocabUpdateLockState = updateTabLockState;
-        // patchSubjectLock();                     // ⬅️ ĐÃ BỎ
 
+        // ═══════════════════════════════════════════════════════════
+        //  ⭐ OVERRIDE pfBuildFilterOptions — lock pfSubjectFilter khi ở vocab
+        // ═══════════════════════════════════════════════════════════
+        if (!window.__vocabPfFilterPatched && typeof window.pfBuildFilterOptions === 'function') {
+            window.__vocabPfFilterPatched = true;
+            var origPfBuild = window.pfBuildFilterOptions;
+            window.pfBuildFilterOptions = function() {
+                var result = origPfBuild.apply(this, arguments);
+
+                // Sau khi build xong → lock nếu đang ở vocab mode
+                if (_isVocabMode()) {
+                    var pfSubj = document.getElementById('pfSubjectFilter');
+                    if (pfSubj) {
+                        pfSubj.disabled = true;
+                        pfSubj.value = '';
+                        pfSubj.style.opacity = '0.5';
+                        pfSubj.style.cursor = 'not-allowed';
+                        pfSubj.title = 'Không khả dụng cho Từ vựng';
+                    }
+                }
+
+                return result;
+            };
+            console.log('[vocab-patch] pfBuildFilterOptions patched');
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  Hook click tab vocab — apply giới hạn HSK + số câu
+        // ═══════════════════════════════════════════════════════════
         if (!vocabBtn.__vocabLimitHooked) {
             vocabBtn.__vocabLimitHooked = true;
             vocabBtn.addEventListener('click', function() {
@@ -428,16 +464,18 @@ def build_vocab_js_patch():
         }
 
         updateTabLockState();
+
+        // ⭐ Refresh banner mỗi 2s
         setInterval(function() {
             if (_isVocabMode()) injectVocabWarningBanner();
         }, 2000);
 
-        // ⭐ Watch mode chạy liên tục
+        // ⭐ Watch mode chạy liên tục — lock/unlock ô chủ đề (main + full)
         watchVocabMode();
         setInterval(watchVocabMode, 800);
 
         console.log('[vocab-patch] ready — onboarding-based');
-          }
+    }
     setTimeout(patchLoop, 800);
 })();
 """
