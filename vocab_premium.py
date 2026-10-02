@@ -824,254 +824,6 @@ def build_vocab_css(vocab_id="tu-vung"):
     .pf-char-info-pinyin { font-size: .9rem; }
     .pf-char-info-line { font-size: .78rem; }
 }
-/* ⭐ TOAST thông báo giới hạn */
-.vocab-limit-toast {
-    position: fixed;
-    top: auto;                                    /* ← Bỏ top */
-    bottom: 100px;                                /* ← Đặt xuống dưới */
-    bottom: calc(100px + env(safe-area-inset-bottom));  /* ← Có safe-area */
-    left: 50%;
-    transform: translateX(-50%) translateY(120px);      /* ← Đảo chiều */
-    padding: .75rem 1rem;
-    background: linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #a855f7 100%);
-    color: #fff;
-    border-radius: 16px;
-    font-size: .85rem;
-    font-weight: 700;
-    font-family: inherit;
-    box-shadow: 0 12px 40px rgba(124, 58, 237, .5), 0 4px 12px rgba(0, 0, 0, .15);
-    z-index: 9999;
-    opacity: 0;
-    transition: opacity .3s ease, transform .4s cubic-bezier(.34, 1.56, .64, 1);
-    display: flex;
-    align-items: center;
-    gap: .75rem;
-    max-width: 90vw;
-    pointer-events: auto;
-    border: 2px solid rgba(255, 255, 255, .2);
-}
-.vocab-limit-toast.show {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-}
-.vocab-limit-toast .vlt-icon {
-    font-size: 1.5rem;
-    flex-shrink: 0;
-    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, .2));
-}
-.vocab-limit-toast .vlt-content {
-    flex: 1;
-    min-width: 0;
-    text-align: left;
-}
-.vocab-limit-toast .vlt-title {
-    font-size: .88rem;
-    font-weight: 900;
-    letter-spacing: .02em;
-    margin-bottom: .15rem;
-    white-space: nowrap;
-}
-.vocab-limit-toast .vlt-desc {
-    font-size: .72rem;
-    opacity: .9;
-    font-weight: 500;
-    white-space: nowrap;
-}
-.vocab-limit-toast .vlt-btn {
-    padding: .45rem .85rem;
-    border-radius: 50px;
-    border: 1.5px solid rgba(255, 255, 255, .5);
-    background: #fff;
-    color: #7c3aed;
-    font-size: .75rem;
-    font-weight: 900;
-    font-family: inherit;
-    cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
-    transition: all .18s;
-}
-.vocab-limit-toast .vlt-btn:hover {
-    background: #fbbf24;
-    color: #1e1b4b;
-    border-color: #fbbf24;
-    transform: scale(1.05);
-}
-.vocab-limit-toast .vlt-close {
-    width: 22px;
-    height: 22px;
-    border-radius: 50%;
-    border: none;
-    background: rgba(255, 255, 255, .2);
-    color: #fff;
-    cursor: pointer;
-    font-size: .7rem;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 0;
-    line-height: 1;
-}
-.vocab-limit-toast .vlt-close:hover {
-    background: rgba(255, 255, 255, .35);
-}
-@media (max-width: 500px) {
-    .vocab-limit-toast {
-        top: auto;
-        bottom: 90px;
-        bottom: calc(90px + env(safe-area-inset-bottom));
-        padding: .6rem .8rem;
-        gap: .5rem;
-        max-width: 95vw;
-    }
-    .vocab-limit-toast .vlt-icon { font-size: 1.2rem; }
-    .vocab-limit-toast .vlt-title { font-size: .78rem; }
-    .vocab-limit-toast .vlt-desc { font-size: .65rem; }
-    .vocab-limit-toast .vlt-btn { padding: .35rem .65rem; font-size: .68rem; }
-}
-/* ⭐ BANNER ở đầu danh sách */
-.vocab-limit-banner {
-    grid-column: 1 / -1;
-    display: flex;
-    align-items: center;
-    gap: .75rem;
-    padding: .85rem 1rem;
-    background: linear-gradient(135deg, rgba(99, 102, 241, .12), rgba(139, 92, 246, .08));
-    border: 2px solid rgba(139, 92, 246, .35);
-    border-radius: 14px;
-    margin-bottom: .75rem;
-    animation: vlbIn .35s cubic-bezier(.34, 1.56, .64, 1);
-    flex-wrap: wrap;
-    position: relative;
-    overflow: hidden;
-}
-.vocab-limit-banner::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    right: -30%;
-    width: 60%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(139, 92, 246, .15), transparent 70%);
-    pointer-events: none;
-    animation: vlbGlow 4s ease-in-out infinite;
-}
-@keyframes vlbIn {
-    from { opacity: 0; transform: translateY(-10px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-@keyframes vlbGlow {
-    0%, 100% { opacity: .5; transform: scale(1); }
-    50%      { opacity: 1; transform: scale(1.2); }
-}
-.vocab-limit-banner .vlb-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    color: #fff;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    flex-shrink: 0;
-    box-shadow: 0 4px 12px rgba(139, 92, 246, .4);
-    animation: vlbIconPulse 2.5s ease-in-out infinite;
-}
-@keyframes vlbIconPulse {
-    0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.08); }
-}
-.vocab-limit-banner .vlb-content {
-    flex: 1;
-    min-width: 0;
-    display: flex;              /* ← THÊM */
-    flex-direction: column;     /* ← THÊM — xếp dọc */
-    gap: .2rem;                 /* ← THÊM — cách nhau 0.2rem */
-}
-.vocab-limit-banner .vlb-title {
-    display: block;
-    font-size: .9rem;
-    font-weight: 800;
-    color: var(--text);
-    margin-bottom: .35rem;
-    line-height: 1.5;
-    min-height: 1.5em;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-.vocab-limit-banner .vlb-title b {
-    color: #dc2626;
-    font-size: 1.15em;
-    font-weight: 900;
-    display: inline;
-}
-.vocab-limit-banner .vlb-desc {
-    display: block;
-    font-size: .75rem;
-    color: var(--text-2);
-    line-height: 1.5;
-    min-height: 1.5em;
-    margin-top: .15rem;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-}
-.vocab-limit-banner .vlb-btn {
-    padding: .65rem 1.1rem;
-    border-radius: 50px;
-    border: none;
-    background: linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #a855f7 100%);
-    color: #fff;
-    font-size: .82rem;
-    font-weight: 900;
-    font-family: inherit;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    white-space: nowrap;
-    box-shadow: 0 6px 18px rgba(139, 92, 246, .5);
-    transition: all .2s;
-    animation: vlbBtnPulse 2s ease-in-out infinite;
-    text-transform: uppercase;
-    letter-spacing: .3px;
-    flex-shrink: 0;
-}
-.vocab-limit-banner .vlb-btn:hover {
-    transform: translateY(-2px) scale(1.03);
-    box-shadow: 0 10px 26px rgba(139, 92, 246, .7);
-}
-.vocab-limit-banner .vlb-btn:active {
-    transform: translateY(0) scale(.97);
-}
-@keyframes vlbBtnPulse {
-    0%, 100% { box-shadow: 0 6px 18px rgba(139, 92, 246, .5); }
-    50%      { box-shadow: 0 6px 24px rgba(139, 92, 246, .85); }
-}
-[data-theme="dark"] .vocab-limit-banner {
-    background: linear-gradient(135deg, rgba(99, 102, 241, .2), rgba(139, 92, 246, .15));
-    border-color: rgba(165, 180, 252, .4);
-}
-@media (max-width: 500px) {
-    .vocab-limit-banner {
-        padding: .7rem .8rem;
-        gap: .5rem;
-    }
-    .vocab-limit-banner .vlb-icon {
-        width: 36px;
-        height: 36px;
-        font-size: 1.15rem;
-    }
-    .vocab-limit-banner .vlb-title { font-size: .82rem; }
-    .vocab-limit-banner .vlb-desc { font-size: .7rem; }
-    .vocab-limit-banner .vlb-btn {
-        width: 100%;
-        justify-content: center;
-        padding: .55rem .85rem;
-        font-size: .75rem;
-    }
-}
 
 """
     return css.replace("__VOCAB_ID__", vocab_id)
@@ -1138,120 +890,10 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     var _done = new WeakSet();
 
     function canAccessVocab() {
-        return true;
-    }
-
-    function canViewFullVocab() {
         if (typeof currentUser === 'undefined' || !currentUser) return false;
         if (currentUser.role === 'admin') return true;
         if (currentUser.isPermanent === true) return true;
         return false;
-    }
-
-    function getMaxVocabWords() {
-        if (canViewFullVocab()) return Infinity;
-        if (typeof currentUser === 'undefined' || !currentUser) return 20;
-        if (currentUser.isTrial || currentUser.tier === 'trial') return 20;
-        if (currentUser.tier === 'active' && !currentUser.isPermanent) return 100;
-        if (currentUser.isExpiredOnly || currentUser.tier === 'expired') return 20;
-        return 20;
-    }
-
-    function limitVocabData() {
-        var max = getMaxVocabWords();
-
-        var fullList = [];
-        if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
-            fullList = window.FIXPY_DATASETS[VOCAB_ID].data || [];
-        }
-        if (!fullList.length) return;
-
-        if (max === Infinity) {
-            try { if (typeof RAW_DATA !== 'undefined') RAW_DATA = fullList; } catch(e) {}
-            console.log('[vocab] Full: ' + fullList.length);
-            return;
-        }
-
-        var limited = fullList.slice(0, max);
-        try { if (typeof RAW_DATA !== 'undefined') RAW_DATA = limited; } catch(e) {}
-        console.log('[vocab] Limited: ' + max);
-
-        // ⭐ GỌI 2 HÀM MỚI
-        showLimitToast();
-        showLimitBanner();
-    }
-    // ⭐ Toast thông báo giới hạn
-    function showLimitToast() {
-        if (canViewFullVocab()) return;
-
-        var max = getMaxVocabWords();
-        var total = 11745;
-        if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
-            total = (window.FIXPY_DATASETS[VOCAB_ID].data || []).length;
-        }
-
-        // Xóa toast cũ
-        var old = document.getElementById('vocabLimitToast');
-        if (old) old.remove();
-
-        var toast = document.createElement('div');
-        toast.id = 'vocabLimitToast';
-        toast.className = 'vocab-limit-toast';
-        toast.innerHTML =
-            '<div class="vlt-icon">💎</div>' +
-            '<div class="vlt-content">' +
-                '<divử class="vlt-title">Xem th ' + max + '/' + total + ' từ</div>' +
-                '<div class="vlt-desc">Mua Premium để xem full</div>' +
-            '</div>' +
-            '<button class="vlt-btn" onclick="vocabUpgradeRenew()">👑 Mua</button>' +
-            '<button class="vlt-close" onclick="this.parentNode.remove()">✕</button>';
-
-        document.body.appendChild(toast);
-
-        requestAnimationFrame(function() {
-            toast.classList.add('show');
-        });
-
-        // Tự ẩn sau 6s
-        setTimeout(function() {
-            if (toast.parentNode) {
-                toast.classList.remove('show');
-                setTimeout(function() { if (toast.parentNode) toast.remove(); }, 300);
-            }
-        }, 6000);
-    }
-    // ⭐ Banner ở đầu danh sách
-    function showLimitBanner() {
-        // Xóa banner cũ
-        var old = document.getElementById('vocabLimitBanner');
-        if (old) old.remove();
-
-        if (canViewFullVocab()) return;
-        if (!_isVocabMode()) return;
-
-        var max = getMaxVocabWords();
-        var total = 11745;
-        if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
-            total = (window.FIXPY_DATASETS[VOCAB_ID].data || []).length;
-        }
-
-        var wrapper = document.getElementById('mobileWrapper');
-        if (!wrapper) return;
-
-        var banner = document.createElement('div');
-        banner.id = 'vocabLimitBanner';
-        banner.className = 'vocab-limit-banner';
-        banner.innerHTML =
-            '<div class="vlb-icon">💎</div>' +
-            '<div class="vlb-content">' +
-                '<div class="vlb-title">Bạn đang xem thử <b>' + max + '</b> / ' + total + ' từ</div>' +
-                '<div class="vlb-desc">Mua Premium 1 triệu để mở khoá toàn bộ từ vựng HSK 1-9</div>' +
-            '</div>' +
-            '<button class="vlb-btn" onclick="vocabUpgradeRenew()">' +
-                '<i class="fas fa-crown"></i> Mua Premium' +
-            '</button>';
-
-        wrapper.insertBefore(banner, wrapper.firstChild);
     }
 
     function _esc(s) {
@@ -1283,15 +925,19 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     function updateTabLockState() {
         var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
         if (!btn) return;
-        btn.classList.remove('vocab-locked');
+        var can = canAccessVocab();
         var oldLock = btn.querySelector('.vocab-lock-icon');
         if (oldLock) oldLock.remove();
 
-        var max = getMaxVocabWords();
-        if (max === Infinity) {
-            btn.title = 'Tu vung HSK 1-9 - Full (Premium/Admin)';
+        if (can) {
+            btn.classList.remove('vocab-locked');
+            btn.title = 'Tu vung HSK 1-9 - Premium (da mo khoa)';
         } else {
-            btn.title = 'Tu vung HSK - Xem thu ' + max + ' tu';
+            btn.classList.add('vocab-locked');
+            btn.title = 'Tu vung HSK - Chi danh cho Premium (1.000.000d)';
+            var lock = document.createElement('i');
+            lock.className = 'fas fa-lock vocab-lock-icon';
+            btn.appendChild(lock);
         }
     }
 
@@ -1506,7 +1152,13 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             e.stopPropagation();
             e.preventDefault();
 
-            console.log('[vocab] switch to tu-vung');
+            if (!canAccessVocab()) {
+                console.log('[vocab] khong co quyen - mo modal');
+                openUpgradeModal();
+                return;
+            }
+
+            console.log('[vocab] co quyen - switch to tu-vung');
 
             var sub = document.getElementById('dsSubWrap');
             if (sub) sub.style.display = 'none';
@@ -1520,8 +1172,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                 window.__switchRawData(VOCAB_ID);
             }
 
-            // ⭐ Giới hạn số từ
-            limitVocabData();
             if (typeof state !== 'undefined' && state) {
                 state.search = '';
                 state.hsk = '';
@@ -1576,7 +1226,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         window.loadPracticeFull = function(stt) {
             var result = orig.apply(this, arguments);
 
-            if (_isVocabMode() && canViewFullVocab()) {
+            if (_isVocabMode() && canAccessVocab()) {
                 var r = _findRecord(stt);
                 if (r && r.vi_du_zh) {
                     try {
@@ -1641,7 +1291,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                             hintBtn.addEventListener('click', function(ev) {
                                 setTimeout(function() {
                                     if (!_isVocabMode()) return;
-                                    if (!canViewFullVocab()) return;
+                                    if (!canAccessVocab()) return;
 
                                     var oldEx = document.querySelector('.pf-vocab-example');
                                     if (oldEx) oldEx.remove();
