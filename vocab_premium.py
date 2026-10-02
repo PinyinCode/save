@@ -2,6 +2,12 @@
 r"""
 Module TỪ VỰNG PREMIUM - cắm vào fix.py.
 Tự sinh bộ thủ + mẹo nhớ từ module vocab_data/.
+
+FIX (2026-10-02 v3):
+  - Practice Full: dòng đầu = nghĩa CÂU VÍ DỤ (không phải từ)
+  - User gõ = câu ví dụ
+  - Block "Ví dụ minh họa" ẨN lúc đầu, chỉ hiện khi click "Xem đáp án"
+  - Không hiển thị prefix "Nghĩa:"
 """
 
 import os
@@ -67,7 +73,6 @@ def read_vocab_excel(excel_file, start_row=3):
     if not os.path.exists(excel_file):
         print("   [X] Khong tim thay file")
         return []
-
     try:
         wb = openpyxl.load_workbook(excel_file, data_only=True, read_only=True)
     except Exception as e:
@@ -194,6 +199,8 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
         })
 
     return data, n_mnemonic_generated, n_radical_generated
+
+
 def build_vocab_css(vocab_id="tu-vung"):
     css = r"""
 /* TAB TU VUNG PREMIUM */
@@ -260,6 +267,7 @@ def build_vocab_css(vocab_id="tu-vung"):
     background: linear-gradient(135deg, #d97706, #b45309 30%, #0e7490);
     color: #fff;
 }
+
 .ds-btn[data-dataset="__VOCAB_ID__"] .ds-vocab-badge {
     position: absolute;
     top: -10px; right: -8px;
@@ -288,6 +296,7 @@ def build_vocab_css(vocab_id="tu-vung"):
     color: #1e1b4b;
     animation: none;
 }
+
 .ds-btn[data-dataset="__VOCAB_ID__"].vocab-locked {
     background: linear-gradient(135deg, rgba(220, 38, 38, .08) 0%, rgba(251, 191, 36, .06) 100%);
     border-color: rgba(220, 38, 38, .4);
@@ -634,197 +643,8 @@ def build_vocab_css(vocab_id="tu-vung"):
     .pf-vocab-example { padding: .7rem .85rem; margin-top: .85rem; }
     .pf-vocab-example-zh { font-size: 1rem; }
     .pf-vocab-example-pinyin { font-size: .8rem; }
-    .pf-vocab-example-vi { font-size: .
+    .pf-vocab-example-vi { font-size: .85rem; }
 }
-/* ⭐ Label tĩnh thay dropdown "Bộ dữ liệu" trong Practice Full */
-.pf-dataset-static-label {
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    padding: .45rem .85rem;
-    border-radius: 12px;
-    background: linear-gradient(135deg,
-        rgba(251, 191, 36, .15),
-        rgba(245, 158, 11, .1));
-    border: 1.5px solid rgba(245, 158, 11, .4);
-    color: #92400e;
-    font-size: clamp(.78rem, .95vw, .88rem);
-    font-weight: 800;
-    letter-spacing: .02em;
-    white-space: nowrap;
-    box-shadow:
-        0 1px 3px rgba(245, 158, 11, .15),
-        inset 0 1px 0 rgba(255, 255, 255, .5);
-    cursor: default;
-    user-select: none;
-}
-[data-theme="dark"] .pf-dataset-static-label {
-    background: linear-gradient(135deg,
-        rgba(251, 191, 36, .22),
-        rgba(245, 158, 11, .15));
-    border-color: rgba(245, 158, 11, .55);
-    color: #fcd34d;
-    box-shadow:
-        0 1px 3px rgba(0, 0, 0, .3),
-        inset 0 1px 0 rgba(255, 255, 255, .08);
-}
-
-/* Đảm bảo row dataset vẫn có padding đẹp */
-.pf-dataset-row {
-    gap: .5rem;
-}
-
-@media (max-width: 500px) {
-    .pf-dataset-static-label {
-        font-size: .72rem;
-        padding: .4rem .7rem;
-    }
-}
-/* ⭐ Block từ clickable trong Practice Full */
-.pf-chars-label {
-    margin-top: .85rem;
-    font-size: .7rem;
-    font-weight: 700;
-    color: #7c3aed;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-}
-[data-theme="dark"] .pf-chars-label { color: #c4b5fd; }
-
-.pf-chars-wrap {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .4rem;
-    margin-top: .4rem;
-}
-.pf-char-btn {
-    font-family: var(--font-zh);
-    font-size: clamp(1.15rem, 2vw, 1.4rem);
-    font-weight: 600;
-    padding: .35rem .7rem;
-    border-radius: 10px;
-    border: 2px solid rgba(139, 92, 246, .3);
-    background: linear-gradient(135deg, rgba(139, 92, 246, .08), rgba(124, 58, 237, .04));
-    color: var(--text);
-    cursor: pointer;
-    transition: all .2s cubic-bezier(.34, 1.56, .64, 1);
-    user-select: none;
-    line-height: 1.2;
-}
-.pf-char-btn:hover {
-    transform: translateY(-2px) scale(1.08);
-    background: linear-gradient(135deg, rgba(139, 92, 246, .2), rgba(124, 58, 237, .1));
-    border-color: #8b5cf6;
-    box-shadow: 0 4px 12px rgba(139, 92, 246, .3);
-}
-.pf-char-btn:active {
-    transform: translateY(0) scale(.98);
-}
-.pf-char-btn.active {
-    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-    color: #fff;
-    border-color: #7c3aed;
-    box-shadow: 0 6px 18px rgba(124, 58, 237, .5);
-    transform: translateY(-2px) scale(1.1);
-}
-[data-theme="dark"] .pf-char-btn {
-    border-color: rgba(167, 139, 250, .4);
-    background: linear-gradient(135deg, rgba(139, 92, 246, .15), rgba(124, 58, 237, .08));
-    color: #e9d5ff;
-}
-[data-theme="dark"] .pf-char-btn:hover {
-    border-color: #a78bfa;
-}
-
-/* ⭐ Info panel khi click vào từ */
-.pf-char-info {
-    margin-top: .85rem;
-    padding: .85rem 1rem;
-    background: linear-gradient(135deg, rgba(139, 92, 246, .1), rgba(124, 58, 237, .05));
-    border-left: 4px solid #8b5cf6;
-    border-radius: 12px;
-    display: flex;
-    flex-direction: column;
-    gap: .5rem;
-    animation: pfCharInfoIn .3s ease-out;
-}
-@keyframes pfCharInfoIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to   { opacity: 1; transform: translateY(0); }
-}
-[data-theme="dark"] .pf-char-info {
-    background: linear-gradient(135deg, rgba(139, 92, 246, .2), rgba(124, 58, 237, .1));
-    border-left-color: #a78bfa;
-}
-
-.pf-char-info-header {
-    display: flex;
-    align-items: baseline;
-    gap: .6rem;
-    padding-bottom: .5rem;
-    border-bottom: 1px dashed rgba(139, 92, 246, .3);
-    flex-wrap: wrap;
-}
-.pf-char-info-zh {
-    font-family: var(--font-zh);
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: #7c3aed;
-}
-[data-theme="dark"] .pf-char-info-zh { color: #c4b5fd; }
-.pf-char-info-pinyin {
-    font-size: 1rem;
-    font-style: italic;
-    color: #8b5cf6;
-    font-weight: 500;
-}
-[data-theme="dark"] .pf-char-info-pinyin { color: #a78bfa; }
-
-.pf-char-info-line {
-    display: flex;
-    gap: .5rem;
-    font-size: .85rem;
-    line-height: 1.5;
-    color: var(--text-2);
-    align-items: flex-start;
-    flex-wrap: wrap;
-}
-.pf-char-info-label {
-    font-weight: 800;
-    color: #7c3aed;
-    white-space: nowrap;
-    flex-shrink: 0;
-}
-[data-theme="dark"] .pf-char-info-label { color: #c4b5fd; }
-
-.pf-char-info-mnemonic {
-    white-space: pre-line;
-    line-height: 1.6;
-    color: var(--text);
-    font-size: .82rem;
-}
-
-.pf-char-info-empty {
-    padding: .75rem;
-    text-align: center;
-    color: var(--text-3);
-    font-size: .85rem;
-    font-style: italic;
-}
-
-@media (max-width: 500px) {
-    .pf-char-btn {
-        font-size: 1.05rem;
-        padding: .3rem .6rem;
-    }
-    .pf-char-info {
-        padding: .7rem .85rem;
-    }
-    .pf-char-info-zh { font-size: 1.35rem; }
-    .pf-char-info-pinyin { font-size: .9rem; }
-    .pf-char-info-line { font-size: .78rem; }
-}
-
 """
     return css.replace("__VOCAB_ID__", vocab_id)
 
@@ -889,77 +709,11 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     var VOCAB_ID = '__VOCAB_ID__';
     var _done = new WeakSet();
 
-    // ⭐ Mở tab cho TẤT CẢ tier
     function canAccessVocab() {
-        return true;
-    }
-
-    // ⭐ Chỉ Premium/Admin xem FULL
-    function canViewFullVocab() {
         if (typeof currentUser === 'undefined' || !currentUser) return false;
         if (currentUser.role === 'admin') return true;
         if (currentUser.isPermanent === true) return true;
         return false;
-    }
-
-    // ⭐ Đọc max_questions từ ONBOARDING_CONFIG theo tier
-    function getMaxVocabWords() {
-        // Admin → Full
-        if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
-            return Infinity;
-        }
-
-        // Premium (isPermanent) → Full
-        if (typeof currentUser !== 'undefined' && currentUser && currentUser.isPermanent === true) {
-            return Infinity;
-        }
-
-        // Lấy key tier
-        var key = 'demo';
-        if (typeof currentUser !== 'undefined' && currentUser) {
-            if (currentUser.isTrial || currentUser.tier === 'trial') key = 'trial';
-            else if (currentUser.isExpiredOnly || currentUser.tier === 'expired') key = 'demo';
-            else if (currentUser.tier === 'active') key = 'active';
-        }
-
-        // Đọc từ ONBOARDING_CONFIG
-        if (typeof ONBOARDING_CONFIG !== 'undefined' && ONBOARDING_CONFIG) {
-            var cfg = ONBOARDING_CONFIG[key];
-            if (cfg && typeof cfg.max_questions === 'number') {
-                var mq = cfg.max_questions;
-                // -1 = không giới hạn
-                if (mq === -1 || mq === Infinity) return Infinity;
-                return Math.max(0, mq);
-            }
-        }
-
-        // Fallback
-        return 20;
-    }
-
-    // ⭐ Giới hạn data
-    function limitVocabData() {
-        var max = getMaxVocabWords();
-
-        var fullList = [];
-        if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
-            fullList = window.FIXPY_DATASETS[VOCAB_ID].data || [];
-        }
-        if (!fullList.length) return;
-
-        if (max === Infinity) {
-            try {
-                if (typeof RAW_DATA !== 'undefined') RAW_DATA = fullList;
-            } catch(e) {}
-            console.log('[vocab] Full: ' + fullList.length);
-            return;
-        }
-
-        var limited = fullList.slice(0, max);
-        try {
-            if (typeof RAW_DATA !== 'undefined') RAW_DATA = limited;
-        } catch(e) {}
-        console.log('[vocab] Limited to ' + max + ' words');
     }
 
     function _esc(s) {
@@ -991,15 +745,19 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     function updateTabLockState() {
         var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
         if (!btn) return;
-        btn.classList.remove('vocab-locked');
+        var can = canAccessVocab();
         var oldLock = btn.querySelector('.vocab-lock-icon');
         if (oldLock) oldLock.remove();
 
-        var max = getMaxVocabWords();
-        if (max === Infinity) {
-            btn.title = 'Tu vung HSK 1-9 - Full (Premium/Admin)';
+        if (can) {
+            btn.classList.remove('vocab-locked');
+            btn.title = 'Tu vung HSK 1-9 - Premium (da mo khoa)';
         } else {
-            btn.title = 'Tu vung HSK - Xem thu ' + max + ' tu';
+            btn.classList.add('vocab-locked');
+            btn.title = 'Tu vung HSK - Chi danh cho Premium (1.000.000d)';
+            var lock = document.createElement('i');
+            lock.className = 'fas fa-lock vocab-lock-icon';
+            btn.appendChild(lock);
         }
     }
 
@@ -1214,7 +972,13 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             e.stopPropagation();
             e.preventDefault();
 
-            console.log('[vocab] switch to tu-vung');
+            if (!canAccessVocab()) {
+                console.log('[vocab] khong co quyen - mo modal');
+                openUpgradeModal();
+                return;
+            }
+
+            console.log('[vocab] co quyen - switch to tu-vung');
 
             var sub = document.getElementById('dsSubWrap');
             if (sub) sub.style.display = 'none';
@@ -1227,9 +991,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             if (typeof window.__switchRawData === 'function') {
                 window.__switchRawData(VOCAB_ID);
             }
-
-            // ⭐ Giới hạn số từ theo tier
-            limitVocabData();
 
             if (typeof state !== 'undefined' && state) {
                 state.search = '';
@@ -1276,166 +1037,102 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     }
 
     function hookPracticeFull() {
-        if (typeof window.loadPracticeFull !== 'function') {
-            return false;
-        }
-        if (window.loadPracticeFull.__vocabHooked) return true;
+    if (typeof window.loadPracticeFull !== 'function') {
+        return false;
+    }
+    if (window.loadPracticeFull.__vocabHooked) return true;
 
-        var orig = window.loadPracticeFull;
-        window.loadPracticeFull = function(stt) {
-            var result = orig.apply(this, arguments);
+    var orig = window.loadPracticeFull;
+    window.loadPracticeFull = function(stt) {
+        // Gọi hàm gốc trước
+        var result = orig.apply(this, arguments);
 
-            if (_isVocabMode() && canViewFullVocab()) {
-                var r = _findRecord(stt);
-                if (r && r.vi_du_zh) {
-                    try {
-                        if (typeof window.pfCurrentAnswer !== 'undefined') {
-                            window.pfCurrentAnswer = r.vi_du_zh;
-                        }
-                        if (typeof window.pfCurrentVi !== 'undefined') {
-                            window.pfCurrentVi = r.vi_du_vi;
-                        }
-                        if (typeof window.pfCurrentPinyin !== 'undefined') {
-                            window.pfCurrentPinyin = r.vi_du_pinyin;
-                        }
-                    } catch(e) {}
+        // Sau đó override
+        if (_isVocabMode() && canAccessVocab()) {
+            var r = _findRecord(stt);
+            if (r && r.vi_du_zh) {
+                // Ghi đè biến toàn cục
+                try {
+                    if (typeof window.pfCurrentAnswer !== 'undefined') {
+                        window.pfCurrentAnswer = r.vi_du_zh;
+                    }
+                    if (typeof window.pfCurrentVi !== 'undefined') {
+                        window.pfCurrentVi = r.vi_du_vi;
+                    }
+                    if (typeof window.pfCurrentPinyin !== 'undefined') {
+                        window.pfCurrentPinyin = r.vi_du_pinyin;
+                    }
+                } catch(e) {}
 
-                    var pfViEl = document.getElementById('pfVi');
-                    if (pfViEl && r.vi_du_vi) {
-                        pfViEl.textContent = r.vi_du_vi;
+                // ĐỔI NGAY — không chờ setTimeout
+                var pfViEl = document.getElementById('pfVi');
+                if (pfViEl && r.vi_du_vi) {
+                    pfViEl.textContent = r.vi_du_vi;
+                }
+
+                // Reset input + preview + status (dùng setTimeout ngắn)
+                setTimeout(function() {
+                    var pfInput = document.getElementById('pfInput');
+                    if (pfInput) pfInput.value = '';
+
+                    var pfPreview = document.getElementById('pfPreview');
+                    if (pfPreview) pfPreview.innerHTML = '';
+
+                    var pfStatus = document.getElementById('pfStatus');
+                    if (pfStatus) {
+                        pfStatus.textContent = '';
+                        pfStatus.className = 'practice-full-status';
                     }
 
-                    setTimeout(function() {
-                        // ⭐ 1. Ẩn ô "Chủ đề"
-                        var pfSubjectChip = document.getElementById('pfSubjectChip');
-                        if (pfSubjectChip) pfSubjectChip.style.display = 'none';
+                    // Xóa block ví dụ cũ
+                    var oldExample = document.querySelector('.pf-vocab-example');
+                    if (oldExample) oldExample.remove();
 
-                        // ⭐ 2. Thay dropdown "Bộ dữ liệu" bằng label tĩnh
-                        var pfDatasetSelect = document.getElementById('pfDatasetSelect');
-                        if (pfDatasetSelect && !pfDatasetSelect.__vocabStaticified) {
-                            pfDatasetSelect.__vocabStaticified = true;
-                            pfDatasetSelect.style.display = 'none';
+                    // ⭐ Hook nút GỢI Ý (không phải Xem đáp án)
+                    var hintBtn = document.getElementById('pfHintBtn');
+                    if (hintBtn && !hintBtn.__vocabHooked) {
+                        hintBtn.__vocabHooked = true;
+                        hintBtn.addEventListener('click', function(ev) {
+                            setTimeout(function() {
+                                if (!_isVocabMode()) return;
+                                if (!canAccessVocab()) return;
 
-                            // Tạo label tĩnh thay thế
-                            var label = document.createElement('div');
-                            label.className = 'pf-dataset-static-label';
-                            label.innerHTML = '📚 Từ vựng HSK (11745 câu)';
-                            label.title = 'Đang ở bộ dữ liệu Từ vựng — không đổi được';
-                            pfDatasetSelect.parentNode.insertBefore(label, pfDatasetSelect);
-                        }
+                                // Xóa block cũ
+                                var oldEx = document.querySelector('.pf-vocab-example');
+                                if (oldEx) oldEx.remove();
 
-                        // Reset input
-                        var pfInput = document.getElementById('pfInput');
-                        if (pfInput) pfInput.value = '';
+                                // Nếu nút Gợi ý TẮT → không hiện
+                                if (!hintBtn.classList.contains('active')) {
+                                    return;
+                                }
 
-                        // Reset char preview
-                        var pfPreview = document.getElementById('pfPreview');
-                        if (pfPreview) pfPreview.innerHTML = '';
+                                var currentStt = null;
+                                try { currentStt = window.pfCurrentStt; } catch(e) {}
+                                if (!currentStt) return;
 
-                        // Reset status
-                        var pfStatus = document.getElementById('pfStatus');
-                        if (pfStatus) {
-                            pfStatus.textContent = '';
-                            pfStatus.className = 'practice-full-status';
-                        }
+                                var rec = _findRecord(currentStt);
+                                if (!rec || !rec.vi_du_zh) return;
 
-                        // Xóa block ví dụ cũ
-                        var oldExample = document.querySelector('.pf-vocab-example');
-                        if (oldExample) oldExample.remove();
+                                var answerEl = document.getElementById('pfAnswer');
+                                if (!answerEl) return;
 
-                        // Hook nút "Gợi ý" để hiện block ví dụ
-                        var hintBtn = document.getElementById('pfHintBtn');
-                        if (hintBtn && !hintBtn.__vocabHooked) {
-                            hintBtn.__vocabHooked = true;
-                            hintBtn.addEventListener('click', function(ev) {
-                                setTimeout(function() {
-                                    if (!_isVocabMode()) return;
-                                    if (!canAccessVocab()) return;
-
-                                    var oldEx = document.querySelector('.pf-vocab-example');
-                                    if (oldEx) oldEx.remove();
-
-                                    if (!hintBtn.classList.contains('active')) {
-                                        return;
-                                    }
-
-                                    var currentStt = null;
-                                    try { currentStt = window.pfCurrentStt; } catch(e) {}
-                                    if (!currentStt) return;
-
-                                    var rec = _findRecord(currentStt);
-                                    if (!rec || !rec.vi_du_zh) return;
-
-                                    var answerEl = document.getElementById('pfAnswer');
-                                    if (!answerEl) return;
-
-                                    var html = buildPFExampleBlock(rec);
-                                    if (html) {
-                                        answerEl.insertAdjacentHTML('afterend', html);
-                                    }
-                                }, 100);
-                            });
-                        }
-                    }, 50);
-                }
+                                var html = buildPFExampleBlock(rec);
+                                if (html) {
+                                    answerEl.insertAdjacentHTML('afterend', html);
+                                }
+                            }, 100);
+                        });
+                    }
+                }, 50);
             }
+        }
 
-            return result;
-        };
-        window.loadPracticeFull.__vocabHooked = true;
-        console.log('[vocab] hooked loadPracticeFull');
-        return true;
-    }
-    /* ⭐ Giới hạn dropdown "Câu:" tránh lag */
-    function hookPfBuildQuickNav() {
-        if (typeof window.pfBuildQuickNav !== 'function') return;
-        if (window.pfBuildQuickNav.__vocabLimited) return;
-
-        var orig = window.pfBuildQuickNav;
-        window.pfBuildQuickNav = function() {
-            // Chỉ override khi ở tab từ vựng
-            if (!_isVocabMode()) {
-                return orig.apply(this, arguments);
-            }
-
-            var sel = document.getElementById('pfQuickNav');
-            if (!sel) return;
-
-            var MAX_OPTIONS = 500;
-            var list = (typeof filtered !== 'undefined') ? filtered : [];
-
-            var total = list.length;
-            var limit = Math.min(total, MAX_OPTIONS);
-
-            var html = '<option value="">-- Chọn câu (' + total + ') --</option>';
-
-            for (var i = 0; i < limit; i++) {
-                var r = list[i];
-                var vi = (r.vi || '').substring(0, 45);
-                var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
-                             ? '#' + String(r.stt).trim() + ' · '
-                             : '';
-                var label = sttRaw + 'Câu ' + (i + 1) + ': ' + vi;
-                html += '<option value="' + _esc(r.stt) + '">' + _esc(label) + '</option>';
-            }
-
-            if (total > MAX_OPTIONS) {
-                html += '<option value="" disabled>-- Còn ' + (total - MAX_OPTIONS) + ' câu nữa, dùng nút ▶ --</option>';
-            }
-
-            sel.innerHTML = html;
-
-            try {
-                if (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) {
-                    sel.value = pfCurrentStt;
-                }
-            } catch(e) {}
-        };
-
-        window.pfBuildQuickNav.__vocabLimited = true;
-        console.log('[vocab] pfBuildQuickNav limited to 500 options');
-    }
-
+        return result;
+    };
+    window.loadPracticeFull.__vocabHooked = true;
+    console.log('[vocab] hooked loadPracticeFull');
+    return true;
+}
 
     function buildPFExampleBlock(r) {
         var zh = _esc(r.vi_du_zh || '');
@@ -1446,184 +1143,17 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         var pinyin = _esc(r.vi_du_pinyin || '');
         var vi = _esc(r.vi_du_vi || '');
 
-        // ⭐ Tách câu thành các từ
-        var chars = [];
-        for (var i = 0; i < zh.length; i++) {
-            var c = zh[i];
-            if (c >= '\u4e00' && c <= '\u9fff') {
-                chars.push(c);
-            }
-        }
-
         var html = '<div class="pf-vocab-example">';
-        html += '<div class="pf-vocab-example-label">📝 Câu ví dụ — Bấm vào từ để xem nghĩa</div>';
+        html += '<div class="pf-vocab-example-label">📝 Ví dụ minh họa</div>';
         html += '<div class="pf-vocab-example-zh">' + zh;
         if (zhJs && typeof speakText === 'function') {
-            html += ' <button class="audio-btn-mini" onclick="speakText(\'' + zhJs + '\', this, event)" title="Nghe câu"><i class="fas fa-volume-up"></i></button>';
+            html += ' <button class="audio-btn-mini" onclick="speakText(\'' + zhJs + '\', this, event)" title="Nghe"><i class="fas fa-volume-up"></i></button>';
         }
         html += '</div>';
         if (pinyin) html += '<div class="pf-vocab-example-pinyin">' + highlightPinyin(pinyin) + '</div>';
         if (vi) html += '<div class="pf-vocab-example-vi">' + vi + '</div>';
-
-        // ⭐ Block từ clickable
-        if (chars.length > 0) {
-            html += '<div class="pf-chars-label">👇 Bấm vào từ để xem nghĩa:</div>';
-            html += '<div class="pf-chars-wrap">';
-            chars.forEach(function(c, idx) {
-                html += '<button class="pf-char-btn" '
-                     + 'data-char="' + _esc(c) + '" '
-                     + 'data-charjs="' + (typeof escapeJs === 'function' ? escapeJs(c) : c) + '" '
-                     + 'onclick="vocabShowCharInfo(this, event)">'
-                     + _esc(c) + '</button>';
-            });
-            html += '</div>';
-            html += '<div class="pf-char-info" id="pfCharInfo" style="display:none"></div>';
-        }
-
         html += '</div>';
         return html;
-    }
-
-    // ⭐ Xử lý khi click vào 1 từ
-    window.vocabShowCharInfo = function(btn, evt) {
-        if (evt) { evt.stopPropagation(); evt.preventDefault(); }
-        if (!btn) return;
-
-        var char = btn.dataset.char || '';
-        if (!char) return;
-
-        // Toggle active
-        var wasActive = btn.classList.contains('active');
-        document.querySelectorAll('.pf-char-btn').forEach(function(b) {
-            b.classList.remove('active');
-        });
-
-        var infoEl = document.getElementById('pfCharInfo');
-        if (!infoEl) return;
-
-        // Nếu bấm lại từ đang active → ẩn
-        if (wasActive) {
-            infoEl.style.display = 'none';
-            return;
-        }
-
-        btn.classList.add('active');
-
-        // Tìm từ trong dataset từ vựng
-        var found = null;
-        var list = [];
-        if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
-            list = window.FIXPY_DATASETS[VOCAB_ID].data || [];
-        }
-
-        // Ưu tiên tìm từ có `zh` khớp CHÍNH XÁC chữ đó
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].zh === char) {
-                found = list[i];
-                break;
-            }
-        }
-
-        // Nếu không tìm được từ đơn → tìm từ ghép chứa chữ đó
-        if (!found) {
-            for (var j = 0; j < list.length; j++) {
-                if (list[j].zh && list[j].zh.indexOf(char) !== -1) {
-                    found = list[j];
-                    break;
-                }
-            }
-        }
-
-        // Build info HTML
-        var html = '';
-
-        if (found) {
-            html += '<div class="pf-char-info-header">';
-            html += '<span class="pf-char-info-zh">' + _esc(found.zh || char) + '</span>';
-            if (found.pinyin) {
-                html += '<span class="pf-char-info-pinyin">' + _esc(found.pinyin) + '</span>';
-            }
-            html += '</div>';
-
-            if (found.vi) {
-                html += '<div class="pf-char-info-line">';
-                html += '<span class="pf-char-info-label">📖 Nghĩa:</span>';
-                html += '<span>' + _esc(found.vi) + '</span>';
-                html += '</div>';
-            }
-
-            if (found.subject) {
-                html += '<div class="pf-char-info-line">';
-                html += '<span class="pf-char-info-label">🏷️ Loại từ:</span>';
-                html += '<span>' + _esc(found.subject) + '</span>';
-                html += '</div>';
-            }
-
-            // Bộ thủ
-            if (found.radical) {
-                var rad = found.radical;
-                html += '<div class="pf-char-info-line">';
-                html += '<span class="pf-char-info-label">🖌️ Bộ thủ:</span>';
-                html += '<span>' + _esc(rad.zh || '');
-                if (rad.pinyin) html += ' (' + _esc(rad.pinyin) + ')';
-                if (rad.strokes) html += ' — ' + _esc(rad.strokes) + ' nét';
-                if (rad.meaning) html += ' — ' + _esc(rad.meaning);
-                html += '</span>';
-                html += '</div>';
-            }
-
-            // Mẹo nhớ
-            if (found.mnemonic) {
-                html += '<div class="pf-char-info-line">';
-                html += '<span class="pf-char-info-label">💡 Mẹo nhớ:</span>';
-                html += '<span class="pf-char-info-mnemonic">' + _esc(found.mnemonic).replace(/\n/g, '<br>') + '</span>';
-                html += '</div>';
-            }
-        } else {
-            // Không tìm thấy từ trong dataset
-            html += '<div class="pf-char-info-empty">';
-            html += 'Không tìm thấy thông tin cho chữ "' + _esc(char) + '"';
-            html += '</div>';
-        }
-
-        infoEl.innerHTML = html;
-        infoEl.style.display = 'block';
-
-        // Scroll xuống info
-        setTimeout(function() {
-            infoEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
-    };
-    function setupPfViWatcher() {
-        var pfViEl = document.getElementById('pfVi');
-        if (!pfViEl) return;
-        if (pfViEl.__vocabWatched) return;
-        pfViEl.__vocabWatched = true;
-
-        var observer = new MutationObserver(function() {
-            if (!_isVocabMode()) return;
-            if (!canViewFullVocab()) return;
-
-            var stt = null;
-            try { stt = window.pfCurrentStt; } catch(e) {}
-            if (!stt) return;
-
-            var r = _findRecord(stt);
-            if (!r || !r.vi_du_vi) return;
-
-            var currentText = pfViEl.textContent.trim();
-            if (currentText !== r.vi_du_vi) {
-                pfViEl.textContent = r.vi_du_vi;
-            }
-        });
-
-        observer.observe(pfViEl, {
-            childList: true,
-            characterData: true,
-            subtree: true
-        });
-
-        console.log('[vocab] pfVi watcher setup');
     }
 
     var _lastTier = null;
@@ -1643,74 +1173,57 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             bindTabIfNeeded();
         }
     }
-    // ⭐ Thêm option HSK7-9 vào filter khi ở tab Từ vựng
-    function hookHskFilter() {
-        if (window.__vocabHskFilterHooked) return;
-        window.__vocabHskFilterHooked = true;
+    // ⭐ Fix bug "nhảy từ" khi mở full màn hình
+function setupPfViWatcher() {
+    var pfViEl = document.getElementById('pfVi');
+    if (!pfViEl) return;
+    if (pfViEl.__vocabWatched) return;
+    pfViEl.__vocabWatched = true;
 
-        // Chờ DOM có sẵn
-        var checkTimer = setInterval(function() {
-            var hskSel = document.getElementById('hskFilter');
-            var pfHskSel = document.getElementById('pfHskFilter');
+    var observer = new MutationObserver(function() {
+        if (!_isVocabMode()) return;
+        if (!canAccessVocab()) return;
 
-            if (hskSel && !hskSel.__vocabExtended) {
-                hskSel.__vocabExtended = true;
-                // Kiểm tra đã có HSK7-9 chưa
-                var hasHSK79 = Array.from(hskSel.options).some(function(o) {
-                    return o.value === 'HSK7-9';
-                });
-                if (!hasHSK79) {
-                    var opt = document.createElement('option');
-                    opt.value = 'HSK7-9';
-                    opt.textContent = 'HSK7-9';
-                    hskSel.appendChild(opt);
-                }
-            }
+        var stt = null;
+        try { stt = window.pfCurrentStt; } catch(e) {}
+        if (!stt) return;
 
-            if (pfHskSel && !pfHskSel.__vocabExtended) {
-                pfHskSel.__vocabExtended = true;
-                var hasHSK79pf = Array.from(pfHskSel.options).some(function(o) {
-                    return o.value === 'HSK7-9';
-                });
-                if (!hasHSK79pf) {
-                    var opt2 = document.createElement('option');
-                    opt2.value = 'HSK7-9';
-                    opt2.textContent = 'HSK7-9';
-                    pfHskSel.appendChild(opt2);
-                }
-            }
-        }, 500);
-    }
+        var r = _findRecord(stt);
+        if (!r || !r.vi_du_vi) return;
+
+        var currentText = pfViEl.textContent.trim();
+        if (currentText !== r.vi_du_vi) {
+            pfViEl.textContent = r.vi_du_vi;
+        }
+    });
+
+    observer.observe(pfViEl, {
+        childList: true,
+        characterData: true,
+        subtree: true
+    });
+
+    console.log('[vocab] pfVi watcher setup');
+}
 
     function init() {
-        bindTabIfNeeded();
-        updateTabLockState();
-        setupObserver();
-        setInterval(watchTier, 1000);
-        hookPfBuildQuickNav();
-        hookHskFilter();
+    bindTabIfNeeded();
+    updateTabLockState();
+    setupObserver();
+    setInterval(watchTier, 1000);
 
-        var tries = 0;
-        var t = setInterval(function() {
-            tries++;
-            if (hookPracticeFull() || tries > 20) clearInterval(t);
-        }, 250);
-        hookPracticeFull();
+    var tries = 0;
+    var t = setInterval(function() {
+        tries++;
+        if (hookPracticeFull() || tries > 20) clearInterval(t);
+    }, 250);
+    hookPracticeFull();
 
-        setTimeout(setupPfViWatcher, 1000);
-        setInterval(setupPfViWatcher, 2000);
+    // ⭐ Setup watcher cho pfVi
+    setTimeout(setupPfViWatcher, 1000);
+    setInterval(setupPfViWatcher, 2000);
 
-        console.log('[vocab] module ready');
-    }
-
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() { setTimeout(init, 600); });
-    } else {
-        setTimeout(init, 600);
-    }
-
-    window.vocabUpdateLockState = updateTabLockState;
-
+    console.log('[vocab] module ready');
 })();
 """
     return js.replace("__VOCAB_ID__", vocab_id)
