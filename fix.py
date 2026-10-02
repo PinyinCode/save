@@ -138,79 +138,96 @@ def build_vocab_js_patch():
     var VOCAB_ID = 'tu-vung';
 
     function getVocabAccess() {
-        var cfg = (typeof ONBOARDING_CONFIG !== 'undefined' && ONBOARDING_CONFIG) || {};
+    var cfg = (typeof ONBOARDING_CONFIG !== 'undefined' && ONBOARDING_CONFIG) || {};
 
-        // Admin → full
-        if (typeof currentUser !== 'undefined' && currentUser && currentUser.role === 'admin') {
-            return { allowed: true, tier: 'admin',
-                hskAllowed: [1,2,3,4,5,6,7,8,9], maxQuestions: -1,
-                label: 'Admin — Toàn bộ HSK', warning: null };
-        }
-        // Premium → full
-        if (typeof currentUser !== 'undefined' && currentUser && currentUser.isPermanent === true) {
-            return { allowed: true, tier: 'premium',
-                hskAllowed: [1,2,3,4,5,6,7,8,9], maxQuestions: -1,
-                label: 'Premium — Toàn bộ HSK', warning: null };
-        }
+    // ⭐ ĐỌC TIER TỪ window.APP_TIER (chính xác nhất — do auth module set)
+    var appTier = (typeof window.APP_TIER !== 'undefined') ? window.APP_TIER : null;
 
-        var tier = 'demo';
-        if (typeof currentUser !== 'undefined' && currentUser) {
-            if (currentUser.isTrial || currentUser.tier === 'trial') tier = 'trial';
-            else if (currentUser.isExpiredOnly || currentUser.tier === 'expired') tier = 'expired';
-            else tier = 'active';
-        }
+    // ⭐ Fallback: đọc currentUser nếu APP_TIER chưa set
+    var u = null;
+    try {
+        if (typeof window.currentUser !== 'undefined' && window.currentUser) u = window.currentUser;
+        else if (typeof currentUser !== 'undefined' && currentUser) u = currentUser;
+    } catch(e) {}
 
-        var tierCfg = cfg[tier] || {};
-        var hskArr = tierCfg.hsk_allowed || [];
-        var maxQ = (typeof tierCfg.max_questions === 'number') ? tierCfg.max_questions : -1;
-        var maxT = (typeof tierCfg.topics_per_user === 'number') ? tierCfg.topics_per_user : -1;
-        var isUnlimited = (maxQ === -1 && maxT === -1);
+    // ═══ Admin → full ═══
+    if (u && u.role === 'admin') {
+        return { allowed: true, tier: 'admin',
+            hskAllowed: [1,2,3,4,5,6,7,8,9], maxQuestions: -1,
+            label: 'Admin — Toàn bộ HSK', warning: null };
+    }
 
-        var hskRange = hskArr.length
-            ? 'HSK ' + hskArr[0] + '-' + hskArr[hskArr.length - 1]
-            : 'cơ bản';
+    // ═══ Premium (isPermanent) → full ═══
+    if (u && u.isPermanent === true) {
+        return { allowed: true, tier: 'premium',
+            hskAllowed: [1,2,3,4,5,6,7,8,9], maxQuestions: -1,
+            label: 'Premium — Toàn bộ HSK', warning: null };
+    }
 
-        if (tier === 'expired') {
-            return { allowed: false, tier: 'expired', hskAllowed: [], maxQuestions: 0,
-                label: 'Tài khoản hết hạn',
-                warning: 'Tài khoản đã hết hạn — gia hạn để tiếp tục dùng Từ vựng HSK.' };
-        }
+    // ═══ Xác định tier ═══
+    // Ưu tiên window.APP_TIER → fallback về currentUser
+    var tier = 'demo';
+    if (appTier === 'active') tier = 'active';
+    else if (appTier === 'trial') tier = 'trial';
+    else if (appTier === 'expired') tier = 'expired';
+    else if (appTier === 'demo') tier = 'demo';
+    else if (u) {
+        if (u.isTrial === true || u.tier === 'trial') tier = 'trial';
+        else if (u.isExpiredOnly === true || u.tier === 'expired') tier = 'expired';
+        else tier = 'active';
+    }
 
-        if (tier === 'demo') {
-            return { allowed: true, tier: 'demo', hskAllowed: hskArr, maxQuestions: maxQ,
-                label: 'Demo — ' + hskRange,
-                warning: 'Bản Demo giới hạn ' + hskRange + ' và tối đa ' +
-                         (maxQ > 0 ? maxQ + ' từ' : 'một số từ') +
-                         ' — đăng nhập để dùng đầy đủ.' };
-        }
+    var tierCfg = cfg[tier] || {};
+    var hskArr = tierCfg.hsk_allowed || [];
+    var maxQ = (typeof tierCfg.max_questions === 'number') ? tierCfg.max_questions : -1;
+    var maxT = (typeof tierCfg.topics_per_user === 'number') ? tierCfg.topics_per_user : -1;
+    var isUnlimited = (maxQ === -1 && maxT === -1);
 
-        if (tier === 'trial') {
-            if (isUnlimited) {
-                return { allowed: true, tier: 'trial',
-                    hskAllowed: hskArr.length ? hskArr : [1,2,3,4,5,6,7,8,9],
-                    maxQuestions: -1,
-                    label: 'Trial — ' + hskRange, warning: null };
-            }
-            return { allowed: true, tier: 'trial', hskAllowed: hskArr, maxQuestions: maxQ,
-                label: 'Trial — ' + hskRange,
-                warning: 'Bản Trial giới hạn ' + hskRange + ' và ' +
-                         (maxQ > 0 ? maxQ + ' từ' : 'một số từ') +
-                         ' — nâng cấp Premium để mở toàn bộ.' };
-        }
+    var hskRange = hskArr.length
+        ? 'HSK ' + hskArr[0] + '-' + hskArr[hskArr.length - 1]
+        : 'cơ bản';
 
+    if (tier === 'expired') {
+        return { allowed: false, tier: 'expired', hskAllowed: [], maxQuestions: 0,
+            label: 'Tài khoản hết hạn',
+            warning: 'Tài khoản đã hết hạn — gia hạn để tiếp tục dùng Từ vựng HSK.' };
+    }
+
+    if (tier === 'demo') {
+        return { allowed: true, tier: 'demo', hskAllowed: hskArr, maxQuestions: maxQ,
+            label: 'Demo — ' + hskRange,
+            warning: 'Bản Demo giới hạn ' + hskRange + ' và tối đa ' +
+                     (maxQ > 0 ? maxQ + ' từ' : 'một số từ') +
+                     ' — đăng nhập để dùng đầy đủ.' };
+    }
+
+    if (tier === 'trial') {
         if (isUnlimited) {
-            return { allowed: true, tier: 'active',
+            return { allowed: true, tier: 'trial',
                 hskAllowed: hskArr.length ? hskArr : [1,2,3,4,5,6,7,8,9],
                 maxQuestions: -1,
-                label: 'Active — ' + hskRange, warning: null };
+                label: 'Trial — ' + hskRange, warning: null };
         }
-        return { allowed: true, tier: 'active', hskAllowed: hskArr, maxQuestions: maxQ,
-            label: 'Active — ' + hskRange,
-            warning: 'Bản Active giới hạn ' + hskRange + ' và ' +
+        return { allowed: true, tier: 'trial', hskAllowed: hskArr, maxQuestions: maxQ,
+            label: 'Trial — ' + hskRange,
+            warning: 'Bản Trial giới hạn ' + hskRange + ' và ' +
                      (maxQ > 0 ? maxQ + ' từ' : 'một số từ') +
                      ' — nâng cấp Premium để mở toàn bộ.' };
     }
 
+    // ═══ Active ═══
+    if (isUnlimited) {
+        return { allowed: true, tier: 'active',
+            hskAllowed: hskArr.length ? hskArr : [1,2,3,4,5,6,7,8,9],
+            maxQuestions: -1,
+            label: 'Active — ' + hskRange, warning: null };
+    }
+    return { allowed: true, tier: 'active', hskAllowed: hskArr, maxQuestions: maxQ,
+        label: 'Active — ' + hskRange,
+        warning: 'Bản Active giới hạn ' + hskRange + ' và ' +
+                 (maxQ > 0 ? maxQ + ' từ' : 'một số từ') +
+                 ' — nâng cấp Premium để mở toàn bộ.' };
+}
     function applyVocabLimits(list, access) {
         var result = list;
         if (access.hskAllowed && access.hskAllowed.length &&
@@ -538,8 +555,9 @@ def build_vocab_js_patch():
 
         updateTabLockState();
 
-        // ⭐ Refresh banner mỗi 2s
+       // ⭐ Refresh badge + banner mỗi 2s (fix race condition + auto-update)
         setInterval(function() {
+            updateTabLockState();   // ⬅️ THÊM — refresh badge
             if (_isVocabMode()) injectVocabWarningBanner();
         }, 2000);
 
