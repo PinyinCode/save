@@ -20,9 +20,6 @@ from vocab_data.mnemonic_generator import generate_mnemonic
 from vocab_data.radical_analyzer import get_radical_for_word
 
 
-# ═══════════════════════════════════════════════════════════════
-#  CLEAN
-# ═══════════════════════════════════════════════════════════════
 def _clean(s):
     if s is None:
         return ""
@@ -71,9 +68,6 @@ def _parse_radical_raw(raw):
     return {"zh": "", "pinyin": "", "strokes": "", "meaning": text}
 
 
-# ═══════════════════════════════════════════════════════════════
-#  ĐỌC FILE EXCEL
-# ═══════════════════════════════════════════════════════════════
 def read_vocab_excel(excel_file, start_row=3):
     print("\n[VOCAB] Dang doc: " + excel_file)
     if not os.path.exists(excel_file):
@@ -207,9 +201,6 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
     return data, n_mnemonic_generated, n_radical_generated
 
 
-# ═══════════════════════════════════════════════════════════════
-#  CSS
-# ═══════════════════════════════════════════════════════════════
 def build_vocab_css(vocab_id="tu-vung"):
     css = r"""
 /* TAB TU VUNG PREMIUM */
@@ -448,13 +439,11 @@ def build_vocab_css(vocab_id="tu-vung"):
     color: #fde68a;
 }
 
-/* ═══ VÍ DỤ TRONG PRACTICE FULL (chỉ hiện khi click "Xem đáp án") ═══ */
+/* VI DU TRONG PRACTICE FULL */
 .pf-vocab-example {
     margin-top: 1rem;
     padding: .85rem 1rem;
-    background: linear-gradient(135deg,
-        rgba(8, 145, 178, .08),
-        rgba(6, 182, 212, .04));
+    background: linear-gradient(135deg, rgba(8, 145, 178, .08), rgba(6, 182, 212, .04));
     border-left: 4px solid #0891b2;
     border-radius: 12px;
     display: flex;
@@ -467,9 +456,7 @@ def build_vocab_css(vocab_id="tu-vung"):
     to   { opacity: 1; transform: translateY(0); }
 }
 [data-theme="dark"] .pf-vocab-example {
-    background: linear-gradient(135deg,
-        rgba(8, 145, 178, .18),
-        rgba(6, 182, 212, .1));
+    background: linear-gradient(135deg, rgba(8, 145, 178, .18), rgba(6, 182, 212, .1));
     border-left-color: #22d3ee;
 }
 .pf-vocab-example-label {
@@ -662,9 +649,6 @@ def build_vocab_css(vocab_id="tu-vung"):
     return css.replace("__VOCAB_ID__", vocab_id)
 
 
-# ═══════════════════════════════════════════════════════════════
-#  HTML
-# ═══════════════════════════════════════════════════════════════
 def build_vocab_tab_html(vocab_id="tu-vung", label="Từ vựng HSK"):
     return (
         '\n        <button class="ds-btn ds-btn-primary" '
@@ -716,11 +700,6 @@ def build_vocab_modal_html():
     </div>
 </div>
 '''
-
-
-# ═══════════════════════════════════════════════════════════════
-#  JS OVERRIDE
-# ═══════════════════════════════════════════════════════════════
 def build_vocab_js_override(vocab_id="tu-vung"):
     js = r"""
 /* VOCAB PREMIUM MODULE */
@@ -776,14 +755,14 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         } else {
             btn.classList.add('vocab-locked');
             btn.title = 'Tu vung HSK - Chi danh cho Premium (1.000.000d)';
-            var lock =Content document.createElement('i');
-            lock.className = = 'fas fa-lock vocab-lock-icon '';
+            var lock = document.createElement('i');
+            lock.className = 'fas fa-lock vocab-lock-icon';
             btn.appendChild(lock);
         }
-   D }
+    }
 
     function openUpgradeModal() {
-ang        var modal = document.getElementById('vocabUpgradeModal');
+        var modal = document.getElementById('vocabUpgradeModal');
         if (!modal) return;
         var titleEl = document.getElementById('vocabUpgradeTitle');
         var subEl = document.getElementById('vocabUpgradeSubtitle');
@@ -797,7 +776,7 @@ ang        var modal = document.getElementById('vocabUpgradeModal');
         }
 
         if (tier === 'demo') {
-            if (titleEl) titleEl.text nhap de mua Premium';
+            if (titleEl) titleEl.textContent = 'Dang nhap de mua Premium';
             if (subEl) subEl.textContent = 'Goi Premium 1 trieu - Mo khoa Tu vung HSK vinh vien';
             if (actionsEl) {
                 actionsEl.innerHTML =
@@ -834,10 +813,10 @@ ang        var modal = document.getElementById('vocabUpgradeModal');
             }
         } else {
             if (titleEl) titleEl.textContent = 'Nang cap len Premium';
-            if (subEl) subEl.textContent = 'Chi goi Premium moi mo duoc Tu=" vung HSK';
-            if (vocactionsEl) {
-                actionsabEl.innerHTML =
-                    '<button class="Upvocab-upgrade-btn primary"grade onclickRenew()">' +
+            if (subEl) subEl.textContent = 'Chi goi Premium moi mo duoc Tu vung HSK';
+            if (actionsEl) {
+                actionsEl.innerHTML =
+                    '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeRenew()">' +
                         '<i class="fas fa-crown"></i> Nang cap Premium 1 trieu' +
                     '</button>' +
                     '<button class="vocab-upgrade-btn secondary" onclick="vocabUpgradeClose()">' +
@@ -1057,7 +1036,6 @@ ang        var modal = document.getElementById('vocabUpgradeModal');
         console.log('[vocab] bound tab click');
     }
 
-    /* ═══ HOOK loadPracticeFull — gõ câu ví dụ ═══ */
     function hookPracticeFull() {
         if (typeof window.loadPracticeFull !== 'function') {
             return false;
@@ -1066,7 +1044,6 @@ ang        var modal = document.getElementById('vocabUpgradeModal');
 
         var orig = window.loadPracticeFull;
         window.loadPracticeFull = function(stt) {
-            // Đổi dữ liệu trước khi gọi hàm gốc
             if (_isVocabMode() && canAccessVocab()) {
                 var r = _findRecord(stt);
                 if (r && r.vi_du_zh) {
@@ -1077,37 +1054,30 @@ ang        var modal = document.getElementById('vocabUpgradeModal');
                             pfCurrentPinyin = r.vi_du_pinyin;
                         }
                     } catch(e) {
-                        console.warn('[vocab] Không đổi được pfCurrentAnswer:', e);
+                        console.warn('[vocab] Khong doi duoc pfCurrentAnswer:', e);
                     }
                 }
             }
 
-            // Gọi hàm gốc
             var result = orig.apply(this, arguments);
 
-            // Sau khi gốc chạy xong, sửa giao diện
             if (_isVocabMode() && canAccessVocab()) {
                 setTimeout(function() {
                     var r = _findRecord(stt);
                     if (!r) return;
 
-                    // ⭐ Đổi pfVi = nghĩa câu ví dụ (KHÔNG có "Nghĩa:")
                     var pfViEl = document.getElementById('pfVi');
                     if (pfViEl && r.vi_du_vi) {
                         pfViEl.textContent = r.vi_du_vi;
                     }
 
-                    // ⭐ Ẩn block ví dụ cũ (nếu có) - chưa hiện
                     var oldExample = document.querySelector('.pf-vocab-example');
                     if (oldExample) oldExample.remove();
 
-                    // ⭐ Hook vào nút "Xem đáp án" để hiện block khi click
                     var revealBtn = document.getElementById('pfRevealBtn');
                     if (revealBtn && !revealBtn.__vocabHooked) {
                         revealBtn.__vocabHooked = true;
-                        var origReveal = revealBtn.onclick;
                         revealBtn.addEventListener('click', function(ev) {
-                            // Sau khi click, hiện block ví dụ
                             setTimeout(function() {
                                 if (!_isVocabMode()) return;
                                 if (!canAccessVocab()) return;
@@ -1116,11 +1086,9 @@ ang        var modal = document.getElementById('vocabUpgradeModal');
                                 if (!answerEl) return;
                                 if (!answerEl.classList.contains('show')) return;
 
-                                // Xóa cũ nếu có
                                 var oldEx = document.querySelector('.pf-vocab-example');
                                 if (oldEx) oldEx.remove();
 
-                                // Thêm block ví dụ mới
                                 var currentStt = (typeof pfCurrentStt !== 'undefined')
                                     ? pfCurrentStt : null;
                                 if (!currentStt) return;
