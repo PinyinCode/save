@@ -1036,102 +1036,100 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         console.log('[vocab] bound tab click');
     }
 
-    function hookPracticeFulltypeof window.loadPracticeFull !== 'function') {
-        return false;
-    }
-    if (window.loadPracticeFull.__vocabHooked) return true;
-
-    var orig = window.loadPracticeFull;
-    window.loadPracticeFull = function(stt) {
-        // Gọi hàm gốc trước
-        var result = orig.apply(this, arguments);
-
-        // Sau đó override
-        if (_isVocabMode() && canAccessVocab()) {
-            var r = _findRecord(stt);
-            if (r && r.vi_du_zh) {
-                // Ghi đè biến toàn cục
-                try {
-                    if (typeof window.pfCurrentAnswer !== 'undefined') {
-                        window.pfCurrentAnswer = r.vi_du_zh;
-                    }
-                    if (typeof window.pfCurrentVi !== 'undefined') {
-                        window.pfCurrentVi = r.vi_du_vi;
-                    }
-                    if (typeof window.pfCurrentPinyin !== 'undefined') {
-                        window.pfCurrentPinyin = r.vi_du_pinyin;
-                    }
-                } catch(e) {}
-
-                // ĐỔI NGAY — không chờ setTimeout
-                var pfViEl = document.getElementById('pfVi');
-                if (pfViEl && r.vi_du_vi) {
-                    pfViEl.textContent = r.vi_du_vi;
-                }
-
-                // Reset input + preview + status (dùng setTimeout ngắn)
-                setTimeout(function() {
-                    var pfInput = document.getElementById('pfInput');
-                    if (pfInput) pfInput.value = '';
-
-                    var pfPreview = document.getElementById('pfPreview');
-                    if (pfPreview) pfPreview.innerHTML = '';
-
-                    var pfStatus = document.getElementById('pfStatus');
-                    if (pfStatus) {
-                        pfStatus.textContent = '';
-                        pfStatus.className = 'practice-full-status';
-                    }
-
-                    // Xóa block ví dụ cũ
-                    var oldExample = document.querySelector('.pf-vocab-example');
-                    if (oldExample) oldExample.remove();
-
-                    // ⭐ Hook nút GỢI Ý (không phải Xem đáp án)
-                    var hintBtn = document.getElementById('pfHintBtn');
-                    if (hintBtn && !hintBtn.__vocabHooked) {
-                        hintBtn.__vocabHooked = true;
-                        hintBtn.addEventListener('click', function(ev) {
-                            setTimeout(function() {
-                                if (!_isVocabMode()) return;
-                                if (!canAccessVocab()) return;
-
-                                // Xóa block cũ
-                                var oldEx = document.querySelector('.pf-vocab-example');
-                                if (oldEx) oldEx.remove();
-
-                                // Nếu nút Gợi ý TẮT → không hiện
-                                if (!hintBtn.classList.contains('active')) {
-                                    return;
-                                }
-
-                                var currentStt = null;
-                                try { currentStt = window.pfCurrentStt; } catch(e) {}
-                                if (!currentStt) return;
-
-                                var rec = _findRecord(currentStt);
-                                if (!rec || !rec.vi_du_zh) return;
-
-                                var answerEl = document.getElementById('pfAnswer');
-                                if (!answerEl) return;
-
-                                var html = buildPFExampleBlock(rec);
-                                if (html) {
-                                    answerEl.insertAdjacentHTML('afterend', html);
-                                }
-                            }, 100);
-                        });
-                    }
-                }, 50);
-            }
+    function hookPracticeFull() {
+        if (typeof window.loadPracticeFull !== 'function') {
+            return false;
         }
+        if (window.loadPracticeFull.__vocabHooked) return true;
 
-        return result;
-    };
-    window.loadPracticeFull.__vocabHooked = true;
-    console.log('[vocab] hooked loadPracticeFull');
-    return true;
-}
+        var orig = window.loadPracticeFull;
+        window.loadPracticeFull = function(stt) {
+            // Gọi hàm gốc trước
+            var result = orig.apply(this, arguments);
+
+            // Sau đó override
+            if (_isVocabMode() && canAccessVocab()) {
+                var r = _findRecord(stt);
+                if (r && r.vi_du_zh) {
+                    // Ghi đè biến toàn cục
+                    try {
+                        if (typeof window.pfCurrentAnswer !== 'undefined') {
+                            window.pfCurrentAnswer = r.vi_du_zh;
+                        }
+                        if (typeof window.pfCurrentVi !== 'undefined') {
+                            window.pfCurrentVi = r.vi_du_vi;
+                        }
+                        if (typeof window.pfCurrentPinyin !== 'undefined') {
+                            window.pfCurrentPinyin = r.vi_du_pinyin;
+                        }
+                    } catch(e) {}
+
+                    // ĐỔI NGAY
+                    var pfViEl = document.getElementById('pfVi');
+                    if (pfViEl && r.vi_du_vi) {
+                        pfViEl.textContent = r.vi_du_vi;
+                    }
+
+                    // Reset input + preview + status
+                    setTimeout(function() {
+                        var pfInput = document.getElementById('pfInput');
+                        if (pfInput) pfInput.value = '';
+
+                        var pfPreview = document.getElementById('pfPreview');
+                        if (pfPreview) pfPreview.innerHTML = '';
+
+                        var pfStatus = document.getElementById('pfStatus');
+                        if (pfStatus) {
+                            pfStatus.textContent = '';
+                            pfStatus.className = 'practice-full-status';
+                        }
+
+                        var oldExample = document.querySelector('.pf-vocab-example');
+                        if (oldExample) oldExample.remove();
+
+                        var hintBtn = document.getElementById('pfHintBtn');
+                        if (hintBtn && !hintBtn.__vocabHooked) {
+                            hintBtn.__vocabHooked = true;
+                            hintBtn.addEventListener('click', function(ev) {
+                                setTimeout(function() {
+                                    if (!_isVocabMode()) return;
+                                    if (!canAccessVocab()) return;
+
+                                    var oldEx = document.querySelector('.pf-vocab-example');
+                                    if (oldEx) oldEx.remove();
+
+                                    if (!hintBtn.classList.contains('active')) {
+                                        return;
+                                    }
+
+                                    var currentStt = null;
+                                    try { currentStt = window.pfCurrentStt; } catch(e) {}
+                                    if (!currentStt) return;
+
+                                    var rec = _findRecord(currentStt);
+                                    if (!rec || !rec.vi_du_zh) return;
+
+                                    var answerEl = document.getElementById('pfAnswer');
+                                    if (!answerEl) return;
+
+                                    var html = buildPFExampleBlock(rec);
+                                    if (html) {
+                                        answerEl.insertAdjacentHTML('afterend', html);
+                                    }
+                                }, 100);
+                            });
+                        }
+                    }, 50);
+                }
+            }
+
+            return result;
+        };
+        window.loadPracticeFull.__vocabHooked = true;
+        console.log('[vocab] hooked loadPracticeFull');
+        return true;
+    }
+
     function buildPFExampleBlock(r) {
         var zh = _esc(r.vi_du_zh || '');
         if (!zh) return '';
@@ -1154,6 +1152,39 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         return html;
     }
 
+    // ⭐ Fix bug "nhảy từ" khi mở full màn hình
+    function setupPfViWatcher() {
+        var pfViEl = document.getElementById('pfVi');
+        if (!pfViEl) return;
+        if (pfViEl.__vocabWatched) return;
+        pfViEl.__vocabWatched = true;
+
+        var observer = new MutationObserver(function() {
+            if (!_isVocabMode()) return;
+            if (!canAccessVocab()) return;
+
+            var stt = null;
+            try { stt = window.pfCurrentStt; } catch(e) {}
+            if (!stt) return;
+
+            var r = _findRecord(stt);
+            if (!r || !r.vi_du_vi) return;
+
+            var currentText = pfViEl.textContent.trim();
+            if (currentText !== r.vi_du_vi) {
+                pfViEl.textContent = r.vi_du_vi;
+            }
+        });
+
+        observer.observe(pfViEl, {
+            childList: true,
+            characterData: true,
+            subtree: true
+        });
+
+        console.log('[vocab] pfVi watcher setup');
+    }
+
     var _lastTier = null;
     function watchTier() {
         var key = '';
@@ -1171,57 +1202,33 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             bindTabIfNeeded();
         }
     }
-    // ⭐ Fix bug "nhảy từ" khi mở full màn hình
-function setupPfViWatcher() {
-    var pfViEl = document.getElementById('pfVi');
-    if (!pfViEl) return;
-    if (pfViEl.__vocabWatched) return;
-    pfViEl.__vocabWatched = true;
-
-    var observer = new MutationObserver(function() {
-        if (!_isVocabMode()) return;
-        if (!canAccessVocab()) return;
-
-        var stt = null;
-        try { stt = window.pfCurrentStt; } catch(e) {}
-        if (!stt) return;
-
-        var r = _findRecord(stt);
-        if (!r || !r.vi_du_vi) return;
-
-        var currentText = pfViEl.textContent.trim();
-        if (currentText !== r.vi_du_vi) {
-            pfViEl.textContent = r.vi_du_vi;
-        }
-    });
-
-    observer.observe(pfViEl, {
-        childList: true,
-        characterData: true,
-        subtree: true
-    });
-
-    console.log('[vocab] pfVi watcher setup');
-}
 
     function init() {
-    bindTabIfNeeded();
-    updateTabLockState();
-    setupObserver();
-    setInterval(watchTier, 1000);
+        bindTabIfNeeded();
+        updateTabLockState();
+        setupObserver();
+        setInterval(watchTier, 1000);
 
-    var tries = 0;
-    var t = setInterval(function() {
-        tries++;
-        if (hookPracticeFull() || tries > 20) clearInterval(t);
-    }, 250);
-    hookPracticeFull();
+        var tries = 0;
+        var t = setInterval(function() {
+            tries++;
+            if (hookPracticeFull() || tries > 20) clearInterval(t);
+        }, 250);
+        hookPracticeFull();
 
-    // ⭐ Setup watcher cho pfVi
-    setTimeout(setupPfViWatcher, 1000);
-    setInterval(setupPfViWatcher, 2000);
+        setTimeout(setupPfViWatcher, 1000);
+        setInterval(setupPfViWatcher, 2000);
 
-    console.log('[vocab] module ready');
+        console.log('[vocab] module ready');
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() { setTimeout(init, 600); });
+    } else {
+        setTimeout(init, 600);
+    }
+
+    window.vocabUpdateLockState = updateTabLockState;
+
 })();
 """
-    return js.replace("__VOCAB_ID__", vocab_id)
