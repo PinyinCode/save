@@ -1305,6 +1305,44 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             bindTabIfNeeded();
         }
     }
+    // ⭐ Thêm option HSK7-9 vào filter khi ở tab Từ vựng
+    function hookHskFilter() {
+        if (window.__vocabHskFilterHooked) return;
+        window.__vocabHskFilterHooked = true;
+
+        // Chờ DOM có sẵn
+        var checkTimer = setInterval(function() {
+            var hskSel = document.getElementById('hskFilter');
+            var pfHskSel = document.getElementById('pfHskFilter');
+
+            if (hskSel && !hskSel.__vocabExtended) {
+                hskSel.__vocabExtended = true;
+                // Kiểm tra đã có HSK7-9 chưa
+                var hasHSK79 = Array.from(hskSel.options).some(function(o) {
+                    return o.value === 'HSK7-9';
+                });
+                if (!hasHSK79) {
+                    var opt = document.createElement('option');
+                    opt.value = 'HSK7-9';
+                    opt.textContent = 'HSK7-9';
+                    hskSel.appendChild(opt);
+                }
+            }
+
+            if (pfHskSel && !pfHskSel.__vocabExtended) {
+                pfHskSel.__vocabExtended = true;
+                var hasHSK79pf = Array.from(pfHskSel.options).some(function(o) {
+                    return o.value === 'HSK7-9';
+                });
+                if (!hasHSK79pf) {
+                    var opt2 = document.createElement('option');
+                    opt2.value = 'HSK7-9';
+                    opt2.textContent = 'HSK7-9';
+                    pfHskSel.appendChild(opt2);
+                }
+            }
+        }, 500);
+    }
 
     function init() {
         bindTabIfNeeded();
@@ -1312,6 +1350,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         setupObserver();
         setInterval(watchTier, 1000);
         hookPfBuildQuickNav();
+        hookHskFilter();
 
         var tries = 0;
         var t = setInterval(function() {
