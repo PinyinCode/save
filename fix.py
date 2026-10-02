@@ -325,6 +325,62 @@ def build_vocab_js_patch():
     function bindVocabPatch() {
         return;   // no-op
     }
+    /* ⭐ LOCK ô Chủ đề khi ở tab Từ vựng */
+    function patchSubjectLock() {
+        if (window.__vocabSubjectLockPatched) return;
+        if (typeof window.buildFilters !== 'function') {
+            setTimeout(patchSubjectLock, 200);
+            return;
+        }
+        var orig = window.buildFilters;
+        window.buildFilters = function() {
+            var result = orig.apply(this, arguments);
+
+            try {
+                var sf = document.getElementById('subjectFilter');
+                if (!sf) return result;
+
+                if (_isVocabMode()) {
+                    // Vocab mode → LOCK ô chủ đề
+                    sf.disabled = true;
+                    sf.value = '';
+                    sf.style.opacity = '0.5';
+                    sf.style.cursor = 'not-allowed';
+                    sf.title = 'Không khả dụng cho Từ vựng';
+                } else {
+                    // Tab khác → mở lại
+                    sf.disabled = false;
+                    sf.style.opacity = '';
+                    sf.style.cursor = '';
+                    sf.title = '';
+                }
+            } catch(e) {}
+
+            return result;
+        };
+        window.__vocabSubjectLockPatched = true;
+        console.log('[vocab-patch] subject lock patched');
+    }
+
+    /* ⭐ Watch đổi tab — tự động lock/unlock */
+    function watchVocabMode() {
+        var isVocab = (typeof CURRENT_DATASET !== 'undefined') && CURRENT_DATASET === VOCAB_ID;
+        var sf = document.getElementById('subjectFilter');
+        if (!sf) return;
+
+        if (isVocab && !sf.disabled)G {
+            sf.disabled = true;
+            sf.value = '';
+            sf.style.opacity = '0.5';
+            sf.style.cursor = 'not-allowed';
+            sf.title = 'Không khả dụng cho Từ vựng';
+        } else if (!isVocab && sf.disabled) {
+            sf.disabled = false;
+            sf.style.opacity = '';
+            sf.style.cursor = '';
+            sf.title = '';
+        }
+    }
 
     window.getVocabAccess = getVocabAccess;
     window.vocabUpdateLockState = updateTabLockState;
@@ -333,16 +389,12 @@ def build_vocab_js_patch():
     function patchLoop() {
         if (typeof window.vocabUpgradeRenew === 'function') {
             window.vocabUpdateLockState = updateTabLockState;
+            patchSubjectLock();                    // ⭐ THÊM DÒNG NÀY
 
-            // ⭐ Không gọi bindVocabPatch() nữa — vocab_premium.py tự lo click
-            // bindVocabPatch();
-
-            // ⭐ Nhưng VẪN apply giới hạn HSK + số câu SAU khi switch
             var vocabBtn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
             if (vocabBtn && !vocabBtn.__vocabLimitHooked) {
                 vocabBtn.__vocabLimitHooked = true;
                 vocabBtn.addEventListener('click', function() {
-                    // Chạy SAU vocab_premium.py (delay 500ms)
                     setTimeout(function() {
                         var acc = getVocabAccess();
                         if (!acc.allowed) return;
@@ -358,6 +410,7 @@ def build_vocab_js_patch():
                         }
                         updateTabLockState();
                         injectVocabWarningBanner();
+                        watchVocabMode();       // ⭐ THÊM DÒNG NÀY
                     }, 500);
                 }, false);
             }
@@ -366,11 +419,12 @@ def build_vocab_js_patch():
             setInterval(function() {
                 if (_isVocabMode()) injectVocabWarningBanner();
             }, 2000);
+            setInterval(watchVocabMode, 800);      // ⭐ THÊM DÒNG NÀY
             console.log('[vocab-patch] ready — onboarding-based');
             return;
         }
         setTimeout(patchLoop, 300);
-        }
+    }
     })();
 """
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
