@@ -429,7 +429,7 @@ def build_vocab_js_patch():
 
         updateTabLockState();
         setInterval(function() {
-            if (_isVocabMode()) injectVocabWarning },Banner();
+            if (_isVocabMode()) injectVocabWarningBanner();
         2000);
 
         // ⭐ Watch mode chạy liên tục
