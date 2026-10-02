@@ -2,12 +2,6 @@
 r"""
 Module TỪ VỰNG PREMIUM - cắm vào fix.py.
 Tự sinh bộ thủ + mẹo nhớ từ module vocab_data/.
-
-FIX (2026-10-02 v3):
-  - Practice Full: dòng đầu = nghĩa CÂU VÍ DỤ (không phải từ)
-  - User gõ = câu ví dụ
-  - Block "Ví dụ minh họa" ẨN lúc đầu, chỉ hiện khi click "Xem đáp án"
-  - Không hiển thị prefix "Nghĩa:"
 """
 
 import os
@@ -73,6 +67,7 @@ def read_vocab_excel(excel_file, start_row=3):
     if not os.path.exists(excel_file):
         print("   [X] Khong tim thay file")
         return []
+
     try:
         wb = openpyxl.load_workbook(excel_file, data_only=True, read_only=True)
     except Exception as e:
@@ -199,9 +194,7 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
         })
 
     return data, n_mnemonic_generated, n_radical_generated
-
-
-def build_vocab_css(vocab_id="tu-vung"):
+  def build_vocab_css(vocab_id="tu-vung"):
     css = r"""
 /* TAB TU VUNG PREMIUM */
 .ds-btn[data-dataset="__VOCAB_ID__"] {
@@ -267,7 +260,6 @@ def build_vocab_css(vocab_id="tu-vung"):
     background: linear-gradient(135deg, #d97706, #b45309 30%, #0e7490);
     color: #fff;
 }
-
 .ds-btn[data-dataset="__VOCAB_ID__"] .ds-vocab-badge {
     position: absolute;
     top: -10px; right: -8px;
@@ -296,7 +288,6 @@ def build_vocab_css(vocab_id="tu-vung"):
     color: #1e1b4b;
     animation: none;
 }
-
 .ds-btn[data-dataset="__VOCAB_ID__"].vocab-locked {
     background: linear-gradient(135deg, rgba(220, 38, 38, .08) 0%, rgba(251, 191, 36, .06) 100%);
     border-color: rgba(220, 38, 38, .4);
@@ -1044,14 +1035,11 @@ def build_vocab_js_override(vocab_id="tu-vung"):
 
         var orig = window.loadPracticeFull;
         window.loadPracticeFull = function(stt) {
-            // Gọi hàm gốc trước
             var result = orig.apply(this, arguments);
 
-            // Sau đó override
             if (_isVocabMode() && canAccessVocab()) {
                 var r = _findRecord(stt);
                 if (r && r.vi_du_zh) {
-                    // Ghi đè biến toàn cục
                     try {
                         if (typeof window.pfCurrentAnswer !== 'undefined') {
                             window.pfCurrentAnswer = r.vi_du_zh;
@@ -1064,13 +1052,11 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                         }
                     } catch(e) {}
 
-                    // ĐỔI NGAY
                     var pfViEl = document.getElementById('pfVi');
                     if (pfViEl && r.vi_du_vi) {
                         pfViEl.textContent = r.vi_du_vi;
                     }
 
-                    // Reset input + preview + status
                     setTimeout(function() {
                         var pfInput = document.getElementById('pfInput');
                         if (pfInput) pfInput.value = '';
@@ -1152,7 +1138,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         return html;
     }
 
-    // ⭐ Fix bug "nhảy từ" khi mở full màn hình
     function setupPfViWatcher() {
         var pfViEl = document.getElementById('pfVi');
         if (!pfViEl) return;
@@ -1232,3 +1217,4 @@ def build_vocab_js_override(vocab_id="tu-vung"):
 
 })();
 """
+    return js.replace("__VOCAB_ID__", vocab_id)
