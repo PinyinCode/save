@@ -109,7 +109,72 @@ def _parse_radical_raw(raw):
     return {"zh": "", "pinyin": "", "strokes": "", "meaning": text}
 
 
+# ═══════════════════════════════════════════════════════════════════
+#  TỰ ĐỘNG PHÁT HIỆN ROW DATA BẮT ĐẦU
+#  - Sheet HSK 1-6: header 2 hàng → data bắt đầu row 3
+#  - Sheet HSK 7-9: header 1 hàng → data bắt đầu row 2
+# ═══════════════════════════════════════════════════════════════════
+def _detect_data_start_row(ws, fallback_row=3, col_zh=1):
+    """
+    Tự động tìm row data bắt đầu trong sheet.
+    - Duyệt 6 row đầu
+    - Skip row header (chứa STT, 汉语, PINYIN, 汉字...)
+    - Return row đầu tiên có chữ Hán ở cột col_zh
+    """
+    HEADER_KEYWORDS = (
+        'stt', '汉字', '汉语', 'pinyin', 'từ', 'hsk', '发音',
+        'nghĩa', 'loại từ', 'tt', 'số tt', 'chữ hán', 'tiếng trung'
+    )
+
+    try:
+        for r_idx, row in enumerate(
+            ws.iter_rows(min_row=1, max_row=6, values_only=True),
+            start=1
+        ):
+            if not row:
+                continue
+
+            cell_val = ""
+            if len(row) > col_zh and row[col_zh] is not None:
+                cell_val = str(row[col_zh]).strip().lower()
+
+            if not cell_val:
+                continue
+
+            # ⭐ Nếu cột B là HEADER → skip
+            is_header = False
+            for kw in HEADER_KEYWORDS:
+                if kw in cell_val:
+                    is_header = True
+                    break
+            if is_header:
+                continue
+
+            # ⭐ Nếu cột B có chữ Hán → đây là row data đầu tiên
+            has_hanzi = any('\u4e00' <= c <= '\u9fff' for c in cell_val)
+            if has_hanzi:
+                print("      [AUTO] Data start row: " + str(r_idx))
+                return r_idx
+
+        # Fallback: dùng row mặc định
+        print("      [AUTO] Fallback start row: " + str(fallback_row))
+        return fallback_row
+
+    except Exception as e:
+        print("      [WARN] _detect_data_start_row error: " + str(e))
+        return fallback_row
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  ĐỌC FILE VOCAB EXCEL (nhiều sheet HSK)
+# ═══════════════════════════════════════════════════════════════════
 def read_vocab_excel(excel_file, start_row=3):
+    """
+    Đọc file vocab HSK từ NHIỀU sheet.
+    - Tự động phát hiện row data bắt đầu cho từng sheet.
+    - Tự sinh mẹo nhớ + bộ thủ nếu cột trống.
+    - Tách câu ví dụ thành từ bằng jieba.
+    """
     print("\n[VOCAB] Dang doc: " + excel_file)
     if not os.path.exists(excel_file):
         print("   [X] Khong tim thay file")
@@ -121,6 +186,7 @@ def read_vocab_excel(excel_file, start_row=3):
         print("   [X] Loi mo file: " + str(e))
         return []
 
+    # ⭐ CHỈ ĐỌC SHEET BẮT ĐẦU BẰNG "HSK"
     target_sheets = [s for s in wb.sheetnames if _is_hsk_sheet(s)]
     if not target_sheets:
         print("   [!] Khong co sheet HSK nao")
@@ -138,7 +204,13 @@ def read_vocab_excel(excel_file, start_row=3):
         try:
             ws = wb[sheet_name]
             hsk = _normalize_hsk(sheet_name)
-            rows, n_mn, n_rd = _read_vocab_sheet(ws, hsk, sheet_name, start_row)
+
+            # ⭐ TỰ ĐỘNG PHÁT HIỆN ROW DATA BẮT ĐẦU
+            actual_start_row = _detect_data_start_row(ws, start_row)
+
+            rows, n_mn, n_rd = _read_vocab_sheet(
+                ws, hsk, sheet_name, actual_start_row
+            )
             all_data.extend(rows)
             total_mnemonic_generated += n_mn
             total_radical_generated += n_rd
@@ -162,7 +234,14 @@ def read_vocab_excel(excel_file, start_row=3):
     return all_data
 
 
+# ═══════════════════════════════════════════════════════════════════
+#  ĐỌC 1 SHEET VOCAB
+# ═══════════════════════════════════════════════════════════════════
 def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
+    """
+    Đọc 1 sheet vocab HSK.
+    - start_row: đã được tự động phát hiện.
+    """
     COL_STT = 0
     COL_ZH = 1
     COL_PINYIN = 2
@@ -195,13 +274,17 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
                 break
             continue
         empty_count = 0
-        if zh.lower() in ("từ tiếng trung", "汉字", "từ vựng", "từ", "hsk"):
+
+        # Skip row header còn sót
+        if zh.lower() in ("từ tiếng trung", "汉字", "từ vựng", "từ", "hsk",
+                          "汉语", "chữ hán"):
             continue
 
         stt_raw = row[COL_STT] if COL_STT < len(row) and row[COL_STT] is not None else ""
         pinyin = _clean_pinyin(row[COL_PINYIN]) if COL_PINYIN < len(row) else ""
         vi = _clean(row[COL_VI]) if COL_VI < len(row) else ""
 
+        # ⭐ MẸO NHỚ
         mnemonic = ""
         if COL_MNEMONIC < len(row):
             mnemonic = _clean(row[COL_MNEMONIC])
@@ -213,6 +296,7 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
             except Exception:
                 mnemonic = ""
 
+        # ⭐ BỘ THỦ
         radical = None
         if COL_RADICAL < len(row):
             radical = _parse_radical_raw(row[COL_RADICAL])
@@ -224,7 +308,7 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
             except Exception:
                 radical = None
 
-        # ⭐ LẤY DỮ LIỆU VÍ DỤ + TÁCH TỪ BẰNG JIEBA
+        # ⭐ VÍ DỤ + TÁCH TỪ BẰNG JIEBA
         vi_du_zh = _clean(row[COL_VI_DU_ZH]) if COL_VI_DU_ZH < len(row) else ""
         vi_du_pinyin = _clean_pinyin(row[COL_VI_DU_PINYIN]) if COL_VI_DU_PINYIN < len(row) else ""
         vi_du_vi = _clean(row[COL_VI_DU_VI]) if COL_VI_DU_VI < len(row) else ""
@@ -241,11 +325,12 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
             "vi_du_zh": vi_du_zh,
             "vi_du_pinyin": vi_du_pinyin,
             "vi_du_vi": vi_du_vi,
-            "vi_du_words": vi_du_words,   # ⭐ FIELD MỚI
+            "vi_du_words": vi_du_words,
             "mnemonic": mnemonic,
             "radical": radical,
             "source_sheet": sheet_name,
         })
+
     return data, n_mnemonic_generated, n_radical_generated
 def build_vocab_css(vocab_id="tu-vung"):
     css = r"""
