@@ -827,9 +827,11 @@ def build_vocab_css(vocab_id="tu-vung"):
 /* ⭐ TOAST thông báo giới hạn */
 .vocab-limit-toast {
     position: fixed;
-    top: 80px;
+    top: auto;                                    /* ← Bỏ top */
+    bottom: 100px;                                /* ← Đặt xuống dưới */
+    bottom: calc(100px + env(safe-area-inset-bottom));  /* ← Có safe-area */
     left: 50%;
-    transform: translateX(-50%) translateY(-120px);
+    transform: translateX(-50%) translateY(120px);      /* ← Đảo chiều */
     padding: .75rem 1rem;
     background: linear-gradient(135deg, #6366f1 0%, #7c3aed 50%, #a855f7 100%);
     color: #fff;
@@ -916,16 +918,18 @@ def build_vocab_css(vocab_id="tu-vung"):
 }
 @media (max-width: 500px) {
     .vocab-limit-toast {
-        top: 70px;
+        top: auto;
+        bottom: 90px;
+        bottom: calc(90px + env(safe-area-inset-bottom));
         padding: .6rem .8rem;
         gap: .5rem;
+        max-width: 95vw;
     }
     .vocab-limit-toast .vlt-icon { font-size: 1.2rem; }
     .vocab-limit-toast .vlt-title { font-size: .78rem; }
     .vocab-limit-toast .vlt-desc { font-size: .65rem; }
     .vocab-limit-toast .vlt-btn { padding: .35rem .65rem; font-size: .68rem; }
 }
-
 /* ⭐ BANNER ở đầu danh sách */
 .vocab-limit-banner {
     grid-column: 1 / -1;
