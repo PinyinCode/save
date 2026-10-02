@@ -9106,6 +9106,150 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
         padding: .4rem .7rem;
     }
 }
+/* ⭐ Block từ clickable trong Practice Full */
+.pf-chars-label {
+    margin-top: .85rem;
+    font-size: .7rem;
+    font-weight: 700;
+    color: #7c3aed;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+}
+[data-theme="dark"] .pf-chars-label { color: #c4b5fd; }
+
+.pf-chars-wrap {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .4rem;
+    margin-top: .4rem;
+}
+.pf-char-btn {
+    font-family: var(--font-zh);
+    font-size: clamp(1.15rem, 2vw, 1.4rem);
+    font-weight: 600;
+    padding: .35rem .7rem;
+    border-radius: 10px;
+    border: 2px solid rgba(139, 92, 246, .3);
+    background: linear-gradient(135deg, rgba(139, 92, 246, .08), rgba(124, 58, 237, .04));
+    color: var(--text);
+    cursor: pointer;
+    transition: all .2s cubic-bezier(.34, 1.56, .64, 1);
+    user-select: none;
+    line-height: 1.2;
+}
+.pf-char-btn:hover {
+    transform: translateY(-2px) scale(1.08);
+    background: linear-gradient(135deg, rgba(139, 92, 246, .2), rgba(124, 58, 237, .1));
+    border-color: #8b5cf6;
+    box-shadow: 0 4px 12px rgba(139, 92, 246, .3);
+}
+.pf-char-btn:active {
+    transform: translateY(0) scale(.98);
+}
+.pf-char-btn.active {
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: #fff;
+    border-color: #7c3aed;
+    box-shadow: 0 6px 18px rgba(124, 58, 237, .5);
+    transform: translateY(-2px) scale(1.1);
+}
+[data-theme="dark"] .pf-char-btn {
+    border-color: rgba(167, 139, 250, .4);
+    background: linear-gradient(135deg, rgba(139, 92, 246, .15), rgba(124, 58, 237, .08));
+    color: #e9d5ff;
+}
+[data-theme="dark"] .pf-char-btn:hover {
+    border-color: #a78bfa;
+}
+
+/* ⭐ Info panel khi click vào từ */
+.pf-char-info {
+    margin-top: .85rem;
+    padding: .85rem 1rem;
+    background: linear-gradient(135deg, rgba(139, 92, 246, .1), rgba(124, 58, 237, .05));
+    border-left: 4px solid #8b5cf6;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    animation: pfCharInfoIn .3s ease-out;
+}
+@keyframes pfCharInfoIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+[data-theme="dark"] .pf-char-info {
+    background: linear-gradient(135deg, rgba(139, 92, 246, .2), rgba(124, 58, 237, .1));
+    border-left-color: #a78bfa;
+}
+
+.pf-char-info-header {
+    display: flex;
+    align-items: baseline;
+    gap: .6rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px dashed rgba(139, 92, 246, .3);
+    flex-wrap: wrap;
+}
+.pf-char-info-zh {
+    font-family: var(--font-zh);
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #7c3aed;
+}
+[data-theme="dark"] .pf-char-info-zh { color: #c4b5fd; }
+.pf-char-info-pinyin {
+    font-size: 1rem;
+    font-style: italic;
+    color: #8b5cf6;
+    font-weight: 500;
+}
+[data-theme="dark"] .pf-char-info-pinyin { color: #a78bfa; }
+
+.pf-char-info-line {
+    display: flex;
+    gap: .5rem;
+    font-size: .85rem;
+    line-height: 1.5;
+    color: var(--text-2);
+    align-items: flex-start;
+    flex-wrap: wrap;
+}
+.pf-char-info-label {
+    font-weight: 800;
+    color: #7c3aed;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+[data-theme="dark"] .pf-char-info-label { color: #c4b5fd; }
+
+.pf-char-info-mnemonic {
+    white-space: pre-line;
+    line-height: 1.6;
+    color: var(--text);
+    font-size: .82rem;
+}
+
+.pf-char-info-empty {
+    padding: .75rem;
+    text-align: center;
+    color: var(--text-3);
+    font-size: .85rem;
+    font-style: italic;
+}
+
+@media (max-width: 500px) {
+    .pf-char-btn {
+        font-size: 1.05rem;
+        padding: .3rem .6rem;
+    }
+    .pf-char-info {
+        padding: .7rem .85rem;
+    }
+    .pf-char-info-zh { font-size: 1.35rem; }
+    .pf-char-info-pinyin { font-size: .9rem; }
+    .pf-char-info-line { font-size: .78rem; }
+}
 
 
 
@@ -26298,19 +26442,154 @@ window.__switchRawData = function(datasetId) {
         var pinyin = _esc(r.vi_du_pinyin || '');
         var vi = _esc(r.vi_du_vi || '');
 
+        // ⭐ Tách câu thành các từ
+        var chars = [];
+        for (var i = 0; i < zh.length; i++) {
+            var c = zh[i];
+            if (c >= '\u4e00' && c <= '\u9fff') {
+                chars.push(c);
+            }
+        }
+
         var html = '<div class="pf-vocab-example">';
-        html += '<div class="pf-vocab-example-label">📝 Ví dụ minh họa</div>';
+        html += '<div class="pf-vocab-example-label">📝 Câu ví dụ — Bấm vào từ để xem nghĩa</div>';
         html += '<div class="pf-vocab-example-zh">' + zh;
         if (zhJs && typeof speakText === 'function') {
-            html += ' <button class="audio-btn-mini" onclick="speakText(\'' + zhJs + '\', this, event)" title="Nghe"><i class="fas fa-volume-up"></i></button>';
+            html += ' <button class="audio-btn-mini" onclick="speakText(\'' + zhJs + '\', this, event)" title="Nghe câu"><i class="fas fa-volume-up"></i></button>';
         }
         html += '</div>';
         if (pinyin) html += '<div class="pf-vocab-example-pinyin">' + highlightPinyin(pinyin) + '</div>';
         if (vi) html += '<div class="pf-vocab-example-vi">' + vi + '</div>';
+
+        // ⭐ Block từ clickable
+        if (chars.length > 0) {
+            html += '<div class="pf-chars-label">👇 Bấm vào từ để xem nghĩa:</div>';
+            html += '<div class="pf-chars-wrap">';
+            chars.forEach(function(c, idx) {
+                html += '<button class="pf-char-btn" '
+                     + 'data-char="' + _esc(c) + '" '
+                     + 'data-charjs="' + (typeof escapeJs === 'function' ? escapeJs(c) : c) + '" '
+                     + 'onclick="vocabShowCharInfo(this, event)">'
+                     + _esc(c) + '</button>';
+            });
+            html += '</div>';
+            html += '<div class="pf-char-info" id="pfCharInfo" style="display:none"></div>';
+        }
+
         html += '</div>';
         return html;
     }
 
+    // ⭐ Xử lý khi click vào 1 từ
+    window.vocabShowCharInfo = function(btn, evt) {
+        if (evt) { evt.stopPropagation(); evt.preventDefault(); }
+        if (!btn) return;
+
+        var char = btn.dataset.char || '';
+        if (!char) return;
+
+        // Toggle active
+        var wasActive = btn.classList.contains('active');
+        document.querySelectorAll('.pf-char-btn').forEach(function(b) {
+            b.classList.remove('active');
+        });
+
+        var infoEl = document.getElementById('pfCharInfo');
+        if (!infoEl) return;
+
+        // Nếu bấm lại từ đang active → ẩn
+        if (wasActive) {
+            infoEl.style.display = 'none';
+            return;
+        }
+
+        btn.classList.add('active');
+
+        // Tìm từ trong dataset từ vựng
+        var found = null;
+        var list = [];
+        if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
+            list = window.FIXPY_DATASETS[VOCAB_ID].data || [];
+        }
+
+        // Ưu tiên tìm từ có `zh` khớp CHÍNH XÁC chữ đó
+        for (var i = 0; i < list.length; i++) {
+            if (list[i].zh === char) {
+                found = list[i];
+                break;
+            }
+        }
+
+        // Nếu không tìm được từ đơn → tìm từ ghép chứa chữ đó
+        if (!found) {
+            for (var j = 0; j < list.length; j++) {
+                if (list[j].zh && list[j].zh.indexOf(char) !== -1) {
+                    found = list[j];
+                    break;
+                }
+            }
+        }
+
+        // Build info HTML
+        var html = '';
+
+        if (found) {
+            html += '<div class="pf-char-info-header">';
+            html += '<span class="pf-char-info-zh">' + _esc(found.zh || char) + '</span>';
+            if (found.pinyin) {
+                html += '<span class="pf-char-info-pinyin">' + _esc(found.pinyin) + '</span>';
+            }
+            html += '</div>';
+
+            if (found.vi) {
+                html += '<div class="pf-char-info-line">';
+                html += '<span class="pf-char-info-label">📖 Nghĩa:</span>';
+                html += '<span>' + _esc(found.vi) + '</span>';
+                html += '</div>';
+            }
+
+            if (found.subject) {
+                html += '<div class="pf-char-info-line">';
+                html += '<span class="pf-char-info-label">🏷️ Loại từ:</span>';
+                html += '<span>' + _esc(found.subject) + '</span>';
+                html += '</div>';
+            }
+
+            // Bộ thủ
+            if (found.radical) {
+                var rad = found.radical;
+                html += '<div class="pf-char-info-line">';
+                html += '<span class="pf-char-info-label">🖌️ Bộ thủ:</span>';
+                html += '<span>' + _esc(rad.zh || '');
+                if (rad.pinyin) html += ' (' + _esc(rad.pinyin) + ')';
+                if (rad.strokes) html += ' — ' + _esc(rad.strokes) + ' nét';
+                if (rad.meaning) html += ' — ' + _esc(rad.meaning);
+                html += '</span>';
+                html += '</div>';
+            }
+
+            // Mẹo nhớ
+            if (found.mnemonic) {
+                html += '<div class="pf-char-info-line">';
+                html += '<span class="pf-char-info-label">💡 Mẹo nhớ:</span>';
+                html += '<span class="pf-char-info-mnemonic">' + _esc(found.mnemonic).replace(/\n/g, '<br>') + '</span>';
+                html += '</div>';
+            }
+        } else {
+            // Không tìm thấy từ trong dataset
+            html += '<div class="pf-char-info-empty">';
+            html += 'Không tìm thấy thông tin cho chữ "' + _esc(char) + '"';
+            html += '</div>';
+        }
+
+        infoEl.innerHTML = html;
+        infoEl.style.display = 'block';
+
+        // Scroll xuống info
+        setTimeout(function() {
+            infoEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    };
     function setupPfViWatcher() {
         var pfViEl = document.getElementById('pfVi');
         if (!pfViEl) return;
