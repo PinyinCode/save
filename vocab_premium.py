@@ -986,23 +986,36 @@ def build_vocab_css(vocab_id="tu-vung"):
 .vocab-limit-banner .vlb-content {
     flex: 1;
     min-width: 0;
+    display: flex;              /* ← THÊM */
+    flex-direction: column;     /* ← THÊM — xếp dọc */
+    gap: .2rem;                 /* ← THÊM — cách nhau 0.2rem */
 }
 .vocab-limit-banner .vlb-title {
+    display: block;
     font-size: .9rem;
     font-weight: 800;
     color: var(--text);
-    margin-bottom: .2rem;
-    line-height: 1.3;
+    margin-bottom: .35rem;
+    line-height: 1.5;
+    min-height: 1.5em;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 .vocab-limit-banner .vlb-title b {
     color: #dc2626;
     font-size: 1.15em;
     font-weight: 900;
+    display: inline;
 }
 .vocab-limit-banner .vlb-desc {
+    display: block;
     font-size: .75rem;
     color: var(--text-2);
-    line-height: 1.4;
+    line-height: 1.5;
+    min-height: 1.5em;
+    margin-top: .15rem;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
 }
 .vocab-limit-banner .vlb-btn {
     padding: .65rem 1.1rem;
