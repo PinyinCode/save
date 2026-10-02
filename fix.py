@@ -370,6 +370,7 @@ def build_vocab_js_patch():
             return;
         }
         setTimeout(patchLoop, 300);
+        }
     })();
 """
 if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
