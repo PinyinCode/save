@@ -46,7 +46,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install openpyxl cn2an pypinyin jieba pandas
+          pip install openpyxl cn2an pypinyin jieba pandas hanzidentifier cjkradlib
 
       - name: Verify dependencies
         run: |
