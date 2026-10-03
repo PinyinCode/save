@@ -934,23 +934,68 @@ def build_vocab_css(vocab_id="tu-vung"):
     font-size: .85rem;
     font-style: italic;
 }
-/* ⭐ SIMILAR CHARS HINT */
-.card-mnemonic-body .similar-hint,
-.card-mnemonic-body .similar-char {
+/* ⭐ SIMILAR CHARS — 1 BOX DUY NHẤT */
+.card-mnemonic-body .similar-hint-block {
     display: block;
-    margin-top: .6rem;
-    padding: .5rem .7rem;
-    background: linear-gradient(135deg, rgba(245, 158, 11, .12), rgba(251, 191, 36, .08));
+    margin-top: .8rem;
+    padding: .65rem .85rem;
+    background: linear-gradient(135deg,
+        rgba(245, 158, 11, .12) 0%,
+        rgba(251, 191, 36, .08) 50%,
+        rgba(239, 68, 68, .06) 100%);
     border-left: 3px solid #f59e0b;
-    border-radius: 8px;
-    font-size: .8rem;
+    border-radius: 10px;
+    font-size: .82rem;
     color: #92400e;
-    line-height: 1.5;
+    line-height: 1.7;
+    white-space: pre-line;
+    position: relative;
 }
-[data-theme="dark"] .card-mnemonic-body .similar-hint,
-[data-theme="dark"] .card-mnemonic-body .similar-char {
-    background: linear-gradient(135deg, rgba(245, 158, 11, .2), rgba(251, 191, 36, .1));
+
+.card-mnemonic-body .similar-hint-block .similar-title {
+    display: block;
+    font-weight: 800;
+    color: #b45309;
+    margin-bottom: .35rem;
+    font-size: .78rem;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+}
+
+.card-mnemonic-body .similar-hint-block .similar-chars {
+    display: block;
+    font-family: var(--font-zh);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #dc2626;
+    margin-bottom: .45rem;
+    letter-spacing: .05em;
+}
+
+.card-mnemonic-body .similar-hint-block .similar-diff {
+    display: block;
+    font-size: .78rem;
+    color: #78350f;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .card-mnemonic-body .similar-hint-block {
+    background: linear-gradient(135deg,
+        rgba(245, 158, 11, .18) 0%,
+        rgba(251, 191, 36, .12) 50%,
+        rgba(239, 68, 68, .08) 100%);
     color: #fcd34d;
+    border-left-color: #fbbf24;
+}
+[data-theme="dark"] .card-mnemonic-body .similar-hint-block .similar-title {
+    color: #fbbf24;
+}
+[data-theme="dark"] .card-mnemonic-body .similar-hint-block .similar-chars {
+    color: #fca5a5;
+}
+[data-theme="dark"] .card-mnemonic-body .similar-hint-block .similar-diff {
+    color: #fde68a;
 }
 @media (max-width: 500px) {
     .pf-char-btn {
