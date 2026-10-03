@@ -1859,29 +1859,54 @@ function favRebuildQuickNavForFav(records) {
 
     var html = '<option value="">-- Chọn câu yêu thích (' + list.length + ') --</option>';
 
+    /* ⭐ Track selected index */
+    var foundSelectedIndex = -1;
+
     for (var j = 0; j < list.length; j++) {
         var r = list[j];
         var vi = (r.vi || '').substring(0, 45);
         var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
                      ? '#' + String(r.stt).trim() + ' · '
                      : '';
-        var dsTag = r.__favDatasetId && r.__favDatasetId !== curDs
-                    ? '[' + r.__favDatasetId + '] '
+        var itemDs = r.__favDatasetId || 'tonghop';
+        var dsTag = (itemDs !== curDs)
+                    ? '[' + itemDs + '] '
                     : '';
         var label = dsTag + sttRaw + 'Câu ' + (j + 1) + ': ' + vi;
 
-        var selected = (String(r.stt) === curStt && r.__favDatasetId === curDs)
-                       ? ' selected'
-                       : '';
+        /* ⭐ UNIQUE KEY = datasetId + '::' + stt */
+        var uniqueKey = itemDs + '::' + String(r.stt);
 
-        html += '<option value="' + String(r.stt) + '"' +
-                ' data-dataset-id="' + escapeHtml(r.__favDatasetId || '') + '"' +
+        /* ⭐ Check match: CẢ stt + datasetId */
+        var isCurrent = (String(r.stt) === curStt && itemDs === curDs);
+        if (isCurrent) {
+            foundSelectedIndex = j + 1;   /* +1 vì có option "-- Chọn --" ở đầu */
+        }
+
+        var selected = isCurrent ? ' selected' : '';
+
+        html += '<option value="' + escapeHtml(uniqueKey) + '"' +
+                ' data-dataset-id="' + escapeHtml(itemDs) + '"' +
+                ' data-stt="' + escapeHtml(String(r.stt)) + '"' +
                 selected + '>' +
                 escapeHtml(label) + '</option>';
     }
 
     sel.innerHTML = html;
-    if (curStt) sel.value = curStt;
+
+    /* ⭐ Set selectedIndex (CHÍNH XÁC hơn set value) */
+    if (foundSelectedIndex >= 0) {
+        sel.selectedIndex = foundSelectedIndex;
+    } else if (curStt) {
+        /* Fallback: tìm option có data-stt khớp (khi dataset lệch) */
+        var opts = sel.options;
+        for (var k = 0; k < opts.length; k++) {
+            if (opts[k].dataset && opts[k].dataset.stt === curStt) {
+                sel.selectedIndex = k;
+                break;
+            }
+        }
+    }
 }
 
 window.favRebuildQuickNavForFav = favRebuildQuickNavForFav;
@@ -2970,6 +2995,10 @@ function favSyncFloatVisibility() {
 /* ═══════════════════════════════════════════════════════════════
    ⭐ LISTENER pfQuickNav CHANGE — Tự chuyển dataset khi chọn câu
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ LISTENER pfQuickNav CHANGE — Tự chuyển dataset khi chọn câu
+   FIX: Dùng data-stt thay vì value, set __favManualNav chặn auto-redirect
+   ═══════════════════════════════════════════════════════════════ */
 (function() {
     var _navChanging = false;
 
@@ -2988,19 +3017,30 @@ function favSyncFloatVisibility() {
             var opt = sel.options[sel.selectedIndex];
             if (!opt) { _navChanging = false; return; }
 
-            var stt = opt.value;
+            /* ⭐ FIX: Đọc stt từ data-stt (chính xác) */
+            var stt = opt.dataset.stt || '';
             var targetDs = opt.dataset.datasetId || null;
+
+            /* Fallback: parse từ value "datasetId::stt" */
+            if (!stt && opt.value && opt.value.indexOf('::') !== -1) {
+                var parts = opt.value.split('::');
+                targetDs = targetDs || parts[0];
+                stt = parts[1];
+            }
 
             if (!stt) { _navChanging = false; return; }
 
             var curDs = favGetCurrentDsId();
+
+            /* ⭐⭐⭐ SET 2 CỜ: manual nav + redirecting */
+            window.__favManualNav = true;
+            window.__favRedirecting = true;
 
             /* ═══ Đổi dataset nếu cần ═══ */
             if (targetDs && targetDs !== curDs) {
                 console.log('[Favorites] Đổi dataset: ' + curDs + ' → ' + targetDs);
 
                 evt.stopPropagation();
-                window.__favRedirecting = true;
 
                 if (typeof window.__switchRawData === 'function') {
                     try {
@@ -3026,26 +3066,30 @@ function favSyncFloatVisibility() {
                     }
                     setTimeout(function() {
                         window.__favRedirecting = false;
-                        favRefreshQuestionDropdown();
+                        window.__favManualNav = false;
+                        if (typeof favRefreshQuestionDropdown === 'function') {
+                            favRefreshQuestionDropdown();
+                        }
                         _navChanging = false;
-                    }, 150);
-                }, 60);
+                    }, 400);
+                }, 80);
 
                 return;
             }
 
             /* ═══ Cùng dataset → load luôn ═══ */
-            window.__favRedirecting = true;
-
             if (typeof loadPracticeFull === 'function') {
                 loadPracticeFull(String(stt));
             }
 
             setTimeout(function() {
                 window.__favRedirecting = false;
-                favRefreshQuestionDropdown();
+                window.__favManualNav = false;
+                if (typeof favRefreshQuestionDropdown === 'function') {
+                    favRefreshQuestionDropdown();
+                }
                 _navChanging = false;
-            }, 120);
+            }, 400);
         });
 
         console.log('✅ [Favorites] Đã gắn listener cho #pfQuickNav');
@@ -3060,7 +3104,6 @@ function favSyncFloatVisibility() {
         }, 200);
     }
 })();
-
 /* ═══════════════════════════════════════════════════════════════
    ⭐ PATCH __switchRawData — Không reset toggle khi tự đổi
    ═══════════════════════════════════════════════════════════════ */
@@ -3719,12 +3762,34 @@ if (document.readyState === 'loading') {
 /* ═══════════════════════════════════════════════════════════════
    FIX: favRefreshQuestionDropdown — ưu tiên pfBuildQuickNav
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   FIX: favRefreshQuestionDropdown — ưu tiên pfBuildQuickNav
+   FIX 2: Nếu đang bật fav only → gọi favRebuildQuickNavForFav với list đã lọc
+   ═══════════════════════════════════════════════════════════════ */
 (function() {
     if (typeof window.favRefreshQuestionDropdown !== 'function') return;
-    if (window.favRefreshQuestionDropdown.__favFixed) return;
+    if (window.favRefreshQuestionDropdown.__favFixed2) return;
 
     var _origRefresh = window.favRefreshQuestionDropdown;
     window.favRefreshQuestionDropdown = function() {
+        /* ⭐ Nếu đang bật toggle → dùng favRebuildQuickNavForFav với list đã lọc */
+        if (favState.pfOnlyFav && favCanUse()) {
+            try {
+                var allFav = favGetRecords();
+                var filteredList = (typeof favFilterRecords === 'function')
+                                   ? favFilterRecords(allFav)
+                                   : allFav;
+
+                if (typeof favRebuildQuickNavForFav === 'function') {
+                    favRebuildQuickNavForFav(filteredList);
+                    return true;
+                }
+            } catch(e) {
+                console.warn('[Favorites] favRebuildQuickNavForFav error:', e);
+            }
+        }
+
+        /* ⭐ Fallback: gọi pfBuildQuickNav */
         if (typeof window.pfBuildQuickNav === 'function') {
             try {
                 window.pfBuildQuickNav();
@@ -3733,9 +3798,10 @@ if (document.readyState === 'loading') {
                 console.warn('[Favorites] pfBuildQuickNav error:', e);
             }
         }
+
         return _origRefresh.apply(this, arguments);
     };
-    window.favRefreshQuestionDropdown.__favFixed = true;
+    window.favRefreshQuestionDropdown.__favFixed2 = true;
 })();
 
 
