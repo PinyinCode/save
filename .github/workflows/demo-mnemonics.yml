@@ -44,10 +44,7 @@ jobs:
       - name: List data folder (debug)
         run: |
           echo "=== data/ folder ==="
-          ls -la data/ || echo "No data folder"
-          echo ""
-          echo "=== File Excel trong data/ ==="
-          ls -la data/*.xlsx 2>/dev/null || echo "Không có file .xlsx"
+          ls -la data/
 
       - name: Run demo mnemonics
         env:
