@@ -1720,6 +1720,17 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                 
                 var charJs = (typeof escapeJs === 'function') ? escapeJs(c) : c;
                 
+                // ⭐ Kiểm tra chữ có thẻ trong data không
+                var hasCard = (info !== null);
+                
+                // ⭐ Nút nhảy → — chỉ hiện nếu có thẻ
+                var jumpBtn = '';
+                if (hasCard) {
+                    jumpBtn = '<button class="similar-char-btn-jump" ' +
+                              'onclick="vocabJumpToChar(\'' + charJs + '\', this, event)" title="Xem chi tiết">' +
+                              '<i class="fas fa-arrow-right"></i></button>';
+                }
+                
                 return '<span class="similar-char-item" data-char="' + _esc(c) + '">' +
                        '<button class="similar-char-btn-audio" ' +
                        'onclick="vocabSpeakChar(\'' + charJs + '\', this, event)" title="Đọc âm">' +
@@ -1727,9 +1738,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                        '<span class="similar-char-main">' +
                        '<span class="similar-char-zh">' + _esc(c) + '</span>' + extra +
                        '</span>' +
-                       '<button class="similar-char-btn-jump" ' +
-                       'onclick="vocabJumpToChar(\'' + charJs + '\', this, event)" title="Xem chi tiết">' +
-                       '<i class="fas fa-arrow-right"></i></button>' +
+                       jumpBtn +
                        '</span>';
             }).join(' <span class="similar-sep">·</span> ');
             
@@ -1756,7 +1765,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             + '<div class="card-mnemonic-body">' + safe + '</div>'
             + '</div>';
     }
-
     function enhanceCards() {
         if (!_isVocabMode()) return;
         if (!canAccessVocab()) return;
