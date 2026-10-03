@@ -1670,6 +1670,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             var charsMatch = titleLine.match(/🔍 Dễ nhầm:\s*(.+)/);
             var charsRaw = charsMatch ? charsMatch[1] : '';
             
+            // ⭐ Lấy TOÀN BỘ data (không dùng filtered)
             var vocabList = (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID])
                             ? (window.FIXPY_DATASETS[VOCAB_ID].data || [])
                             : [];
@@ -1678,9 +1679,27 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                 c = c.trim();
                 if (!c) return '';
                 
+                // ⭐ TÌM trong FIXPY_DATASETS
                 var info = null;
                 for (var i = 0; i < vocabList.length; i++) {
                     if (vocabList[i].zh === c) { info = vocabList[i]; break; }
+                }
+                
+                // ⭐ FALLBACK 1: Tìm trong RAW_DATA
+                if (!info && typeof RAW_DATA !== 'undefined' && RAW_DATA) {
+                    for (var j = 0; j < RAW_DATA.length; j++) {
+                        if (RAW_DATA[j].zh === c) { info = RAW_DATA[j]; break; }
+                    }
+                }
+                
+                // ⭐ FALLBACK 2: Tìm chữ có CHỨA chữ này (VD: 爸 trong 爸爸)
+                if (!info) {
+                    for (var k = 0; k < vocabList.length; k++) {
+                        if (vocabList[k].zh && vocabList[k].zh.indexOf(c) !== -1) {
+                            info = vocabList[k];
+                            break;
+                        }
+                    }
                 }
                 
                 var pinyin = info ? (info.pinyin || '') : '';
@@ -1694,6 +1713,9 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                     extra = '<span class="similar-char-info-txt"><span class="similar-char-pinyin">/' + _esc(pinyin) + '/</span></span>';
                 } else if (vi) {
                     extra = '<span class="similar-char-info-txt">' + _esc(vi) + '</span>';
+                } else {
+                    // ⭐ Không tìm thấy → hiện "?" mờ
+                    extra = '<span class="similar-char-info-txt" style="opacity:.5">(?)</span>';
                 }
                 
                 var charJs = (typeof escapeJs === 'function') ? escapeJs(c) : c;
@@ -1734,7 +1756,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             + '<div class="card-mnemonic-body">' + safe + '</div>'
             + '</div>';
     }
-
     function enhanceCards() {
         if (!_isVocabMode()) return;
         if (!canAccessVocab()) return;
