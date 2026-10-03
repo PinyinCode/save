@@ -2322,7 +2322,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                     if (oldExample) oldExample.remove();
 
                     /* 2. Xóa info panel chữ (nếu có) */
-                    var oldInfo = document.getElementById('pfCharInfo g');
+                    var oldInfo = document.getElementById('pfCharInfo');
                     if (oldInfo) {
                         oldInfo.style.display = 'none';
                         oldInfo.innerHTML = '';
@@ -2671,6 +2671,81 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         // ⭐ Watch dataset change → ẩn nút back khi rời vocab
         setInterval(watchDatasetNav, 500);
 
+        /* ═══════════════════════════════════════════════════════════════
+           🎯 RESET GỢI Ý KHI CHUYỂN CÂU — ĐỘC LẬP VỚI HOOK
+           Watch pfCurrentStt → khi đổi → xóa block + reset nút "Gợi ý"
+           Hoạt động cả khi bật/tắt Fav only
+           ═══════════════════════════════════════════════════════════════ */
+        var _lastWatchedStt = null;
+        var _lastWatchedDs = null;
+
+        function watchSttChange() {
+            /* ⭐ Nếu KHÔNG ở vocab mode → clean hết + reset tracker */
+            if (!_isVocabMode()) {
+                var blockR = document.querySelector('.pf-vocab-example');
+                if (blockR) {
+                    blockR.remove();
+                    console.log('[vocab] Đã xóa block gợi ý (rời vocab)');
+                }
+
+                var infoR = document.getElementById('pfCharInfo');
+                if (infoR) {
+                    infoR.style.display = 'none';
+                    infoR.innerHTML = '';
+                }
+
+                _lastWatchedStt = null;
+                _lastWatchedDs = null;
+                return;
+            }
+
+            var curStt = (typeof window.pfCurrentStt !== 'undefined' && window.pfCurrentStt)
+                         ? String(window.pfCurrentStt)
+                         : null;
+
+            var curDs = (typeof CURRENT_DATASET !== 'undefined')
+                        ? CURRENT_DATASET
+                        : 'tonghop';
+
+            /* ⭐ Không đổi → bỏ qua */
+            if (curStt === _lastWatchedStt && curDs === _lastWatchedDs) return;
+
+            console.log('[vocab] stt change detected:',
+                        _lastWatchedStt, '(' + _lastWatchedDs + ')',
+                        '→', curStt, '(' + curDs + ')');
+
+            _lastWatchedStt = curStt;
+            _lastWatchedDs = curDs;
+
+            if (!curStt) return;
+
+            /* ═══ 1. Xóa block gợi ý cũ ═══ */
+            var oldExample = document.querySelector('.pf-vocab-example');
+            if (oldExample) {
+                oldExample.remove();
+                console.log('[vocab] Đã xóa block gợi ý cũ');
+            }
+
+            /* ═══ 2. Xóa info panel chữ (nếu có) ═══ */
+            var oldInfo = document.getElementById('pfCharInfo');
+            if (oldInfo) {
+                oldInfo.style.display = 'none';
+                oldInfo.innerHTML = '';
+            }
+
+            /* ═══ 3. Reset nút "Gợi ý" về OFF ═══ */
+            var hintBtn = document.getElementById('pfHintBtn');
+            if (hintBtn) {
+                hintBtn.classList.remove('active');
+                hintBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Gợi ý';
+                console.log('[vocab] Đã reset nút Gợi ý');
+            }
+        }
+
+        /* ⭐ Chạy mỗi 250ms — nhanh + nhẹ */
+        setInterval(watchSttChange, 250);
+
+        console.log('[vocab] Stt watcher started');
         console.log('[vocab] module ready');
     }
 
