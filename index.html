@@ -13530,32 +13530,59 @@ function updateDemoBanner() {
     var info = getTierInfo();
     var banner = $('demoBanner');
     if (!banner) return;
-    if (info.tier !== 'demo' && info.tier !== 'expired') return;
+
+    /* ⭐ Ẩn banner nếu KHÔNG phải demo/expired */
+    if (info.tier !== 'demo' && info.tier !== 'expired') {
+        banner.style.display = 'none';
+        return;
+    }
+
     var titleEl = $('demoBannerTitle');
     var descEl  = $('demoBannerDesc');
     var btnEl   = $('demoBannerBtn');
     var btnText = $('demoBannerBtnText');
     var iconEl  = banner.querySelector('.demo-banner-icon');
 
+    banner.style.display = 'flex';
+
     if (info.tier === 'expired') {
-        if (titleEl) titleEl.innerHTML = 'Tài khoản đã hết hạn';
+        /* ═══════════════════════════════════════════════════════════
+           ⭐ EXPIRED → Nút "Gia hạn ngay"
+           ═══════════════════════════════════════════════════════════ */
+        if (titleEl) titleEl.innerHTML = '⚠️ Tài khoản đã hết hạn';
         if (descEl) {
             descEl.innerHTML = 'Bạn đang xem chế độ giới hạn (' +
                 info.maxQuestions + ' câu đầu, HSK1-' + info.maxHSK + ', ' +
-                DEMO_DAILY_LIMIT + ' lượt/ngày).<br>Gia hạn để mở khóa toàn bộ ' +
-                (typeof RAW_DATA !== 'undefined' ? RAW_DATA.length : '') + ' câu!';
+                DEMO_DAILY_LIMIT + ' lượt/ngày).<br>' +
+                '<b style="color:#dc2626">Gia hạn để mở khóa toàn bộ ' +
+                (typeof RAW_DATA !== 'undefined' ? RAW_DATA.length : '') + ' câu!</b>';
         }
+
+        /* ⭐ XÓA HOÀN TOÀN attribute onclick cũ + gán property mới */
         if (btnEl) {
-            btnEl.onclick = function() {
-                if (typeof openRenewalModal === 'function') openRenewalModal();
+            btnEl.removeAttribute('onclick');
+            btnEl.onclick = function(e) {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                if (typeof openRenewalModal === 'function') {
+                    openRenewalModal();
+                }
             };
-            btnEl.setAttribute('onclick', '');
         }
+
         if (btnText) btnText.textContent = 'Gia hạn ngay';
+
+        /* ⭐ Đổi icon trong nút */
+        var btnIcon = btnEl ? btnEl.querySelector('i') : null;
+        if (btnIcon) btnIcon.className = 'fas fa-gem';
+
         if (iconEl) iconEl.innerHTML = '<i class="fas fa-exclamation-triangle"></i>';
         banner.style.background = 'linear-gradient(135deg, #fecaca, #fca5a5)';
         banner.style.borderColor = '#dc2626';
+
     } else {
+        /* ═══════════════════════════════════════════════════════════
+           ⭐ DEMO → Nút "Đăng nhập bằng Gmail"
+           ═══════════════════════════════════════════════════════════ */
         if (titleEl) titleEl.innerHTML = 'Đăng nhập miễn phí để mở khóa toàn bộ';
         if (descEl) {
             descEl.innerHTML = 'Đăng nhập bằng <b>Gmail</b> để xem <b>toàn bộ kho câu</b>, ' +
@@ -13563,7 +13590,24 @@ function updateDemoBanner() {
                 'Nghe + Luyện viết còn lại hôm nay: ' +
                 '<b id="demoRemainingText" style="color:#16a34a">' + getDemoRemaining() + '</b> lượt.';
         }
+
+        /* ⭐ XÓA HOÀN TOÀN attribute onclick cũ + gán property mới */
+        if (btnEl) {
+            btnEl.removeAttribute('onclick');
+            btnEl.onclick = function(e) {
+                if (e) { e.preventDefault(); e.stopPropagation(); }
+                if (typeof showLoginModal === 'function') {
+                    showLoginModal();
+                }
+            };
+        }
+
         if (btnText) btnText.textContent = 'Đăng nhập bằng Gmail';
+
+        /* ⭐ Đổi icon trong nút */
+        var btnIcon2 = btnEl ? btnEl.querySelector('i') : null;
+        if (btnIcon2) btnIcon2.className = 'fas fa-sign-in-alt';
+
         if (iconEl) iconEl.innerHTML = '<i class="fas fa-gift"></i>';
         banner.style.background = '';
         banner.style.borderColor = '';
