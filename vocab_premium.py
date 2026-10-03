@@ -2728,18 +2728,18 @@ window._speakExampleKaraoke = function(exampleText) {
 
     try { speechSynthesis.cancel(); } catch(e) {}
 
-    /* ⭐ Clear tất cả highlight cũ + float cũ */
+    /* ⭐ Clear ALL ngay từ đầu */
     document.querySelectorAll('.pf-char-btn.reading').forEach(function(b) {
         b.classList.remove('reading');
     });
-    var oldFloat = document.getElementById('pfKaraokePinyin');
-    if (oldFloat) oldFloat.remove();
+    var initFloat = document.getElementById('pfKaraokePinyin');
+    if (initFloat) initFloat.remove();
 
-    /* ⭐ Lấy pinyin câu ví dụ */
+    /* ⭐ Pinyin câu */
     var examplePinyin = window.__currentVocabExamplePinyin || '';
     var pinyinWords = examplePinyin.trim().split(/\s+/).filter(function(w) { return w; });
 
-    /* ⭐ Tách từng chữ Hán */
+    /* ⭐ Tách chữ Hán */
     var chars = [];
     for (var i = 0; i < exampleText.length; i++) {
         var c = exampleText[i];
@@ -2751,7 +2751,7 @@ window._speakExampleKaraoke = function(exampleText) {
     if (chars.length === 0) {
         var u0 = new SpeechSynthesisUtterance(exampleText);
         u0.lang = 'zh-CN';
-        u0.rate = 0.75;   /* ⭐ Chậm */
+        u0.rate = 0.75;
         if (typeof applyVoiceSettings === 'function') {
             try { applyVoiceSettings(u0); u0.rate = 0.75; } catch(e) {}
         }
@@ -2761,14 +2761,12 @@ window._speakExampleKaraoke = function(exampleText) {
         return;
     }
 
-    /* ⭐ Lấy danh sách nút */
     var allBtns = document.querySelectorAll('.pf-char-btn');
     var btnChars = [];
     allBtns.forEach(function(b) {
         btnChars.push(b.dataset.char || '');
     });
 
-    /* ⭐ Map pinyin cho từng chữ đơn */
     var list = [];
     if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
         list = window.FIXPY_DATASETS[VOCAB_ID].data || [];
@@ -2782,29 +2780,32 @@ window._speakExampleKaraoke = function(exampleText) {
 
     var charIdx = 0;
 
+    /* ⭐ Hàm clear float + highlight — đồng bộ, gọi ngay */
+    function clearFloatAndHighlight() {
+        var f = document.getElementById('pfKaraokePinyin');
+        if (f && f.parentNode) f.parentNode.removeChild(f);
+        document.querySelectorAll('.pf-char-btn.reading').forEach(function(b) {
+            b.classList.remove('reading');
+        });
+    }
+
     function speakNext() {
+        /* ═══════════════════════════════════════════════════════════
+           ⭐ CHỮ CUỐI → đọc xong mới clear
+           ═══════════════════════════════════════════════════════════ */
         if (charIdx >= chars.length) {
-            /* ⭐ Đọc xong → delay 500ms rồi mới clear (để chữ cuối vẫn hiện pinyin) */
             setTimeout(function() {
-                document.querySelectorAll('.pf-char-btn.reading').forEach(function(b) {
-                    b.classList.remove('reading');
-                });
-                var fEl = document.getElementById('pfKaraokePinyin');
-                if (fEl) fEl.remove();
-            }, 500);
+                clearFloatAndHighlight();
+            }, 800);
             return;
         }
 
         var ch = chars[charIdx];
 
-        /* ⭐ Clear highlight cũ + float cũ */
-        document.querySelectorAll('.pf-char-btn.reading').forEach(function(b) {
-            b.classList.remove('reading');
-        });
-        var oldFloat2 = document.getElementById('pfKaraokePinyin');
-        if (oldFloat2) oldFloat2.remove();
+        /* ⭐ CLEAR NGAY — không delay, không để chồng */
+        clearFloatAndHighlight();
 
-        /* ⭐ Tìm nút khớp */
+        /* ⭐ Tìm nút */
         var matchedBtn = null;
         for (var k = 0; k < btnChars.length; k++) {
             var btnChar = btnChars[k];
@@ -2815,31 +2816,22 @@ window._speakExampleKaraoke = function(exampleText) {
             }
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           ⭐ Hiện pinyin float — LUÔN hiện cho mọi chữ
-           ═══════════════════════════════════════════════════════════ */
+        /* ⭐ Hiện pinyin */
         if (matchedBtn) {
             var btnChar = matchedBtn.dataset.char || '';
             var pinyinText = '';
 
-            /* 1. Pinyin của từ ghép */
             for (var p = 0; p < list.length; p++) {
                 if (list[p].zh === btnChar) {
                     pinyinText = list[p].pinyin || '';
                     break;
                 }
             }
-            /* 2. Fallback pinyin của chữ đơn */
-            if (!pinyinText) {
-                pinyinText = pinyinMap[ch] || '';
-            }
-            /* 3. Fallback: split pinyin câu theo tỉ lệ */
+            if (!pinyinText) pinyinText = pinyinMap[ch] || '';
             if (!pinyinText && pinyinWords.length === chars.length) {
                 pinyinText = pinyinWords[charIdx] || '';
             }
-            /* 4. Fallback cuối: lấy từ pinyin câu nếu khác số chữ */
             if (!pinyinText && pinyinWords.length > 0) {
-                /* Ước lượng vị trí: gán từ theo index */
                 var ratio = charIdx / chars.length;
                 var pIdx = Math.floor(ratio * pinyinWords.length);
                 pinyinText = pinyinWords[Math.min(pIdx, pinyinWords.length - 1)] || '';
@@ -2857,32 +2849,21 @@ window._speakExampleKaraoke = function(exampleText) {
                 floatEl.style.transform = 'translate(-50%, -100%)';
                 floatEl.style.zIndex = '9999';
                 document.body.appendChild(floatEl);
-
-                /* ⭐ Delay xóa dài hơn để chữ cuối kịp hiện */
-                setTimeout(function() {
-                    if (floatEl.parentNode) floatEl.remove();
-                }, 2000);
+                /* ⭐ KHÔNG tự xóa — để speakNext() tự clear */
             }
         }
 
-        /* ═══════════════════════════════════════════════════════════
-           ⭐ Đọc chữ — GIỌNG CHẬM (rate = 0.75)
-           ═══════════════════════════════════════════════════════════ */
+        /* ⭐ Đọc chữ */
         var u = new SpeechSynthesisUtterance(ch);
         u.lang = 'zh-CN';
-
         if (typeof applyVoiceSettings === 'function') {
             try { applyVoiceSettings(u); } catch(e) {}
         }
-
-        /* ⭐ Force rate chậm — sau khi apply settings */
         u.rate = 0.75;
-        /* ⭐ Force pitch tự nhiên */
         if (!u.pitch || u.pitch < 0.8) u.pitch = 1.0;
 
         u.onend = function() {
             charIdx++;
-            /* ⭐ Delay giữa các chữ — tăng lên để tự nhiên hơn */
             setTimeout(speakNext, 200);
         };
         u.onerror = function() {
