@@ -14,6 +14,52 @@ import unicodedata
 import re
 
 from .radical_analyzer import analyze_word, _split_components
+import json
+import os
+
+# ═══════════════════════════════════════════════════════════════
+#  ⭐ LOAD SIMILAR CHARS (2 files)
+# ═══════════════════════════════════════════════════════════════
+SIMILAR_CHARS = {}
+
+def _load_similar_chars():
+    global SIMILAR_CHARS
+    SIMILAR_CHARS = {}
+    
+    base_dir = os.path.dirname(__file__)
+    
+    # File 1: HSK 1-4
+    p1 = os.path.join(base_dir, "similar_chars.json")
+    if os.path.exists(p1):
+        try:
+            with open(p1, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                SIMILAR_CHARS.update(data)
+            print("[MNEMONIC] Loaded part1: " + str(len(data)) + " chars")
+        except Exception as e:
+            print("[MNEMONIC] Load part1 error: " + str(e))
+    
+    # File 2: HSK 5-6
+    p2 = os.path.join(base_dir, "similar_chars_part2.json")
+    if os.path.exists(p2):
+        try:
+            with open(p2, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                SIMILAR_CHARS.update(data)
+            print("[MNEMONIC] Loaded part2: " + str(len(data)) + " chars")
+        except Exception as e:
+            print("[MNEMONIC] Load part2 error: " + str(e))
+    
+    print("[MNEMONIC] Total similar chars: " + str(len(SIMILAR_CHARS)))
+
+_load_similar_chars()
+
+
+def find_similar_chars(char):
+    """Tìm chữ gần giống từ cache."""
+    if not char:
+        return None
+    return SIMILAR_CHARS.get(char)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -535,9 +581,24 @@ def generate_mnemonic(zh, pinyin="", vi=""):
         return ""
 
     # ═══ TỪ 1 CHỮ ═══
+    # ═══ TỪ 1 CHỮ ═══
     if len(chars) == 1:
-        return _generate_single_char_mnemonic(chars[0], pinyin, vi)
-
+        base = _generate_single_char_mnemonic(chars[0], pinyin, vi)
+        
+        # ⭐ Thêm gợi ý chữ dễ nhầm
+        similar_info = find_similar_chars(chars[0])
+        if similar_info:
+            similar_list = similar_info.get("similar", [])
+            diff_text = similar_info.get("diff", "")
+            if similar_list and diff_text:
+                similar_str = "🔍 Dễ nhầm: " + ", ".join(similar_list)
+                similar_str += "\n📌 " + diff_text
+                if base:
+                    base += "\n\n" + similar_str
+                else:
+                    base = similar_str
+        
+        return base
     # ═══ TỪ 2+ CHỮ — TỪ GHÉP ═══
     hints = []
 
