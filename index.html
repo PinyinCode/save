@@ -9978,6 +9978,46 @@ body[data-vocab-mode="1"] .mobile-view {
 [data-theme="dark"] .pf-char-info-audio {
     background: linear-gradient(135deg, #a78bfa, #8b5cf6);
 }
+/* ═══════════════════════════════════════════════════════════════
+   🎯 KARAOKE PINYIN FLOAT — Hiện pinyin nổi khi đọc
+   ═══════════════════════════════════════════════════════════════ */
+.pf-karaoke-pinyin {
+    padding: .35rem .75rem;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #fff;
+    font-size: .82rem;
+    font-weight: 800;
+    font-family: inherit;
+    font-style: italic;
+    border-radius: 50px;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, .6),
+                0 0 0 3px rgba(255, 255, 255, .5);
+    pointer-events: none;
+    animation: karaokePinyinIn .25s cubic-bezier(.34, 1.56, .64, 1);
+    white-space: nowrap;
+    letter-spacing: .02em;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .2);
+}
+.pf-karaoke-pinyin::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #f59e0b;
+    filter: drop-shadow(0 2px 2px rgba(245, 158, 11, .3));
+}
+@keyframes karaokePinyinIn {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -100%) scale(.8) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, -100%) scale(1) translateY(0);
+    }
+}
 
 
 /* ═══ BANNER CẢNH BÁO TỪ VỰNG ═══ */
@@ -28044,11 +28084,12 @@ window.__switchRawData = function(datasetId) {
 
 
     function buildPFExampleBlock(r) {
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ Lưu câu ví dụ vào global để nút loa trong info header dùng
-       ═══════════════════════════════════════════════════════════ */
+    /* ⭐ Lưu câu ví dụ + pinyin vào global */
     if (r && r.vi_du_zh) {
         window.__currentVocabExampleZh = r.vi_du_zh;
+    }
+    if (r && r.vi_du_pinyin) {
+        window.__currentVocabExamplePinyin = r.vi_du_pinyin;
     }
 
     var zh = _esc(r.vi_du_zh || '');
@@ -28059,10 +28100,8 @@ window.__switchRawData = function(datasetId) {
     var pinyin = _esc(r.vi_du_pinyin || '');
     var vi = _esc(r.vi_du_vi || '');
 
-    /* ⭐ DÙNG vi_du_words từ Python (jieba đã tách sẵn) */
     var chars = (r && Array.isArray(r.vi_du_words)) ? r.vi_du_words : [];
     if (chars.length === 0) {
-        /* Fallback: tách từng chữ Hán đơn */
         for (var i = 0; i < zh.length; i++) {
             var c = zh[i];
             if (c >= '\u4e00' && c <= '\u9fff') {
@@ -28091,7 +28130,6 @@ window.__switchRawData = function(datasetId) {
         html += '<div class="pf-vocab-example-vi">' + vi + '</div>';
     }
 
-    /* ⭐ Block từ clickable */
     if (chars.length > 0) {
         html += '<div class="pf-chars-label">👇 Bấm vào từ để xem nghĩa:</div>';
         html += '<div class="pf-chars-wrap">';
@@ -28111,7 +28149,6 @@ window.__switchRawData = function(datasetId) {
     html += '</div>';
     return html;
 }
-
     // ⭐ Xử lý khi click vào 1 từ
     /* ═══════════════════════════════════════════════════════════════
    🎯 ĐỌC TỪ ĐƠN — Dùng khi click vào từ (KHÔNG karaoke)
@@ -28139,6 +28176,9 @@ window._speakWord = function(text) {
    - Đọc lần lượt từng chữ
    - Highlight chữ đang đọc trong block pf-char-btn (màu vàng cam)
    ═══════════════════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════════════════
+   🎯 ĐỌC CẢ CÂU + KARAOKE + HIỆN PINYIN TỪ ĐANG ĐỌC
+   ═══════════════════════════════════════════════════════════════ */
 window._speakExampleKaraoke = function(exampleText) {
     if (!exampleText) return;
     if (!('speechSynthesis' in window)) return;
@@ -28150,7 +28190,15 @@ window._speakExampleKaraoke = function(exampleText) {
         b.classList.remove('reading');
     });
 
-    /* ⭐ Tách từng chữ Hán từ câu ví dụ */
+    /* ⭐ Ẩn pinyin float cũ (nếu có) */
+    var oldFloat = document.getElementById('pfKaraokePinyin');
+    if (oldFloat) oldFloat.remove();
+
+    /* ⭐ Lấy pinyin câu ví dụ để tách */
+    var examplePinyin = window.__currentVocabExamplePinyin || '';
+    var pinyinWords = examplePinyin.trim().split(/\s+/).filter(function(w) { return w; });
+
+    /* ⭐ Tách từng chữ Hán từ câu */
     var chars = [];
     for (var i = 0; i < exampleText.length; i++) {
         var c = exampleText[i];
@@ -28160,7 +28208,6 @@ window._speakExampleKaraoke = function(exampleText) {
     }
 
     if (chars.length === 0) {
-        /* Không có chữ Hán → đọc nguyên văn */
         var u0 = new SpeechSynthesisUtterance(exampleText);
         u0.lang = 'zh-CN';
         if (typeof applyVoiceSettings === 'function') {
@@ -28172,22 +28219,34 @@ window._speakExampleKaraoke = function(exampleText) {
         return;
     }
 
-    /* ⭐ Lấy danh sách tất cả các nút trong block từ */
+    /* ⭐ Lấy danh sách nút */
     var allBtns = document.querySelectorAll('.pf-char-btn');
     var btnChars = [];
     allBtns.forEach(function(b) {
         btnChars.push(b.dataset.char || '');
     });
 
-    /* ⭐ Bắt đầu karaoke từ chữ đầu tiên */
+    /* ⭐ Mỗi nút có pinyin riêng từ dataset */
+    var list = [];
+    if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
+        list = window.FIXPY_DATASETS[VOCAB_ID].data || [];
+    }
+    var pinyinMap = {}; /* { chữ đơn: pinyin } */
+    for (var m = 0; m < list.length; m++) {
+        if (list[m].zh && list[m].pinyin && list[m].zh.length === 1) {
+            pinyinMap[list[m].zh] = list[m].pinyin;
+        }
+    }
+
     var charIdx = 0;
 
     function speakNext() {
         if (charIdx >= chars.length) {
-            /* Đọc xong → clear highlight */
             document.querySelectorAll('.pf-char-btn.reading').forEach(function(b) {
                 b.classList.remove('reading');
             });
+            var floatEl = document.getElementById('pfKaraokePinyin');
+            if (floatEl) floatEl.remove();
             return;
         }
 
@@ -28197,17 +28256,61 @@ window._speakExampleKaraoke = function(exampleText) {
         document.querySelectorAll('.pf-char-btn.reading').forEach(function(b) {
             b.classList.remove('reading');
         });
+        var oldFloat2 = document.getElementById('pfKaraokePinyin');
+        if (oldFloat2) oldFloat2.remove();
 
-        /* ⭐ Tìm nút có data-char khớp (exact hoặc chứa) */
+        /* ⭐ Tìm nút khớp */
+        var matchedBtn = null;
         for (var k = 0; k < btnChars.length; k++) {
             var btnChar = btnChars[k];
-            if (btnChar === ch) {
-                allBtns[k].classList.add('reading');
+            if (btnChar === ch || btnChar.indexOf(ch) !== -1) {
+                matchedBtn = allBtns[k];
+                matchedBtn.classList.add('reading');
                 break;
             }
-            if (btnChar.indexOf(ch) !== -1) {
-                allBtns[k].classList.add('reading');
-                break;
+        }
+
+        /* ═══════════════════════════════════════════════════════════
+           ⭐ Hiện pinyin nổi phía trên nút đang đọc
+           ═══════════════════════════════════════════════════════════ */
+        if (matchedBtn) {
+            /* Ưu tiên pinyin của từ ghép, fallback pinyin của chữ đơn */
+            var btnChar = matchedBtn.dataset.char || '';
+            var pinyinText = '';
+
+            /* 1. Tìm trong dataset theo từ ghép */
+            for (var p = 0; p < list.length; p++) {
+                if (list[p].zh === btnChar) {
+                    pinyinText = list[p].pinyin || '';
+                    break;
+                }
+            }
+            /* 2. Fallback: pinyin của chữ đơn */
+            if (!pinyinText) {
+                pinyinText = pinyinMap[ch] || '';
+            }
+            /* 3. Fallback cuối: lấy từ câu pinyin theo index */
+            if (!pinyinText && pinyinWords.length === chars.length) {
+                pinyinText = pinyinWords[charIdx] || '';
+            }
+
+            if (pinyinText) {
+                var rect = matchedBtn.getBoundingClientRect();
+                var floatEl = document.createElement('div');
+                floatEl.id = 'pfKaraokePinyin';
+                floatEl.className = 'pf-karaoke-pinyin';
+                floatEl.textContent = pinyinText;
+                floatEl.style.position = 'fixed';
+                floatEl.style.left = (rect.left + rect.width / 2) + 'px';
+                floatEl.style.top = (rect.top - 8) + 'px';
+                floatEl.style.transform = 'translate(-50%, -100%)';
+                floatEl.style.zIndex = '9999';
+                document.body.appendChild(floatEl);
+
+                /* ⭐ Tự xóa sau 1.2s hoặc khi chuyển chữ khác */
+                setTimeout(function() {
+                    if (floatEl.parentNode) floatEl.remove();
+                }, 1200);
             }
         }
 
@@ -28238,7 +28341,6 @@ window._speakExampleKaraoke = function(exampleText) {
 
     speakNext();
 };
-
 /* ═══════════════════════════════════════════════════════════════
    🎯 CLICK VÀO TỪ — Đọc từ + Zoom (KHÔNG đổi màu) + Info
    ═══════════════════════════════════════════════════════════════ */
@@ -28275,19 +28377,17 @@ window.vocabShowCharInfo = function(btn, evt) {
     /* ⭐ Set active */
     btn.classList.add('active');
 
-    /* ⭐ ZOOM hiệu ứng (không đổi màu) */
+    /* ⭐ ZOOM hiệu ứng */
     btn.classList.add('zooming');
     setTimeout(function() {
         btn.classList.remove('zooming');
     }, 600);
 
-    /* ═══════════════════════════════════════════════════════════
-       🎯 ĐỌC TỪ ĐÓ (không karaoke)
-       ═══════════════════════════════════════════════════════════ */
+    /* ⭐ Đọc từ đó */
     _speakWord(char);
 
     /* ═══════════════════════════════════════════════════════════
-       Tìm record trong dataset từ vựng
+       Tìm record trong dataset
        ═══════════════════════════════════════════════════════════ */
     var found = null;
     var list = [];
@@ -28295,15 +28395,12 @@ window.vocabShowCharInfo = function(btn, evt) {
         list = window.FIXPY_DATASETS[VOCAB_ID].data || [];
     }
 
-    /* ⭐ 1. Match EXACT */
     for (var i = 0; i < list.length; i++) {
         if (list[i].zh === char) {
             found = list[i];
             break;
         }
     }
-
-    /* ⭐ 2. Fallback: tìm từ ghép chứa chữ đó */
     if (!found) {
         for (var j = 0; j < list.length; j++) {
             if (list[j].zh && list[j].zh.indexOf(char) !== -1) {
@@ -28314,32 +28411,35 @@ window.vocabShowCharInfo = function(btn, evt) {
     }
 
     /* ═══════════════════════════════════════════════════════════
-       Build info HTML
+       Build info HTML — LUÔN hiện header + nút loa tím
        ═══════════════════════════════════════════════════════════ */
     var html = '';
 
+    /* ⭐ HEADER — luôn hiện (dù có found hay không) */
+    html += '<div class="pf-char-info-header">';
+    html += '<span class="pf-char-info-zh">' + _esc(char) + '</span>';
+
+    /* ⭐ Pinyin — lấy từ record nếu có */
+    if (found && found.pinyin) {
+        html += '<span class="pf-char-info-pinyin">' + _esc(found.pinyin) + '</span>';
+    }
+
+    /* ⭐ Nút loa tím — LUÔN hiện để đọc cả câu ví dụ + karaoke */
+    var exampleText = window.__currentVocabExampleZh || '';
+    if (exampleText) {
+        var exJs = (typeof escapeJs === 'function')
+            ? escapeJs(exampleText)
+            : String(exampleText).replace(/"/g, '&quot;').replace(/'/g, "\\'");
+        html += '<button class="pf-char-info-audio" '
+              + 'onclick="event.stopPropagation(); _speakExampleKaraoke(\'' + exJs + '\');" '
+              + 'title="Đọc cả câu ví dụ + karaoke">'
+              + '<i class="fas fa-volume-up"></i>'
+              + '</button>';
+    }
+    html += '</div>';
+
+    /* ⭐ Body — chỉ hiện khi có found */
     if (found) {
-        html += '<div class="pf-char-info-header">';
-        html += '<span class="pf-char-info-zh">' + _esc(found.zh || char) + '</span>';
-        if (found.pinyin) {
-            html += '<span class="pf-char-info-pinyin">' + _esc(found.pinyin) + '</span>';
-        }
-
-        /* ⭐ Nút loa đọc CẢ CÂU VÍ DỤ + KARAOKE */
-        var exampleText = window.__currentVocabExampleZh || '';
-        if (exampleText) {
-            var exJs = (typeof escapeJs === 'function')
-                ? escapeJs(exampleText)
-                : String(exampleText).replace(/"/g, '&quot;').replace(/'/g, "\\'");
-            html += '<button class="pf-char-info-audio" '
-                  + 'onclick="event.stopPropagation(); _speakExampleKaraoke(\'' + exJs + '\');" '
-                  + 'title="Đọc cả câu ví dụ">'
-                  + '<i class="fas fa-volume-up"></i>'
-                  + '</button>';
-        }
-
-        html += '</div>';
-
         if (found.vi) {
             html += '<div class="pf-char-info-line">';
             html += '<span class="pf-char-info-label">📖 Nghĩa:</span>';
@@ -28354,7 +28454,6 @@ window.vocabShowCharInfo = function(btn, evt) {
             html += '</div>';
         }
 
-        /* Bộ thủ */
         if (found.radical) {
             var rad = found.radical;
             html += '<div class="pf-char-info-line">';
@@ -28367,7 +28466,6 @@ window.vocabShowCharInfo = function(btn, evt) {
             html += '</div>';
         }
 
-        /* Mẹo nhớ */
         if (found.mnemonic) {
             html += '<div class="pf-char-info-line">';
             html += '<span class="pf-char-info-label">💡 Mẹo nhớ:</span>';
@@ -28377,6 +28475,7 @@ window.vocabShowCharInfo = function(btn, evt) {
             html += '</div>';
         }
     } else {
+        /* ⭐ Không tìm thấy → vẫn hiện empty state */
         html += '<div class="pf-char-info-empty">';
         html += 'Không tìm thấy thông tin cho chữ "' + _esc(char) + '"';
         html += '</div>';
@@ -28385,7 +28484,6 @@ window.vocabShowCharInfo = function(btn, evt) {
     infoEl.innerHTML = html;
     infoEl.style.display = 'block';
 
-    /* ⭐ Scroll xuống info */
     setTimeout(function() {
         infoEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }, 100);
