@@ -1343,6 +1343,12 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         return null;
     }
     
+    // ⭐ Kiểm tra THỰC TẾ có thẻ HTML không
+    function _hasCardForChar(char) {
+        if (!char) return false;
+        return _findCardByChar(char) !== null;
+    }
+    
     function _scrollToCard(card) {
         if (!card) return;
         
@@ -1434,7 +1440,6 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                 behavior: 'smooth'
             });
         } catch (e) {
-            // Fallback cho trình duyệt cũ
             window.scrollTo(0, prevScroll);
         }
         
@@ -1460,6 +1465,30 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                 console.log('[vocab] nav back btn removed');
             }, 300);
         }
+    }
+    
+    // ⭐ Ẩn nút back + clear stack (khi rời tab vocab)
+    function _hideNavBackBtn() {
+        if (_navBackBtn) {
+            _navBackBtn.remove();
+            _navBackBtn = null;
+            console.log('[vocab] nav back btn hidden (left vocab)');
+        }
+        _navStack = [];
+    }
+    
+    // ⭐ Watch tab change → ẩn nút nếu rời vocab
+    var _lastDatasetForNav = null;
+    function watchDatasetNav() {
+        var curDataset = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : '';
+        if (_lastDatasetForNav === null) {
+            _lastDatasetForNav = curDataset;
+            return;
+        }
+        if (_lastDatasetForNav === VOCAB_ID && curDataset !== VOCAB_ID) {
+            _hideNavBackBtn();
+        }
+        _lastDatasetForNav = curDataset;
     }
     
     window.vocabSpeakChar = function(char, btn, evt) {
@@ -1655,7 +1684,8 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         return html;
     }
 
-    function buildMnemonicBlock(text) {
+    function buildMnemonicBlock(text, currentChar) {
+        currentChar = currentChar || '';
         if (!text || !text.trim()) return '';
         var safe = _esc(text);
         
@@ -1678,6 +1708,11 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             var charsList = charsRaw.split(/[,，]\s*/).map(function(c) {
                 c = c.trim();
                 if (!c) return '';
+                
+                // ⭐ VIỆC 1: LOẠI BỎ chữ đang xem (r.zh)
+                if (currentChar && c === currentChar) {
+                    return '';
+                }
                 
                 // ⭐ TÌM trong FIXPY_DATASETS
                 var info = null;
@@ -1714,11 +1749,21 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                 } else if (vi) {
                     extra = '<span class="similar-char-info-txt">' + _esc(vi) + '</span>';
                 } else {
-                    // ⭐ Không tìm thấy → hiện "?" mờ
                     extra = '<span class="similar-char-info-txt" style="opacity:.5">(?)</span>';
                 }
                 
                 var charJs = (typeof escapeJs === 'function') ? escapeJs(c) : c;
+                
+                // ⭐ VIỆC 2: Kiểm tra THỰC TẾ có thẻ HTML không
+                var hasCard = _hasCardForChar(c);
+                
+                // ⭐ Nút nhảy → — chỉ hiện nếu có thẻ
+                var jumpBtn = '';
+                if (hasCard) {
+                    jumpBtn = '<button class="similar-char-btn-jump" ' +
+                              'onclick="vocabJumpToChar(\'' + charJs + '\', this, event)" title="Xem chi tiết">' +
+                              '<i class="fas fa-arrow-right"></i></button>';
+                }
                 
                 return '<span class="similar-char-item" data-char="' + _esc(c) + '">' +
                        '<button class="similar-char-btn-audio" ' +
@@ -1727,18 +1772,21 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                        '<span class="similar-char-main">' +
                        '<span class="similar-char-zh">' + _esc(c) + '</span>' + extra +
                        '</span>' +
-                       '<button class="similar-char-btn-jump" ' +
-                       'onclick="vocabJumpToChar(\'' + charJs + '\', this, event)" title="Xem chi tiết">' +
-                       '<i class="fas fa-arrow-right"></i></button>' +
+                       jumpBtn +
                        '</span>';
+            }).filter(function(html) {
+                return html !== '';
             }).join(' <span class="similar-sep">·</span> ');
             
-            similarBlockHtml = '<div class="similar-hint-block">' +
-                '<span class="similar-title">🔍 Dễ nhầm</span>' +
-                '<div class="similar-chars">' + charsList + '</div>' +
-                '</div>';
+            // ⭐ Nếu sau khi lọc KHÔNG còn chữ → không hiện block
+            if (charsList.trim() !== '') {
+                similarBlockHtml = '<div class="similar-hint-block">' +
+                    '<span class="similar-title">🔍 Dễ nhầm</span>' +
+                    '<div class="similar-chars">' + charsList + '</div>' +
+                    '</div>';
+            }
             
-            // ⭐ XÓA block "Dễ nhầm" khỏi text (để không bị wrap)
+            // ⭐ XÓA block "Dễ nhầm" khỏi text
             safe = safe.replace(similarRegex, '');
         }
         
@@ -1748,7 +1796,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         safe = safe.replace(/→/g, '<span class="arrow">→</span>');
         safe = safe.replace(/\(([^)]+)\)/g, '(<span class="hint">$1</span>)');
         
-        // ⭐ BƯỚC 3: Ghép lại (mẹo nhớ + block dễ nhầm)
+        // ⭐ BƯỚC 3: Ghép lại
         safe = safe + similarBlockHtml;
         
         return '<div class="card-mnemonic">'
@@ -1775,6 +1823,7 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             if (oldR) oldR.remove();
             var oldM = body.querySelector('.card-mnemonic');
             if (oldM) oldM.remove();
+
             // ⭐ Update số thứ tự hiển thị (dùng stt_original)
             var sttEl = card.querySelector('.card-stt');
             if (sttEl && r.stt_original) {
@@ -1788,8 +1837,9 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                 else body.insertAdjacentHTML('beforeend', htmlR);
             }
 
+            // ⭐ Truyền r.zh để loại bỏ chữ đang xem khỏi block "Dễ nhầm"
             if (r.mnemonic) {
-                body.insertAdjacentHTML('beforeend', buildMnemonicBlock(r.mnemonic));
+                body.insertAdjacentHTML('beforeend', buildMnemonicBlock(r.mnemonic, r.zh));
             }
 
             var pyEl = body.querySelector('.card-vocab-example-pinyin')
