@@ -9193,7 +9193,24 @@ body.acm-bulk-mode .acm-select-all-row{display:flex;}
     font-size: .85rem;
     font-style: italic;
 }
-
+/* ⭐ SIMILAR CHARS HINT */
+.card-mnemonic-body .similar-hint,
+.card-mnemonic-body .similar-char {
+    display: block;
+    margin-top: .6rem;
+    padding: .5rem .7rem;
+    background: linear-gradient(135deg, rgba(245, 158, 11, .12), rgba(251, 191, 36, .08));
+    border-left: 3px solid #f59e0b;
+    border-radius: 8px;
+    font-size: .8rem;
+    color: #92400e;
+    line-height: 1.5;
+}
+[data-theme="dark"] .card-mnemonic-body .similar-hint,
+[data-theme="dark"] .card-mnemonic-body .similar-char {
+    background: linear-gradient(135deg, rgba(245, 158, 11, .2), rgba(251, 191, 36, .1));
+    color: #fcd34d;
+}
 @media (max-width: 500px) {
     .pf-char-btn {
         font-size: 1.05rem;
@@ -26191,6 +26208,11 @@ window.__switchRawData = function(datasetId) {
         safe = safe.replace(/\s=\s/g, ' <span class="arrow">=</span> ');
         safe = safe.replace(/→/g, '<span class="arrow">→</span>');
         safe = safe.replace(/\(([^)]+)\)/g, '(<span class="hint">$1</span>)');
+        
+        // ⭐ Highlight chữ dễ nhầm
+        safe = safe.replace(/🔍 Dễ nhầm:/g, '<span class="similar-hint">🔍 Dễ nhầm:</span>');
+        safe = safe.replace(/📌 /g, '<br><span class="similar-char">📌 </span>');
+        
         return '<div class="card-mnemonic">'
             + '<div class="card-mnemonic-label">MẸO NHỚ</div>'
             + '<div class="card-mnemonic-body">' + safe + '</div>'
