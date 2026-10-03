@@ -2359,6 +2359,8 @@ def build_vocab_js_override(vocab_id="tu-vung"):
 
         setTimeout(setupPfViWatcher, 1000);
         setInterval(setupPfViWatcher, 2000);
+        // ⭐ Watch dataset change → ẩn nút back khi rời vocab
+        setInterval(watchDatasetNav, 500);
 
         console.log('[vocab] module ready');
     }
