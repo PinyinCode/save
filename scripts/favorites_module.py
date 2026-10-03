@@ -1065,6 +1065,140 @@ function favGetCurrentDsId() {
            ? CURRENT_DATASET
            : 'tonghop';
 }
+/* ═══════════════════════════════════════════════════════════════
+   ⭐ SWITCH DATASET ĐẦY ĐỦ — cover hết UI + data + filter
+   Dùng khi cần đổi dataset từ bất kỳ ngữ cảnh nào (dropdown fav, v.v.)
+   ═══════════════════════════════════════════════════════════════ */
+function favSwitchDatasetFull(targetDs) {
+    if (!targetDs) return false;
+
+    console.log('[Favorites] favSwitchDatasetFull → ' + targetDs);
+
+    /* ═══ 1. Đổi data + CURRENT_DATASET ═══ */
+    var switched = false;
+
+    if (typeof window.__switchRawData === 'function') {
+        try {
+            switched = window.__switchRawData(targetDs);
+        } catch(e) {
+            console.warn('[Favorites] __switchRawData error:', e);
+        }
+    }
+
+    if (!switched) {
+        console.warn('[Favorites] __switchRawData failed for: ' + targetDs);
+        return false;
+    }
+
+    /* ═══ 2. Đổi active state UI ═══ */
+    document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {
+        b.classList.remove('active');
+    });
+
+    /* Ưu tiên: tìm ds-btn trước (cho tab chính) */
+    var targetBtn = document.querySelector('.ds-btn[data-dataset="' + targetDs + '"]');
+
+    /* Nếu không có, tìm ds-sub-btn (chuyên ngành) */
+    if (!targetBtn) {
+        targetBtn = document.querySelector('.ds-sub-btn[data-dataset="' + targetDs + '"]');
+        /* Nếu là sub-btn → active luôn nút Chuyên ngành cha */
+        if (targetBtn) {
+            var cnBtn = document.querySelector('.ds-btn[data-dataset-group="chuyen-nganh"]');
+            if (cnBtn) cnBtn.classList.add('active');
+        }
+    }
+
+    if (targetBtn) targetBtn.classList.add('active');
+
+    /* ═══ 3. Ẩn sub-wrap nếu không phải chuyên ngành ═══ */
+    var subWrap = document.getElementById('dsSubWrap');
+    if (subWrap) {
+        var isChuyenNganh = (targetDs !== 'tonghop')
+                         && !document.querySelector('.ds-btn[data-dataset="' + targetDs + '"]');
+        /* Nếu là ds-btn chính → ẩn sub-wrap */
+        if (!isChuyenNganh) {
+            subWrap.style.display = 'none';
+        }
+    }
+
+    /* ═══ 4. Clear onboarding override ═══ */
+    window.__onboardingOverride = null;
+    window.__onboardingAutoPicked = false;
+
+    /* ═══ 5. Rebuild filters (HSK options + subject options) ═══ */
+    try {
+        if (typeof buildFilters === 'function') buildFilters();
+    } catch(e) {}
+
+    /* ═══ 6. Apply filter → rebuild filtered ═══ */
+    try {
+        if (typeof applyFilter === 'function') applyFilter();
+        if (typeof updateResultCount === 'function') updateResultCount();
+    } catch(e) {}
+
+    /* ═══ 7. Đồng bộ #pfDatasetSelect trong Full mode ═══ */
+    var dsSel = document.getElementById('pfDatasetSelect');
+    if (dsSel) {
+        /* Set giá trị nếu option tồn tại */
+        for (var i = 0; i < dsSel.options.length; i++) {
+            if (dsSel.options[i].value === targetDs) {
+                dsSel.value = targetDs;
+                break;
+            }
+        }
+    }
+
+    /* ═══ 8. Rebuild filter options trong Full mode ═══ */
+    try {
+        if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
+    } catch(e) {}
+
+    try {
+        if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
+    } catch(e) {}
+
+    /* ═══ 9. Trigger watchers (vocab lock, subject lock) ═══ */
+    setTimeout(function() {
+        /* Watch dataset nav (ẩn nav-back-btn nếu rời vocab) */
+        if (typeof watchDatasetNav === 'function') {
+            try { watchDatasetNav(); } catch(e) {}
+        }
+
+        /* Sync vocab mode (lock subject, thêm HSK7-9) */
+        var isVocab = (targetDs === 'tu-vung');
+
+        var body = document.body;
+        if (isVocab) {
+            body.setAttribute('data-vocab-mode', '1');
+        } else {
+            body.removeAttribute('data-vocab-mode');
+        }
+
+        /* Update subject filter disabled state */
+        var subjSelects = [
+            document.getElementById('subjectFilter'),
+            document.getElementById('pfSubjectFilter')
+        ];
+        subjSelects.forEach(function(sf) {
+            if (!sf) return;
+            if (isVocab) {
+                sf.disabled = true;
+                sf.value = '';
+                sf.style.opacity = '0.5';
+                sf.style.cursor = 'not-allowed';
+            } else {
+                sf.disabled = false;
+                sf.style.opacity = '';
+                sf.style.cursor = '';
+            }
+        });
+    }, 50);
+
+    console.log('[Favorites] favSwitchDatasetFull done → ' + targetDs);
+    return true;
+}
+
+window.favSwitchDatasetFull = favSwitchDatasetFull;
 
 /* ============ LOCK DIALOG ============ */
 function favShowLockDialog() {
@@ -3037,45 +3171,37 @@ function favSyncFloatVisibility() {
             window.__favRedirecting = true;
 
             /* ═══ Đổi dataset nếu cần ═══ */
-            if (targetDs && targetDs !== curDs) {
-                console.log('[Favorites] Đổi dataset: ' + curDs + ' → ' + targetDs);
+            /* ═══ Đổi dataset nếu cần ═══ */
+if (targetDs && targetDs !== curDs) {
+    console.log('[Favorites] Đổi dataset: ' + curDs + ' → ' + targetDs);
 
-                evt.stopPropagation();
+    evt.stopPropagation();
 
-                if (typeof window.__switchRawData === 'function') {
-                    try {
-                        window.__switchRawData(targetDs);
-                    } catch(e) {
-                        console.warn('[Favorites] __switchRawData error:', e);
-                    }
-                }
+    /* ⭐ DÙNG HÀM ĐẦY ĐỦ */
+    if (typeof favSwitchDatasetFull === 'function') {
+        favSwitchDatasetFull(targetDs);
+    } else {
+        /* Fallback */
+        if (typeof window.__switchRawData === 'function') {
+            try { window.__switchRawData(targetDs); } catch(e) {}
+        }
+    }
 
-                var dsSel = document.getElementById('pfDatasetSelect');
-                if (dsSel) dsSel.value = targetDs;
-
-                if (typeof pfBuildFilterOptions === 'function') {
-                    pfBuildFilterOptions();
-                }
-                if (typeof pfBuildDatasetSelect === 'function') {
-                    pfBuildDatasetSelect();
-                }
-
-                setTimeout(function() {
-                    if (typeof loadPracticeFull === 'function') {
-                        loadPracticeFull(String(stt));
-                    }
-                    setTimeout(function() {
-                        window.__favRedirecting = false;
-                        window.__favManualNav = false;
-                        if (typeof favRefreshQuestionDropdown === 'function') {
-                            favRefreshQuestionDropdown();
-                        }
-                        _navChanging = false;
-                    }, 400);
-                }, 80);
-
-                return;
+    setTimeout(function() {
+        if (typeof loadPracticeFull === 'function') {
+            loadPracticeFull(String(stt));
+        }
+        setTimeout(function() {
+            window.__favRedirecting = false;
+            window.__favManualNav = false;
+            if (typeof favRefreshQuestionDropdown === 'function') {
+                favRefreshQuestionDropdown();
             }
+            _navChanging = false;
+        }, 400);
+    }, 120);
+    return;
+}
 
             /* ═══ Cùng dataset → load luôn ═══ */
             if (typeof loadPracticeFull === 'function') {
