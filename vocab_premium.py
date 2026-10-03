@@ -2570,56 +2570,112 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     return true;
 }
     /* ⭐ Giới hạn dropdown "Câu:" tránh lag */
-    function hookPfBuildQuickNav() {
-        if (typeof window.pfBuildQuickNav !== 'function') return;
-        if (window.pfBuildQuickNav.__vocabLimited) return;
+    /* ⭐ Giới hạn dropdown "Câu:" tránh lag + luôn hiện câu hiện tại */
+function hookPfBuildQuickNav() {
+    if (typeof window.pfBuildQuickNav !== 'function') return;
+    if (window.pfBuildQuickNav.__vocabLimited) return;
 
-        var orig = window.pfBuildQuickNav;
-        window.pfBuildQuickNav = function() {
-            // Chỉ override khi ở tab từ vựng
-            if (!_isVocabMode()) {
-                return orig.apply(this, arguments);
+    var orig = window.pfBuildQuickNav;
+    window.pfBuildQuickNav = function() {
+        /* ⭐ Chỉ override khi ở tab từ vựng */
+        if (!_isVocabMode()) {
+            return orig.apply(this, arguments);
+        }
+
+        var sel = document.getElementById('pfQuickNav');
+        if (!sel) return;
+
+        var MAX_OPTIONS = 500;
+        var list = (typeof filtered !== 'undefined') ? filtered : [];
+
+        var total = list.length;
+        var limit = Math.min(total, MAX_OPTIONS);
+
+        /* ⭐ Lấy stt hiện tại */
+        var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
+                     ? String(pfCurrentStt)
+                     : '';
+
+        /* ⭐ Tìm index của câu hiện tại trong list */
+        var curIdx = -1;
+        for (var k = 0; k < list.length; k++) {
+            if (String(list[k].stt) === curStt) {
+                curIdx = k;
+                break;
             }
+        }
 
-            var sel = document.getElementById('pfQuickNav');
-            if (!sel) return;
+        var html = '<option value="">-- Chọn câu (' + total + ') --</option>';
 
-            var MAX_OPTIONS = 500;
-            var list = (typeof filtered !== 'undefined') ? filtered : [];
+        /* ═══════════════════════════════════════════════════════════
+           ⭐⭐⭐ FIX: Nếu câu hiện tại NGOÀI 500 đầu
+           → Chèn option "Câu hiện tại" ở đầu (đánh dấu ⭐)
+           ═══════════════════════════════════════════════════════════ */
+        if (curIdx >= MAX_OPTIONS && curStt) {
+            var rCur = list[curIdx];
+            var viCur = (rCur.vi || '').substring(0, 45);
+            var sttDisplayCur = rCur.stt_original || rCur.stt;
+            var sttRawCur = (sttDisplayCur !== undefined 
+                          && sttDisplayCur !== null 
+                          && String(sttDisplayCur).trim() !== '')
+                            ? '#' + String(sttDisplayCur).trim() + ' · '
+                            : '';
+            var labelCur = '⭐ ' + sttRawCur + 'Câu ' + (curIdx + 1) + ': ' + viCur;
 
-            var total = list.length;
-            var limit = Math.min(total, MAX_OPTIONS);
+            html += '<option value="' + _esc(rCur.stt) + '" selected>'
+                  + _esc(labelCur)
+                  + '</option>';
+            html += '<option value="" disabled>───────────────</option>';
+        }
 
-            var html = '<option value="">-- Chọn câu (' + total + ') --</option>';
+        /* ═══════════════════════════════════════════════════════════
+           Build 500 câu đầu
+           ═══════════════════════════════════════════════════════════ */
+        for (var i = 0; i < limit; i++) {
+            var r = list[i];
+            var vi = (r.vi || '').substring(0, 45);
+            var sttDisplay = r.stt_original || r.stt;
+            var sttRaw = (sttDisplay !== undefined 
+                       && sttDisplay !== null 
+                       && String(sttDisplay).trim() !== '')
+                         ? '#' + String(sttDisplay).trim() + ' · '
+                         : '';
+            var label = sttRaw + 'Câu ' + (i + 1) + ': ' + vi;
 
-            for (var i = 0; i < limit; i++) {
-                var r = list[i];
-                var vi = (r.vi || '').substring(0, 45);
-                var sttDisplay = r.stt_original || r.stt;
-                var sttRaw = (sttDisplay !== undefined && sttDisplay !== null && String(sttDisplay).trim() !== '')
-                             ? '#' + String(sttDisplay).trim() + ' · '
-                             : '';
-                var label = sttRaw + 'Câu ' + (i + 1) + ': ' + vi;
-                html += '<option value="' + _esc(r.stt) + '">' + _esc(label) + '</option>';
-            }
+            /* ⭐ Nếu option này là câu hiện tại → set selected */
+            var isSelected = (String(r.stt) === curStt) ? ' selected' : '';
 
-            if (total > MAX_OPTIONS) {
-                html += '<option value="" disabled>-- Còn ' + (total - MAX_OPTIONS) + ' câu nữa, dùng nút ▶ --</option>';
-            }
+            html += '<option value="' + _esc(r.stt) + '"' + isSelected + '>'
+                  + _esc(label)
+                  + '</option>';
+        }
 
-            sel.innerHTML = html;
+        /* ⭐ Nếu còn câu chưa hiện → thông báo */
+        if (total > MAX_OPTIONS) {
+            html += '<option value="" disabled>'
+                  + '── Còn ' + (total - MAX_OPTIONS) + ' câu nữa, dùng nút ▶ ──'
+                  + '</option>';
+        }
 
+        sel.innerHTML = html;
+
+        /* ═══════════════════════════════════════════════════════════
+           ⭐ Set selectedIndex chính xác
+           ═══════════════════════════════════════════════════════════ */
+        if (curIdx >= MAX_OPTIONS && curStt) {
+            /* Câu NGOÀI 500 đầu → chọn option "Câu hiện tại" (vị trí 1) */
+            sel.selectedIndex = 1;
+        } else if (curStt) {
+            /* Câu TRONG 500 đầu → set value bình thường */
             try {
-                if (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) {
-                    sel.value = pfCurrentStt;
-                }
+                sel.value = curStt;
             } catch(e) {}
-        };
+        }
+    };
 
-        window.pfBuildQuickNav.__vocabLimited = true;
-        console.log('[vocab] pfBuildQuickNav limited to 500 options');
-    }
-
+    window.pfBuildQuickNav.__vocabLimited = true;
+    console.log('[vocab] pfBuildQuickNav: max 500 + highlight current');
+}
 
     function buildPFExampleBlock(r) {
     /* ⭐ Lưu câu ví dụ + pinyin vào global */
