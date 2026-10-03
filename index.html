@@ -22570,6 +22570,164 @@ window.favFilterRecords = favFilterRecords;
 window.favRenderFilterSummary = favRenderFilterSummary;
 window.favFilterIsEmpty = favFilterIsEmpty;
 window.favFilterCount = favFilterCount;
+/* ═══════════════════════════════════════════════════════════════════════════
+   🔧 FIX: K đềHI ĐÓNG FULL MODE → TỰ)
+
+ ĐỘNG RESET "CHỈ C2. User đÂU YÊU THÍCH"
+   Đảm bảo rằng sau khi đóng full mode:
+   1. Toggle "Chỉ câu yêu thích" tự tắt
+   2. Bộ lọc yêu thích (datasets/hsk/subjects/search) tự xóa
+   3. class "fav-only-active" trên <body> được remove
+   4. Filter cũ (HSK/Chủ đề/Dataset) hiện lại bình thường
+   5. Nút "Lọc" ẩn đi
+   6. Summary bar ẩn đi
+   7. Câu không phải yêu thích có thể mở bình thường
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function() {
+    'use strict';
+
+    /* ═══════════════════════════════════════════════════════════
+       HÀM RESET TOÀN BỘ FAV STATE
+       ═══════════════════════════════════════════════════════════ */
+    function favResetOnFullClose() {
+        /* ═══ 1. Tắt toggle ═══ */
+        var wasActive = favState.pfOnlyFav;
+        favState.pfOnlyFav = false;
+
+        /* ═══ 2. Xóa filters ═══ */
+        favState.favFilters = {
+            datasets: [],
+            hsk: [],
+            subjects: [],
+            search: ''
+        };
+        favState.favFilterDraft = null;
+
+        /* ═══ 3. Xóa class fav-only-active trên body ═══ */
+        document.body.classList.remove('fav-only-active');
+
+        /* ═══ 4. Cập nhật nút toggle float ═══ */
+        if (typeof favUpdatePfOnlyFavBtn === 'function') {
+            favUpdatePfOnlyFavBtn();
+        }
+
+        /* ═══ 5. Ẩn summary bar ═══ */
+        var summary = document.getElementById('pfFavFilterSummary');
+        if (summary) {
+            summary.classList.remove('show');
+            summary.innerHTML = '';
+        }
+
+        /* ═══ 6. Ẩn nút Lọc ═══ */
+        var btn = document.getElementById('pfFavFilterBtn');
+        if (btn) {
+            btn.classList.remove('show', 'active');
+        }
+
+        /* ═══ 7. Đóng modal filter nếu đang mở ═══ */
+        var filterModal = document.getElementById('favFilterModal');
+        if (filterModal && filterModal.classList.contains('show')) {
+            filterModal.classList.remove('show');
+        }
+
+        /* ═══ 8. Clear filter trong main page (nếu có) ═══ */
+        try {
+            if (typeof state !== 'undefined' && state) {
+                state.search = '';
+                state.hsk = '';
+                state.subject = '';
+            }
+
+            var si = document.getElementById('searchInput');
+            var hf = document.getElementById('hskFilter');
+            var sf = document.getElementById('subjectFilter');
+            if (si) si.value = '';
+            if (hf) hf.value = '';
+            if (sf) sf.value = '';
+
+            var cb = document.getElementById('clearSearchBtn');
+            if (cb) cb.classList.remove('show');
+        } catch(e) {}
+
+        /* ═══ 9. Clear flags ═══ */
+        window.__favRedirecting = false;
+        window.__favManualNav = false;
+
+        /* ═══ 10. Log ═══ */
+        if (wasActive) {
+            console.log('✅ [Favorites] Đã reset "Chỉ câu yêu thích" khi đóng Full Mode');
+        }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       HOOK VÀO closePracticeFull
+       ═══════════════════════════════════════════════════════════ */
+    function tryHookClosePF() {
+        if (typeof window.closePracticeFull !== 'function') return false;
+        if (window.closePracticeFull.__favResetHooked) return true;
+
+        var _origClose = window.closePracticeFull;
+        window.closePracticeFull = function() {
+            /* ⭐ RESET TRƯỚC KHI ĐÓNG */
+            if (favState.pfOnlyFav) {
+                favResetOnFullClose();
+            }
+
+            return _origClose.apply(this, arguments);
+        };
+        window.closePracticeFull.__favResetHooked = true;
+        console.log('✅ [Favorites] Hooked closePracticeFull — auto-reset toggle');
+        return true;
+    }
+
+    if (!tryHookClosePF()) {
+        var _t = 0;
+        var _iv = setInterval(function() {
+            _t++;
+            if (tryHookClosePF() || _t > 60) clearInterval(_iv);
+        }, 200);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       FALLBACK: MutationObserver — phát hiện modal đóng
+       (phòng khi closePracticeFull bị override bởi module khác)
+       ═══════════════════════════════════════════════════════════ */
+    function attachModalObserver() {
+        var pfModal = document.getElementById('practiceFullModal');
+        if (!pfModal) return false;
+        if (pfModal.__favResetObserved) return true;
+        pfModal.__favResetObserved = true;
+
+        var wasOpen = pfModal.classList.contains('show');
+
+        var obs = new MutationObserver(function() {
+            var isOpen = pfModal.classList.contains('show');
+
+            /* ⭐ Modal ĐÓNG (true → false) + toggle đang bật → reset */
+            if (wasOpen && !isOpen && favState.pfOnlyFav) {
+                favResetOnFullClose();
+            }
+            wasOpen = isOpen;
+        });
+
+        obs.observe(pfModal, { attributes: true, attributeFilter: ['class'] });
+        return true;
+    }
+
+    if (!attachModalObserver()) {
+        var _t2 = 0;
+        var _iv2 = setInterval(function() {
+            _t2++;
+            if (attachModalObserver() || _t2 > 60) clearInterval(_iv2);
+        }, 200);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       EXPORT
+       ═══════════════════════════════════════════════════════════ */
+    window.favResetOnFullClose = favResetOnFullClose;
+
+})();
 
 /* ==== 💬 CHAT SUPPORT JS ==== */
 
