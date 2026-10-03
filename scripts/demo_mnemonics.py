@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 r"""
 Demo sinh mẹo nhớ cho vocab HSK bằng OpenRouter + Qwen.
-Chạy trên GitHub Actions.
-
-Fix: Unicode NFD/NFC bug khi tìm file Excel.
+CHỈ ĐỌC file data/tu_vung_hsk.xlsx — hỗ trợ Unicode NFD/NFC.
 """
 import os
 import sys
@@ -34,58 +32,48 @@ DELAY_BETWEEN = float(os.getenv("DELAY_BETWEEN", "2.0"))
 
 
 # ═══════════════════════════════════════════════════════════════════
-#  TÌM FILE EXCEL — HỖ TRỢ NFD/NFC
+#  TÌM FILE — CHỈ ĐỌC tu_vung_hsk.xlsx
 # ═══════════════════════════════════════════════════════════════════
 def _norm(s):
     """Chuẩn hóa Unicode về NFC."""
     return unicodedata.normalize("NFC", s) if s else s
 
 
-def find_excel_file():
-    """Tìm file Excel — hỗ trợ cả NFC và NFD."""
+def find_vocab_excel():
+    """Tìm CHÍNH XÁC file tu_vung_hsk.xlsx trong data/."""
+    TARGET_NFC = "tu_vung_hsk.xlsx"
+    folder = "data"
     
-    # 1. Thử các path cố định (NFC)
-    candidates = [
-        "data/tu_vung_hsk.xlsx",
-        "data/tu-vung-hsk.xlsx",
-        "vocab_data/tu_vung_hsk.xlsx",
-        "scripts/data/tu_vung_hsk.xlsx",
-    ]
+    if not os.path.isdir(folder):
+        print(f"❌ Không có folder {folder}/")
+        return None
     
-    for path in candidates:
-        if os.path.exists(path):
-            print(f"✅ Tìm thấy Excel (NFC): {path}")
-            return path
-    
-    # 2. Fallback: scan folder — match bằng NFC
-    for folder in ["data", "vocab_data", "scripts/data"]:
-        if not os.path.isdir(folder):
-            continue
+    # Scan và match chính xác
+    for fname in os.listdir(folder):
+        fname_nfc = _norm(fname)
         
-        try:
-            for fname in os.listdir(folder):
-                fname_nfc = _norm(fname)
-                if fname_nfc == "tu_vung_hsk.xlsx":
-                    full_path = os.path.join(folder, fname)
-                    print(f"✅ Tìm thấy Excel (NFD fallback): {full_path}")
-                    return full_path
-        except Exception as e:
-            print(f"⚠️  Lỗi scan {folder}: {e}")
+        if fname_nfc == TARGET_NFC:
+            full_path = os.path.join(folder, fname)
+            kind = "NFC" if fname == fname_nfc else "NFD"
+            print(f"✅ Tìm thấy [{kind}]: {full_path}")
+            return full_path
     
-    # 3. Debug — list tất cả file Excel có trong repo
-    print(f"❌ Không tìm thấy file Excel. Debug:")
-    for folder in ["data", "vocab_data", "scripts/data"]:
-        if os.path.isdir(folder):
-            print(f"\n📁 Folder {folder}/:")
-            for f in os.listdir(folder):
-                f_nfc = _norm(f)
-                kind = "NFC" if f == f_nfc else "NFD"
-                print(f"   - {f} [{kind}]")
+    # Debug nếu không tìm thấy
+    print(f"❌ Không tìm thấy '{TARGET_NFC}' trong {folder}/")
+    print(f"📁 Các file có trong {folder}/:")
+    for fname in os.listdir(folder):
+        fname_nfc = _norm(fname)
+        kind = "NFC" if fname == fname_nfc else "NFD"
+        try:
+            size = os.path.getsize(os.path.join(folder, fname))
+            print(f"   - {fname} [{kind}, {size} bytes]")
+        except:
+            print(f"   - {fname} [{kind}]")
     
     return None
 
 
-EXCEL_FILE = find_excel_file()
+EXCEL_FILE = find_vocab_excel()
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -123,9 +111,6 @@ Bây giờ sinh mẹo cho: {zh}
 Output:"""
 
 
-# ═══════════════════════════════════════════════════════════════════
-#  GỌI API
-# ═══════════════════════════════════════════════════════════════════
 def generate_mnemonic(zh, pinyin, vi, hsk):
     prompt = build_prompt(zh, pinyin, vi, hsk)
     
@@ -161,7 +146,7 @@ def generate_mnemonic(zh, pinyin, vi, hsk):
 # ═══════════════════════════════════════════════════════════════════
 def load_sample_words():
     if not EXCEL_FILE or not os.path.exists(EXCEL_FILE):
-        print("❌ Không có file Excel")
+        print("❌ Không có file Excel vocab")
         return []
     
     print(f"📖 Đang đọc: {EXCEL_FILE}")
@@ -220,7 +205,7 @@ def main():
     print("=" * 62)
     
     if not EXCEL_FILE:
-        print("❌ Không tìm thấy file Excel. Dừng.")
+        print("❌ Không tìm thấy file Excel vocab. Dừng.")
         sys.exit(1)
     
     samples = load_sample_words()
@@ -248,7 +233,6 @@ def main():
             failed += 1
             print(f"   ❌ FAIL")
         
-        # Lưu cache sau mỗi từ
         os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
         with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
@@ -260,7 +244,6 @@ def main():
     print(f"📁 File: {OUTPUT_FILE}")
     print("=" * 62)
     
-    # In 3 mẫu đầu
     print("\n📝 3 MẪU ĐẦU TIÊN:\n")
     for i, (key, mnemonic) in enumerate(list(results.items())[:3], 1):
         zh = key.split('|')[-1]
