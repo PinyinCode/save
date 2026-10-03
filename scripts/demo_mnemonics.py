@@ -3,17 +3,13 @@ r"""
 Demo sinh mẹo nhớ cho vocab HSK bằng OpenRouter + Qwen.
 Chạy trên GitHub Actions.
 
-Input:
-    - Environment: OPENROUTER_API_KEY (từ GitHub Secrets)
-    - File: data/tu_vung_hsk.xlsx
-
-Output:
-    - data/mnemonics_demo.json
+Fix: Unicode NFD/NFC bug khi tìm file Excel.
 """
 import os
 import sys
 import json
 import time
+import unicodedata
 from openai import OpenAI
 import openpyxl
 
@@ -22,7 +18,6 @@ import openpyxl
 #  CONFIG
 # ═══════════════════════════════════════════════════════════════════
 API_KEY = os.getenv("OPENROUTER_API_KEY")
-
 if not API_KEY:
     print("❌ Chưa set OPENROUTER_API_KEY")
     sys.exit(1)
@@ -32,17 +27,65 @@ client = OpenAI(
     base_url="https://openrouter.ai/api/v1"
 )
 
-EXCEL_FILE = "data/tu_vung_hsk.xlsx"
 OUTPUT_FILE = "data/mnemonics_demo.json"
-
-# ⭐ Model Qwen miễn phí
 MODEL_ID = os.getenv("QWEN_MODEL", "qwen/qwen3.5-flash:free")
-
-# ⭐ Số từ demo (có thể truyền qua env)
 DEMO_LIMIT = int(os.getenv("DEMO_LIMIT", "20"))
-
-# ⭐ Delay giữa requests (giây)
 DELAY_BETWEEN = float(os.getenv("DELAY_BETWEEN", "2.0"))
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  TÌM FILE EXCEL — HỖ TRỢ NFD/NFC
+# ═══════════════════════════════════════════════════════════════════
+def _norm(s):
+    """Chuẩn hóa Unicode về NFC."""
+    return unicodedata.normalize("NFC", s) if s else s
+
+
+def find_excel_file():
+    """Tìm file Excel — hỗ trợ cả NFC và NFD."""
+    
+    # 1. Thử các path cố định (NFC)
+    candidates = [
+        "data/tu_vung_hsk.xlsx",
+        "data/tu-vung-hsk.xlsx",
+        "vocab_data/tu_vung_hsk.xlsx",
+        "scripts/data/tu_vung_hsk.xlsx",
+    ]
+    
+    for path in candidates:
+        if os.path.exists(path):
+            print(f"✅ Tìm thấy Excel (NFC): {path}")
+            return path
+    
+    # 2. Fallback: scan folder — match bằng NFC
+    for folder in ["data", "vocab_data", "scripts/data"]:
+        if not os.path.isdir(folder):
+            continue
+        
+        try:
+            for fname in os.listdir(folder):
+                fname_nfc = _norm(fname)
+                if fname_nfc == "tu_vung_hsk.xlsx":
+                    full_path = os.path.join(folder, fname)
+                    print(f"✅ Tìm thấy Excel (NFD fallback): {full_path}")
+                    return full_path
+        except Exception as e:
+            print(f"⚠️  Lỗi scan {folder}: {e}")
+    
+    # 3. Debug — list tất cả file Excel có trong repo
+    print(f"❌ Không tìm thấy file Excel. Debug:")
+    for folder in ["data", "vocab_data", "scripts/data"]:
+        if os.path.isdir(folder):
+            print(f"\n📁 Folder {folder}/:")
+            for f in os.listdir(folder):
+                f_nfc = _norm(f)
+                kind = "NFC" if f == f_nfc else "NFD"
+                print(f"   - {f} [{kind}]")
+    
+    return None
+
+
+EXCEL_FILE = find_excel_file()
 
 
 # ═══════════════════════════════════════════════════════════════════
@@ -117,10 +160,11 @@ def generate_mnemonic(zh, pinyin, vi, hsk):
 #  LOAD EXCEL
 # ═══════════════════════════════════════════════════════════════════
 def load_sample_words():
-    if not os.path.exists(EXCEL_FILE):
-        print(f"❌ Không tìm thấy {EXCEL_FILE}")
+    if not EXCEL_FILE or not os.path.exists(EXCEL_FILE):
+        print("❌ Không có file Excel")
         return []
     
+    print(f"📖 Đang đọc: {EXCEL_FILE}")
     wb = openpyxl.load_workbook(EXCEL_FILE, data_only=True, read_only=True)
     samples = []
     
@@ -148,7 +192,7 @@ def load_sample_words():
             
             if not zh or not vi:
                 continue
-            if len(zh) > 3:  # Chỉ lấy từ ngắn
+            if len(zh) > 3:
                 continue
             
             samples.append({
@@ -175,6 +219,10 @@ def main():
     print(f"   Delay: {DELAY_BETWEEN}s")
     print("=" * 62)
     
+    if not EXCEL_FILE:
+        print("❌ Không tìm thấy file Excel. Dừng.")
+        sys.exit(1)
+    
     samples = load_sample_words()
     print(f"\n📚 Đã lấy {len(samples)} từ mẫu\n")
     
@@ -200,7 +248,7 @@ def main():
             failed += 1
             print(f"   ❌ FAIL")
         
-        # Lưu sau mỗi từ
+        # Lưu cache sau mỗi từ
         os.makedirs(os.path.dirname(OUTPUT_FILE), exist_ok=True)
         with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
             json.dump(results, f, ensure_ascii=False, indent=2)
@@ -212,7 +260,7 @@ def main():
     print(f"📁 File: {OUTPUT_FILE}")
     print("=" * 62)
     
-    # In mẫu
+    # In 3 mẫu đầu
     print("\n📝 3 MẪU ĐẦU TIÊN:\n")
     for i, (key, mnemonic) in enumerate(list(results.items())[:3], 1):
         zh = key.split('|')[-1]
