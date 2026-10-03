@@ -2018,9 +2018,13 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     function openUpgradeModal() {
     var modal = document.getElementById('vocabUpgradeModal');
     if (!modal) return;
+
     var titleEl = document.getElementById('vocabUpgradeTitle');
     var subEl = document.getElementById('vocabUpgradeSubtitle');
     var actionsEl = document.getElementById('vocabUpgradeActions');
+    var priceEl = document.getElementById('vocabUpgradePrice');
+    var iconEl = document.getElementById('vocabUpgradeIcon');
+    var highlightEl = document.getElementById('vocabUpgradeFeatureHighlight');
 
     var tier = 'demo';
     if (typeof currentUser !== 'undefined' && currentUser) {
@@ -2029,9 +2033,27 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         else tier = 'active';
     }
 
+    /* ⭐ Ẩn dòng giá cố định (chỉ hiện nếu cần) */
+    if (priceEl) priceEl.style.display = 'none';
+
+    /* ⭐ Reset header màu */
+    var header = modal.querySelector('.vocab-upgrade-header');
+    if (header) header.style.background = '';
+
     if (tier === 'demo') {
+        /* ═══════════════════════════════════════════════════════════
+           ⭐ DEMO — Chưa login
+           ═══════════════════════════════════════════════════════════ */
+        if (iconEl) iconEl.textContent = '🔐';
         if (titleEl) titleEl.textContent = 'Đăng nhập để sử dụng Từ vựng HSK';
-        if (subEl) subEl.textContent = 'Đăng nhập để mở khóa toàn bộ từ vựng HSK 1-9';
+        if (subEl) subEl.textContent = 'Đăng nhập miễn phí để trải nghiệm kho từ vựng HSK 1-9';
+
+        if (highlightEl) {
+            highlightEl.innerHTML =
+                '<i class="fas fa-gift"></i>' +
+                '<span><b>Đăng nhập miễn phí — Dùng thử ngay</b></span>';
+        }
+
         if (actionsEl) {
             actionsEl.innerHTML =
                 '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeLogin()">' +
@@ -2041,21 +2063,45 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                     'Để sau' +
                 '</button>';
         }
+
     } else if (tier === 'trial') {
-        if (titleEl) titleEl.textContent = 'Nâng cấp để sử dụng đầy đủ';
-        if (subEl) subEl.textContent = 'Gia hạn để mở khóa toàn bộ từ vựng HSK 1-9';
+        /* ═══════════════════════════════════════════════════════════
+           ⭐ TRIAL — Còn hạn dùng thử
+           ═══════════════════════════════════════════════════════════ */
+        if (iconEl) iconEl.textContent = '🎁';
+        if (titleEl) titleEl.textContent = 'Nâng cấp để mở khóa Từ vựng';
+        if (subEl) subEl.textContent = 'Gia hạn gói để sử dụng Từ vựng HSK và toàn bộ tính năng';
+
+        if (highlightEl) {
+            highlightEl.innerHTML =
+                '<i class="fas fa-rocket"></i>' +
+                '<span><b>Chọn gói linh hoạt — Bắt đầu chỉ từ 1 tháng</b></span>';
+        }
+
         if (actionsEl) {
             actionsEl.innerHTML =
                 '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeRenew()">' +
-                    '<i class="fas fa-sync-alt"></i> Gia hạn ngay' +
+                    '<i class="fas fa-sync-alt"></i> Xem các gói' +
                 '</button>' +
                 '<button class="vocab-upgrade-btn secondary" onclick="vocabUpgradeClose()">' +
                     'Để sau' +
                 '</button>';
         }
+
     } else if (tier === 'expired') {
+        /* ═══════════════════════════════════════════════════════════
+           ⭐ EXPIRED — Đã hết hạn
+           ═══════════════════════════════════════════════════════════ */
+        if (iconEl) iconEl.textContent = '⏰';
         if (titleEl) titleEl.textContent = 'Tài khoản đã hết hạn';
-        if (subEl) subEl.textContent = 'Gia hạn để tiếp tục sử dụng Từ vựng HSK và toàn bộ tính năng';
+        if (subEl) subEl.textContent = 'Gia hạn gói bất kỳ để tiếp tục sử dụng Từ vựng HSK và toàn bộ tính năng';
+
+        if (highlightEl) {
+            highlightEl.innerHTML =
+                '<i class="fas fa-crown"></i>' +
+                '<span><b>Chọn gói phù hợp — 1 tháng, 3 tháng, 6 tháng, 1 năm hoặc vĩnh viễn</b></span>';
+        }
+
         if (actionsEl) {
             actionsEl.innerHTML =
                 '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeRenew()">' +
@@ -2065,13 +2111,25 @@ def build_vocab_js_override(vocab_id="tu-vung"):
                     'Để sau' +
                 '</button>';
         }
+
     } else {
-        if (titleEl) titleEl.textContent = 'Mở khóa Từ vựng HSK';
-        if (subEl) subEl.textContent = 'Nâng cấp để sử dụng đầy đủ tính năng';
+        /* ═══════════════════════════════════════════════════════════
+           ⭐ ACTIVE — Đang hoạt động (không phải admin)
+           ═══════════════════════════════════════════════════════════ */
+        if (iconEl) iconEl.textContent = '💎';
+        if (titleEl) titleEl.textContent = 'Nâng cấp để dùng Từ vựng HSK';
+        if (subEl) subEl.textContent = 'Gia hạn gói để mở khóa toàn bộ từ vựng HSK 1-9';
+
+        if (highlightEl) {
+            highlightEl.innerHTML =
+                '<i class="fas fa-star"></i>' +
+                '<span><b>Chọn gói linh hoạt — Phù hợp với bạn</b></span>';
+        }
+
         if (actionsEl) {
             actionsEl.innerHTML =
                 '<button class="vocab-upgrade-btn primary" onclick="vocabUpgradeRenew()">' +
-                    '<i class="fas fa-gem"></i> Nâng cấp' +
+                    '<i class="fas fa-gem"></i> Xem các gói' +
                 '</button>' +
                 '<button class="vocab-upgrade-btn secondary" onclick="vocabUpgradeClose()">' +
                     'Để sau' +
@@ -2095,10 +2153,21 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         if (typeof showLoginModal === 'function') showLoginModal();
     };
     window.vocabUpgradeRenew = function() {
+    /* ⭐ Đóng modal vocab trước */
     closeUpgradeModal();
+
+    /* ⭐ Đảm bảo body không bị khóa scroll */
+    document.body.style.overflow = '';
+
+    /* ⭐ Mở modal gia hạn — user tự chọn gói */
     if (typeof openRenewalModal === 'function') {
-        openRenewalModal();
-        /* ⭐ KHÔNG auto-select gói 'forever' — để user tự chọn gói phù hợp */
+        setTimeout(function() {
+            openRenewalModal();
+            /* ⭐ KHÔNG auto-select gói nào — để user tự chọn
+               (1 tháng, 3 tháng, 6 tháng, 1 năm, hoặc vĩnh viễn) */
+        }, 150);
+    } else {
+        console.warn('[vocab] openRenewalModal không tồn tại');
     }
 };
 
