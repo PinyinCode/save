@@ -1465,7 +1465,13 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     window.vocabSpeakChar = function(char, btn, evt) {
         if (evt) { evt.stopPropagation(); evt.preventDefault(); }
         if (!char) return;
-        if (!('speechSynthesis' in window)) speechSynthesis.cancel();
+        
+        if (!('speechSynthesis' in window)) {
+            console.warn('[vocab] TTS not supported');
+            return;
+        }
+        
+        speechSynthesis.cancel();
         if (btn) {
             document.querySelectorAll('.similar-char-btn-audio.speaking').forEach(function(b) {
                 b.classList.remove('speaking');
