@@ -839,6 +839,8 @@ body.practice-full-open .demo-banner,body.practice-full-open .expiry-banner{disp
 @media (max-height:550px) and (orientation:landscape){.pf-tiktok-float{bottom:calc(64px + env(safe-area-inset-bottom))}}
 @media (max-height:420px) and (orientation:landscape){.pf-tiktok-float{bottom:calc(56px + env(safe-area-inset-bottom));transform:scale(.85);transform-origin:left bottom}}
 .practice-full-modal:not(.show) .pf-tiktok-float{display:none!important}
+body.practice-full-open .pf-tiktok-float {
+    display: none !important;
 
 /* ============================================================ */
 /* FILTERS trong Practice Full                                    */
