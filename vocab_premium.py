@@ -1683,12 +1683,14 @@ def build_vocab_modal_html():
 <div class="vocab-upgrade-modal" id="vocabUpgradeModal">
     <div class="vocab-upgrade-box">
         <div class="vocab-upgrade-header">
-            <div class="vocab-upgrade-icon">👑</div>
+            <div class="vocab-upgrade-icon" id="vocabUpgradeIcon">👑</div>
             <div class="vocab-upgrade-title" id="vocabUpgradeTitle">Mở khóa Từ vựng HSK</div>
             <div class="vocab-upgrade-subtitle" id="vocabUpgradeSubtitle">
-                Dành riêng cho thành viên Premium
+                Gia hạn gói để sử dụng Từ vựng HSK và toàn bộ tính năng
             </div>
-            <div class="vocab-upgrade-price">💎 1.000.000đ</div>
+            <div class="vocab-upgrade-price" id="vocabUpgradePrice" style="display:none;">
+                💎 1.000.000đ
+            </div>
         </div>
         <div class="vocab-upgrade-body">
             <div class="vocab-upgrade-features">
@@ -1708,9 +1710,9 @@ def build_vocab_modal_html():
                     <i class="fas fa-quote-left"></i>
                     <span>Câu ví dụ + phiên âm + nghĩa</span>
                 </div>
-                <div class="vocab-upgrade-feature highlight">
+                <div class="vocab-upgrade-feature highlight" id="vocabUpgradeFeatureHighlight">
                     <i class="fas fa-crown"></i>
-                    <span><b>Gói Premium — Sở hữu vĩnh viễn</b></span>
+                    <span><b>Nhiều gói linh hoạt — Chọn gói phù hợp</b></span>
                 </div>
             </div>
             <div class="vocab-upgrade-actions" id="vocabUpgradeActions"></div>
