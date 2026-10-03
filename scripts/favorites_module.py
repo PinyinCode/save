@@ -1620,6 +1620,7 @@ function favFindRecordInDataset(dsId, stt) {
     if (!dsId || stt === null || stt === undefined) return null;
     stt = String(stt);
 
+    /* ═══ 1. Tìm trong DATASET_REGISTRY (tổng hợp + chuyên ngành) ═══ */
     if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
         var ds = DATASET_REGISTRY[dsId];
         if (ds && Array.isArray(ds.data)) {
@@ -1629,15 +1630,37 @@ function favFindRecordInDataset(dsId, stt) {
         }
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 2. Tìm trong FIXPY_DATASETS (từ vựng + tab tự động từ data/)
+       Đây là FIX cho tab Từ vựng HSK
+       ═══════════════════════════════════════════════════════════ */
+    if (typeof window.FIXPY_DATASETS !== 'undefined'
+        && window.FIXPY_DATASETS
+        && window.FIXPY_DATASETS[dsId]) {
+        var fixpyDs = window.FIXPY_DATASETS[dsId];
+        if (fixpyDs && Array.isArray(fixpyDs.data)) {
+            for (var k = 0; k < fixpyDs.data.length; k++) {
+                if (String(fixpyDs.data[k].stt) === stt) return fixpyDs.data[k];
+            }
+        }
+    }
+
+    /* ═══ 3. Fallback: tonghop → RAW_DATA ═══ */
     if (dsId === 'tonghop' && typeof RAW_DATA !== 'undefined' && RAW_DATA) {
         for (var j = 0; j < RAW_DATA.length; j++) {
             if (String(RAW_DATA[j].stt) === stt) return RAW_DATA[j];
         }
     }
 
+    /* ═══ 4. Fallback: RAW_DATA hiện tại (khi __switchRawData đã chạy) ═══ */
+    if (typeof RAW_DATA !== 'undefined' && RAW_DATA) {
+        for (var m = 0; m < RAW_DATA.length; m++) {
+            if (String(RAW_DATA[m].stt) === stt) return RAW_DATA[m];
+        }
+    }
+
     return null;
 }
-
 function favFindRecordAnywhere(stt) {
     if (stt === null || stt === undefined) return null;
     stt = String(stt);
