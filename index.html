@@ -19383,6 +19383,7 @@ function favFindRecordAnywhere(stt) {
     if (stt === null || stt === undefined) return null;
     stt = String(stt);
 
+    /* ═══ 1. Tìm trong DATASET_REGISTRY ═══ */
     if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
         var keys = Object.keys(DATASET_REGISTRY);
         for (var k = 0; k < keys.length; k++) {
@@ -19395,6 +19396,25 @@ function favFindRecordAnywhere(stt) {
         }
     }
 
+    /* ═══════════════════════════════════════════════════════════
+       ⭐ 2. FIX: Tìm trong FIXPY_DATASETS (từ vựng + tab auto)
+       ═══════════════════════════════════════════════════════════ */
+    if (typeof window.FIXPY_DATASETS !== 'undefined'
+        && window.FIXPY_DATASETS) {
+        var fixpyKeys = Object.keys(window.FIXPY_DATASETS);
+        for (var f = 0; f < fixpyKeys.length; f++) {
+            var fixpyDs = window.FIXPY_DATASETS[fixpyKeys[f]];
+            if (fixpyDs && Array.isArray(fixpyDs.data)) {
+                for (var g = 0; g < fixpyDs.data.length; g++) {
+                    if (String(fixpyDs.data[g].stt) === stt) {
+                        return fixpyDs.data[g];
+                    }
+                }
+            }
+        }
+    }
+
+    /* ═══ 3. Fallback RAW_DATA ═══ */
     if (typeof RAW_DATA !== 'undefined' && RAW_DATA) {
         for (var j = 0; j < RAW_DATA.length; j++) {
             if (String(RAW_DATA[j].stt) === stt) return RAW_DATA[j];
@@ -19403,7 +19423,6 @@ function favFindRecordAnywhere(stt) {
 
     return null;
 }
-
 /* ═══════════════════════════════════════════════════════════════
    ⭐ LẤY TẤT CẢ RECORD YÊU THÍCH (không phân biệt dataset)
    ═══════════════════════════════════════════════════════════════ */
