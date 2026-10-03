@@ -26311,14 +26311,47 @@ window.__switchRawData = function(datasetId) {
     
     function _scrollToCard(card) {
         if (!card) return;
-        var prevScroll = window.scrollY;
+        
+        // ⭐ Lưu vị trí HIỆN TẠI trước khi cuộn
+        var prevScroll = window.pageYOffset 
+                      || document.documentElement.scrollTop 
+                      || document.body.scrollTop 
+                      || window.scrollY 
+                      || 0;
+        
         _navStack.push(prevScroll);
-        var yOffset = card.getBoundingClientRect().top + window.scrollY - 100;
-        window.scrollTo({ top: yOffset, behavior: 'smooth' });
+        console.log('[vocab] saved scroll:', prevScroll);
+        
+        // ⭐ Đảm bảo body không bị overflow hidden
+        if (document.body.style.overflow === 'hidden') {
+            console.log('[vocab] body overflow was hidden, resetting');
+            document.body.style.overflow = '';
+        }
+        
+        // ⭐ Tính vị trí đích
+        var rect = card.getBoundingClientRect();
+        var yOffset = rect.top + window.pageYOffset - 100;
+        
+        // ⭐ Cuộn đến thẻ đích
+        try {
+            window.scrollTo({
+                top: yOffset,
+                behavior: 'smooth'
+            });
+        } catch (e) {
+            // Fallback cho trình duyệt cũ
+            window.scrollTo(0, yOffset);
+        }
+        
+        console.log('[vocab] scrolling to:', yOffset);
+        
+        // ⭐ Highlight thẻ đích
         card.classList.add('nav-highlight');
         setTimeout(function() {
             card.classList.remove('nav-highlight');
         }, 2000);
+        
+        // ⭐ Hiện nút back
         _showNavBackBtn();
     }
     
@@ -26337,17 +26370,56 @@ Back();
     }
     
     function _navBack() {
+        console.log('[vocab] _navBack called, stack size:', _navStack.length);
+        
+        // ⭐ Stack rỗng → xóa nút, thoát
         if (_navStack.length === 0) {
+            console.log('[vocab] stack empty, removing btn');
             if (_navBackBtn) _navBackBtn.remove();
             _navBackBtn = null;
             return;
         }
+        
+        // ⭐ Lấy vị trí cũ từ stack
         var prevScroll = _navStack.pop();
-        window.scrollTo({ top: prevScroll, behavior: 'smooth' });
+        console.log('[vocab] scrolling back to:', prevScroll);
+        
+        // ⭐ Đảm bảo body không bị overflow hidden
+        if (document.body.style.overflow === 'hidden') {
+            document.body.style.overflow = '';
+        }
+        
+        // ⭐ Cuộn về vị trí cũ — dùng nhiều fallback
+        try {
+            window.scrollTo({
+                top: prevScroll,
+                behavior: 'smooth'
+            });
+        } catch (e) {
+            // Fallback cho trình duyệt cũ
+            window.scrollTo(0, prevScroll);
+        }
+        
+        // ⭐ Fallback thứ 2 — nếu smooth scroll không chạy sau 500ms
+        setTimeout(function() {
+            var currentScroll = window.pageYOffset 
+                             || document.documentElement.scrollTop 
+                             || document.body.scrollTop 
+                             || 0;
+            
+            if (Math.abs(currentScroll - prevScroll) > 50) {
+                console.log('[vocab] smooth scroll failed, using instant');
+                document.documentElement.scrollTop = prevScroll;
+                document.body.scrollTop = prevScroll;
+            }
+        }, 500);
+        
+        // ⭐ Nếu stack rỗng sau khi pop → xóa nút sau 300ms
         if (_navStack.length === 0) {
             setTimeout(function() {
                 if (_navBackBtn) _navBackBtn.remove();
                 _navBackBtn = null;
+                console.log('[vocab] nav back btn removed');
             }, 300);
         }
     }
