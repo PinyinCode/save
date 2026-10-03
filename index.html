@@ -27775,26 +27775,27 @@ window.__switchRawData = function(datasetId) {
                     }
 
                     /* ═══════════════════════════════════════════════════
-                       ⭐ FIX: Auto-rebuild "Gợi ý" nếu button đang ACTIVE
+                       ⭐ XÓA BLOCK GỢI Ý khi chuyển câu
+                       ⭐ RESET nút "Gợi ý" về OFF
                        ═══════════════════════════════════════════════════ */
 
-                    /* 1. Xóa block cũ */
+                    /* 1. Xóa block gợi ý cũ */
                     var oldExample = document.querySelector('.pf-vocab-example');
                     if (oldExample) oldExample.remove();
 
-                    /* 2. Check nút "Gợi ý" có đang bật không */
-                    var hintBtn = document.getElementById('pfHintBtn');
-                    var hintActive = hintBtn && hintBtn.classList.contains('active');
+                    /* 2. Xóa info panel chữ (nếu có) */
+                    var oldInfo = document.getElementById('pfCharInfo g');
+                    if (oldInfo) {
+                        oldInfo.style.display = 'none';
+                        oldInfo.innerHTML = '';
+                    }
 
-                    /* 3. Nếu đang bật → build lại block mới cho câu hiện tại */
-                    if (hintActive) {
-                        var answerEl = document.getElementById('pfAnswer');
-                        if (answerEl) {
-                            var html = buildPFExampleBlock(r);
-                            if (html) {
-                                answerEl.insertAdjacentHTML('afterend', html);
-                            }
-                        }
+                    /* 3. Reset nút "Gợi ý" về trạng thái OFF */
+                    var hintBtn = document.getElementById('pfHintBtn');
+                    if (hintBtn) {
+                        hintBtn.classList.remove('active');
+                        /* Reset innerHTML về mặc định (giữ icon bóng đèn) */
+                        hintBtn.innerHTML = '<i class="fas fa-lightbulb"></i> Gợi ý';
                     }
 
                     /* 4. Hook nút "Gợi ý" (chỉ bind 1 lần) */
@@ -27809,31 +27810,35 @@ window.__switchRawData = function(datasetId) {
                                 var oldEx = document.querySelector('.pf-vocab-example');
                                 if (oldEx) oldEx.remove();
 
-                                /* Nếu nút KHÔNG active (vừa bị tắt) → dừng */
-                                if (!hintBtn.classList.contains('active')) {
-                                    return;
+                                var oldInfo2 = document.getElementById('pfCharInfo');
+                                if (oldInfo2) {
+                                    oldInfo2.style.display = 'none';
+                                    oldInfo2.innerHTML = '';
                                 }
 
-                                /* Lấy câu hiện tại */
+                                /* Nếu nút tắt → dừng */
+                                if (!hintBtn.classList.contains('active')) return;
+
+                                /* Lấy record câu hiện tại */
                                 var currentStt = null;
                                 try { currentStt = window.pfCurrentStt; } catch(e) {}
                                 if (!currentStt) return;
 
-                                var rec = _findRecord(currentStt);
-                                if (!rec || !rec.vi_du_zh) return;
+                                var rec2 = _findRecord(currentStt);
+                                if (!rec2 || !rec2.vi_du_zh) return;
 
                                 var answerEl2 = document.getElementById('pfAnswer');
                                 if (!answerEl2) return;
 
                                 /* Build block gợi ý */
-                                var html2 = buildPFExampleBlock(rec);
+                                var html2 = buildPFExampleBlock(rec2);
                                 if (html2) {
                                     answerEl2.insertAdjacentHTML('afterend', html2);
                                 }
                             }, 100);
                         });
                     }
-                }, 50);
+                }, 100);
             }
         }
 
