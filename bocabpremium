@@ -14,6 +14,53 @@ from vocab_data.mnemonic_generator import generate_mnemonic
 from vocab_data.radical_analyzer import get_radical_for_word
 
 
+# ═══════════════════════════════════════════════════════════════════
+#  ⭐ JIEBA — tách từ tiếng Trung
+# ═══════════════════════════════════════════════════════════════════
+try:
+    import jieba
+    HAS_JIEBA = True
+    print("[VOCAB] OK - Da load jieba")
+except ImportError:
+    HAS_JIEBA = False
+    print("[VOCAB] WARN - Khong co jieba, se tach tung chu don")
+    print("   Cai: pip install jieba")
+
+
+def _split_chinese_words(text):
+    """
+    Tách câu tiếng Trung thành các TỪ (không phải từng chữ đơn).
+    - Dùng jieba nếu có
+    - Chỉ giữ chữ Hán (bỏ dấu câu, số, chữ Latin)
+    - Fallback: tách từng chữ đơn nếu không có jieba
+    """
+    if not text:
+        return []
+    text = text.strip()
+    if not text:
+        return []
+
+    words = []
+    if HAS_JIEBA:
+        try:
+            for seg in jieba.cut(text):
+                seg = seg.strip()
+                # Chỉ giữ segment là chữ Hán thuần
+                if seg and re.match(r'^[\u4e00-\u9fff]+$', seg):
+                    words.append(seg)
+            if words:
+                return words
+        except Exception as e:
+            print("      [WARN] jieba error: " + str(e))
+
+    # Fallback: tách từng chữ Hán đơn
+    for c in text:
+        if '\u4e00' <= c <= '\u9fff':
+            words.append(c)
+
+    return words
+
+
 def _clean(s):
     if s is None:
         return ""
@@ -62,7 +109,72 @@ def _parse_radical_raw(raw):
     return {"zh": "", "pinyin": "", "strokes": "", "meaning": text}
 
 
+# ═══════════════════════════════════════════════════════════════════
+#  TỰ ĐỘNG PHÁT HIỆN ROW DATA BẮT ĐẦU
+#  - Sheet HSK 1-6: header 2 hàng → data bắt đầu row 3
+#  - Sheet HSK 7-9: header 1 hàng → data bắt đầu row 2
+# ═══════════════════════════════════════════════════════════════════
+def _detect_data_start_row(ws, fallback_row=3, col_zh=1):
+    """
+    Tự động tìm row data bắt đầu trong sheet.
+    - Duyệt 6 row đầu
+    - Skip row header (chứa STT, 汉语, PINYIN, 汉字...)
+    - Return row đầu tiên có chữ Hán ở cột col_zh
+    """
+    HEADER_KEYWORDS = (
+        'stt', '汉字', '汉语', 'pinyin', 'từ', 'hsk', '发音',
+        'nghĩa', 'loại từ', 'tt', 'số tt', 'chữ hán', 'tiếng trung'
+    )
+
+    try:
+        for r_idx, row in enumerate(
+            ws.iter_rows(min_row=1, max_row=6, values_only=True),
+            start=1
+        ):
+            if not row:
+                continue
+
+            cell_val = ""
+            if len(row) > col_zh and row[col_zh] is not None:
+                cell_val = str(row[col_zh]).strip().lower()
+
+            if not cell_val:
+                continue
+
+            # ⭐ Nếu cột B là HEADER → skip
+            is_header = False
+            for kw in HEADER_KEYWORDS:
+                if kw in cell_val:
+                    is_header = True
+                    break
+            if is_header:
+                continue
+
+            # ⭐ Nếu cột B có chữ Hán → đây là row data đầu tiên
+            has_hanzi = any('\u4e00' <= c <= '\u9fff' for c in cell_val)
+            if has_hanzi:
+                print("      [AUTO] Data start row: " + str(r_idx))
+                return r_idx
+
+        # Fallback: dùng row mặc định
+        print("      [AUTO] Fallback start row: " + str(fallback_row))
+        return fallback_row
+
+    except Exception as e:
+        print("      [WARN] _detect_data_start_row error: " + str(e))
+        return fallback_row
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  ĐỌC FILE VOCAB EXCEL (nhiều sheet HSK)
+# ═══════════════════════════════════════════════════════════════════
 def read_vocab_excel(excel_file, start_row=3):
+    """
+    Đọc file vocab HSK từ NHIỀU sheet.
+    - Tự động phát hiện row data bắt đầu cho từng sheet.
+    - Tự sinh mẹo nhớ + bộ thủ nếu cột trống.
+    - Tách câu ví dụ thành từ bằng jieba.
+    """
     print("\n[VOCAB] Dang doc: " + excel_file)
     if not os.path.exists(excel_file):
         print("   [X] Khong tim thay file")
@@ -74,6 +186,7 @@ def read_vocab_excel(excel_file, start_row=3):
         print("   [X] Loi mo file: " + str(e))
         return []
 
+    # ⭐ CHỈ ĐỌC SHEET BẮT ĐẦU BẰNG "HSK"
     target_sheets = [s for s in wb.sheetnames if _is_hsk_sheet(s)]
     if not target_sheets:
         print("   [!] Khong co sheet HSK nao")
@@ -91,7 +204,13 @@ def read_vocab_excel(excel_file, start_row=3):
         try:
             ws = wb[sheet_name]
             hsk = _normalize_hsk(sheet_name)
-            rows, n_mn, n_rd = _read_vocab_sheet(ws, hsk, sheet_name, start_row)
+
+            # ⭐ TỰ ĐỘNG PHÁT HIỆN ROW DATA BẮT ĐẦU
+            actual_start_row = _detect_data_start_row(ws, start_row)
+
+            rows, n_mn, n_rd = _read_vocab_sheet(
+                ws, hsk, sheet_name, actual_start_row
+            )
             all_data.extend(rows)
             total_mnemonic_generated += n_mn
             total_radical_generated += n_rd
@@ -115,22 +234,52 @@ def read_vocab_excel(excel_file, start_row=3):
     return all_data
 
 
+# ═══════════════════════════════════════════════════════════════════
+#  ĐỌC 1 SHEET VOCAB
+# ═══════════════════════════════════════════════════════════════════
 def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
-    COL_STT = 0
-    COL_ZH = 1
-    COL_PINYIN = 2
-    COL_LOAI_TU = 4
-    COL_VI = 5
-    COL_VI_DU_ZH = 8
-    COL_VI_DU_PINYIN = 9
-    COL_VI_DU_VI = 10
-    COL_MNEMONIC = 11
-    COL_RADICAL = 12
+    """
+    Đọc 1 sheet vocab HSK.
+    - Tự động phát hiện cấu trúc cột dựa trên loại sheet (HSK1-6 vs HSK7-9).
+    - stt unique: prefix sheet name để tránh trùng giữa các sheet.
+    """
+    # ⭐ PHÁT HIỆN LOẠI SHEET
+    is_hsk79 = ('7' in hsk and '9' in hsk) or ('HSK7' in hsk) or ('HSK8' in hsk) or ('HSK9' in hsk)
+
+    if is_hsk79:
+        # ═══ HSK 7-9: A-STT, B-汉语, C-PINYIN, D-发音, E-Nghĩa ═══
+        COL_STT = 0
+        COL_ZH = 1
+        COL_PINYIN = 2
+        COL_LOAI_TU = -1        # ⬅️ Không có
+        COL_VI = 4              # ⬅️ Nghĩa ở cột E
+        COL_VI_DU_ZH = -1       # ⬅️ Không có
+        COL_VI_DU_PINYIN = -1
+        COL_VI_DU_VI = -1
+        COL_MNEMONIC = -1
+        COL_RADICAL = -1
+        print("      [COLS] HSK 7-9 mode (nghĩa ở cột E)")
+    else:
+        # ═══ HSK 1-6: A-STT, B-汉语, C-PINYIN, D-Phát âm, E-Loại từ, F-Nghĩa ═══
+        COL_STT = 0
+        COL_ZH = 1
+        COL_PINYIN = 2
+        COL_LOAI_TU = 4         # ⬅️ Loại từ ở cột E
+        COL_VI = 5              # ⬅️ Nghĩa ở cột F
+        COL_VI_DU_ZH = 8
+        COL_VI_DU_PINYIN = 9
+        COL_VI_DU_VI = 10
+        COL_MNEMONIC = 11
+        COL_RADICAL = 12
+        print("      [COLS] HSK 1-6 mode (nghĩa ở cột F)")
 
     data = []
     empty_count = 0
     n_mnemonic_generated = 0
     n_radical_generated = 0
+
+    # ⭐ PREFIX SHEET NAME
+    sheet_clean = re.sub(r'[^A-Za-z0-9]+', '-', sheet_name).strip('-')
 
     for row in ws.iter_rows(min_row=start_row, values_only=True):
         if not row:
@@ -148,15 +297,24 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
                 break
             continue
         empty_count = 0
-        if zh.lower() in ("từ tiếng trung", "汉字", "từ vựng", "từ", "hsk"):
+
+        # Skip row header còn sót
+        if zh.lower() in ("từ tiếng trung", "汉字", "từ vựng", "từ", "hsk",
+                          "汉语", "chữ hán", "tiếng trung"):
             continue
 
-        stt_raw = row[COL_STT] if COL_STT < len(row) and row[COL_STT] is not None else ""
-        pinyin = _clean_pinyin(row[COL_PINYIN]) if COL_PINYIN < len(row) else ""
-        vi = _clean(row[COL_VI]) if COL_VI < len(row) else ""
+        # ⭐ STT GỐC + STT UNIQUE
+        stt_raw_val = row[COL_STT] if COL_STT < len(row) and row[COL_STT] is not None else ""
+        stt_str = str(stt_raw_val).strip()
+        stt_unique = (sheet_clean + "-" + stt_str) if stt_str else ""
 
+        # ⭐ Đọc các cột (an toàn với index âm)
+        pinyin = _clean_pinyin(row[COL_PINYIN]) if COL_PINYIN >= 0 and COL_PINYIN < len(row) else ""
+        vi = _clean(row[COL_VI]) if COL_VI >= 0 and COL_VI < len(row) else ""
+
+        # ⭐ MẸO NHỚ
         mnemonic = ""
-        if COL_MNEMONIC < len(row):
+        if COL_MNEMONIC >= 0 and COL_MNEMONIC < len(row):
             mnemonic = _clean(row[COL_MNEMONIC])
         if not mnemonic:
             try:
@@ -166,8 +324,9 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
             except Exception:
                 mnemonic = ""
 
+        # ⭐ BỘ THỦ
         radical = None
-        if COL_RADICAL < len(row):
+        if COL_RADICAL >= 0 and COL_RADICAL < len(row):
             radical = _parse_radical_raw(row[COL_RADICAL])
         if not radical:
             try:
@@ -177,17 +336,25 @@ def _read_vocab_sheet(ws, hsk, sheet_name, start_row):
             except Exception:
                 radical = None
 
+        # ⭐ VÍ DỤ + TÁCH TỪ BẰNG JIEBA
+        vi_du_zh = _clean(row[COL_VI_DU_ZH]) if COL_VI_DU_ZH >= 0 and COL_VI_DU_ZH < len(row) else ""
+        vi_du_pinyin = _clean_pinyin(row[COL_VI_DU_PINYIN]) if COL_VI_DU_PINYIN >= 0 and COL_VI_DU_PINYIN < len(row) else ""
+        vi_du_vi = _clean(row[COL_VI_DU_VI]) if COL_VI_DU_VI >= 0 and COL_VI_DU_VI < len(row) else ""
+        vi_du_words = _split_chinese_words(vi_du_zh)
+
         data.append({
-            "stt": str(stt_raw).strip(),
+            "stt": stt_unique,
+            "stt_original": stt_str,
             "hsk": hsk,
             "topic": "Từ vựng",
-            "subject": _clean(row[COL_LOAI_TU]) if COL_LOAI_TU < len(row) else "",
+            "subject": _clean(row[COL_LOAI_TU]) if COL_LOAI_TU >= 0 and COL_LOAI_TU < len(row) else "",
             "vi": vi,
             "zh": zh,
             "pinyin": pinyin,
-            "vi_du_zh": _clean(row[COL_VI_DU_ZH]) if COL_VI_DU_ZH < len(row) else "",
-            "vi_du_pinyin": _clean_pinyin(row[COL_VI_DU_PINYIN]) if COL_VI_DU_PINYIN < len(row) else "",
-            "vi_du_vi": _clean(row[COL_VI_DU_VI]) if COL_VI_DU_VI < len(row) else "",
+            "vi_du_zh": vi_du_zh,
+            "vi_du_pinyin": vi_du_pinyin,
+            "vi_du_vi": vi_du_vi,
+            "vi_du_words": vi_du_words,
             "mnemonic": mnemonic,
             "radical": radical,
             "source_sheet": sheet_name,
@@ -767,7 +934,69 @@ def build_vocab_css(vocab_id="tu-vung"):
     font-size: .85rem;
     font-style: italic;
 }
+/* ⭐ SIMILAR CHARS — 1 BOX DUY NHẤT */
+.card-mnemonic-body .similar-hint-block {
+    display: block;
+    margin-top: .8rem;
+    padding: .65rem .85rem;
+    background: linear-gradient(135deg,
+        rgba(245, 158, 11, .12) 0%,
+        rgba(251, 191, 36, .08) 50%,
+        rgba(239, 68, 68, .06) 100%);
+    border-left: 3px solid #f59e0b;
+    border-radius: 10px;
+    font-size: .82rem;
+    color: #92400e;
+    line-height: 1.7;
+    white-space: pre-line;
+    position: relative;
+}
 
+.card-mnemonic-body .similar-hint-block .similar-title {
+    display: block;
+    font-weight: 800;
+    color: #b45309;
+    margin-bottom: .35rem;
+    font-size: .78rem;
+    letter-spacing: .3px;
+    text-transform: uppercase;
+}
+
+.card-mnemonic-body .similar-hint-block .similar-chars {
+    display: block;
+    font-family: var(--font-zh);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #dc2626;
+    margin-bottom: .45rem;
+    letter-spacing: .05em;
+}
+
+.card-mnemonic-body .similar-hint-block .similar-diff {
+    display: block;
+    font-size: .78rem;
+    color: #78350f;
+    line-height: 1.6;
+    font-weight: 500;
+}
+
+[data-theme="dark"] .card-mnemonic-body .similar-hint-block {
+    background: linear-gradient(135deg,
+        rgba(245, 158, 11, .18) 0%,
+        rgba(251, 191, 36, .12) 50%,
+        rgba(239, 68, 68, .08) 100%);
+    color: #fcd34d;
+    border-left-color: #fbbf24;
+}
+[data-theme="dark"] .card-mnemonic-body .similar-hint-block .similar-title {
+    color: #fbbf24;
+}
+[data-theme="dark"] .card-mnemonic-body .similar-hint-block .similar-chars {
+    color: #fca5a5;
+}
+[data-theme="dark"] .card-mnemonic-body .similar-hint-block .similar-diff {
+    color: #fde68a;
+}
 @media (max-width: 500px) {
     .pf-char-btn {
         font-size: 1.05rem;
@@ -1058,6 +1287,11 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         safe = safe.replace(/\s=\s/g, ' <span class="arrow">=</span> ');
         safe = safe.replace(/→/g, '<span class="arrow">→</span>');
         safe = safe.replace(/\(([^)]+)\)/g, '(<span class="hint">$1</span>)');
+        
+        // ⭐ Highlight chữ dễ nhầm
+        safe = safe.replace(/🔍 Dễ nhầm:/g, '<span class="similar-hint">🔍 Dễ nhầm:</span>');
+        safe = safe.replace(/📌 /g, '<br><span class="similar-char">📌 </span>');
+        
         return '<div class="card-mnemonic">'
             + '<div class="card-mnemonic-label">MẸO NHỚ</div>'
             + '<div class="card-mnemonic-body">' + safe + '</div>'
@@ -1083,6 +1317,11 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             if (oldR) oldR.remove();
             var oldM = body.querySelector('.card-mnemonic');
             if (oldM) oldM.remove();
+            // ⭐ Update số thứ tự hiển thị (dùng stt_original)
+            var sttEl = card.querySelector('.card-stt');
+            if (sttEl && r.stt_original) {
+                sttEl.textContent = r.stt_original;
+            }
 
             var anchor = body.querySelector('.card-vocab-example');
             if (r.radical) {
@@ -1356,8 +1595,9 @@ def build_vocab_js_override(vocab_id="tu-vung"):
             for (var i = 0; i < limit; i++) {
                 var r = list[i];
                 var vi = (r.vi || '').substring(0, 45);
-                var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
-                             ? '#' + String(r.stt).trim() + ' · '
+                var sttDisplay = r.stt_original || r.stt;
+                var sttRaw = (sttDisplay !== undefined && sttDisplay !== null && String(sttDisplay).trim() !== '')
+                             ? '#' + String(sttDisplay).trim() + ' · '
                              : '';
                 var label = sttRaw + 'Câu ' + (i + 1) + ': ' + vi;
                 html += '<option value="' + _esc(r.stt) + '">' + _esc(label) + '</option>';
@@ -1390,12 +1630,15 @@ def build_vocab_js_override(vocab_id="tu-vung"):
         var pinyin = _esc(r.vi_du_pinyin || '');
         var vi = _esc(r.vi_du_vi || '');
 
-        // ⭐ Tách câu thành các từ
-        var chars = [];
-        for (var i = 0; i < zh.length; i++) {
-            var c = zh[i];
-            if (c >= '\u4e00' && c <= '\u9fff') {
-                chars.push(c);
+        // ⭐ DÙNG vi_du_words từ Python (jieba đã tách sẵn)
+        var chars = (r && Array.isArray(r.vi_du_words)) ? r.vi_du_words : [];
+        if (chars.length === 0) {
+            // Fallback: tách từng chữ Hán đơn
+            for (var i = 0; i < zh.length; i++) {
+                var c = zh[i];
+                if (c >= '\u4e00' && c <= '\u9fff') {
+                    chars.push(c);
+                }
             }
         }
 
