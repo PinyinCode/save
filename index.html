@@ -9835,6 +9835,68 @@ body[data-vocab-mode="1"] .mobile-view {
         gap: .4rem !important;
     }
 }
+/* ═══════════════════════════════════════════════════════════════
+   🎯 HIGHLIGHT TỪ ĐANG ĐỌC (karaoke style)
+   ═══════════════════════════════════════════════════════════════ */
+.pf-char-btn.reading {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b) !important;
+    color: #fff !important;
+    border-color: #f59e0b !important;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, .6),
+                0 0 0 4px rgba(245, 158, 11, .25) !important;
+    transform: translateY(-3px) scale(1.15) !important;
+    animation: charReadingPulse 1s ease-in-out infinite;
+    position: relative;
+    z-index: 10;
+}
+
+@keyframes charReadingPulse {
+    0%, 100% {
+        box-shadow: 0 6px 20px rgba(245, 158, 11, .6),
+                    0 0 0 4px rgba(245, 158, 11, .25);
+        transform: translateY(-3px) scale(1.15);
+    }
+    50% {
+        box-shadow: 0 8px 28px rgba(245, 158, 11, .8),
+                    0 0 0 8px rgba(245, 158, 11, .1);
+        transform: translateY(-3px) scale(1.2);
+    }
+}
+
+/* ⭐ Nút loa trong info header */
+.pf-char-info-audio {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: none;
+    background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+    color: #fff;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .85rem;
+    transition: all .2s;
+    flex-shrink: 0;
+    margin-left: auto;
+    box-shadow: 0 3px 10px rgba(124, 58, 237, .4);
+    padding: 0;
+}
+.pf-char-info-audio:hover {
+    transform: scale(1.15);
+    box-shadow: 0 5px 16px rgba(124, 58, 237, .6);
+}
+.pf-char-info-audio:active {
+    transform: scale(.95);
+}
+.pf-char-info-audio i {
+    pointer-events: none;
+}
+
+/* Dark mode */
+[data-theme="dark"] .pf-char-info-audio {
+    background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+}
 
 
 /* ═══ BANNER CẢNH BÁO TỪ VỰNG ═══ */
@@ -27952,118 +28014,241 @@ window.__switchRawData = function(datasetId) {
 
     // ⭐ Xử lý khi click vào 1 từ
     window.vocabShowCharInfo = function(btn, evt) {
-        if (evt) { evt.stopPropagation(); evt.preventDefault(); }
-        if (!btn) return;
+    if (evt) { evt.stopPropagation(); evt.preventDefault(); }
+    if (!btn) return;
 
-        var char = btn.dataset.char || '';
-        if (!char) return;
+    var char = btn.dataset.char || '';
+    if (!char) return;
 
-        // Toggle active
-        // Toggle active
-        var wasActive = btn.classList.contains('active');
-        document.querySelectorAll('.pf-char-btn').forEach(function(b) {
-            b.classList.remove('active');
-        });
-        document.querySelectorAll('.similar-char-item').forEach(function(b) {
-            b.classList.remove('active');
-        });
+    /* ⭐ Toggle active */
+    var wasActive = btn.classList.contains('active');
 
-        var infoEl = document.getElementById('pfCharInfo');
-        if (!infoEl) return;
+    /* ⭐ Reset tất cả active + reading + cancel đọc cũ */
+    document.querySelectorAll('.pf-char-btn').forEach(function(b) {
+        b.classList.remove('active', 'reading');
+    });
+    document.querySelectorAll('.similar-char-item').forEach(function(b) {
+        b.classList.remove('active');
+    });
+    if ('speechSynthesis' in window) {
+        try { speechSynthesis.cancel(); } catch(e) {}
+    }
 
-        // Nếu bấm lại từ đang active → ẩn
-        if (wasActive) {
-            infoEl.style.display = 'none';
-            return;
+    var infoEl = document.getElementById('pfCharInfo');
+    if (!infoEl) return;
+
+    /* Nếu bấm lại từ đang active → ẩn info */
+    if (wasActive) {
+        infoEl.style.display = 'none';
+        return;
+    }
+
+    /* ⭐ Set active */
+    btn.classList.add('active');
+
+    /* ═══════════════════════════════════════════════════════════
+       🎯 TỰ ĐỘNG ĐỌC + HIGHLIGHT TỪNG CHỮ (karaoke style)
+       ═══════════════════════════════════════════════════════════ */
+    setTimeout(function() {
+        _speakAndHighlight(char);
+    }, 100);
+
+    /* ═══════════════════════════════════════════════════════════
+       Tìm record trong dataset từ vựng
+       ═══════════════════════════════════════════════════════════ */
+    var found = null;
+    var list = [];
+    if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
+        list = window.FIXPY_DATASETS[VOCAB_ID].data || [];
+    }
+
+    /* ⭐ 1. Match EXACT */
+    for (var i = 0; i < list.length; i++) {
+        if (list[i].zh === char) {
+            found = list[i];
+            break;
         }
+    }
 
-        btn.classList.add('active');
-
-        // Tìm từ trong dataset từ vựng
-        var found = null;
-        var list = [];
-        if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
-            list = window.FIXPY_DATASETS[VOCAB_ID].data || [];
-        }
-
-        // Ưu tiên tìm từ có `zh` khớp CHÍNH XÁC chữ đó
-        for (var i = 0; i < list.length; i++) {
-            if (list[i].zh === char) {
-                found = list[i];
+    /* ⭐ 2. Fallback: tìm từ ghép chứa chữ đó */
+    if (!found) {
+        for (var j = 0; j < list.length; j++) {
+            if (list[j].zh && list[j].zh.indexOf(char) !== -1) {
+                found = list[j];
                 break;
             }
         }
+    }
 
-        // Nếu không tìm được từ đơn → tìm từ ghép chứa chữ đó
-        if (!found) {
-            for (var j = 0; j < list.length; j++) {
-                if (list[j].zh && list[j].zh.indexOf(char) !== -1) {
-                    found = list[j];
-                    break;
-                }
-            }
+    /* ═══════════════════════════════════════════════════════════
+       Build info HTML
+       ═══════════════════════════════════════════════════════════ */
+    var html = '';
+
+    if (found) {
+        html += '<div class="pf-char-info-header">';
+        html += '<span class="pf-char-info-zh">' + _esc(found.zh || char) + '</span>';
+        if (found.pinyin) {
+            html += '<span class="pf-char-info-pinyin">' + _esc(found.pinyin) + '</span>';
         }
 
-        // Build info HTML
-        var html = '';
+        /* ⭐ Nút loa đọc lại trong header */
+        var foundZhJs = (typeof escapeJs === 'function')
+            ? escapeJs(found.zh || char)
+            : String(found.zh || char).replace(/"/g, '&quot;');
+        html += '<button class="pf-char-info-audio" '
+              + 'onclick="event.stopPropagation(); _speakAndHighlight(\'' + foundZhJs + '\');" '
+              + 'title="Đọc lại">'
+              + '<i class="fas fa-volume-up"></i>'
+              + '</button>';
 
-        if (found) {
-            html += '<div class="pf-char-info-header">';
-            html += '<span class="pf-char-info-zh">' + _esc(found.zh || char) + '</span>';
-            if (found.pinyin) {
-                html += '<span class="pf-char-info-pinyin">' + _esc(found.pinyin) + '</span>';
-            }
-            html += '</div>';
+        html += '</div>';
 
-            if (found.vi) {
-                html += '<div class="pf-char-info-line">';
-                html += '<span class="pf-char-info-label">📖 Nghĩa:</span>';
-                html += '<span>' + _esc(found.vi) + '</span>';
-                html += '</div>';
-            }
-
-            if (found.subject) {
-                html += '<div class="pf-char-info-line">';
-                html += '<span class="pf-char-info-label">🏷️ Loại từ:</span>';
-                html += '<span>' + _esc(found.subject) + '</span>';
-                html += '</div>';
-            }
-
-            // Bộ thủ
-            if (found.radical) {
-                var rad = found.radical;
-                html += '<div class="pf-char-info-line">';
-                html += '<span class="pf-char-info-label">🖌️ Bộ thủ:</span>';
-                html += '<span>' + _esc(rad.zh || '');
-                if (rad.pinyin) html += ' (' + _esc(rad.pinyin) + ')';
-                if (rad.strokes) html += ' — ' + _esc(rad.strokes) + ' nét';
-                if (rad.meaning) html += ' — ' + _esc(rad.meaning);
-                html += '</span>';
-                html += '</div>';
-            }
-
-            // Mẹo nhớ
-            if (found.mnemonic) {
-                html += '<div class="pf-char-info-line">';
-                html += '<span class="pf-char-info-label">💡 Mẹo nhớ:</span>';
-                html += '<span class="pf-char-info-mnemonic">' + _esc(found.mnemonic).replace(/\n/g, '<br>') + '</span>';
-                html += '</div>';
-            }
-        } else {
-            // Không tìm thấy từ trong dataset
-            html += '<div class="pf-char-info-empty">';
-            html += 'Không tìm thấy thông tin cho chữ "' + _esc(char) + '"';
+        if (found.vi) {
+            html += '<div class="pf-char-info-line">';
+            html += '<span class="pf-char-info-label">📖 Nghĩa:</span>';
+            html += '<span>' + _esc(found.vi) + '</span>';
             html += '</div>';
         }
 
-        infoEl.innerHTML = html;
-        infoEl.style.display = 'block';
+        if (found.subject) {
+            html += '<div class="pf-char-info-line">';
+            html += '<span class="pf-char-info-label">🏷️ Loại từ:</span>';
+            html += '<span>' + _esc(found.subject) + '</span>';
+            html += '</div>';
+        }
 
-        // Scroll xuống info
+        /* Bộ thủ */
+        if (found.radical) {
+            var rad = found.radical;
+            html += '<div class="pf-char-info-line">';
+            html += '<span class="pf-char-info-label">🖌️ Bộ thủ:</span>';
+            html += '<span>' + _esc(rad.zh || '');
+            if (rad.pinyin) html += ' (' + _esc(rad.pinyin) + ')';
+            if (rad.strokes) html += ' — ' + _esc(rad.strokes) + ' nét';
+            if (rad.meaning) html += ' — ' + _esc(rad.meaning);
+            html += '</span>';
+            html += '</div>';
+        }
+
+        /* Mẹo nhớ */
+        if (found.mnemonic) {
+            html += '<div class="pf-char-info-line">';
+            html += '<span class="pf-char-info-label">💡 Mẹo nhớ:</span>';
+            html += '<span class="pf-char-info-mnemonic">'
+                  + _esc(found.mnemonic).replace(/\n/g, '<br>')
+                  + '</span>';
+            html += '</div>';
+        }
+    } else {
+        html += '<div class="pf-char-info-empty">';
+        html += 'Không tìm thấy thông tin cho chữ "' + _esc(char) + '"';
+        html += '</div>';
+    }
+
+    infoEl.innerHTML = html;
+    infoEl.style.display = 'block';
+
+    /* ⭐ Scroll xuống info */
+    setTimeout(function() {
+        infoEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }, 100);
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   🎯 SPEAK + HIGHLIGHT TỪNG CHỮ (karaoke style)
+   - Từ 1 chữ → đọc luôn
+   - Từ nhiều chữ → đọc từng chữ, highlight chữ đang đọc
+   ═══════════════════════════════════════════════════════════════ */
+window._speakAndHighlight = function(text) {
+    if (!text) return;
+    if (!('speechSynthesis' in window)) {
+        console.warn('[vocab] TTS not supported');
+        return;
+    }
+
+    /* ⭐ Cancel phiên đọc cũ */
+    try { speechSynthesis.cancel(); } catch(e) {}
+
+    /* ⭐ Clear highlight cũ */
+    document.querySelectorAll('.pf-char-btn.reading').forEach(function(b) {
+        b.classList.remove('reading');
+    });
+
+    /* ⭐ Tách từng chữ Hán */
+    var chars = [];
+    for (var i = 0; i < text.length; i++) {
+        var c = text[i];
+        if (c >= '\u4e00' && c <= '\u9fff') {
+            chars.push(c);
+        }
+    }
+
+    /* ⭐ Nếu không có chữ Hán → đọc nguyên văn */
+    if (chars.length === 0) {
+        var u0 = new SpeechSynthesisUtterance(text);
+        u0.lang = 'zh-CN';
+        if (typeof applyVoiceSettings === 'function') {
+            try { applyVoiceSettings(u0); } catch(e) {}
+        }
         setTimeout(function() {
-            infoEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-        }, 100);
-    };
+            try { speechSynthesis.speak(u0); } catch(e) {}
+        }, 30);
+        return;
+    }
+
+    /* ⭐ Đọc từng chữ, highlight từng chữ tương ứng */
+    var idx = 0;
+
+    function speakNext() {
+        if (idx >= chars.length) {
+            /* Đọc xong → clear reading */
+            document.querySelectorAll('.pf-char-btn.reading').forEach(function(b) {
+                b.classList.remove('reading');
+            });
+            return;
+        }
+
+        var ch = chars[idx];
+
+        /* ⭐ Clear highlight cũ */
+        document.querySelectorAll('.pf-char-btn.reading').forEach(function(b) {
+            b.classList.remove('reading');
+        });
+
+        /* ⭐ Highlight nút có data-char khớp */
+        var targetBtns = document.querySelectorAll('.pf-char-btn[data-char="' + ch + '"]');
+        targetBtns.forEach(function(b) {
+            b.classList.add('reading');
+        });
+
+        var u = new SpeechSynthesisUtterance(ch);
+        u.lang = 'zh-CN';
+        if (typeof applyVoiceSettings === 'function') {
+            try { applyVoiceSettings(u); } catch(e) {}
+        }
+
+        u.onend = function() {
+            idx++;
+            setTimeout(speakNext, 80);
+        };
+        u.onerror = function() {
+            idx++;
+            setTimeout(speakNext, 80);
+        };
+
+        setTimeout(function() {
+            try {
+                speechSynthesis.speak(u);
+            } catch(e) {
+                idx++;
+                setTimeout(speakNext, 80);
+            }
+        }, 30);
+    }
+
+    speakNext();
+};
     function setupPfViWatcher() {
         var pfViEl = document.getElementById('pfVi');
         if (!pfViEl) return;
