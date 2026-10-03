@@ -1200,6 +1200,286 @@ def build_vocab_css(vocab_id="tu-vung"):
     .pf-char-info-pinyin { font-size: .9rem; }
     .pf-char-info-line { font-size: .78rem; }
 }
+/* ═══════════════════════════════════════════════════════════════
+   🎯 COMPACT DENSITY CHO TAB TỪ VỰNG — Chỉ áp dụng khi data-vocab-mode
+   Mục tiêu: giảm 50% chiều cao card, giữ đầy đủ nội dung
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ═══ 1. CARD: Giảm padding, bỏ khoảng trống ═══ */
+body[data-vocab-mode="1"] .card {
+    padding: clamp(.6rem, 1vw, .85rem) clamp(.7rem, 1.2vw, 1rem) !important;
+    padding-left: clamp(.85rem, 1.4vw, 1.1rem) !important;
+    margin-bottom: 0 !important;
+    border-radius: 12px !important;
+}
+
+/* ═══ 2. HEADER CARD: Compact hơn, tags gọn ═══ */
+body[data-vocab-mode="1"] .card-header {
+    margin-bottom: .35rem !important;
+    padding-bottom: .35rem !important;
+    gap: .35rem !important;
+}
+
+/* Chỉ giữ HSK tag, ẩn Từ vựng + Số từ */
+body[data-vocab-mode="1"] .card-tag.topic,
+body[data-vocab-mode="1"] .card-tag.subject {
+    display: none !important;
+}
+
+/* HSK tag nhỏ hơn */
+body[data-vocab-mode="1"] .card-tag.hsk {
+    padding: .12rem .45rem !important;
+    font-size: .62rem !important;
+}
+
+/* STT chip nhỏ hơn */
+body[data-vocab-mode="1"] .card-stt {
+    min-width: 24px !important;
+    height: 24px !important;
+    font-size: .62rem !important;
+    padding: 0 .4rem !important;
+}
+
+/* Action buttons nhỏ hơn */
+body[data-vocab-mode="1"] .action-group {
+    gap: .2rem !important;
+}
+body[data-vocab-mode="1"] .action-group .audio-btn,
+body[data-vocab-mode="1"] .action-group .write-btn,
+body[data-vocab-mode="1"] .action-group .practice-full-btn,
+body[data-vocab-mode="1"] .action-group .fav-btn {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: .7rem !important;
+}
+
+/* ═══ 3. BODY CARD: Chữ + Pinyin + Nghĩa cùng DÒNG ═══ */
+body[data-vocab-mode="1"] .card-body {
+    margin-bottom: .4rem !important;
+    padding-left: 0 !important;
+}
+
+/* Nghĩa (vi) — inline nhỏ gọn */
+body[data-vocab-mode="1"] .card-vi {
+    font-size: .75rem !important;
+    margin-bottom: .25rem !important;
+    padding-left: 0 !important;
+    color: var(--text-2) !important;
+    font-weight: 600 !important;
+}
+body[data-vocab-mode="1"] .card-vi::before {
+    display: none !important; /* Bỏ dấu chấm trước nghĩa */
+}
+
+/* Chữ Hán — lớn, rõ, không chiếm nhiều dọc */
+body[data-vocab-mode="1"] .card-zh {
+    font-size: clamp(1.5rem, 3.5vw, 2rem) !important;
+    font-weight: 700 !important;
+    line-height: 1.1 !important;
+    margin-bottom: .2rem !important;
+    display: inline-block !important;
+    margin-right: .5rem !important;
+}
+
+/* Pinyin — inline kế bên chữ Hán */
+body[data-vocab-mode="1"] .card-pinyin {
+    font-size: .82rem !important;
+    padding: .15rem .5rem !important;
+    margin-bottom: 0 !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+}
+
+/* ═══ 4. BỘ THỦ: Thu gọn thành inline 1 dòng ═══ */
+body[data-vocab-mode="1"] .card-radical {
+    margin-top: .35rem !important;
+    padding: .35rem .5rem !important;
+    border-radius: 8px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: .4rem !important;
+}
+body[data-vocab-mode="1"] .card-radical-label {
+    font-size: .6rem !important;
+    margin: 0 !important;
+}
+body[data-vocab-mode="1"] .card-radical-body {
+    gap: .4rem !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+body[data-vocab-mode="1"] .card-radical-box {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 1rem !important;
+    border-radius: 5px !important;
+}
+body[data-vocab-mode="1"] .card-radical-info {
+    gap: .1rem !important;
+}
+body[data-vocab-mode="1"] .card-radical-name {
+    font-size: .72rem !important;
+    line-height: 1.25 !important;
+}
+body[data-vocab-mode="1"] .card-radical-meaning {
+    font-size: .68rem !important;
+    line-height: 1.3 !important;
+    color: var(--text-3) !important;
+}
+
+/* ═══ 5. MẸO NHỚ: Compact, font nhỏ ═══ */
+body[data-vocab-mode="1"] .card-mnemonic {
+    margin-top: .35rem !important;
+    padding: .4rem .6rem !important;
+    border-radius: 8px !important;
+    gap: .3rem !important;
+}
+body[data-vocab-mode="1"] .card-mnemonic-label {
+    font-size: .6rem !important;
+    letter-spacing: .3px !important;
+}
+body[data-vocab-mode="1"] .card-mnemonic-body {
+    font-size: .76rem !important;
+    line-height: 1.5 !important;
+}
+body[data-vocab-mode="1"] .card-mnemonic-body .char-zh {
+    font-size: .9rem !important;
+    padding: 0 .1rem !important;
+}
+
+/* ═══ 6. DỄ NHẦM: Compact chips ═══ */
+body[data-vocab-mode="1"] .similar-hint-block {
+    margin-top: .4rem !important;
+    padding: .4rem .55rem !important;
+    border-radius: 8px !important;
+    font-size: .72rem !important;
+    line-height: 1.4 !important;
+}
+body[data-vocab-mode="1"] .similar-hint-block .similar-title {
+    font-size: .62rem !important;
+    margin-bottom: .3rem !important;
+}
+body[data-vocab-mode="1"] .similar-hint-block .similar-chars {
+    gap: .25rem .35rem !important;
+    margin-bottom: 0 !important;
+}
+body[data-vocab-mode="1"] .similar-char-item {
+    padding: .12rem .3rem .12rem .15rem !important;
+    gap: .2rem !important;
+    border-radius: 6px !important;
+}
+body[data-vocab-mode="1"] .similar-char-btn-audio,
+body[data-vocab-mode="1"] .similar-char-btn-jump {
+    width: 20px !important;
+    height: 20px !important;
+    font-size: .55rem !important;
+}
+body[data-vocab-mode="1"] .similar-char-main {
+    gap: .15rem !important;
+}
+body[data-vocab-mode="1"] .similar-char-main .similar-char-zh {
+    font-size: .88rem !important;
+}
+body[data-vocab-mode="1"] .similar-char-main .similar-char-pinyin {
+    font-size: .6rem !important;
+}
+body[data-vocab-mode="1"] .similar-char-main .similar-char-info-txt {
+    font-size: .6rem !important;
+}
+body[data-vocab-mode="1"] .similar-sep {
+    font-size: .7rem !important;
+}
+
+/* ═══ 7. PRACTICE INPUT ẩn mặc định cho vocab (không cần luyện gõ từ đơn) ═══ */
+body[data-vocab-mode="1"] .card-practice {
+    padding-top: .35rem !important;
+    margin-top: 0 !important;
+    border-top: 1px dashed var(--border) !important;
+    gap: .25rem !important;
+}
+body[data-vocab-mode="1"] .card-practice .practice-input {
+    padding: .3rem .6rem !important;
+    font-size: .78rem !important;
+}
+body[data-vocab-mode="1"] .card-practice .toggle-check-btn {
+    width: 26px !important;
+    height: 26px !important;
+    font-size: .7rem !important;
+}
+
+/* ═══ 8. GRID: 2 cột trên tablet, 3 cột trên desktop ═══ */
+@media (min-width: 769px) {
+    body[data-vocab-mode="1"] .mobile-view {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: .6rem !important;
+    }
+}
+@media (min-width: 1200px) {
+    body[data-vocab-mode="1"] .mobile-view {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: .7rem !important;
+    }
+}
+
+/* ═══ 9. FOCUSED card: không phóng to quá nhiều ═══ */
+body[data-vocab-mode="1"] .card.focused {
+    transform: scale(1.01) !important;
+}
+body[data-vocab-mode="1"] .card.focused .card-zh {
+    font-size: clamp(1.65rem, 3.8vw, 2.1rem) !important;
+}
+
+/* ═══ 10. Mobile: giữ 1 cột nhưng compact hơn nữa ═══ */
+@media (max-width: 500px) {
+    body[data-vocab-mode="1"] .card {
+        padding: .5rem .65rem !important;
+        padding-left: .8rem !important;
+        border-radius: 10px !important;
+    }
+    body[data-vocab-mode="1"] .card-header {
+        margin-bottom: .25rem !important;
+        padding-bottom: .25rem !important;
+    }
+    body[data-vocab-mode="1"] .card-zh {
+        font-size: 1.35rem !important;
+    }
+    body[data-vocab-mode="1"] .card-pinyin {
+        font-size: .74rem !important;
+    }
+    body[data-vocab-mode="1"] .card-radical-box {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: .9rem !important;
+    }
+    body[data-vocab-mode="1"] .card-mnemonic-body {
+        font-size: .72rem !important;
+        line-height: 1.45 !important;
+    }
+    body[data-vocab-mode="1"] .similar-char-item {
+        padding: .1rem .25rem .1rem .12rem !important;
+    }
+    body[data-vocab-mode="1"] .similar-char-btn-audio,
+    body[data-vocab-mode="1"] .similar-char-btn-jump {
+        width: 18px !important;
+        height: 18px !important;
+        font-size: .5rem !important;
+    }
+}
+
+/* ═══ 11. Scroll smoother khi ở vocab mode ═══ */
+body[data-vocab-mode="1"] {
+    scroll-behavior: smooth;
+}
+
+/* ═══ 12. Ẩn bớt padding giữa các card trong wrapper ═══ */
+body[data-vocab-mode="1"] .mobile-view {
+    gap: .5rem !important;
+}
+@media (max-width: 500px) {
+    body[data-vocab-mode="1"] .mobile-view {
+        gap: .4rem !important;
+    }
+}
 """
     return css.replace("__VOCAB_ID__", vocab_id)
 
