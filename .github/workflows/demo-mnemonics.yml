@@ -11,7 +11,7 @@ on:
         description: 'Model Qwen'
         required: false
         default: 'qwen/qwen3.5-flash:free'
-  
+
   push:
     paths:
       - 'scripts/demo_mnemonics.py'
@@ -23,38 +23,32 @@ permissions:
 jobs:
   demo:
     runs-on: ubuntu-latest
-    
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install openai openpyxl
-      
-      - name: Check Excel file
+
+      - name: List data folder (debug)
         run: |
-          echo "=== Kiểm tra file Excel vocab ==="
-          if [ -f "data/tu_vung_hsk.x),lsx" ]; then
-            echo "✅ ' Tìm thấy data/tmu_vung_hsk.xlsx"
-            lsẹ -lh data/tu_vung_hsk.xlsx
-          else
-            echo "❌ Không tìm thấy data/tu_vung_hsk.xlsx"
-            echo ""
-            echo "=== data/ folder ==="
-            ls -la data/ || echo "No data folder"
-            exit 1
-          fi
-      
+          echo "=== data/ folder ==="
+          ls -la data/ || echo "No data folder"
+          echo ""
+          echo "=== File Excel trong data/ ==="
+          ls -la data/*.xlsx 2>/dev/null || echo "Không có file .xlsx"
+
       - name: Run demo mnemonics
         env:
           OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
@@ -63,27 +57,33 @@ jobs:
           DELAY_BETWEEN: '2.0'
         run: |
           python scripts/demo_mnemonics.py
-      
+
       - name: Show result
+        if: always()
         run: |
           echo "=== File output ==="
           ls -la data/mnemonics_demo.json || echo "Chưa có output"
           echo ""
           echo "=== Số mẹo đã sinh ==="
-          python -c "import json; d=json.load(open('data/mnemonics_demo.json')); print(len(do')" || echo "Lỗi đọc file"
-      
+          python -c "import json; d=json.load(open('data/mnemonics_demo.json')); print(len(d), 'mẹo')" || echo "Chưa có file hoặc lỗi"
+
       - name: Commit result
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          
-          git add data/mnemonics_demo.json
-          
-          if git diff --quiet && git diff --staged --quiet; then
-            echo "✅ Không có thay đổi để commit"
+
+          if [ -f "data/mnemonics_demo.json" ]; then
+            git add data/mnemonics_demo.json
+
+            if git diff --quiet && git diff --staged --quiet; then
+              echo "✅ Không có thay đổi để commit"
+            else
+              COUNT=$(python -c "import json; print(len(json.load(open('data/mnemonics_demo.json'))))" 2>/dev/null || echo "0")
+              git commit -m "🤖 Demo mnemonics ($COUNT từ) [skip ci]"
+              git pull --rebase origin main || true
+              git push || echo "⚠️  Push failed"
+            fi
           else
-            COUNT=$(python -c "import json; print(len(json.load(open('data/mnemonics_demo.json'))))")
-            git commit -m "🤖 Demo mnemonics ($COUNT từ) [skip ci]"
-            git pull --rebase origin main || true
-            git push
+            echo "⚠️  Không có file output để commit"
           fi
