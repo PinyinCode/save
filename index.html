@@ -26542,14 +26542,12 @@ Back();
     function buildMnemonicBlock(text) {
         if (!text || !text.trim()) return '';
         var safe = _esc(text);
-        safe = safe.replace(/([\u4e00-\u9fa5]+)/g, '<span class="char-zh">$1</span>');
-        safe = safe.replace(/\s=\s/g, ' <span class="arrow">=</span> ');
-        safe = safe.replace(/→/g, '<span class="arrow">→</span>');
-        safe = safe.replace(/\(([^)]+)\)/g, '(<span class="hint">$1</span>)');
         
-       // ⭐ Xử lý block "Dễ nhầm" — 2 nút/chữ
+        // ⭐ BƯỚC 1: Xử lý block "Dễ nhầm" TRƯỚC (trước khi wrap chữ Hán)
         var similarRegex = /(🔍 Dễ nhầm:[^\n]*)\n(📌 [\s\S]*?)(?=\n\n|$)/;
         var match = safe.match(similarRegex);
+        var similarBlockHtml = '';
+        
         if (match) {
             var titleLine = match[1];
             var diffLine = match[2];
@@ -26597,13 +26595,23 @@ Back();
                        '</span>';
             }).join(' <span class="similar-sep">·</span> ');
             
-            var boxHtml = '<div class="similar-hint-block">' +
+            similarBlockHtml = '<div class="similar-hint-block">' +
                 '<span class="similar-title">🔍 Dễ nhầm</span>' +
                 '<div class="similar-chars">' + charsList + '</div>' +
                 '</div>';
             
-            safe = safe.replace(similarRegex, boxHtml);
+            // ⭐ XÓA block "Dễ nhầm" khỏi text (để không bị wrap)
+            safe = safe.replace(similarRegex, '');
         }
+        
+        // ⭐ BƯỚC 2: Wrap chữ Hán cho phần còn lại
+        safe = safe.replace(/([\u4e00-\u9fa5]+)/g, '<span class="char-zh">$1</span>');
+        safe = safe.replace(/\s=\s/g, ' <span class="arrow">=</span> ');
+        safe = safe.replace(/→/g, '<span class="arrow">→</span>');
+        safe = safe.replace(/\(([^)]+)\)/g, '(<span class="hint">$1</span>)');
+        
+        // ⭐ BƯỚC 3: Ghép lại (mẹo nhớ + block dễ nhầm)
+        safe = safe + similarBlockHtml;
         
         return '<div class="card-mnemonic">'
             + '<div class="card-mnemonic-label">MẸO NHỚ</div>'
