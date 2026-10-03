@@ -2270,93 +2270,117 @@ def build_vocab_js_override(vocab_id="tu-vung"):
     }
 
     function hookPracticeFull() {
-        if (typeof window.loadPracticeFull !== 'function') {
-            return false;
-        }
-        if (window.loadPracticeFull.__vocabHooked) return true;
+    if (typeof window.loadPracticeFull !== 'function') {
+        return false;
+    }
+    if (window.loadPracticeFull.__vocabHooked) return true;
 
-        var orig = window.loadPracticeFull;
-        window.loadPracticeFull = function(stt) {
-            var result = orig.apply(this, arguments);
+    var orig = window.loadPracticeFull;
+    window.loadPracticeFull = function(stt) {
+        var result = orig.apply(this, arguments);
 
-            if (_isVocabMode() && canAccessVocab()) {
-                var r = _findRecord(stt);
-                if (r && r.vi_du_zh) {
-                    try {
-                        if (typeof window.pfCurrentAnswer !== 'undefined') {
-                            window.pfCurrentAnswer = r.vi_du_zh;
-                        }
-                        if (typeof window.pfCurrentVi !== 'undefined') {
-                            window.pfCurrentVi = r.vi_du_vi;
-                        }
-                        if (typeof window.pfCurrentPinyin !== 'undefined') {
-                            window.pfCurrentPinyin = r.vi_du_pinyin;
-                        }
-                    } catch(e) {}
+        if (_isVocabMode() && canAccessVocab()) {
+            var r = _findRecord(stt);
+            if (r && r.vi_du_zh) {
+                try {
+                    if (typeof window.pfCurrentAnswer !== 'undefined') {
+                        window.pfCurrentAnswer = r.vi_du_zh;
+                    }
+                    if (typeof window.pfCurrentVi !== 'undefined') {
+                        window.pfCurrentVi = r.vi_du_vi;
+                    }
+                    if (typeof window.pfCurrentPinyin !== 'undefined') {
+                        window.pfCurrentPinyin = r.vi_du_pinyin;
+                    }
+                } catch(e) {}
 
-                    var pfViEl = document.getElementById('pfVi');
-                    if (pfViEl && r.vi_du_vi) {
-                        pfViEl.textContent = r.vi_du_vi;
+                var pfViEl = document.getElementById('pfVi');
+                if (pfViEl && r.vi_du_vi) {
+                    pfViEl.textContent = r.vi_du_vi;
+                }
+
+                setTimeout(function() {
+                    var pfInput = document.getElementById('pfInput');
+                    if (pfInput) pfInput.value = '';
+
+                    var pfPreview = document.getElementById('pfPreview');
+                    if (pfPreview) pfPreview.innerHTML = '';
+
+                    var pfStatus = document.getElementById('pfStatus');
+                    if (pfStatus) {
+                        pfStatus.textContent = '';
+                        pfStatus.className = 'practice-full-status';
                     }
 
-                    setTimeout(function() {
-                        var pfInput = document.getElementById('pfInput');
-                        if (pfInput) pfInput.value = '';
+                    /* ═══════════════════════════════════════════════════
+                       ⭐ FIX: Auto-rebuild "Gợi ý" nếu button đang ACTIVE
+                       ═══════════════════════════════════════════════════ */
 
-                        var pfPreview = document.getElementById('pfPreview');
-                        if (pfPreview) pfPreview.innerHTML = '';
+                    /* 1. Xóa block cũ */
+                    var oldExample = document.querySelector('.pf-vocab-example');
+                    if (oldExample) oldExample.remove();
 
-                        var pfStatus = document.getElementById('pfStatus');
-                        if (pfStatus) {
-                            pfStatus.textContent = '';
-                            pfStatus.className = 'practice-full-status';
+                    /* 2. Check nút "Gợi ý" có đang bật không */
+                    var hintBtn = document.getElementById('pfHintBtn');
+                    var hintActive = hintBtn && hintBtn.classList.contains('active');
+
+                    /* 3. Nếu đang bật → build lại block mới cho câu hiện tại */
+                    if (hintActive) {
+                        var answerEl = document.getElementById('pfAnswer');
+                        if (answerEl) {
+                            var html = buildPFExampleBlock(r);
+                            if (html) {
+                                answerEl.insertAdjacentHTML('afterend', html);
+                            }
                         }
+                    }
 
-                        var oldExample = document.querySelector('.pf-vocab-example');
-                        if (oldExample) oldExample.remove();
+                    /* 4. Hook nút "Gợi ý" (chỉ bind 1 lần) */
+                    if (hintBtn && !hintBtn.__vocabHooked) {
+                        hintBtn.__vocabHooked = true;
+                        hintBtn.addEventListener('click', function(ev) {
+                            setTimeout(function() {
+                                if (!_isVocabMode()) return;
+                                if (!canAccessVocab()) return;
 
-                        var hintBtn = document.getElementById('pfHintBtn');
-                        if (hintBtn && !hintBtn.__vocabHooked) {
-                            hintBtn.__vocabHooked = true;
-                            hintBtn.addEventListener('click', function(ev) {
-                                setTimeout(function() {
-                                    if (!_isVocabMode()) return;
-                                    if (!canAccessVocab()) return;
+                                /* Xóa block cũ */
+                                var oldEx = document.querySelector('.pf-vocab-example');
+                                if (oldEx) oldEx.remove();
 
-                                    var oldEx = document.querySelector('.pf-vocab-example');
-                                    if (oldEx) oldEx.remove();
+                                /* Nếu nút KHÔNG active (vừa bị tắt) → dừng */
+                                if (!hintBtn.classList.contains('active')) {
+                                    return;
+                                }
 
-                                    if (!hintBtn.classList.contains('active')) {
-                                        return;
-                                    }
+                                /* Lấy câu hiện tại */
+                                var currentStt = null;
+                                try { currentStt = window.pfCurrentStt; } catch(e) {}
+                                if (!currentStt) return;
 
-                                    var currentStt = null;
-                                    try { currentStt = window.pfCurrentStt; } catch(e) {}
-                                    if (!currentStt) return;
+                                var rec = _findRecord(currentStt);
+                                if (!rec || !rec.vi_du_zh) return;
 
-                                    var rec = _findRecord(currentStt);
-                                    if (!rec || !rec.vi_du_zh) return;
+                                var answerEl2 = document.getElementById('pfAnswer');
+                                if (!answerEl2) return;
 
-                                    var answerEl = document.getElementById('pfAnswer');
-                                    if (!answerEl) return;
-
-                                    var html = buildPFExampleBlock(rec);
-                                    if (html) {
-                                        answerEl.insertAdjacentHTML('afterend', html);
-                                    }
-                                }, 100);
-                            });
-                        }
-                    }, 50);
-                }
+                                /* Build block gợi ý */
+                                var html2 = buildPFExampleBlock(rec);
+                                if (html2) {
+                                    answerEl2.insertAdjacentHTML('afterend', html2);
+                                }
+                            }, 100);
+                        });
+                    }
+                }, 50);
             }
+        }
 
-            return result;
-        };
-        window.loadPracticeFull.__vocabHooked = true;
-        console.log('[vocab] hooked loadPracticeFull');
-        return true;
-    }
+        return result;
+    };
+    window.loadPracticeFull.__vocabHooked = true;
+    console.log('[vocab] hooked loadPracticeFull');
+    return true;
+}
     /* ⭐ Giới hạn dropdown "Câu:" tránh lag */
     function hookPfBuildQuickNav() {
         if (typeof window.pfBuildQuickNav !== 'function') return;
