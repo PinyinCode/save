@@ -26359,14 +26359,18 @@ window.__switchRawData = function(datasetId) {
         if (_navBackBtn) _navBackBtn.remove();
         _navBackBtn = document.createElement('button');
         _navBackBtn.className = 'nav-back-btn';
+        _navBackBtn.type = 'button';
         _navBackBtn.innerHTML = '<i class="fas fa-arrow-left"></i> Quay lại';
-        _navBackBtn.onclick = function(e) {
+        
+        _navBackBtn.addEventListener('click', function(e) {
+            e.stopImmediatePropagation();
             e.stopPropagation();
- return            e.preventDefault();
-            _nav;
-Back();
-        };
-        document.body       .appendChild(_navBackBtn);
+            e.preventDefault();
+            _navBack();
+        }, true);
+        
+        document.body.appendChild(_navBackBtn);
+        console.log('[vocab] nav back btn shown, stack:', _navStack.length);
     }
     
     function _navBack() {
