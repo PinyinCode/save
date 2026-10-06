@@ -1,3040 +1,1685 @@
- # -*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
+r"""
+fix.py - Auto-scan data/ và thêm MỌI file Excel thành tab riêng.
++ TỰ ĐỘNG thêm tab TỪ VỰNG PREMIUM từ data/tu_vung_hsk.xlsx
+
+Chạy:
+    python scripts/convert.py
+    python fix.py
 """
-Module FAVORITES — Tính năng Yêu thích câu.
+import json
+import os
+import re
+import sys
+import glob
+import unicodedata
 
-Quy tắc tier:
-  - ACTIVE / ADMIN  → dùng đầy đủ (lưu Firebase cloud + cache localStorage)
-  - TRIAL / DEMO / EXPIRED → chỉ hiển thị icon khoá 🔒 + tab mờ 🔒
-                              bấm vào mở dialog mời đăng nhập / gia hạn
+import openpyxl
 
-Tính năng chính:
-  1. Nút tim trên card câu — đổi màu theo trạng thái yêu thích
-  2. Nút tim FLOAT trong Practice Full (góc phải)
-  3. Nút toggle "Chỉ câu yêu thích" trong Practice Full (góc trái)
-     ★ Khi bật → dropdown "CÂU:" chỉ liệt kê câu yêu thích
-  4. Tab Yêu thích + Item Yêu thích trong dropdown bộ dữ liệu
-  5. Đồng bộ Firebase real-time + cache localStorage
 
-Tích hợp:
-  from favorites_module import build_favorites_css, build_favorites_html, build_favorites_js
+# =================================================================
+#  CONFIG
+# =================================================================
+INDEX_HTML = "index.html"
+CONFIG_JSON = "config.json"
+DATA_DIR = "data"
+
+SKIP_FILES = {"input.xlsx", "input.xls", "input.csv"}
+
+VOCAB_FILE = os.path.join(DATA_DIR, "tu_vung_hsk.xlsx")
+VOCAB_ID = "tu-vung"
+VOCAB_LABEL = "11000+ Từ vựng HSK"
+
+TAB_ICONS = [
+    "fa-comments", "fa-file-alt", "fa-book", "fa-graduation-cap",
+    "fa-star", "fa-fire", "fa-bolt", "fa-rocket",
+]
+TAB_COLORS = [
+    "#0891b2", "#dc2626", "#059669", "#d97706",
+    "#7c3aed", "#db2777", "#0284c7", "#65a30d",
+]
+
+
+# ═══════════════════════════════════════════════════════════════════
+#  VOCAB WARNING CSS
+# ═══════════════════════════════════════════════════════════════════
+VOCAB_WARNING_CSS = r"""
+.vocab-warning-banner {
+    display: flex; align-items: center; gap: .85rem;
+    padding: .85rem 1rem; margin-bottom: 1rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, rgba(251, 191, 36, .15), rgba(245, 158, 11, .08));
+    border: 1.5px solid rgba(245, 158, 11, .45);
+    animation: vocabWarnIn .4s cubic-bezier(.34, 1.56, .64, 1);
+}
+@keyframes vocabWarnIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.vocab-warning-banner.tier-trial {
+    background: linear-gradient(135deg, rgba(99, 102, 241, .12), rgba(139, 92, 246, .08));
+    border-color: rgba(99, 102, 241, .45);
+}
+.vocab-warning-banner.tier-expired {
+    background: linear-gradient(135deg, rgba(220, 38, 38, .12), rgba(251, 146, 60, .08));
+    border-color: rgba(220, 38, 38, .5);
+}
+.vocab-warning-banner.tier-active {
+    background: linear-gradient(135deg, rgba(8, 145, 178, .12), rgba(6, 182, 212, .08));
+    border-color: rgba(8, 145, 178, .45);
+}
+.vocab-warning-icon {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, .4);
+}
+.vocab-warning-banner.tier-trial .vocab-warning-icon {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    box-shadow: 0 4px 12px rgba(99, 102, 241, .4);
+}
+.vocab-warning-banner.tier-expired .vocab-warning-icon {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, .4);
+}
+.vocab-warning-banner.tier-active .vocab-warning-icon {
+    background: linear-gradient(135deg, #0891b2, #06b6d4);
+    box-shadow: 0 4px 12px rgba(8, 145, 178, .4);
+}
+.vocab-warning-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: .15rem; }
+.vocab-warning-text strong { font-size: .92rem; font-weight: 800; color: #92400e; }
+.vocab-warning-banner.tier-trial .vocab-warning-text strong { color: #4f46e5; }
+.vocab-warning-banner.tier-expired .vocab-warning-text strong { color: #991b1b; }
+.vocab-warning-banner.tier-active .vocab-warning-text strong { color: #075985; }
+.vocab-warning-text span { font-size: .8rem; color: var(--text-2); line-height: 1.4; }
+.vocab-warning-btn {
+    padding: .55rem .9rem; border-radius: 10px; border: none;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b 50%, #ea580c);
+    color: #fff; font-weight: 800; font-size: .8rem;
+    font-family: inherit; cursor: pointer;
+    display: inline-flex; align-items: center; gap: .35rem;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, .4);
+    transition: all .2s; white-space: nowrap; flex-shrink: 0;
+}
+.vocab-warning-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(245, 158, 11, .6);
+}
+[data-theme="dark"] .vocab-warning-banner {
+    background: linear-gradient(135deg, rgba(251, 191, 36, .2), rgba(245, 158, 11, .1));
+}
+[data-theme="dark"] .vocab-warning-text strong { color: #fcd34d; }
+[data-theme="dark"] .vocab-warning-banner.tier-trial .vocab-warning-text strong { color: #c4b5fd; }
+[data-theme="dark"] .vocab-warning-banner.tier-expired .vocab-warning-text strong { color: #fca5a5; }
+[data-theme="dark"] .vocab-warning-banner.tier-active .vocab-warning-text strong { color: #67e8f9; }
+@media (max-width: 600px) {
+    .vocab-warning-banner { flex-wrap: wrap; gap: .6rem; padding: .7rem .8rem; }
+    .vocab-warning-icon { width: 34px; height: 34px; font-size: .95rem; }
+    .vocab-warning-text strong { font-size: .85rem; }
+    .vocab-warning-text span { font-size: .74rem; }
+}
 """
 
 
-# ═══════════════════════════════════════════════════════════════
-# CSS
-# ═══════════════════════════════════════════════════════════════
-def build_favorites_css():
+def build_vocab_js_patch():
     return r"""
-/* ═══════════════════════════════════════════════════════════════
-   ❤️ FAVORITES — Nút tim trên card
-   ═══════════════════════════════════════════════════════════════ */
-.fav-btn{
-    width:clamp(28px,2.8vw,32px);
-    height:clamp(28px,2.8vw,32px);
-    border-radius:50%;
-    border:none;
-    background:var(--surface-2);
-    color:var(--text-3);
-    cursor:pointer;
-    display:inline-flex;
-    align-items:center;
-    justify-content:center;
-    font-size:clamp(.72rem,.9vw,.85rem);
-    transition:all .2s cubic-bezier(.34,1.56,.64,1);
-    flex-shrink:0;
-    position:relative;
-}
-.fav-btn:hover{
-    transform:scale(1.15);
-    background:rgba(239,68,68,.12);
-    color:#ef4444;
-}
-.fav-btn:active{transform:scale(.92);}
-.fav-btn.active{color:#ef4444;background:rgba(239,68,68,.12);}
-.fav-btn.active i{animation:favHeartPop .4s cubic-bezier(.34,1.56,.64,1);}
-@keyframes favHeartPop{
-    0%{transform:scale(1);}
-    40%{transform:scale(1.4);}
-    70%{transform:scale(.9);}
-    100%{transform:scale(1);}
-}
-.fav-btn.active::after{
-    content:'';position:absolute;inset:-4px;border-radius:50%;
-    border:2px solid rgba(239,68,68,.4);
-    animation:favRing .5s ease-out;pointer-events:none;
-}
-@keyframes favRing{
-    0%{opacity:1;transform:scale(.8);}
-    100%{opacity:0;transform:scale(1.4);}
-}
-.fav-btn.locked{color:#dc2626;background:rgba(220,38,38,.1);}
-.fav-btn.locked:hover{
-    transform:scale(1.12);background:rgba(220,38,38,.2);color:#b91c1c;
-}
-.fav-btn.locked i{font-size:.65rem;}
-[data-theme="dark"] .fav-btn.locked{color:#fca5a5;background:rgba(220,38,38,.25);}
-[data-theme="dark"] .fav-btn.locked:hover{background:rgba(220,38,38,.4);color:#fecaca;}
+(function() {
+    'use strict';
+    var VOCAB_ID = 'tu-vung';
 
-/* ═══════════════════════════════════════════════════════════════
-   ❤️ Nút tim FLOAT (Practice Full) — góc phải
-   ═══════════════════════════════════════════════════════════════ */
-.pf-fav-float{
-    position:fixed;
-    right:clamp(14px,2vw,22px);
-    bottom:calc(80px + env(safe-area-inset-bottom));
-    display:none;align-items:center;gap:.5rem;
-    padding:.65rem 1.1rem .65rem .9rem;
-    border-radius:999px;
-    border:2px solid rgba(239,68,68,.4);
-    background:linear-gradient(135deg,#fef2f2,#fee2e2);
-    color:#dc2626;
-    font-size:clamp(.85rem,1vw,.95rem);font-weight:800;font-family:inherit;
-    cursor:pointer;z-index:2450;
-    transition:all .25s cubic-bezier(.34,1.56,.64,1);
-    box-shadow:0 8px 24px rgba(239,68,68,.35),0 2px 8px rgba(0,0,0,.1);
-    text-transform:uppercase;letter-spacing:.3px;
-}
-.pf-fav-float.show{display:inline-flex}
-.pf-fav-float i{
-    font-size:clamp(1.15rem,1.4vw,1.35rem);
-    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
-}
-.pf-fav-float:hover{
-    transform:translateY(-3px) scale(1.05);
-    border-color:#ef4444;
-    box-shadow:0 12px 32px rgba(239,68,68,.5),0 4px 12px rgba(0,0,0,.15);
-}
-.pf-fav-float:hover i{transform:scale(1.15);}
-.pf-fav-float:active{transform:translateY(-1px) scale(1.02);}
-.pf-fav-float:not(.active):not(.locked){
-    background:linear-gradient(135deg,#fef2f2,#fee2e2);
-    color:#dc2626;border-color:rgba(239,68,68,.4);
-}
-.pf-fav-float.active{
-    background:linear-gradient(135deg,#ef4444,#dc2626);
-    color:#fff;border-color:#dc2626;
-    box-shadow:0 8px 28px rgba(239,68,68,.6),0 2px 8px rgba(220,38,38,.3);
-    animation:pfFavPulse 2s ease-in-out infinite;
-}
-.pf-fav-float.active i{animation:favHeartPop .5s cubic-bezier(.34,1.56,.64,1);}
-.pf-fav-float.active::after{
-    content:'';position:absolute;inset:-4px;border-radius:999px;
-    border:2px solid rgba(239,68,68,.5);
-    animation:favRing 1s ease-out infinite;pointer-events:none;
-}
-@keyframes pfFavPulse{
-    0%,100%{box-shadow:0 8px 28px rgba(239,68,68,.6),0 2px 8px rgba(220,38,38,.3);}
-    50%{box-shadow:0 8px 36px rgba(239,68,68,.85),0 4px 12px rgba(220,38,38,.4);}
-}
-.pf-fav-float.locked{
-    background:linear-gradient(135deg,#fef3c7,#fde68a);
-    color:#b45309;border-color:rgba(217,119,6,.5);animation:none;
-}
-.pf-fav-float.locked:hover{
-    background:linear-gradient(135deg,#fde68a,#fcd34d);
-    color:#92400e;border-color:#d97706;
-    transform:translateY(-3px) scale(1.05);
-}
-.pf-fav-float.locked::after{display:none;}
-.pf-fav-float .pf-fav-float-label{display:inline-block;white-space:nowrap;}
-[data-theme="dark"] .pf-fav-float{
-    background:linear-gradient(135deg,rgba(239,68,68,.2),rgba(220,38,38,.15));
-    border-color:rgba(239,68,68,.5);color:#fca5a5;
-}
-[data-theme="dark"] .pf-fav-float.active{
-    background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;
-}
-[data-theme="dark"] .pf-fav-float.locked{
-    background:linear-gradient(135deg,rgba(217,119,6,.25),rgba(180,83,9,.2));
-    color:#fcd34d;border-color:rgba(217,119,6,.5);
-}
+    function getVocabAccess() {
+        var cfg = (typeof ONBOARDING_CONFIG !== 'undefined' && ONBOARDING_CONFIG) || {};
+        var appTier = (typeof window.APP_TIER !== 'undefined') ? window.APP_TIER : null;
 
-/* ═══════════════════════════════════════════════════════════════
-   ❤️ Nút toggle "Chỉ câu yêu thích" (Practice Full) — góc trái
-   ═══════════════════════════════════════════════════════════════ */
-.pf-fav-only-float{
-    position:fixed;
-    left:clamp(14px,2vw,22px);
-    bottom:calc(80px + env(safe-area-inset-bottom));
-    display:none;align-items:center;gap:.5rem;
-    padding:.65rem 1.1rem .65rem .9rem;
-    border-radius:999px;
-    border:2px solid var(--border);
-    background:var(--surface);
-    color:var(--text-2);
-    font-size:clamp(.82rem,.95vw,.92rem);font-weight:800;font-family:inherit;
-    cursor:pointer;z-index:2450;
-    transition:all .25s cubic-bezier(.34,1.56,.64,1);
-    box-shadow:0 4px 14px rgba(0,0,0,.12);
-    text-transform:uppercase;letter-spacing:.3px;user-select:none;
-}
-.pf-fav-only-float.show{display:inline-flex;}
-.pf-fav-only-float i{
-    font-size:clamp(1rem,1.2vw,1.15rem);
-    transition:transform .3s cubic-bezier(.34,1.56,.64,1);
-}
-.pf-fav-only-float:hover{
-    transform:translateY(-3px) scale(1.04);
-    border-color:#ef4444;color:#dc2626;
-    box-shadow:0 8px 22px rgba(239,68,68,.3);
-}
-.pf-fav-only-float:active{transform:translateY(-1px) scale(1.01);}
-.pf-fav-only-float .pf-fav-only-count{
-    min-width:20px;height:20px;padding:0 .4rem;border-radius:50px;
-    background:rgba(239,68,68,.15);color:#dc2626;
-    font-size:.68rem;font-weight:900;
-    display:inline-flex;align-items:center;justify-content:center;
-    line-height:1;transition:.2s;
-}
-.pf-fav-only-float.active{
-    background:linear-gradient(135deg,#ef4444,#dc2626);
-    color:#fff;border-color:#dc2626;
-    box-shadow:0 8px 24px rgba(239,68,68,.5);
-}
-.pf-fav-only-float.active i{animation:favHeartPop .4s cubic-bezier(.34,1.56,.64,1);}
-.pf-fav-only-float.active .pf-fav-only-count{
-    background:rgba(255,255,255,.3);color:#fff;
-}
-.pf-fav-only-float.locked{
-    background:linear-gradient(135deg,#fef3c7,#fde68a);
-    color:#b45309;border-color:rgba(217,119,6,.5);
-}
-.pf-fav-only-float.locked:hover{
-    background:linear-gradient(135deg,#fde68a,#fcd34d);
-    color:#92400e;border-color:#d97706;
-    transform:translateY(-3px) scale(1.04);
-}
-.pf-fav-only-float.locked .pf-fav-only-count{
-    background:rgba(217,119,6,.2);color:#92400e;
-}
-.pf-fav-only-float.empty{opacity:.55;}
-.pf-fav-only-float.empty .pf-fav-only-count{display:none;}
-[data-theme="dark"] .pf-fav-only-float{
-    background:var(--surface-2);border-color:var(--border);color:var(--text-2);
-}
-[data-theme="dark"] .pf-fav-only-float.active{
-    background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;border-color:#dc2626;
-}
-[data-theme="dark"] .pf-fav-only-float.locked{
-    background:linear-gradient(135deg,rgba(217,119,6,.25),rgba(180,83,9,.2));
-    color:#fcd34d;border-color:rgba(217,119,6,.5);
-}
+        var u = null;
+        try {
+            if (typeof window.currentUser !== 'undefined' && window.currentUser) u = window.currentUser;
+            else if (typeof currentUser !== 'undefined' && currentUser) u = currentUser;
+        } catch(e) {}
 
-/* ═══════════════════════════════════════════════════════════════
-   ❤️ Responsive
-   ═══════════════════════════════════════════════════════════════ */
-@media (max-width:500px){
-    .pf-fav-float{
-        padding:.55rem .9rem .55rem .75rem;font-size:.78rem;
-        bottom:calc(78px + env(safe-area-inset-bottom));
-    }
-    .pf-fav-float i{font-size:1.05rem;}
-    .pf-fav-float .pf-fav-float-label{display:none;}
-
-    .pf-fav-only-float{
-        padding:.55rem .9rem .55rem .75rem;font-size:.78rem;
-        bottom:calc(78px + env(safe-area-inset-bottom));
-    }
-    .pf-fav-only-float i{font-size:1rem;}
-    .pf-fav-only-float .pf-fav-only-label{display:none;}
-}
-@media (max-width:400px){
-    .pf-fav-float{padding:.5rem;min-width:46px;justify-content:center;}
-    .pf-fav-only-float{padding:.5rem;min-width:46px;justify-content:center;}
-}
-@media (max-height:550px) and (orientation:landscape){
-    .pf-fav-float{
-        bottom:calc(64px + env(safe-area-inset-bottom));
-        transform:scale(.9);transform-origin:right bottom;
-    }
-    .pf-fav-only-float{
-        bottom:calc(64px + env(safe-area-inset-bottom));
-        transform:scale(.9);transform-origin:left bottom;
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   ❤️ Tab trong dataset selector
-   ═══════════════════════════════════════════════════════════════ */
-.ds-btn[data-dataset-group="favorites"]{position:relative;overflow:visible;}
-.ds-btn[data-dataset-group="favorites"] .ds-fav-badge{
-    position:absolute;top:-8px;right:-6px;
-    min-width:22px;height:22px;padding:0 .4rem;border-radius:50px;
-    background:linear-gradient(135deg,#ef4444,#dc2626);
-    color:#fff;font-size:.65rem;font-weight:900;
-    display:flex;align-items:center;justify-content:center;
-    box-shadow:0 2px 8px rgba(239,68,68,.5),0 0 0 2px var(--surface);
-    animation:favBadgePulse 2s ease-in-out infinite;
-    z-index:10;line-height:1;
-}
-.ds-btn[data-dataset-group="favorites"] .ds-fav-badge[data-count="0"]{display:none;}
-@keyframes favBadgePulse{
-    0%,100%{transform:scale(1);}
-    50%{transform:scale(1.1);}
-}
-.ds-btn[data-dataset-group="favorites"] .ds-fav-lock{
-    position:absolute;top:-8px;right:-6px;width:22px;height:22px;border-radius:50%;
-    background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;display:flex;align-items:center;justify-content:center;
-    font-size:.62rem;
-    box-shadow:0 2px 8px rgba(220,38,38,.55),0 0 0 2px var(--surface);
-    z-index:10;
-}
-.ds-btn[data-dataset-group="favorites"] i:first-child{color:#ef4444;}
-.ds-btn[data-dataset-group="favorites"].active i:first-child{color:#fff;}
-.ds-btn[data-dataset-group="favorites"].fav-locked{opacity:.65;cursor:pointer;}
-.ds-btn[data-dataset-group="favorites"].fav-locked:hover{
-    opacity:.85;border-color:#dc2626;background:rgba(220,38,38,.06);
-}
-.ds-btn[data-dataset-group="favorites"].fav-locked i:first-child{color:#dc2626;}
-[data-theme="dark"] .ds-btn[data-dataset-group="favorites"].fav-locked i:first-child{color:#fca5a5;}
-
-/* ═══════════════════════════════════════════════════════════════
-   ❤️ Dropdown item (bộ dữ liệu)
-   ═══════════════════════════════════════════════════════════════ */
-.ds-dropdown-item[data-dataset-group="favorites"]{position:relative;}
-.ds-dropdown-item[data-dataset-group="favorites"] .ds-dd-fav-icon{color:#ef4444;}
-.ds-dropdown-item[data-dataset-group="favorites"].active .ds-dd-fav-icon{color:#fff;}
-.ds-dropdown-item[data-dataset-group="favorites"] .ds-dd-fav-badge{
-    margin-left:auto;min-width:20px;height:20px;padding:0 .42rem;border-radius:50px;
-    background:linear-gradient(135deg,#ef4444,#dc2626);
-    color:#fff;font-size:.62rem;font-weight:900;
-    display:inline-flex;align-items:center;justify-content:center;
-    box-shadow:0 2px 6px rgba(239,68,68,.45);line-height:1;
-}
-.ds-dropdown-item[data-dataset-group="favorites"] .ds-dd-fav-badge[data-count="0"]{display:none;}
-.ds-dropdown-item[data-dataset-group="favorites"] .ds-dd-fav-lock{
-    margin-left:auto;color:#dc2626;font-size:.7rem;
-}
-.ds-dropdown-item[data-dataset-group="favorites"].fav-locked{opacity:.7;}
-.ds-dropdown-item[data-dataset-group="favorites"].fav-locked .ds-dd-fav-icon{color:#dc2626;}
-[data-theme="dark"] .ds-dropdown-item[data-dataset-group="favorites"].fav-locked .ds-dd-fav-icon{
-    color:#fca5a5;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   ❤️ Empty states
-   ═══════════════════════════════════════════════════════════════ */
-.fav-empty{
-    grid-column:1 / -1;padding:3rem 1.5rem;text-align:center;
-    background:linear-gradient(135deg,rgba(239,68,68,.04),rgba(220,38,38,.02));
-    border:2px dashed rgba(239,68,68,.25);border-radius:16px;
-}
-[data-theme="dark"] .fav-empty{
-    background:linear-gradient(135deg,rgba(239,68,68,.1),rgba(220,38,38,.05));
-    border-color:rgba(239,68,68,.35);
-}
-.fav-empty .fav-empty-icon{
-    width:70px;height:70px;margin:0 auto 1rem;border-radius:50%;
-    background:linear-gradient(135deg,rgba(239,68,68,.15),rgba(220,38,38,.1));
-    color:#ef4444;display:flex;align-items:center;justify-content:center;
-    font-size:1.8rem;animation:favEmptyFloat 3s ease-in-out infinite;
-}
-@keyframes favEmptyFloat{
-    0%,100%{transform:translateY(0) scale(1);}
-    50%{transform:translateY(-6px) scale(1.05);}
-}
-.fav-empty .fav-empty-title{
-    font-size:1.05rem;font-weight:800;color:var(--text);margin-bottom:.4rem;
-}
-.fav-empty .fav-empty-desc{
-    font-size:.85rem;color:var(--text-2);line-height:1.5;
-    max-width:420px;margin:0 auto;
-}
-.fav-empty .fav-empty-desc b{color:#dc2626;font-weight:800;}
-.fav-locked-empty{
-    grid-column:1 / -1;padding:3rem 1.5rem;text-align:center;
-    background:linear-gradient(135deg,rgba(220,38,38,.06),rgba(185,28,28,.03));
-    border:2px dashed rgba(220,38,38,.35);border-radius:16px;
-}
-.fav-locked-empty .fav-empty-cta{
-    display:inline-flex;align-items:center;gap:.4rem;margin-top:1rem;
-    padding:.6rem 1.2rem;border-radius:50px;border:none;
-    background:linear-gradient(135deg,#dc2626,#b91c1c);
-    color:#fff;font-size:.85rem;font-weight:800;font-family:inherit;
-    cursor:pointer;box-shadow:0 6px 18px rgba(220,38,38,.4);
-    transition:all .2s;text-transform:uppercase;letter-spacing:.3px;
-}
-.fav-locked-empty .fav-empty-cta:hover{
-    transform:translateY(-2px) scale(1.03);
-    box-shadow:0 10px 26px rgba(220,38,38,.6);
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   ❤️ Toast
-   ═══════════════════════════════════════════════════════════════ */
-.fav-toast{
-    position:fixed;top:80px;left:50%;
-    transform:translateX(-50%) translateY(-20px);
-    padding:.7rem 1.2rem;border-radius:50px;
-    font-size:.85rem;font-weight:800;font-family:inherit;color:#fff;
-    z-index:9999;opacity:0;
-    transition:opacity .25s ease, transform .3s cubic-bezier(.34,1.56,.64,1);
-    pointer-events:none;display:flex;align-items:center;gap:.5rem;
-    max-width:90vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    box-shadow:0 8px 24px rgba(0,0,0,.25);
-}
-.fav-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.fav-toast.add{background:linear-gradient(135deg,#ef4444,#dc2626);}
-.fav-toast.remove{background:linear-gradient(135deg,#64748b,#475569);}
-.fav-toast.warn{background:linear-gradient(135deg,#f59e0b,#d97706);}
-.fav-toast i{font-size:1rem;}
-
-/* ═══════════════════════════════════════════════════════════════
-   ★ FIX 2026-09: KHÔNG ZOOM TO TRÊN MÀN RỘNG
-   Khoá kích thước 2 nút float (tim + chỉ câu yêu thích) nhỏ vừa vặn
-   ═══════════════════════════════════════════════════════════════ */
-
-/* Khoá kích thước tối đa cho cả 2 nút */
-.pf-fav-float,
-.pf-fav-only-float {
-    max-width: 180px;
-    max-height: 44px;
-    padding: .55rem .95rem .55rem .8rem;
-    font-size: .82rem;
-    box-sizing: border-box;
-}
-.pf-fav-float i,
-.pf-fav-only-float i {
-    font-size: 1.05rem;
-}
-
-/* Màn hình siêu rộng (>= 1600px): giữ nguyên kích thước nhỏ */
-@media (min-width: 1600px) {
-    .pf-fav-float,
-    .pf-fav-only-float {
-        max-width: 170px;
-        max-height: 42px;
-        font-size: .8rem;
-        padding: .5rem .85rem .5rem .75rem;
-    }
-    .pf-fav-float i,
-    .pf-fav-only-float i {
-        font-size: 1rem;
-    }
-}
-
-/* Landscape (màn thấp ngang): thu nhỏ nhẹ, KHÔNG phóng to */
-@media (max-height: 550px) and (orientation: landscape) {
-    .pf-fav-float {
-        transform: scale(.9) !important;
-        transform-origin: right bottom;
-    }
-    .pf-fav-only-float {
-        transform: scale(.9) !important;
-        transform-origin: right bottom;
-    }
-}
-/* ═══════════════════════════════════════════════════════════════
-   ★ NÚT TOGGLE "CHỈ CÂU YÊU THÍCH" — TRẠNG THÁI CÂU KHÔNG PHẢI YÊU THÍCH
-   Khi câu hiện tại CHƯA like → nút mờ, không kích hoạt được
-   ═══════════════════════════════════════════════════════════════ */
-.pf-fav-only-float.current-not-fav {
-    opacity: 0.5 !important;
-    filter: grayscale(0.6);
-    cursor: not-allowed;
-    pointer-events: auto; /* Vẫn cho phép bấm để hiện cảnh báo */
-}
-
-.pf-fav-only-float.current-not-fav:hover {
-    transform: none !important;
-    border-color: var(--border) !important;
-    color: var(--text-2) !important;
-    box-shadow: 0 4px 14px rgba(0,0,0,.12) !important;
-    opacity: 0.6 !important;
-}
-
-.pf-fav-only-float.current-not-fav i {
-    animation: none !important;
-}
-
-.pf-fav-only-float.current-not-fav .pf-fav-only-count {
-    background: rgba(148, 163, 184, 0.2);
-    color: var(--text-3);
-}
-
-/* Dark mode */
-[data-theme="dark"] .pf-fav-only-float.current-not-fav {
-    background: var(--surface-2);
-    border-color: var(--border);
-    color: var(--text-3);
-}
-
-[data-theme="dark"] .pf-fav-only-float.current-not-fav:hover {
-    background: var(--surface-2) !important;
-    border-color: var(--border) !important;
-}
-"""
-
-
-# ═══════════════════════════════════════════════════════════════
-# HTML SNIPPETS
-# ═══════════════════════════════════════════════════════════════
-def build_favorites_html():
-    return {
-        # Tab Yêu thích — chèn SAU nút Chuyên ngành
-        "dataset_tab":
-            '<button class="ds-btn ds-btn-primary" data-dataset-group="favorites" id="dsFavBtn">\n'
-            '            <i class="far fa-heart"></i>\n'
-            '            <span>Yêu thích</span>\n'
-            '            <span class="ds-fav-badge" id="favTabBadge" data-count="0"></span>\n'
-            '            <i class="fas fa-lock ds-fav-lock" id="favTabLock" style="display:none;"></i>\n'
-            '        </button>',
-
-        # Dropdown item Yêu thích — chèn SAU item Chuyên ngành trong dropdown
-        "dataset_dropdown_item":
-            '<button class="ds-dropdown-item" data-dataset-group="favorites" id="dsFavDropdownItem" type="button">\n'
-            '            <i class="far fa-heart ds-dd-fav-icon"></i>\n'
-            '            <span>Yêu thích</span>\n'
-            '            <span class="ds-dd-fav-badge" id="favDropdownBadge" data-count="0"></span>\n'
-            '            <i class="fas fa-lock ds-dd-fav-lock" id="favDropdownLock" style="display:none;"></i>\n'
-            '        </button>',
-
-        # Nút tim FLOAT — góc phải
-        "pf_float_btn":
-            '<button class="pf-fav-float" id="pfFavBtn" type="button" '
-            'title="Thêm vào yêu thích" aria-label="Thêm vào yêu thích">'
-            '<i class="far fa-heart"></i>'
-            '<span class="pf-fav-float-label">Like</span>'
-            '</button>',
-
-        # Nút toggle "Chỉ câu yêu thích" — góc trái
-        "pf_fav_only_btn":
-            '<button class="pf-fav-only-float" id="pfFavOnlyBtn" type="button" '
-            'title="Chỉ luyện câu yêu thích" aria-label="Chỉ luyện câu yêu thích">'
-            '<i class="far fa-heart"></i>'
-            '<span class="pf-fav-only-label">Favorites Only</span>'
-            '<span class="pf-fav-only-count" id="pfFavOnlyCount">0</span>'
-            '</button>',
-    }
-
-
-# ═══════════════════════════════════════════════════════════════
-# JS — Toàn bộ logic
-# ═══════════════════════════════════════════════════════════════
-def build_favorites_js():
-    return r"""
-/* ═══════════════════════════════════════════════════════════════
-   ❤️ FAVORITES — Module quản lý câu yêu thích
-   KEY = datasetId + "_" + stt  (VD: "tonghop_1", "ketoan_5")
-   ═══════════════════════════════════════════════════════════════ */
-
-/* ============ STATE ============ */
-var favState = {
-    items: {},
-    loaded: false,
-    loading: false,
-    sortMode: 'recent',
-    listener: null,
-    currentView: false,
-    filteringOnly: false,
-    pfOnlyFav: false,
-    __renderTimer: null
-};
-
-/* ============ TIER CHECK ============ */
-function favCanUse() {
-    if (typeof window.APP_TIER === 'undefined') return false;
-    return window.APP_TIER === 'active';
-}
-
-function favIsLoggedIn() {
-    return typeof currentUser !== 'undefined' && currentUser !== null;
-}
-
-function favGetCurrentEmail() {
-    if (favIsLoggedIn() && currentUser.email) return currentUser.email.toLowerCase();
-    return null;
-}
-
-function favGetStorageKey() {
-    var email = favGetCurrentEmail();
-    return email ? ('favorites_cache_' + email) : 'favorites_guest';
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ KEY BUILDER — datasetId + "_" + stt
-   ═══════════════════════════════════════════════════════════════ */
-function favBuildKey(stt, datasetId) {
-    if (stt === null || stt === undefined) return null;
-    var ds = datasetId;
-    if (!ds) {
-        ds = (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
-             ? CURRENT_DATASET
-             : 'tonghop';
-    }
-    return String(ds) + '_' + String(stt);
-}
-
-function favParseKey(key) {
-    if (!key) return null;
-    var str = String(key);
-    var idx = str.indexOf('_');
-    if (idx === -1) {
-        return { datasetId: 'tonghop', stt: str };
-    }
-    return {
-        datasetId: str.substring(0, idx),
-        stt: str.substring(idx + 1)
-    };
-}
-
-function favGetCurrentDsId() {
-    return (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
-           ? CURRENT_DATASET
-           : 'tonghop';
-}
-
-/* ============ LOCK DIALOG ============ */
-function favShowLockDialog() {
-    if (!favIsLoggedIn()) {
-        if (confirm('❤️ Yêu thích câu\n\n' +
-                    'Bạn cần ĐĂNG NHẬP và GIA HẠN để dùng tính năng này.\n\n' +
-                    'Đăng nhập ngay?')) {
-            if (typeof showLoginModal === 'function') showLoginModal();
+        if (u && u.role === 'admin') {
+            return { allowed: true, tier: 'admin',
+                hskAllowed: [1,2,3,4,5,6,7,8,9], maxQuestions: -1,
+                label: 'Admin - Toan bo HSK', warning: null };
         }
-        return;
-    }
-    var tier = (typeof window.APP_TIER !== 'undefined') ? window.APP_TIER : 'demo';
-    if (tier === 'demo' || tier === 'trial' || tier === 'expired') {
-        if (confirm('❤️ Yêu thích câu\n\n' +
-                    'Chỉ tài khoản ĐÃ GIA HẠN mới dùng được tính năng này.\n\n' +
-                    'Gia hạn ngay để lưu câu yêu thích?')) {
-            if (typeof openRenewalModal === 'function') openRenewalModal();
+        if (u && u.isPermanent === true) {
+            return { allowed: true, tier: 'premium',
+                hskAllowed: [1,2,3,4,5,6,7,8,9], maxQuestions: -1,
+                label: 'Premium - Toan bo HSK', warning: null };
         }
-        return;
+
+        var tier = 'demo';
+        if (appTier === 'active') tier = 'active';
+        else if (appTier === 'trial') tier = 'trial';
+        else if (appTier === 'expired') tier = 'expired';
+        else if (appTier === 'demo') tier = 'demo';
+        else if (u) {
+            if (u.isTrial === true || u.tier === 'trial') tier = 'trial';
+            else if (u.isExpiredOnly === true || u.tier === 'expired') tier = 'expired';
+            else tier = 'active';
+        }
+
+        var tierCfg = cfg[tier] || {};
+        var hskArr = tierCfg.hsk_allowed || [];
+        var maxQ = (typeof tierCfg.max_questions === 'number') ? tierCfg.max_questions : -1;
+        var maxT = (typeof tierCfg.topics_per_user === 'number') ? tierCfg.topics_per_user : -1;
+        var isUnlimited = (maxQ === -1 && maxT === -1);
+
+        var hskRange = hskArr.length
+            ? 'HSK ' + hskArr[0] + '-' + hskArr[hskArr.length - 1]
+            : 'co ban';
+
+        if (tier === 'expired') {
+            return { allowed: false, tier: 'expired', hskAllowed: [], maxQuestions: 0,
+                label: 'Tai khoan het han',
+                warning: 'Tai khoan da het han - gia han de tiep tuc dung Tu vung HSK.' };
+        }
+        if (tier === 'demo') {
+            return { allowed: true, tier: 'demo', hskAllowed: hskArr, maxQuestions: maxQ,
+                label: 'Demo - ' + hskRange,
+                warning: 'Ban Demo gioi han ' + hskRange + ' va toi da ' +
+                         (maxQ > 0 ? maxQ + ' tu' : 'mot so tu') +
+                         ' - dang nhap de dung day du.' };
+        }
+        if (tier === 'trial') {
+            if (isUnlimited) {
+                return { allowed: true, tier: 'trial',
+                    hskAllowed: hskArr.length ? hskArr : [1,2,3,4,5,6,7,8,9],
+                    maxQuestions: -1,
+                    label: 'Trial - ' + hskRange, warning: null };
+            }
+            return { allowed: true, tier: 'trial', hskAllowed: hskArr, maxQuestions: maxQ,
+                label: 'Trial - ' + hskRange,
+                warning: 'Ban Trial gioi han ' + hskRange + ' va ' +
+                         (maxQ > 0 ? maxQ + ' tu' : 'mot so tu') +
+                         ' - nang cap Premium de mo toan bo.' };
+        }
+        if (isUnlimited) {
+            return { allowed: true, tier: 'active',
+                hskAllowed: hskArr.length ? hskArr : [1,2,3,4,5,6,7,8,9],
+                maxQuestions: -1,
+                label: 'Active - ' + hskRange, warning: null };
+        }
+        return { allowed: true, tier: 'active', hskAllowed: hskArr, maxQuestions: maxQ,
+            label: 'Active - ' + hskRange,
+            warning: 'Ban Active gioi han ' + hskRange + ' va ' +
+                     (maxQ > 0 ? maxQ + ' tu' : 'mot so tu') +
+                     ' - nang cap Premium de mo toan bo.' };
     }
-}
 
-/* ═══════════════════════════════════════════════════════════════
-   LOAD / SAVE LOCAL — Migration key cũ → key mới
-   ═══════════════════════════════════════════════════════════════ */
-function favLoadFromLocal() {
-    try {
-        var key = favGetStorageKey();
-        var cached = JSON.parse(localStorage.getItem(key) || 'null');
-        if (cached && cached.items && typeof cached.items === 'object') {
-
-            var rawItems = cached.items;
-            var migrated = {};
-            var needResave = false;
-
-            Object.keys(rawItems).forEach(function(k) {
-                var item = rawItems[k];
-                if (!item || typeof item !== 'object') {
-                    needResave = true;
-                    return;
-                }
-
-                var parsed = favParseKey(k);
-                var ds = item.datasetId || parsed.datasetId || 'tonghop';
-                var stt = item.stt || parsed.stt;
-
-                var newKey = favBuildKey(stt, ds);
-                if (newKey !== k) needResave = true;
-
-                migrated[newKey] = {
-                    stt: String(stt),
-                    datasetId: ds,
-                    addedAt: item.addedAt || Date.now(),
-                    hsk: item.hsk || '',
-                    subject: item.subject || ''
-                };
+    function applyVocabLimits(list, access) {
+        var result = list;
+        if (access.hskAllowed && access.hskAllowed.length &&
+            access.hskAllowed.length < 9) {
+            var allowSet = {};
+            access.hskAllowed.forEach(function(h) {
+                allowSet['HSK' + h] = true;
+                allowSet[String(h)] = true;
             });
-
-            favState.items = migrated;
-
-            if (needResave) {
-                favSaveToLocal();
-                if (typeof favMigrateLocalToCloud === 'function') {
-                    favMigrateLocalToCloud();
+            result = result.filter(function(r) {
+                var h = (r.hsk || '').toString().toUpperCase().trim();
+                if (!h) return true;
+                if (h === 'HSK7-9') {
+                    return allowSet['HSK7-9'] === true;
                 }
-            }
-
-            return true;
-        }
-    } catch(e) {
-        console.warn('[Favorites] Load local error:', e);
-    }
-    return false;
-}
-
-function favSaveToLocal() {
-    try {
-        var key = favGetStorageKey();
-        localStorage.setItem(key, JSON.stringify({
-            items: favState.items,
-            savedAt: Date.now()
-        }));
-    } catch(e) {
-        console.warn('[Favorites] Save local error:', e);
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   LOAD FROM CLOUD — Doc ID = key mới
-   ═══════════════════════════════════════════════════════════════ */
-async function favLoadFromCloud() {
-    if (!favCanUse()) return;
-    var email = favGetCurrentEmail();
-    if (!email || typeof db === 'undefined' || !db) return;
-    if (favState.loading) return;
-    favState.loading = true;
-
-    try {
-        var snap = await db.collection('favorites').doc(email)
-            .collection('items').get();
-
-        var items = {};
-        var needMigration = false;
-
-        snap.forEach(function(doc) {
-            var d = doc.data() || {};
-            var docId = String(doc.id);
-
-            var parsed = favParseKey(docId);
-            var ds = d.datasetId || parsed.datasetId || 'tonghop';
-            var stt = d.stt || parsed.stt;
-
-            var newKey = favBuildKey(stt, ds);
-            if (newKey !== docId) needMigration = true;
-
-            items[newKey] = {
-                stt: String(stt),
-                datasetId: ds,
-                addedAt: d.addedAt
-                    ? (d.addedAt.toMillis ? d.addedAt.toMillis() : d.addedAt)
-                    : Date.now(),
-                hsk: d.hsk || '',
-                subject: d.subject || ''
-            };
-        });
-
-        favState.items = items;
-        favState.loaded = true;
-        favSaveToLocal();
-        favNotifyChanged();
-        favListenCloud();
-
-        if (needMigration && typeof favMigrateLocalToCloud === 'function') {
-            favMigrateLocalToCloud();
-        }
-
-    } catch(e) {
-        console.warn('[Favorites] Load cloud error:', e);
-    } finally {
-        favState.loading = false;
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   LISTEN CLOUD — Realtime
-   ═══════════════════════════════════════════════════════════════ */
-function favListenCloud() {
-    if (!favCanUse()) return;
-    var email = favGetCurrentEmail();
-    if (!email || typeof db === 'undefined' || !db) return;
-
-    if (favState.listener) {
-        try { favState.listener(); } catch(e) {}
-        favState.listener = null;
-    }
-
-    favState.listener = db.collection('favorites').doc(email)
-        .collection('items')
-        .onSnapshot(function(snap) {
-
-            var items = {};
-            var needMigration = false;
-
-            snap.forEach(function(doc) {
-                var d = doc.data() || {};
-                var docId = String(doc.id);
-
-                var parsed = favParseKey(docId);
-                var ds = d.datasetId || parsed.datasetId || 'tonghop';
-                var stt = d.stt || parsed.stt;
-
-                var newKey = favBuildKey(stt, ds);
-                if (newKey !== docId) needMigration = true;
-
-                items[newKey] = {
-                    stt: String(stt),
-                    datasetId: ds,
-                    addedAt: d.addedAt
-                        ? (d.addedAt.toMillis ? d.addedAt.toMillis() : d.addedAt)
-                        : Date.now(),
-                    hsk: d.hsk || '',
-                    subject: d.subject || ''
-                };
+                var num = h.replace(/[^0-9]/g, '');
+                if (!num) return true;
+                return allowSet['HSK' + num] === true || allowSet[num] === true;
             });
+        }
+        var maxQ = access.maxQuestions;
+        if (typeof maxQ === 'number' && maxQ > 0 && result.length > maxQ) {
+            result = result.slice(0, maxQ);
+        }
+        return result;
+    }
 
-            favState.items = items;
-            favState.loaded = true;
-            favSaveToLocal();
-            favNotifyChanged();
+    function _esc(s) {
+        return (typeof escapeHtml === 'function')
+            ? escapeHtml(s) : String(s == null ? '' : s);
+    }
 
-            if (needMigration && typeof favMigrateLocalToCloud === 'function') {
-                favMigrateLocalToCloud();
+    function _isVocabMode() {
+        return (typeof CURRENT_DATASET !== 'undefined') && CURRENT_DATASET === VOCAB_ID;
+    }
+
+    function updateTabLockState() {
+        var btn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
+        if (!btn) return;
+        var acc = getVocabAccess();
+        var oldLock = btn.querySelector('.vocab-lock-icon');
+        if (oldLock) oldLock.remove();
+        var badge = btn.querySelector('.ds-vocab-badge');
+
+        if (acc.allowed) {
+            btn.classList.remove('vocab-locked');
+            btn.classList.add('vocab-unlocked');
+            btn.title = acc.label;
+            if (badge) {
+                badge.textContent = (acc.tier === 'admin' || acc.tier === 'premium')
+                    ? 'PREMIUM' : (acc.tier === 'active' ? 'ACTIVE'
+                    : (acc.tier === 'trial' ? 'TRIAL' : 'DEMO'));
             }
+        } else {
+            btn.classList.add('vocab-locked');
+            btn.classList.remove('vocab-unlocked');
+            btn.title = acc.label;
+            var lock = document.createElement('i');
+            lock.className = 'fas fa-lock vocab-lock-icon';
+            btn.appendChild(lock);
+        }
+    }
 
-        }, function(err) {
-            console.warn('[Favorites] Listener error:', err);
-        });
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ MIGRATION CLOUD
-   ═══════════════════════════════════════════════════════════════ */
-var _favMigrating = false;
-
-async function favMigrateLocalToCloud() {
-    if (_favMigrating) return;
-    if (!favCanUse()) return;
-
-    var email = favGetCurrentEmail();
-    if (!email || typeof db === 'undefined' || !db) return;
-
-    _favMigrating = true;
-
-    try {
-        var snap = await db.collection('favorites').doc(email)
-            .collection('items').get();
-
-        var toDelete = [];
-        var toCreate = [];
-
-        snap.forEach(function(doc) {
-            var d = doc.data() || {};
-            var docId = String(doc.id);
-
-            var parsed = favParseKey(docId);
-            var ds = d.datasetId || parsed.datasetId || 'tonghop';
-            var stt = d.stt || parsed.stt;
-
-            var newKey = favBuildKey(stt, ds);
-
-            if (newKey !== docId) {
-                toCreate.push({
-                    ref: db.collection('favorites').doc(email)
-                        .collection('items').doc(newKey),
-                    data: {
-                        stt: String(stt),
-                        datasetId: ds,
-                        hsk: d.hsk || '',
-                        subject: d.subject || '',
-                        addedAt: d.addedAt || firebase.firestore.FieldValue.serverTimestamp()
-                    }
-                });
-                toDelete.push(doc.ref);
-            } else if (!d.datasetId) {
-                toCreate.push({
-                    ref: doc.ref,
-                    data: { datasetId: ds },
-                    isUpdate: true
-                });
-            }
-        });
-
-        if (toCreate.length === 0 && toDelete.length === 0) {
-            _favMigrating = false;
+    function injectVocabWarningBanner() {
+        if (!_isVocabMode()) {
+            var oldOut = document.getElementById('vocabWarningBanner');
+            if (oldOut) oldOut.remove();
             return;
         }
+        var old = document.getElementById('vocabWarningBanner');
+        if (old) old.remove();
 
-        var BATCH_SIZE = 400;
-        for (var i = 0; i < toCreate.length; i += BATCH_SIZE) {
-            var batch = db.batch();
-            var chunk = toCreate.slice(i, i + BATCH_SIZE);
-            chunk.forEach(function(entry) {
-                if (entry.isUpdate) {
-                    batch.update(entry.ref, entry.data);
-                } else {
-                    batch.set(entry.ref, entry.data);
-                }
-            });
-            await batch.commit();
-        }
+        var acc = getVocabAccess();
+        if (!acc.warning) return;
 
-        for (var j = 0; j < toDelete.length; j += BATCH_SIZE) {
-            var delBatch = db.batch();
-            var delChunk = toDelete.slice(j, j + BATCH_SIZE);
-            delChunk.forEach(function(ref) {
-                delBatch.delete(ref);
-            });
-            await delBatch.commit();
-        }
+        var main = document.getElementById('mainContent');
+        if (!main) return;
 
-        console.log('[Favorites] Migrated: +' + toCreate.length + ' / -' + toDelete.length);
-
-    } catch(e) {
-        console.warn('[Favorites] Migration error:', e);
-    } finally {
-        _favMigrating = false;
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   ADD / REMOVE / TOGGLE
-   ═══════════════════════════════════════════════════════════════ */
-async function favAdd(stt, record, datasetId) {
-    if (!favCanUse()) { favShowLockDialog(); return false; }
-    var email = favGetCurrentEmail();
-    if (!email) { favShowLockDialog(); return false; }
-
-    stt = String(stt);
-    var currentDsId = datasetId || favGetCurrentDsId();
-    var key = favBuildKey(stt, currentDsId);
-
-    var isAdmin = (typeof currentUser !== 'undefined'
-                   && currentUser
-                   && currentUser.role === 'admin');
-
-    var MAX_PER_DAY = 500;
-    var today = new Date().toDateString();
-
-    if (!isAdmin) {
-        var dayKey = 'fav_daily_' + email;
-        var daily = { date: today, count: 0 };
+        var limitedCount = 0, totalCount = 0;
         try {
-            var saved = JSON.parse(localStorage.getItem(dayKey) || 'null');
-            if (saved && saved.date === today) {
-                daily = saved;
+            if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[VOCAB_ID]) {
+                var full = window.FIXPY_DATASETS[VOCAB_ID].data || [];
+                totalCount = full.length;
+                limitedCount = applyVocabLimits(full, acc).length;
             }
         } catch(e) {}
 
-        if (daily.count >= MAX_PER_DAY) {
-            var tomorrow = new Date();
-            tomorrow.setDate(tomorrow.getDate() + 1);
-            tomorrow.setHours(0, 0, 0, 0);
-            var hoursLeft = Math.ceil((tomorrow - Date.now()) / 3600000);
-            favShowToast('Đã đạt giới hạn ' + MAX_PER_DAY + ' tim hôm nay. Còn ' + hoursLeft + 'h nữa!', 'warn');
-            return false;
+        var limitInfo = '';
+        if (acc.maxQuestions > 0 && limitedCount > 0 && totalCount > limitedCount) {
+            limitInfo = ' <span style="opacity:.75">(' +
+                        limitedCount + '/' + totalCount + ' tu)</span>';
         }
 
-        daily.count++;
-        daily.date = today;
-        try { localStorage.setItem(dayKey, JSON.stringify(daily)); } catch(e) {}
+        var icon = acc.tier === 'expired' ? 'fa-exclamation-triangle'
+                 : acc.tier === 'trial' ? 'fa-hourglass-half'
+                 : acc.tier === 'demo' ? 'fa-user'
+                 : 'fa-info-circle';
+        var btnLabel = acc.tier === 'expired' ? 'Gia han ngay'
+                     : acc.tier === 'demo' ? 'Dang nhap'
+                     : 'Nang cap Premium';
+        var btnFn = acc.tier === 'demo' ? 'vocabUpgradeLogin()'
+                  : 'vocabUpgradeRenew()';
+
+        var banner = document.createElement('div');
+        banner.id = 'vocabWarningBanner';
+        banner.className = 'vocab-warning-banner tier-' + acc.tier;
+        banner.innerHTML =
+            '<div class="vocab-warning-icon"><i class="fas ' + icon + '"></i></div>' +
+            '<div class="vocab-warning-text">' +
+                '<strong>' + _esc(acc.label) + limitInfo + '</strong>' +
+                '<span>' + _esc(acc.warning) + '</span>' +
+            '</div>' +
+            '<button class="vocab-warning-btn" onclick="' + btnFn + '">' +
+                '<i class="fas fa-crown"></i> ' + btnLabel +
+            '</button>';
+        main.insertBefore(banner, main.firstChild);
     }
 
-    favState.items[key] = {
-        stt: stt,
-        datasetId: currentDsId,
-        addedAt: Date.now(),
-        hsk: record && record.hsk ? record.hsk : '',
-        subject: record && record.subject ? record.subject : ''
-    };
-    favSaveToLocal();
-    favNotifyChanged();
-
-    if (typeof db !== 'undefined' && db) {
-        try {
-            await db.collection('favorites').doc(email)
-                .collection('items').doc(key).set({
-                    stt: stt,
-                    datasetId: currentDsId,
-                    hsk: favState.items[key].hsk,
-                    subject: favState.items[key].subject,
-                    addedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-        } catch(e) {
-            console.warn('[Favorites] Add cloud error:', e);
-            delete favState.items[key];
-            favSaveToLocal();
-            favNotifyChanged();
-
-            if (!isAdmin) {
-                try {
-                    var dayKey2 = 'fav_daily_' + email;
-                    var d2 = JSON.parse(localStorage.getItem(dayKey2) || 'null');
-                    if (d2 && d2.date === today && d2.count > 0) {
-                        d2.count--;
-                        localStorage.setItem(dayKey2, JSON.stringify(d2));
-                    }
-                } catch(e2) {}
-            }
-
-            favShowToast('Lỗi lưu! Thử lại sau', 'warn');
-            return false;
-        }
-    }
-    return true;
-}
-
-async function favRemove(stt, datasetId) {
-    if (!favCanUse()) { favShowLockDialog(); return false; }
-    var email = favGetCurrentEmail();
-    if (!email) return false;
-
-    stt = String(stt);
-    var targetDs = datasetId || favGetCurrentDsId();
-    var key = favBuildKey(stt, targetDs);
-
-    var backup = favState.items[key];
-    if (!backup) {
-        if (favState.items[stt]) {
-            key = stt;
-            backup = favState.items[key];
-        }
-    }
-    if (!backup) return true;
-
-    delete favState.items[key];
-    favSaveToLocal();
-    favNotifyChanged();
-
-    if (typeof db !== 'undefined' && db) {
-        try {
-            await db.collection('favorites').doc(email)
-                .collection('items').doc(key).delete();
-        } catch(e) {
-            console.warn('[Favorites] Remove cloud error:', e);
-            favState.items[key] = backup;
-            favSaveToLocal();
-            favNotifyChanged();
-            return false;
-        }
-    }
-    return true;
-}
-
-async function favToggle(stt, record, datasetId) {
-    if (!favCanUse()) { favShowLockDialog(); return; }
-    stt = String(stt);
-
-    var dsId = datasetId || favGetCurrentDsId();
-
-    if (favHas(stt, dsId)) {
-        var ok = await favRemove(stt, dsId);
-        if (ok) favShowToast('Đã xoá khỏi yêu thích', 'remove');
-    } else {
-        var ok2 = await favAdd(stt, record, dsId);
-        if (ok2) favShowToast('Đã thêm vào yêu thích', 'add');
-    }
-}
-
-async function favClearAll() {
-    if (!favCanUse()) { favShowLockDialog(); return; }
-    var email = favGetCurrentEmail();
-    if (!email) return;
-
-    var count = favCount();
-    if (count === 0) {
-        favShowToast('Chưa có câu yêu thích nào', 'warn');
-        return;
-    }
-
-    if (!confirm('Xoá TẤT CẢ ' + count + ' câu yêu thích?\n\nKhông thể hoàn tác!')) return;
-
-    var backup = favState.items;
-    favState.items = {};
-    favSaveToLocal();
-    favNotifyChanged();
-
-    if (typeof db !== 'undefined' && db) {
-        try {
-            var snap = await db.collection('favorites').doc(email)
-                .collection('items').get();
-
-            if (snap.size === 0) return;
-
-            var BATCH_SIZE = 450;
-            var docs = [];
-            snap.forEach(function(doc) { docs.push(doc.ref); });
-
-            for (var i = 0; i < docs.length; i += BATCH_SIZE) {
-                var batch = db.batch();
-                var chunk = docs.slice(i, i + BATCH_SIZE);
-                chunk.forEach(function(ref) { batch.delete(ref); });
-                await batch.commit();
-            }
-        } catch(e) {
-            console.warn('[Favorites] Clear cloud error:', e);
-            favState.items = backup;
-            favSaveToLocal();
-            favNotifyChanged();
-            favShowToast('Lỗi! Thử lại sau', 'warn');
+    function patchSubjectLock() {
+        if (window.__vocabSubjectLockPatched) return;
+        if (typeof window.buildFilters !== 'function') {
+            setTimeout(patchSubjectLock, 200);
             return;
         }
-    }
-    favShowToast('Đã xoá tất cả yêu thích', 'remove');
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   CHECK / COUNT
-   ═══════════════════════════════════════════════════════════════ */
-function favHas(stt, datasetId) {
-    if (stt === null || stt === undefined) return false;
-
-    var targetDs = datasetId || favGetCurrentDsId();
-
-    var key = favBuildKey(stt, targetDs);
-    if (favState.items[key]) return true;
-
-    var oldItem = favState.items[String(stt)];
-    if (oldItem) {
-        var itemDs = oldItem.datasetId || 'tonghop';
-        return itemDs === targetDs;
-    }
-
-    return false;
-}
-
-function favCount() {
-    return Object.keys(favState.items).length;
-}
-
-function favCountInCurrentDataset() {
-    var currentDs = favGetCurrentDsId();
-    var count = 0;
-    Object.keys(favState.items).forEach(function(k) {
-        var item = favState.items[k];
-        if (!item) return;
-        var parsed = favParseKey(k);
-        var ds = item.datasetId || (parsed && parsed.datasetId) || 'tonghop';
-        if (ds === currentDs) count++;
-    });
-    return count;
-}
-
-function favGetDailyRemaining() {
-    var email = favGetCurrentEmail();
-    if (!email) return 0;
-
-    var isAdmin = (typeof currentUser !== 'undefined'
-                   && currentUser
-                   && currentUser.role === 'admin');
-    if (isAdmin) return Infinity;
-
-    var MAX_PER_DAY = 500;
-    var today = new Date().toDateString();
-
-    try {
-        var saved = JSON.parse(localStorage.getItem('fav_daily_' + email) || 'null');
-        if (saved && saved.date === today) {
-            return Math.max(0, MAX_PER_DAY - saved.count);
-        }
-    } catch(e) {}
-
-    return MAX_PER_DAY;
-}
-
-function favGetDailyUsed() {
-    var email = favGetCurrentEmail();
-    if (!email) return 0;
-
-    var today = new Date().toDateString();
-    try {
-        var saved = JSON.parse(localStorage.getItem('fav_daily_' + email) || 'null');
-        if (saved && saved.date === today) {
-            return saved.count;
-        }
-    } catch(e) {}
-    return 0;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   FIND RECORD
-   ═══════════════════════════════════════════════════════════════ */
-function favFindRecordInDataset(dsId, stt) {
-    if (!dsId || stt === null || stt === undefined) return null;
-    stt = String(stt);
-
-    if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
-        var ds = DATASET_REGISTRY[dsId];
-        if (ds && Array.isArray(ds.data)) {
-            for (var i = 0; i < ds.data.length; i++) {
-                if (String(ds.data[i].stt) === stt) return ds.data[i];
-            }
-        }
-    }
-
-    if (dsId === 'tonghop' && typeof RAW_DATA !== 'undefined' && RAW_DATA) {
-        for (var j = 0; j < RAW_DATA.length; j++) {
-            if (String(RAW_DATA[j].stt) === stt) return RAW_DATA[j];
-        }
-    }
-
-    return null;
-}
-
-function favFindRecordAnywhere(stt) {
-    if (stt === null || stt === undefined) return null;
-    stt = String(stt);
-
-    if (typeof DATASET_REGISTRY !== 'undefined' && DATASET_REGISTRY) {
-        var keys = Object.keys(DATASET_REGISTRY);
-        for (var k = 0; k < keys.length; k++) {
-            var ds = DATASET_REGISTRY[keys[k]];
-            if (ds && Array.isArray(ds.data)) {
-                for (var i = 0; i < ds.data.length; i++) {
-                    if (String(ds.data[i].stt) === stt) return ds.data[i];
-                }
-            }
-        }
-    }
-
-    if (typeof RAW_DATA !== 'undefined' && RAW_DATA) {
-        for (var j = 0; j < RAW_DATA.length; j++) {
-            if (String(RAW_DATA[j].stt) === stt) return RAW_DATA[j];
-        }
-    }
-
-    return null;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ LẤY TẤT CẢ RECORD YÊU THÍCH (không phân biệt dataset)
-   ═══════════════════════════════════════════════════════════════ */
-function favGetRecords() {
-    var out = [];
-    var seen = {};
-
-    Object.keys(favState.items).forEach(function(key) {
-        var item = favState.items[key];
-        if (!item) return;
-
-        var parsed = favParseKey(key);
-        if (!parsed) return;
-
-        var itemDs = item.datasetId || parsed.datasetId || 'tonghop';
-        var itemStt = item.stt || parsed.stt;
-
-        var record = null;
-        if (typeof favFindRecordInDataset === 'function') {
-            record = favFindRecordInDataset(itemDs, itemStt);
-        }
-        if (!record && typeof favFindRecordAnywhere === 'function') {
-            record = favFindRecordAnywhere(itemStt);
-        }
-
-        var seenKey = itemDs + '_' + itemStt;
-        if (record && !seen[seenKey]) {
-            seen[seenKey] = true;
-
-            /* Clone record để không làm hỏng object gốc */
-            var cloned = {};
-            Object.keys(record).forEach(function(k) {
-                cloned[k] = record[k];
-            });
-
-            cloned.__favDatasetId = itemDs;
-            cloned.__favKey = key;
-            cloned.__favAddedAt = item.addedAt || 0;
-
-            out.push(cloned);
-        }
-    });
-
-    return out;
-}
-
-function favIsFavoriteRecord(r) {
-    if (!r) return false;
-    return favHas(r.stt);
-}
-
-/* ============ SORT ============ */
-function favGetSortedList() {
-    var items = Object.keys(favState.items).map(function(k) { return favState.items[k]; });
-    var mode = favState.sortMode;
-
-    if (mode === 'oldest') {
-        items.sort(function(a, b) { return (a.addedAt || 0) - (b.addedAt || 0); });
-    } else if (mode === 'stt') {
-        items.sort(function(a, b) {
-            var na = parseInt(a.stt) || 0;
-            var nb = parseInt(b.stt) || 0;
-            return na - nb;
-        });
-    } else {
-        items.sort(function(a, b) { return (b.addedAt || 0) - (a.addedAt || 0); });
-    }
-    return items;
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   DROPDOWN "CÂU:"
-   ═══════════════════════════════════════════════════════════════ */
-function favGetQuestionsForDropdown() {
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ KHI BẬT TOGGLE: Trả về TẤT CẢ câu yêu thích
-       (không filter theo dataset hiện tại)
-       ═══════════════════════════════════════════════════════════ */
-    if (favState.pfOnlyFav && favCanUse()) {
-        return favGetRecords();   /* Đã có __favDatasetId trong mỗi record */
-    }
-
-    /* ═══ KHI TẮT TOGGLE: Trả về RAW_DATA hiện tại ═══ */
-    if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return [];
-    return RAW_DATA;
-}
-function favRefreshQuestionDropdown() {
-    var fns = [
-        'renderQuestionSelect',
-        'buildQuestionDropdown',
-        'updateQuestionList',
-        'renderQuestionList',
-        'buildQuestionSelect',
-        'renderPfQuestionSelect',
-        'renderQuestionPicker',
-        'updateQuestionPicker',
-        'refreshQuestionDropdown',
-        'populateQuestionSelect',
-        'renderPfQSelect'
-    ];
-    for (var i = 0; i < fns.length; i++) {
-        if (typeof window[fns[i]] === 'function') {
+        var orig = window.buildFilters;
+        window.buildFilters = function() {
+            var result = orig.apply(this, arguments);
             try {
-                window[fns[i]]();
-                return true;
-            } catch(e) {
-                console.warn('[Favorites] ' + fns[i] + '() error:', e);
+                var sf = document.getElementById('subjectFilter');
+                if (!sf) return result;
+                if (_isVocabMode()) {
+                    sf.disabled = true;
+                    sf.value = '';
+                    sf.style.opacity = '0.5';
+                    sf.style.cursor = 'not-allowed';
+                    sf.title = 'Khong kha dung cho Tu vung';
+                } else {
+                    sf.disabled = false;
+                    sf.style.opacity = '';
+                    sf.style.cursor = '';
+                    sf.title = '';
+                }
+            } catch(e) {}
+            return result;
+        };
+        window.__vocabSubjectLockPatched = true;
+    }
+
+    function watchVocabMode() {
+        var isVocab = (typeof CURRENT_DATASET !== 'undefined') && CURRENT_DATASET === VOCAB_ID;
+
+        if (isVocab) {
+            document.body.setAttribute('data-vocab-mode', '1');
+        } else {
+            document.body.removeAttribute('data-vocab-mode');
+        }
+
+        var selects = [
+            document.getElementById('subjectFilter'),
+            document.getElementById('pfSubjectFilter')
+        ];
+        selects.forEach(function(sf) {
+            if (!sf) return;
+            if (isVocab && !sf.disabled) {
+                sf.disabled = true;
+                sf.value = '';
+                sf.style.opacity = '0.5';
+                sf.style.cursor = 'not-allowed';
+                sf.title = 'Khong kha dung cho Tu vung';
+            } else if (!isVocab && sf.disabled) {
+                sf.disabled = false;
+                sf.style.opacity = '';
+                sf.style.cursor = '';
+                sf.title = '';
             }
-        }
-    }
+        });
 
-    var sel = document.getElementById('pfQuestionSelect')
-           || document.getElementById('questionSelect')
-           || document.getElementById('pfQuestionDropdown')
-           || document.getElementById('questionPicker')
-           || document.querySelector('.pf-question-select select')
-           || document.querySelector('#pfQuestionPicker');
-    if (!sel) return false;
-
-    try {
-        var list = favGetQuestionsForDropdown();
-        var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : '';
-        var html = '';
-        for (var j = 0; j < list.length; j++) {
-            var r = list[j];
-            var sel2 = (String(r.stt) === curStt) ? ' selected' : '';
-            html += '<option value="' + r.stt + '"' + sel2 + '>'
-                  + '#' + r.stt + ' · ' + (r.vi || '')
-                  + '</option>';
-        }
-        sel.innerHTML = html;
-        return true;
-    } catch(e) {
-        console.warn('[Favorites] Fallback dropdown error:', e);
-        return false;
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   NÚT TIM FLOAT
-   ═══════════════════════════════════════════════════════════════ */
-function favUpdatePfFloatBtn() {
-    var pfBtn = document.getElementById('pfFavBtn');
-    if (!pfBtn) return;
-
-    var icon = pfBtn.querySelector('i');
-    var label = pfBtn.querySelector('.pf-fav-float-label');
-    var can = favCanUse();
-    var stt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt) ? String(pfCurrentStt) : null;
-    var currentDsId = favGetCurrentDsId();
-
-    if (!can) {
-        pfBtn.classList.add('locked');
-        pfBtn.classList.remove('active');
-        if (icon) icon.className = 'fas fa-lock';
-        if (label) label.textContent = 'Khoá';
-        pfBtn.title = 'Cần gia hạn để dùng Yêu thích';
-        return;
-    }
-
-    pfBtn.classList.remove('locked');
-    var active = stt ? favHas(stt, currentDsId) : false;
-    pfBtn.classList.toggle('active', active);
-    if (icon) icon.className = active ? 'fas fa-heart' : 'far fa-heart';
-    if (label) label.textContent = 'Like';
-    pfBtn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   NÚT TOGGLE "CHỈ CÂU YÊU THÍCH"
-   ═══════════════════════════════════════════════════════════════ */
-function favUpdatePfOnlyFavBtn() {
-    var btn = document.getElementById('pfFavOnlyBtn');
-    if (!btn) return;
-
-    var icon = btn.querySelector('i');
-    var countEl = document.getElementById('pfFavOnlyCount');
-    var can = favCanUse();
-    var count = favCount();   /* ⭐ Đếm TỔNG */
-
-    /* ═══ 1. CHƯA ĐỦ QUYỀN ═══ */
-    if (!can) {
-        btn.classList.add('locked');
-        btn.classList.remove('active', 'empty', 'current-not-fav');
-        if (icon) icon.className = 'fas fa-lock';
-        btn.title = 'Cần gia hạn để dùng Yêu thích';
-        if (countEl) countEl.textContent = '0';
-        return;
-    }
-
-    btn.classList.remove('locked', 'current-not-fav');
-    if (countEl) countEl.textContent = count;
-
-    /* ═══ 2. CHƯA CÓ CÂU YÊU THÍCH NÀO ═══ */
-    if (count === 0) {
-        btn.classList.add('empty');
-        btn.classList.remove('active');
-        if (icon) icon.className = 'far fa-heart';
-        btn.title = 'Chưa có câu yêu thích nào';
-        if (favState.pfOnlyFav) favState.pfOnlyFav = false;
-        return;
-    }
-
-    btn.classList.remove('empty');
-
-    /* ═══ 3. CẬP NHẬT THEO TRẠNG THÁI TOGGLE ═══ */
-    if (favState.pfOnlyFav) {
-        btn.classList.add('active');
-        if (icon) icon.className = 'fas fa-heart';
-        btn.title = 'Đang chỉ luyện câu yêu thích — bấm để tắt';
-    } else {
-        btn.classList.remove('active');
-        if (icon) icon.className = 'far fa-heart';
-        btn.title = 'Chỉ luyện câu yêu thích';
-    }
-}
-
-function favTogglePfOnlyFav() {
-    if (!favCanUse()) { favShowLockDialog(); return; }
-
-    var currentDsId = favGetCurrentDsId();
-    var totalCount = favCount();
-
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ TRƯỜNG HỢP 1: ĐANG BẬT → TẮT
-       ═══════════════════════════════════════════════════════════ */
-    if (favState.pfOnlyFav) {
-        favState.pfOnlyFav = false;
-        favUpdatePfOnlyFavBtn();
-        favRefreshQuestionDropdown();
-
-        if (typeof pfBuildQuickNav === 'function') {
-            try { pfBuildQuickNav(); } catch(e) {}
-        }
-
-        favShowToast('Luyện tất cả câu', 'remove');
-        return;
-    }
-
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ TRƯỜNG HỢP 2: ĐANG TẮT → BẬT
-       ═══════════════════════════════════════════════════════════ */
-    if (totalCount === 0) {
-        favShowToast('Chưa có câu yêu thích nào', 'warn');
-        return;
-    }
-
-    favState.pfOnlyFav = true;
-    favUpdatePfOnlyFavBtn();
-    favRefreshQuestionDropdown();
-
-    /* ⭐ Nếu câu hiện tại KHÔNG phải yêu thích → tự nhảy sang fav đầu tiên */
-    var currentStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                     ? String(pfCurrentStt)
-                     : null;
-    var currentIsFav = currentStt ? favHas(currentStt, currentDsId) : false;
-
-    if (!currentIsFav) {
-        var favList = favGetRecords();
-        if (favList.length > 0) {
-            var firstFavStt = String(favList[0].stt);
-            if (typeof loadPracticeFull === 'function') {
-                loadPracticeFull(firstFavStt);
+        var hskSelects = [
+            document.getElementById('hskFilter'),
+            document.getElementById('pfHskFilter')
+        ];
+        hskSelects.forEach(function(hf) {
+            if (!hf) return;
+            var hsk79 = hf.querySelector('option[value="HSK7-9"]');
+            var has79 = !!hsk79;
+            if (isVocab && !has79) {
+                var opt = document.createElement('option');
+                opt.value = 'HSK7-9';
+                opt.textContent = 'HSK7-9';
+                hf.appendChild(opt);
+            } else if (!isVocab && has79) {
+                if (hf.value === 'HSK7-9') {
+                    hf.value = '';
+                }
+                hsk79.remove();
             }
-        }
+        });
     }
 
-    favShowToast('Chỉ luyện ' + totalCount + ' câu yêu thích', 'add');
-}
+    window.getVocabAccess = getVocabAccess;
+    window.vocabUpdateLockState = updateTabLockState;
+    window.vocabInjectWarning = injectVocabWarningBanner;
 
-/* ═══════════════════════════════════════════════════════════════
-   SCAN ALL HEART BUTTONS
-   ═══════════════════════════════════════════════════════════════ */
-function favScanAllHeartButtons() {
-    var can = (typeof favCanUse === 'function') ? favCanUse() : false;
-    var currentDsId = favGetCurrentDsId();
-
-    document.querySelectorAll('.fav-btn[data-stt]').forEach(function(btn) {
-        var stt = btn.dataset.stt;
-        if (!stt) return;
-
-        var btnDsId = btn.dataset.datasetId || currentDsId;
-        var active = (typeof favHas === 'function') ? favHas(stt, btnDsId) : false;
-        var icon = btn.querySelector('i');
-
-        if (!can) {
-            btn.classList.add('locked');
-            btn.classList.remove('active');
-            if (icon) icon.className = 'fas fa-lock';
-            btn.title = 'Cần gia hạn để dùng Yêu thích';
+    function patchLoop() {
+        var vocabBtn = document.querySelector('.ds-btn[data-dataset="' + VOCAB_ID + '"]');
+        if (!vocabBtn) {
+            setTimeout(patchLoop, 300);
             return;
         }
 
-        btn.classList.remove('locked');
-        btn.classList.toggle('active', active);
-        if (icon) {
-            icon.className = active ? 'fas fa-heart' : 'far fa-heart';
-        }
-        btn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
-    });
-
-    if (typeof favUpdatePfFloatBtn === 'function') {
-        favUpdatePfFloatBtn();
-    }
-    if (typeof favUpdatePfOnlyFavBtn === 'function') {
-        favUpdatePfOnlyFavBtn();
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   NOTIFY CHANGES
-   ═══════════════════════════════════════════════════════════════ */
-function favNotifyChanged() {
-    /* ⭐ Quét lại tất cả nút tim */
-    if (typeof favScanAllHeartButtons === 'function') {
-        favScanAllHeartButtons();
-    }
-
-    /* ⭐ Cập nhật badge trên tab + dropdown */
-    var count = favCount();
-    ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
-        var badge = document.getElementById(id);
-        if (badge) {
-            badge.textContent = count;
-            badge.dataset.count = count;
-        }
-    });
-
-    /* ⭐⭐ CẬP NHẬT HEADER COUNT ngay (không cần chờ render) */
-    var headerCountEl = document.querySelector('.fav-header .fav-count-text');
-    if (headerCountEl) {
-        headerCountEl.textContent = count + ' câu';
-    }
-
-    /* ⭐⭐⭐ Nếu đang ở tab Yêu thích → render lại NGAY */
-    if (favState.currentView && favState.filteringOnly) {
-        if (typeof window.render === 'function') {
-            clearTimeout(favState.__renderTimer);
-            favState.__renderTimer = setTimeout(function() {
-                window.render();
-                /* Backup: cập nhật lại header sau khi render */
-                setTimeout(function() {
-                    var el = document.querySelector('.fav-header .fav-count-text');
-                    if (el) el.textContent = favCount() + ' câu';
-                }, 20);
-            }, 80);
-        } else {
-            favRenderCurrentTab();
-            setTimeout(function() {
-                var el = document.querySelector('.fav-header .fav-count-text');
-                if (el) el.textContent = favCount() + ' câu';
-            }, 20);
-        }
-    }
-}
-/* ═══════════════════════════════════════════════════════════════
-   UPDATE LOCK STATE
-   ═══════════════════════════════════════════════════════════════ */
-function favUpdateLockState() {
-    var can = favCanUse();
-
-    var favTab = document.getElementById('dsFavBtn');
-    if (favTab) {
-        favTab.classList.toggle('fav-locked', !can);
-        var lockEl = document.getElementById('favTabLock');
-        var badgeEl = document.getElementById('favTabBadge');
-        if (can) {
-            if (lockEl) lockEl.style.display = 'none';
-            if (badgeEl) badgeEl.style.display = '';
-        } else {
-            if (lockEl) lockEl.style.display = 'flex';
-            if (badgeEl) badgeEl.style.display = 'none';
-        }
-    }
-
-    var favDd = document.getElementById('dsFavDropdownItem');
-    if (favDd) {
-        favDd.classList.toggle('fav-locked', !can);
-        var ddLock = document.getElementById('favDropdownLock');
-        var ddBadge = document.getElementById('favDropdownBadge');
-        if (can) {
-            if (ddLock) ddLock.style.display = 'none';
-            if (ddBadge) ddBadge.style.display = '';
-        } else {
-            if (ddLock) ddLock.style.display = 'inline-flex';
-            if (ddBadge) ddBadge.style.display = 'none';
-        }
-    }
-
-    var currentDsId = favGetCurrentDsId();
-    document.querySelectorAll('.fav-btn[data-stt]').forEach(function(btn) {
-        var icon = btn.querySelector('i');
-        var btnDsId = btn.dataset.datasetId || currentDsId;
-        if (can) {
-            btn.classList.remove('locked');
-            var active = favHas(btn.dataset.stt, btnDsId);
-            btn.classList.toggle('active', active);
-            if (icon) {
-                icon.className = active ? 'fas fa-heart' : 'far fa-heart';
-            }
-            btn.title = active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích';
-        } else {
-            btn.classList.add('locked');
-            btn.classList.remove('active');
-            if (icon) icon.className = 'fas fa-lock';
-            btn.title = 'Cần gia hạn để dùng Yêu thích';
-        }
-    });
-
-    favUpdatePfFloatBtn();
-    favUpdatePfOnlyFavBtn();
-
-    if (!can && favState.currentView) {
-        favExitFilterMode();
-        if (typeof switchDataset === 'function') switchDataset('tonghop');
-        if (typeof markCurrentDatasetActive === 'function') markCurrentDatasetActive();
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   TOAST
-   ═══════════════════════════════════════════════════════════════ */
-function favShowToast(message, type) {
-    var old = document.getElementById('favToast');
-    if (old) old.remove();
-
-    var toast = document.createElement('div');
-    toast.id = 'favToast';
-    toast.className = 'fav-toast ' + (type || 'add');
-
-    var iconClass = 'fa-heart';
-    if (type === 'remove') iconClass = 'fa-heart-broken';
-    if (type === 'warn') iconClass = 'fa-info-circle';
-
-    toast.innerHTML = '<i class="fas ' + iconClass + '"></i><span>' + message + '</span>';
-    document.body.appendChild(toast);
-
-    requestAnimationFrame(function() { toast.classList.add('show'); });
-    setTimeout(function() {
-        toast.classList.remove('show');
-        setTimeout(function() { if (toast.parentNode) toast.remove(); }, 300);
-    }, 1800);
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   RENDER TAB YÊU THÍCH
-   ═══════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════
-   RENDER TAB YÊU THÍCH
-   - Đếm đúng số câu (allFavRecords.length)
-   - Header có class "fav-count-text" để update trực tiếp
-   - Empty state khi hết câu
-   ═══════════════════════════════════════════════════════════════ */
-function favRenderCurrentTab() {
-    if (!favState.currentView) return;
-    if (typeof mobileWrapper === 'undefined' || !mobileWrapper) return;
-    if (typeof RAW_DATA === 'undefined' || !RAW_DATA) return;
-
-    var can = favCanUse();
-
-    /* ═══ 1. KHÔNG CÓ QUYỀN → LOCK STATE ═══ */
-    if (!can) {
-        mobileWrapper.innerHTML = '<div class="fav-locked-empty">' +
-            '<div style="width:70px;height:70px;margin:0 auto 1rem;border-radius:50%;' +
-            'background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;' +
-            'display:flex;align-items:center;justify-content:center;font-size:1.8rem;">' +
-                '<i class="fas fa-lock"></i>' +
-            '</div>' +
-            '<div style="font-size:1.05rem;font-weight:800;margin-bottom:.4rem;color:#dc2626;">' +
-                'Tính năng Yêu thích đang bị khoá' +
-            '</div>' +
-            '<div style="font-size:.85rem;color:var(--text-2);line-height:1.5;max-width:420px;margin:0 auto;">' +
-                (favIsLoggedIn()
-                    ? 'Chỉ tài khoản <b>đã gia hạn</b> mới lưu được câu yêu thích và đồng bộ trên mọi thiết bị.'
-                    : 'Vui lòng <b>đăng nhập</b> và <b>gia hạn</b> để dùng tính năng này.') +
-            '</div>' +
-            '<button style="margin-top:1rem;padding:.6rem 1.2rem;border-radius:50px;border:none;' +
-            'background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;font-weight:800;cursor:pointer;' +
-            'font-family:inherit;text-transform:uppercase;letter-spacing:.3px;" ' +
-            'onclick="favShowLockDialog()">' +
-                '<i class="fas ' + (favIsLoggedIn() ? 'fa-gem' : 'fa-sign-in-alt') + '"></i>' +
-                (favIsLoggedIn() ? ' Gia hạn ngay' : ' Đăng nhập ngay') +
-            '</button>' +
-        '</div>';
-        return;
-    }
-
-    /* ═══════════════════════════════════════════════════════════
-       ⭐ 2. LẤY TẤT CẢ CÂU YÊU THÍCH — KHÔNG FILTER DATASET
-       ═══════════════════════════════════════════════════════════ */
-    var allFavRecords = favGetRecords();
-
-    /* ═══ 3. EMPTY STATE — Không còn câu nào ═══ */
-    if (allFavRecords.length === 0) {
-        mobileWrapper.innerHTML = '<div class="fav-empty">' +
-            '<div class="fav-empty-icon"><i class="far fa-heart"></i></div>' +
-            '<div class="fav-empty-title">Chưa có câu yêu thích nào</div>' +
-            '<div class="fav-empty-desc">' +
-                'Bấm vào biểu tượng <b>❤️ trái tim</b> trên mỗi câu để lưu lại. ' +
-                'Các câu yêu thích sẽ được đồng bộ trên mọi thiết bị khi bạn đăng nhập.' +
-            '</div>' +
-        '</div>';
-
-        /* ⭐ Cập nhật badge = 0 ngay */
-        ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
-            var b = document.getElementById(id);
-            if (b) { b.textContent = '0'; b.dataset.count = '0'; }
-        });
-
-        return;
-    }
-
-    /* ═══ 4. COUNTER + HEADER ═══ */
-    var isAdminUser = (typeof currentUser !== 'undefined'
-                       && currentUser
-                       && currentUser.role === 'admin');
-    var counterHtml = '';
-
-    if (isAdminUser) {
-        counterHtml = '<span style="font-size:.7rem;font-weight:700;color:#7c3aed;' +
-                      'padding:.15rem .55rem;background:rgba(124,58,237,.12);border-radius:50px;' +
-                      'display:inline-flex;align-items:center;gap:.25rem;">' +
-                      '<i class="fas fa-infinity"></i> Admin không giới hạn</span>';
-    } else {
-        var used = (typeof favGetDailyUsed === 'function') ? favGetDailyUsed() : 0;
-        var MAX_PER_DAY = 500;
-        var color = used >= 450 ? '#dc2626' : (used >= 350 ? '#f59e0b' : '#16a34a');
-        var bgColor = used >= 450 ? 'rgba(220,38,38,.15)' :
-                      used >= 350 ? 'rgba(245,158,11,.15)' : 'rgba(22,163,74,.12)';
-        counterHtml = '<span style="font-size:.7rem;font-weight:700;color:' + color + ';' +
-                      'padding:.15rem .55rem;background:' + bgColor + ';border-radius:50px;' +
-                      'display:inline-flex;align-items:center;gap:.25rem;">' +
-                      '<i class="fas fa-calendar-day"></i> ' + used + '/' + MAX_PER_DAY + ' hôm nay</span>';
-    }
-
-    /* ⭐ Header — dùng class "fav-count-text" để có thể update trực tiếp */
-    var headerHtml = '<div class="fav-header" style="grid-column:1 / -1;' +
-        'display:flex;align-items:center;gap:.5rem;padding:.65rem .85rem;' +
-        'background:linear-gradient(135deg,rgba(239,68,68,.08),rgba(220,38,38,.04));' +
-        'border:1.5px solid rgba(239,68,68,.25);border-radius:12px;margin-bottom:.75rem;flex-wrap:wrap;">' +
-        '<div style="display:flex;align-items:center;gap:.45rem;font-size:.88rem;font-weight:800;flex:1 1 auto;flex-wrap:wrap;">' +
-            '<i class="fas fa-heart" style="color:#ef4444;"></i>' +
-            '<span>Yêu thích</span>' +
-            '<span class="fav-count-text" style="font-size:.72rem;font-weight:700;color:#dc2626;' +
-            'background:rgba(239,68,68,.15);padding:.15rem .55rem;border-radius:50px;">' +
-                allFavRecords.length + ' câu</span>' +
-            counterHtml +
-        '</div>' +
-        '<select onchange="favOnSortChange(this.value)" ' +
-        'style="padding:.35rem 1.8rem .35rem .7rem;border-radius:50px;border:1.5px solid var(--border);' +
-        'background:var(--surface);color:var(--text);font-size:.72rem;font-weight:700;cursor:pointer;' +
-        'font-family:inherit;outline:none;">' +
-            '<option value="recent"' + (favState.sortMode === 'recent' ? ' selected' : '') + '>Mới nhất</option>' +
-            '<option value="oldest"' + (favState.sortMode === 'oldest' ? ' selected' : '') + '>Cũ nhất</option>' +
-            '<option value="stt"' + (favState.sortMode === 'stt' ? ' selected' : '') + '>Theo STT</option>' +
-        '</select>' +
-        '<button onclick="favClearAll()" ' +
-        'style="padding:.35rem .75rem;border-radius:50px;border:1.5px solid rgba(220,38,38,.35);' +
-        'background:var(--surface);color:#dc2626;font-size:.72rem;font-weight:700;cursor:pointer;' +
-        'font-family:inherit;display:inline-flex;align-items:center;gap:.3rem;">' +
-            '<i class="fas fa-trash-alt"></i> Xoá hết' +
-        '</button>' +
-    '</div>';
-
-    /* ═══ 5. FILTER theo search / hsk / subject ═══ */
-    var filteredFav = allFavRecords.filter(function(r) {
-        if (typeof state !== 'undefined') {
-            if (state.search) {
-                var s = state.search;
-                var inVi = (r.vi || '').toLowerCase().indexOf(s) !== -1;
-                var inZh = (r.zh || '').toLowerCase().indexOf(s) !== -1;
-                var inPinyin = (r.pinyin || '').toLowerCase().indexOf(s) !== -1;
-                var inTopic = (r.topic || '').toLowerCase().indexOf(s) !== -1;
-                var inSubject = (r.subject || '').toLowerCase().indexOf(s) !== -1;
-                if (!inVi && !inZh && !inPinyin && !inTopic && !inSubject) return false;
-            }
-            if (state.hsk && r.hsk !== state.hsk) return false;
-            if (state.subject && r.subject !== state.subject) return false;
-        }
-        return true;
-    });
-
-    /* ═══ 6. SORT ═══ */
-    var sortMode = favState.sortMode || 'recent';
-    if (sortMode === 'oldest') {
-        filteredFav.sort(function(a, b) {
-            return (a.__favAddedAt || 0) - (b.__favAddedAt || 0);
-        });
-    } else if (sortMode === 'stt') {
-        filteredFav.sort(function(a, b) {
-            var na = parseInt(a.stt) || 0;
-            var nb = parseInt(b.stt) || 0;
-            return na - nb;
-        });
-    } else {
-        /* recent */
-        filteredFav.sort(function(a, b) {
-            return (b.__favAddedAt || 0) - (a.__favAddedAt || 0);
-        });
-    }
-
-    /* ═══ 7. RENDER ═══ */
-    var cardsHtml = headerHtml;
-
-    if (filteredFav.length === 0) {
-        cardsHtml += '<div class="no-data" style="grid-column:1 / -1;">' +
-            '<i class="fas fa-search"></i>Không tìm thấy câu yêu thích nào khớp bộ lọc' +
-            '</div>';
-    } else {
-        filteredFav.forEach(function(r) {
-            cardsHtml += favBuildCardHtml(r);
-        });
-    }
-
-    mobileWrapper.innerHTML = cardsHtml;
-
-    /* ═══ 8. UPDATE LOCK STATE + SYNC HEADER + BADGE ═══ */
-    setTimeout(function() {
-        if (typeof favUpdateLockState === 'function') favUpdateLockState();
-
-        /* ⭐ Sync lại header count sau render (chống race condition) */
-        var headerCountEl = document.querySelector('.fav-header .fav-count-text');
-        if (headerCountEl) {
-            headerCountEl.textContent = favCount() + ' câu';
-        }
-
-        /* ⭐ Sync badge */
-        var total = favCount();
-        ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
-            var b = document.getElementById(id);
-            if (b) {
-                b.textContent = total;
-                b.dataset.count = total;
-            }
-        });
-    }, 50);
-}
-function favBuildCardHtml(r) {
-    var zhJs = escapeJs(r.zh);
-    var viJs = escapeJs(r.vi);
-    var pinyinJs = escapeJs(r.pinyin);
-    var zhHtml = escapeHtml(r.zh);
-    var viHtml = escapeHtml(r.vi);
-    var sttSafe = escapeHtml(r.stt);
-    var sttJs = escapeJs(r.stt);
-
-    var itemDsId = r.__favDatasetId
-                   || (typeof CURRENT_DATASET !== 'undefined' && CURRENT_DATASET)
-                   || 'tonghop';
-    var dsSafe = escapeHtml(itemDsId);
-
-    var audio = r.zh ? '<button class="audio-btn" onclick="speakText(\'' + zhJs + '\', this, event)" title="Nghe"><i class="fas fa-volume-up"></i></button>' : '';
-    var writeBtn = '';
-    if (r.zh) {
-        writeBtn = '<button class="write-btn" onclick="openWriter(\'' + zhJs + '\', \'' + viJs + '\', \'' + pinyinJs + '\', event)" title="Luyện viết"><i class="fas fa-pen-fancy"></i></button>';
-    }
-    var fullBtn = '';
-    if (r.zh) {
-        fullBtn = '<button class="practice-full-btn" onclick="openPracticeFull(\'' + sttJs + '\', event)" title="Luyện tập full màn hình"><i class="fas fa-expand"></i></button>';
-    }
-
-    var can = favCanUse();
-    var active = favHas(r.stt, itemDsId);
-
-    var favBtn = '<button class="fav-btn' +
-        (active ? ' active' : '') +
-        (!can ? ' locked' : '') +
-        '" data-stt="' + sttSafe + '" ' +
-        'data-dataset-id="' + dsSafe + '" ' +
-        'onclick="favOnCardBtnClick(event, \'' + sttJs + '\')" ' +
-        'title="' + (active ? 'Xoá khỏi yêu thích' : 'Thêm vào yêu thích') + '">' +
-        '<i class="' + (!can ? 'fas fa-lock' : (active ? 'fas fa-heart' : 'far fa-heart')) + '"></i>' +
-    '</button>';
-
-    var practiceInput = '<input type="text" class="practice-input" placeholder="Gõ tiếng Trung..." data-answer="' + zhHtml + '" data-stt="' + sttSafe + '" oninput="checkInput(this)" autocomplete="off">';
-
-    return '<div class="card" data-hsk="' + (r.hsk || '') + '" onclick="toggleFocus(\'' + sttJs + '\', this)" data-stt="' + sttSafe + '">' +
-        '<div class="card-header">' +
-            '<div class="card-stt">' + sttSafe + '</div>' +
-            '<div class="card-meta">' +
-                (r.hsk ? '<span class="card-tag hsk">' + escapeHtml(r.hsk) + '</span>' : '') +
-            '</div>' +
-            '<div onclick="event.stopPropagation()" class="action-group">' +
-                audio + writeBtn + fullBtn + favBtn +
-            '</div>' +
-        '</div>' +
-        '<div class="card-body">' +
-            (r.vi ? '<div class="card-vi">' + viHtml + '</div>' : '') +
-            '<div class="card-zh">' + zhHtml + '</div>' +
-            (r.pinyin ? '<div class="card-pinyin">' + escapeHtml(r.pinyin) + '</div>' : '') +
-        '</div>' +
-        '<div class="card-practice" onclick="event.stopPropagation()">' +
-            practiceInput +
-        '</div>' +
-    '</div>';
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   EVENT HANDLERS
-   ═══════════════════════════════════════════════════════════════ */
-window.favOnCardBtnClick = function(evt, stt) {
-    evt.stopPropagation();
-    if (evt.preventDefault) evt.preventDefault();
-
-    if (!favCanUse()) { favShowLockDialog(); return; }
-
-    var btnDsId = null;
-    if (evt && evt.currentTarget) {
-        btnDsId = evt.currentTarget.dataset.datasetId || null;
-    }
-
-    var currentDsId = btnDsId || favGetCurrentDsId();
-
-    var record = null;
-    if (typeof favFindRecordInDataset === 'function') {
-        record = favFindRecordInDataset(currentDsId, stt);
-    }
-    if (!record && typeof favFindRecordAnywhere === 'function') {
-        record = favFindRecordAnywhere(stt);
-    }
-
-    favToggle(stt, record, currentDsId);
-};
-
-window.favOnPfBtnClick = function(evt) {
-    if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
-    if (typeof pfCurrentStt === 'undefined' || !pfCurrentStt) return;
-    if (!favCanUse()) { favShowLockDialog(); return; }
-
-    var stt = String(pfCurrentStt);
-    var currentDsId = favGetCurrentDsId();
-
-    var record = null;
-    if (typeof favFindRecordInDataset === 'function') {
-        record = favFindRecordInDataset(currentDsId, stt);
-    }
-    if (!record && typeof favFindRecordAnywhere === 'function') {
-        record = favFindRecordAnywhere(stt);
-    }
-
-    favToggle(stt, record, currentDsId).then(function() {
-        favUpdatePfFloatBtn();
-    });
-};
-
-window.favTogglePfOnlyFav = favTogglePfOnlyFav;
-
-window.favOnSortChange = function(mode) {
-    favState.sortMode = mode || 'recent';
-    try { localStorage.setItem('favSortMode', favState.sortMode); } catch(e) {}
-    if (typeof window.render === 'function') window.render();
-    else favRenderCurrentTab();
-};
-
-/* ═══════════════════════════════════════════════════════════════
-   CLICK TAB YÊU THÍCH
-   ═══════════════════════════════════════════════════════════════ */
-function favOnTabClick(evt) {
-    if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
-
-    if (!favCanUse()) { favShowLockDialog(); return; }
-
-    document.querySelectorAll('.ds-btn').forEach(function(b) { b.classList.remove('active'); });
-    document.querySelectorAll('.ds-sub-btn').forEach(function(b) { b.classList.remove('active'); });
-    document.querySelectorAll('.ds-dropdown-item').forEach(function(b) { b.classList.remove('active'); });
-
-    var tabBtn = document.getElementById('dsFavBtn');
-    if (tabBtn) tabBtn.classList.add('active');
-    var ddBtn = document.getElementById('dsFavDropdownItem');
-    if (ddBtn) ddBtn.classList.add('active');
-
-    var subWrap = document.getElementById('dsSubWrap');
-    if (subWrap) subWrap.style.display = 'none';
-
-    favState.currentView = true;
-    favState.filteringOnly = true;
-
-    if (typeof state !== 'undefined') {
-        state.search = '';
-        state.hsk = '';
-        state.subject = '';
-    }
-    try {
-        var si = document.getElementById('searchInput');
-        if (si) si.value = '';
-        var hf = document.getElementById('hskFilter');
-        if (hf) hf.value = '';
-        var sf = document.getElementById('subjectFilter');
-        if (sf) sf.value = '';
-        var cb = document.getElementById('clearSearchBtn');
-        if (cb) cb.classList.remove('show');
-    } catch(e) {}
-    if (typeof updateFilterUI === 'function') updateFilterUI();
-
-    window.__onboardingOverride = null;
-    var obBanner = document.getElementById('onboardingActiveBanner');
-    if (obBanner) obBanner.style.display = 'none';
-
-    var favRecords = favGetRecords();
-
-    try {
-        filtered = favRecords;
-    } catch(e1) {
-        try { window.filtered = favRecords; } catch(e2) {}
-    }
-    try { window.filtered = favRecords; } catch(e) {}
-
-    try { renderedCount = 0; } catch(e) { try { window.renderedCount = 0; } catch(e2) {} }
-
-    if (typeof favRenderCurrentTab === 'function') {
-        favRenderCurrentTab();
-    } else if (typeof window.render === 'function') {
-        window.render(true);
-    }
-
-    setTimeout(function() {
-        var mainEl = document.getElementById('mainContent');
-        if (mainEl) {
-            var yOffset = mainEl.getBoundingClientRect().top + window.scrollY - 100;
-            window.scrollTo({ top: yOffset, behavior: 'smooth' });
-        }
-    }, 150);
-
-    if (favCanUse() && !favState.loaded) {
-        favLoadFromCloud();
-    }
-}
-
-function favExitFilterMode() {
-    if (!favState.filteringOnly) return;
-    favState.filteringOnly = false;
-    favState.currentView = false;
-    favState.pfOnlyFav = false;
-    var tabBtn = document.getElementById('dsFavBtn');
-    if (tabBtn) tabBtn.classList.remove('active');
-    var ddBtn = document.getElementById('dsFavDropdownItem');
-    if (ddBtn) ddBtn.classList.remove('active');
-    if (typeof favUpdatePfOnlyFavBtn === 'function') favUpdatePfOnlyFavBtn();
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   INIT
-   ═══════════════════════════════════════════════════════════════ */
-function initFavorites() {
-    try {
-        var savedSort = localStorage.getItem('favSortMode');
-        if (savedSort) favState.sortMode = savedSort;
-    } catch(e) {}
-
-    favLoadFromLocal();
-
-    var pfBtn = document.getElementById('pfFavBtn');
-    if (pfBtn && !pfBtn.__favBound) {
-        pfBtn.__favBound = true;
-        pfBtn.addEventListener('click', window.favOnPfBtnClick);
-    }
-
-    var pfOnlyBtn = document.getElementById('pfFavOnlyBtn');
-    if (pfOnlyBtn && !pfOnlyBtn.__favBound) {
-        pfOnlyBtn.__favBound = true;
-        pfOnlyBtn.addEventListener('click', function(evt) {
-            evt.stopPropagation();
-            if (evt.preventDefault) evt.preventDefault();
-            favTogglePfOnlyFav();
-        });
-    }
-
-    var favTab = document.getElementById('dsFavBtn');
-    if (favTab && !favTab.__favBound) {
-        favTab.__favBound = true;
-        favTab.addEventListener('click', favOnTabClick);
-    }
-
-    var favDd = document.getElementById('dsFavDropdownItem');
-    if (favDd && !favDd.__favBound) {
-        favDd.__favBound = true;
-        favDd.addEventListener('click', function(evt) {
-            if (evt) { evt.stopPropagation(); if (evt.preventDefault) evt.preventDefault(); }
-            var dd = favDd.closest('.ds-dropdown, .dataset-dropdown, [class*="dropdown"]');
-            if (dd) dd.classList.remove('show', 'open');
-            favOnTabClick(evt);
-        });
-    }
-
-    favUpdateLockState();
-    if (favCanUse()) favLoadFromCloud();
-    favNotifyChanged();
-    favSyncFloatVisibility();
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   FLOAT VISIBILITY
-   ═══════════════════════════════════════════════════════════════ */
-function favSyncFloatVisibility() {
-    var pfModal = document.getElementById('practiceFullModal');
-    var pfFavFloat = document.getElementById('pfFavBtn');
-    var pfOnlyFloat = document.getElementById('pfFavOnlyBtn');
-
-    var isOpen = pfModal && pfModal.classList.contains('show');
-
-    if (isOpen) {
-        if (pfFavFloat) {
-            pfFavFloat.classList.add('show');
-            pfFavFloat.style.display = 'inline-flex';
-        }
-        if (pfOnlyFloat) {
-            pfOnlyFloat.classList.add('show');
-            pfOnlyFloat.style.display = 'inline-flex';
-        }
-
-        favUpdatePfFloatBtn();
-        favUpdatePfOnlyFavBtn();
-
-        setTimeout(function() {
-            favRefreshQuestionDropdown();
-        }, 80);
-
-        /* ⭐ Nếu toggle BẬT + câu hiện tại KHÔNG phải fav → tự nhảy fav đầu */
-        if (favState.pfOnlyFav && favCanUse()) {
-            setTimeout(function() {
-                var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                             ? String(pfCurrentStt)
-                             : null;
-                if (!curStt) return;
-
-                var curDs = favGetCurrentDsId();
-                var isFav = favHas(curStt, curDs);
-
-                if (!isFav) {
-                    var favList = favGetRecords();
-                    if (favList.length > 0) {
-                        var firstFavStt = String(favList[0].stt);
-                        if (firstFavStt !== curStt && !window.__favRedirecting) {
-                            window.__favRedirecting = true;
-                            setTimeout(function() {
-                                if (typeof loadPracticeFull === 'function') {
-                                    loadPracticeFull(firstFavStt);
-                                }
-                                window.__favRedirecting = false;
-                            }, 30);
-                        }
+        window.vocabUpdateLockState = updateTabLockState;
+
+        if (!window.__vocabBuildFiltersPatched && typeof window.buildFilters === 'function') {
+            window.__vocabBuildFiltersPatched = true;
+            var origBuildFilters = window.buildFilters;
+            window.buildFilters = function() {
+                var result = origBuildFilters.apply(this, arguments);
+                if (_isVocabMode()) {
+                    var hf = document.getElementById('hskFilter');
+                    if (hf && !hf.querySelector('option[value="HSK7-9"]')) {
+                        var opt = document.createElement('option');
+                        opt.value = 'HSK7-9';
+                        opt.textContent = 'HSK7-9';
+                        hf.appendChild(opt);
                     }
                 }
-            }, 120);
-        }
-
-    } else {
-        if (pfFavFloat) {
-            pfFavFloat.classList.remove('show');
-            pfFavFloat.style.display = 'none';
-        }
-        if (pfOnlyFloat) {
-            pfOnlyFloat.classList.remove('show');
-            pfOnlyFloat.style.display = 'none';
-        }
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════
-   WATCH PRACTICE FULL MODAL
-   ═══════════════════════════════════════════════════════════════ */
-
-/* [PHẦN TRƯỚC GIỮ NGUYÊN — từ đầu file đến hết favSyncFloatVisibility] */
-
-/* ═══════════════════════════════════════════════════════════════
-   WATCH PRACTICE FULL MODAL
-   ═══════════════════════════════════════════════════════════════ */
-/* ═══════════════════════════════════════════════════════════════
-   WATCH PRACTICE FULL MODAL
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function attach() {
-        var pfModal = document.getElementById('practiceFullModal');
-        if (!pfModal) return false;
-        if (pfModal.__favObserved) return true;
-        pfModal.__favObserved = true;
-
-        var obs = new MutationObserver(function(mutations) {
-            mutations.forEach(function(m) {
-                if (m.attributeName === 'class') {
-                    if (typeof favSyncFloatVisibility === 'function') {
-                        favSyncFloatVisibility();
-                    }
-                }
-            });
-        });
-        obs.observe(pfModal, { attributes: true });
-        return true;
-    }
-
-    if (!attach()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (attach() || _tries > 60) clearInterval(_iv);
-        }, 200);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   THEO DÕI pfCurrentStt — KHÔNG tự tắt toggle
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    var _lastPfStt = null;
-
-    function syncPfState() {
-        var cur = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                  ? String(pfCurrentStt)
-                  : null;
-        if (cur === _lastPfStt) return;
-        _lastPfStt = cur;
-        if (!cur) return;
-
-        if (typeof favUpdatePfFloatBtn === 'function') {
-            favUpdatePfFloatBtn();
-        }
-        if (typeof favUpdatePfOnlyFavBtn === 'function') {
-            favUpdatePfOnlyFavBtn();
-        }
-        if (typeof favScanAllHeartButtons === 'function') {
-            favScanAllHeartButtons();
-        }
-    }
-
-    setInterval(syncPfState, 250);
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   PATCH render()
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function tryPatch() {
-        if (typeof window.render !== 'function') return false;
-        if (window.render.__favScanPatched) return true;
-
-        var _origRender = window.render;
-        window.render = function() {
-            var result = _origRender.apply(this, arguments);
-            setTimeout(function() {
-                if (typeof favScanAllHeartButtons === 'function') {
-                    favScanAllHeartButtons();
-                }
-            }, 10);
-            return result;
-        };
-        window.render.__favScanPatched = true;
-        return true;
-    }
-
-    if (!tryPatch()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (tryPatch() || _tries > 40) clearInterval(_iv);
-        }, 100);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   PATCH switchDataset()
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function tryPatch() {
-        if (typeof window.render !== 'function') return false;
-        if (window.render.__favScanPatched) return true;
-
-        var _origRender = window.render;
-        window.render = function() {
-            var result = _origRender.apply(this, arguments);
-            setTimeout(function() {
-                if (typeof favScanAllHeartButtons === 'function') {
-                    favScanAllHeartButtons();
-                }
-
-                /* ⭐ Sync header count sau khi render xong */
-                var el = document.querySelector('.fav-header .fav-count-text');
-                if (el && typeof favCount === 'function') {
-                    el.textContent = favCount() + ' câu';
-                }
-
-                /* ⭐ Sync badge = 0 nếu hết */
-                if (typeof favCount === 'function' && favCount() === 0) {
-                    ['favTabBadge', 'favDropdownBadge'].forEach(function(id) {
-                        var b = document.getElementById(id);
-                        if (b) { b.textContent = '0'; b.dataset.count = '0'; }
-                    });
-                }
-            }, 20);
-            return result;
-        };
-        window.render.__favScanPatched = true;
-        return true;
-    }
-
-    if (!tryPatch()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (tryPatch() || _tries > 40) clearInterval(_iv);
-        }, 100);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH pfBuildQuickNav — Build dropdown "CÂU:"
-   - BẬT toggle: hiện TẤT CẢ câu yêu thích (mọi dataset) kèm data-dataset-id
-   - TẮT toggle: gọi hàm gốc (dataset hiện tại)
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function tryPatch() {
-        if (typeof window.pfBuildQuickNav !== 'function') return false;
-        if (window.pfBuildQuickNav.__favPatched) return true;
-
-        var _origBuildQuickNav = window.pfBuildQuickNav;
-        window.pfBuildQuickNav = function() {
-            var sel = document.getElementById('pfQuickNav');
-            if (!sel) {
-                return _origBuildQuickNav.apply(this, arguments);
-            }
-
-            /* ═══ KHÔNG BẬT TOGGLE → gọi hàm gốc ═══ */
-            if (!favState.pfOnlyFav || !favCanUse()) {
-                return _origBuildQuickNav.apply(this, arguments);
-            }
-
-            /* ═══════════════════════════════════════════════════════
-               BẬT TOGGLE → Build dropdown từ TẤT CẢ câu yêu thích
-               ═══════════════════════════════════════════════════════ */
-            var favRecords = favGetRecords();
-            var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                         ? String(pfCurrentStt)
-                         : '';
-            var curDs = favGetCurrentDsId();
-
-            var html = '<option value="">-- Chọn câu yêu thích (' + favRecords.length + ') --</option>';
-
-            for (var j = 0; j < favRecords.length; j++) {
-                var r = favRecords[j];
-                var vi = (r.vi || '').substring(0, 45);
-                var sttRaw = (r.stt !== undefined && r.stt !== null && String(r.stt).trim() !== '')
-                             ? '#' + String(r.stt).trim() + ' · '
-                             : '';
-                var dsTag = r.__favDatasetId && r.__favDatasetId !== curDs
-                            ? '[' + r.__favDatasetId + '] '
-                            : '';
-                var label = dsTag + sttRaw + 'Câu ' + (j + 1) + ': ' + vi;
-
-                var selected = (String(r.stt) === curStt && r.__favDatasetId === curDs)
-                               ? ' selected'
-                               : '';
-
-                html += '<option value="' + String(r.stt) + '"' +
-                        ' data-dataset-id="' + escapeHtml(r.__favDatasetId || '') + '"' +
-                        selected + '>' +
-                        escapeHtml(label) + '</option>';
-            }
-
-            sel.innerHTML = html;
-            if (curStt) sel.value = curStt;
-        };
-        window.pfBuildQuickNav.__favPatched = true;
-        return true;
-    }
-
-    if (!tryPatch()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (tryPatch() || _tries > 60) clearInterval(_iv);
-        }, 200);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ LISTENER pfQuickNav CHANGE — Tự chuyển dataset khi chọn câu
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    var _navChanging = false;
-
-    function attachListener() {
-        var sel = document.getElementById('pfQuickNav');
-        if (!sel) return false;
-        if (sel.__favNavBound) return true;
-
-        sel.__favNavBound = true;
-
-        sel.addEventListener('change', function(evt) {
-            if (!favState.pfOnlyFav || !favCanUse()) return;
-            if (_navChanging) return;
-            _navChanging = true;
-
-            var opt = sel.options[sel.selectedIndex];
-            if (!opt) { _navChanging = false; return; }
-
-            var stt = opt.value;
-            var targetDs = opt.dataset.datasetId || null;
-
-            if (!stt) { _navChanging = false; return; }
-
-            var curDs = favGetCurrentDsId();
-
-            /* ═══ Đổi dataset nếu cần ═══ */
-            if (targetDs && targetDs !== curDs) {
-                console.log('[Favorites] Đổi dataset: ' + curDs + ' → ' + targetDs);
-
-                evt.stopPropagation();
-                window.__favRedirecting = true;
-
-                if (typeof window.__switchRawData === 'function') {
-                    try {
-                        window.__switchRawData(targetDs);
-                    } catch(e) {
-                        console.warn('[Favorites] __switchRawData error:', e);
-                    }
-                }
-
-                var dsSel = document.getElementById('pfDatasetSelect');
-                if (dsSel) dsSel.value = targetDs;
-
-                if (typeof pfBuildFilterOptions === 'function') {
-                    pfBuildFilterOptions();
-                }
-                if (typeof pfBuildDatasetSelect === 'function') {
-                    pfBuildDatasetSelect();
-                }
-
-                setTimeout(function() {
-                    if (typeof loadPracticeFull === 'function') {
-                        loadPracticeFull(String(stt));
-                    }
-                    setTimeout(function() {
-                        window.__favRedirecting = false;
-                        favRefreshQuestionDropdown();
-                        _navChanging = false;
-                    }, 150);
-                }, 60);
-
-                return;
-            }
-
-            /* ═══ Cùng dataset → load luôn ═══ */
-            window.__favRedirecting = true;
-
-            if (typeof loadPracticeFull === 'function') {
-                loadPracticeFull(String(stt));
-            }
-
-            setTimeout(function() {
-                window.__favRedirecting = false;
-                favRefreshQuestionDropdown();
-                _navChanging = false;
-            }, 120);
-        });
-
-        console.log('✅ [Favorites] Đã gắn listener cho #pfQuickNav');
-        return true;
-    }
-
-    if (!attachListener()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (attachListener() || _tries > 60) clearInterval(_iv);
-        }, 200);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH __switchRawData — Không reset toggle khi tự đổi
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function tryPatch() {
-        if (typeof window.__switchRawData !== 'function') return false;
-        if (window.__switchRawData.__favPatched) return true;
-
-        var _origSwitch = window.__switchRawData;
-        window.__switchRawData = function(dsId) {
-            var wasPfOnlyFav = favState.pfOnlyFav;
-
-            var result = _origSwitch.apply(this, arguments);
-
-            if (wasPfOnlyFav && favCanUse()) {
-                favState.pfOnlyFav = true;
-            }
-
-            return result;
-        };
-        window.__switchRawData.__favPatched = true;
-        return true;
-    }
-
-    if (!tryPatch()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (tryPatch() || _tries > 40) clearInterval(_iv);
-        }, 100);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   PATCH các hàm build dropdown "CÂU:" khác (fallback)
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    var CANDIDATES = [
-        'renderQuestionSelect',
-        'buildQuestionDropdown',
-        'updateQuestionList',
-        'renderQuestionList',
-        'buildQuestionSelect',
-        'renderPfQuestionSelect',
-        'renderQuestionPicker',
-        'updateQuestionPicker',
-        'refreshQuestionDropdown',
-        'populateQuestionSelect',
-        'renderPfQSelect'
-    ];
-
-    function patchFn(name) {
-        if (typeof window[name] !== 'function') return false;
-        if (window[name].__favDropdownPatched) return true;
-
-        var _orig = window[name];
-        window[name] = function() {
-            if (!favState.pfOnlyFav || !favCanUse()) {
-                return _orig.apply(this, arguments);
-            }
-
-            var _origRaw = (typeof RAW_DATA !== 'undefined') ? RAW_DATA : null;
-            if (!_origRaw) return _orig.apply(this, arguments);
-
-            try {
-                var favRecords = favGetQuestionsForDropdown();
-                window.__favOrigRawDataDD = _origRaw;
-                try { RAW_DATA = favRecords; } catch(e) {}
-
-                var result = _orig.apply(this, arguments);
-
-                try { RAW_DATA = window.__favOrigRawDataDD; } catch(e) {}
-                delete window.__favOrigRawDataDD;
                 return result;
-            } catch(e) {
-                console.warn('[Favorites] ' + name + ' patch error:', e);
-                try {
-                    if (window.__favOrigRawDataDD) RAW_DATA = window.__favOrigRawDataDD;
-                } catch(err) {}
-                return _orig.apply(this, arguments);
-            }
-        };
-        window[name].__favDropdownPatched = true;
-        return true;
-    }
+            };
+        }
 
-    var _tries = 0;
-    var _iv = setInterval(function() {
-        _tries++;
-        CANDIDATES.forEach(patchFn);
-        if (_tries > 40) clearInterval(_iv);
-    }, 150);
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH openPracticeFull
-   - Auto-bật toggle khi mở từ tab Yêu thích
-   - Bỏ filter khi đang __favRedirecting
-   - Đổi dataset nếu fav đầu thuộc dataset khác
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function tryPatch() {
-        if (typeof window.openPracticeFull !== 'function') return false;
-        if (window.openPracticeFull.__favFilterPatched) return true;
-
-        var _origOpenPF = window.openPracticeFull;
-        window.openPracticeFull = function(stt, evt) {
-            /* ⭐ AUTO-BẬT toggle khi mở từ tab Yêu thích */
-            if (favCanUse() && favState.currentView && !favState.pfOnlyFav) {
-                favState.pfOnlyFav = true;
-            }
-
-            /* ⭐ Nếu toggle bật + KHÔNG đang redirect → filter stt */
-            if (favState.pfOnlyFav && favCanUse() && !window.__favRedirecting) {
-                var favList = favGetRecords();
-                if (favList.length === 0) {
-                    favShowToast('Chưa có câu yêu thích nào', 'warn');
-                    return;
-                }
-
-                var targetStt = String(stt);
-                var curDs = favGetCurrentDsId();
-
-                var isFav = favList.some(function(r) {
-                    return String(r.stt) === targetStt &&
-                           r.__favDatasetId === curDs;
-                });
-
-                if (!isFav) {
-                    stt = String(favList[0].stt);
-
-                    var firstDs = favList[0].__favDatasetId;
-                    if (firstDs && firstDs !== curDs) {
-                        window.__favRedirecting = true;
-                        if (typeof window.__switchRawData === 'function') {
-                            try { window.__switchRawData(firstDs); } catch(e) {}
-                        }
-                        var dsSel = document.getElementById('pfDatasetSelect');
-                        if (dsSel) dsSel.value = firstDs;
-                        if (typeof pfBuildFilterOptions === 'function') pfBuildFilterOptions();
-                        if (typeof pfBuildDatasetSelect === 'function') pfBuildDatasetSelect();
-                        setTimeout(function() {
-                            window.__favRedirecting = false;
-                        }, 150);
+        if (!window.__vocabPfFilterPatched && typeof window.pfBuildFilterOptions === 'function') {
+            window.__vocabPfFilterPatched = true;
+            var origPfBuild = window.pfBuildFilterOptions;
+            window.pfBuildFilterOptions = function() {
+                var result = origPfBuild.apply(this, arguments);
+                if (_isVocabMode()) {
+                    var pfHf = document.getElementById('pfHskFilter');
+                    if (pfHf && !pfHf.querySelector('option[value="HSK7-9"]')) {
+                        var opt = document.createElement('option');
+                        opt.value = 'HSK7-9';
+                        opt.textContent = 'HSK7-9';
+                        pfHf.appendChild(opt);
+                    }
+                    var pfSubj = document.getElementById('pfSubjectFilter');
+                    if (pfSubj) {
+                        pfSubj.disabled = true;
+                        pfSubj.value = '';
+                        pfSubj.style.opacity = '0.5';
+                        pfSubj.style.cursor = 'not-allowed';
+                        pfSubj.title = 'Khong kha dung cho Tu vung';
                     }
                 }
-            }
-
-            var result = _origOpenPF.apply(this, arguments);
-
-            setTimeout(function() {
-                if (typeof favScanAllHeartButtons === 'function') {
-                    favScanAllHeartButtons();
-                }
-                if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                    favUpdatePfOnlyFavBtn();
-                }
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
-                }
-            }, 30);
-            setTimeout(function() {
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
-                }
-            }, 200);
-
-            return result;
-        };
-        window.openPracticeFull.__favFilterPatched = true;
-        return true;
-    }
-
-    if (!tryPatch()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (tryPatch() || _tries > 40) clearInterval(_iv);
-        }, 100);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH loadPracticeFull
-   - KHÔNG tự tắt toggle
-   - Bỏ auto-nhảy khi __favRedirecting
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function tryPatch() {
-        if (typeof window.loadPracticeFull !== 'function') return false;
-        if (window.loadPracticeFull.__favUnifiedPatched) return true;
-
-        var _origLoadPF = window.loadPracticeFull;
-        window.loadPracticeFull = function(stt) {
-            var result = _origLoadPF.apply(this, arguments);
-
-            setTimeout(function() {
-                var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                             ? String(pfCurrentStt)
-                             : null;
-                if (!newStt) return;
-
-                if (typeof favScanAllHeartButtons === 'function') {
-                    favScanAllHeartButtons();
-                }
-                if (typeof favUpdatePfOnlyFavBtn === 'function') {
-                    favUpdatePfOnlyFavBtn();
-                }
-
-                /* ⭐ Đang redirect → bỏ qua auto-nhảy */
-                if (window.__favRedirecting) {
-                    if (typeof favRefreshQuestionDropdown === 'function') {
-                        favRefreshQuestionDropdown();
-                    }
-                    return;
-                }
-
-                /* ⭐ Toggle bật + câu mới không phải fav → nhảy fav đầu */
-                if (favState.pfOnlyFav && favCanUse()) {
-                    var curDs = favGetCurrentDsId();
-                    var isNewFav = favHas(newStt, curDs);
-
-                    if (!isNewFav) {
-                        var favList = favGetRecords();
-                        if (favList.length > 0) {
-                            var firstFavStt = String(favList[0].stt);
-
-                            if (firstFavStt !== newStt) {
-                                window.__favRedirecting = true;
-                                setTimeout(function() {
-                                    if (typeof loadPracticeFull === 'function') {
-                                        loadPracticeFull(firstFavStt);
-                                    }
-                                    setTimeout(function() {
-                                        window.__favRedirecting = false;
-                                    }, 150);
-                                }, 30);
-                            }
-                        }
-                    }
-                }
-
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
-                }
-            }, 50);
-
-            return result;
-        };
-        window.loadPracticeFull.__favUnifiedPatched = true;
-        return true;
-    }
-
-    if (!tryPatch()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (tryPatch() || _tries > 40) clearInterval(_iv);
-        }, 100);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   PATCH: ĐỔI BỘ DỮ LIỆU (#pfDatasetSelect.change)
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    'use strict';
-
-    var _datasetChangeTimer = null;
-
-    function handleDatasetChange() {
-        console.log('[Favorites] Đổi bộ dữ liệu → đồng bộ');
-
-        /* ⭐ Nếu đang redirect thì bỏ qua */
-        if (window.__favRedirecting) {
-            console.log('[Favorites] Đang redirect — bỏ qua handleDatasetChange');
-            return;
+                return result;
+            };
         }
 
-        if (typeof favState !== 'undefined') {
-            favState.pfOnlyFav = false;
-        }
-
-        if (typeof favUpdatePfOnlyFavBtn === 'function') {
-            favUpdatePfOnlyFavBtn();
-        }
-
-        if (typeof favRefreshQuestionDropdown === 'function') {
-            favRefreshQuestionDropdown();
-        }
-
-        setTimeout(function() {
-            if (typeof favScanAllHeartButtons === 'function') {
-                favScanAllHeartButtons();
-            }
-
-            var newStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                         ? String(pfCurrentStt)
-                         : null;
-            var curDs = favGetCurrentDsId();
-            var isNewFav = newStt && typeof favHas === 'function' ? favHas(newStt, curDs) : false;
-            console.log('[Favorites] Câu mới #' + newStt + ' | ds: ' + curDs + ' | liked: ' + isNewFav);
-
-        }, 100);
-    }
-
-    function attachListener() {
-        var sel = document.getElementById('pfDatasetSelect');
-        if (!sel) return false;
-        if (sel.__favDatasetBound) return true;
-
-        sel.__favDatasetBound = true;
-
-        sel.addEventListener('change', function() {
-            console.log('[Favorites] #pfDatasetSelect change fired');
-
-            if (_datasetChangeTimer) clearTimeout(_datasetChangeTimer);
-            _datasetChangeTimer = setTimeout(function() {
-                handleDatasetChange();
+        if (!vocabBtn.__vocabLimitHooked) {
+            vocabBtn.__vocabLimitHooked = true;
+            vocabBtn.addEventListener('click', function() {
                 setTimeout(function() {
-                    if (typeof favScanAllHeartButtons === 'function') {
-                        favScanAllHeartButtons();
+                    var acc = getVocabAccess();
+                    if (!acc.allowed) return;
+                    if (_isVocabMode() && window.FIXPY_DATASETS &&
+                        window.FIXPY_DATASETS[VOCAB_ID]) {
+                        var full = window.FIXPY_DATASETS[VOCAB_ID].data || [];
+                        var limited = applyVocabLimits(full, acc);
+                        if (limited.length !== full.length) {
+                            RAW_DATA = limited;
+                            if (typeof applyFilter === 'function') applyFilter();
+                            if (typeof updateResultCount === 'function') updateResultCount();
+                        }
                     }
+                    updateTabLockState();
+                    injectVocabWarningBanner();
+                    watchVocabMode();
                 }, 500);
-            }, 250);
-        });
-
-        console.log('✅ [Favorites] Đã gắn listener cho #pfDatasetSelect');
-        return true;
-    }
-
-    if (!attachListener()) {
-        var _tries = 0;
-        var _iv = setInterval(function() {
-            _tries++;
-            if (attachListener() || _tries > 60) clearInterval(_iv);
-        }, 200);
-    }
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   ⭐ PATCH next/prev — Dùng loadPracticeFull + tự đổi dataset
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function patchNavigateFn(fnName) {
-        if (typeof window[fnName] !== 'function') return false;
-        if (window[fnName].__favFilterPatched) return true;
-
-        var _orig = window[fnName];
-
-        window[fnName] = function() {
-            /* ═══ KHÔNG BẬT TOGGLE → gọi hàm gốc ═══ */
-            if (!favState.pfOnlyFav || !favCanUse()) {
-                var res = _orig.apply(this, arguments);
-                setTimeout(function() {
-                    if (typeof favScanAllHeartButtons === 'function') {
-                        favScanAllHeartButtons();
-                    }
-                }, 30);
-                return res;
-            }
-
-            /* ═══ BẬT TOGGLE → điều hướng trong danh sách yêu thích ═══ */
-            var favList = favGetRecords();
-            if (favList.length === 0) {
-                return _orig.apply(this, arguments);
-            }
-
-            var direction = (fnName.toLowerCase().indexOf('prev') !== -1) ? -1 : 1;
-
-            var curStt = (typeof pfCurrentStt !== 'undefined' && pfCurrentStt)
-                         ? String(pfCurrentStt)
-                         : null;
-            var curDs = favGetCurrentDsId();
-            var curIdx = -1;
-
-            for (var i = 0; i < favList.length; i++) {
-                if (String(favList[i].stt) === curStt &&
-                    favList[i].__favDatasetId === curDs) {
-                    curIdx = i;
-                    break;
-                }
-            }
-
-            var nextIdx;
-            if (curIdx === -1) {
-                nextIdx = 0;
-            } else {
-                nextIdx = curIdx + direction;
-                if (nextIdx < 0) nextIdx = favList.length - 1;
-                if (nextIdx >= favList.length) nextIdx = 0;
-            }
-
-            var nextItem = favList[nextIdx];
-            var nextStt = String(nextItem.stt);
-            var nextDs = nextItem.__favDatasetId || curDs;
-
-            /* ═══ Nếu câu kế thuộc dataset khác → chuyển dataset ═══ */
-            if (nextDs !== curDs) {
-                console.log('[Favorites] Next/prev đổi dataset: ' + curDs + ' → ' + nextDs);
-
-                window.__favRedirecting = true;
-
-                if (typeof window.__switchRawData === 'function') {
-                    try {
-                        window.__switchRawData(nextDs);
-                    } catch(e) {
-                        console.warn('[Favorites] __switchRawData error:', e);
-                    }
-                }
-
-                var dsSel = document.getElementById('pfDatasetSelect');
-                if (dsSel) dsSel.value = nextDs;
-
-                if (typeof pfBuildFilterOptions === 'function') {
-                    pfBuildFilterOptions();
-                }
-                if (typeof pfBuildDatasetSelect === 'function') {
-                    pfBuildDatasetSelect();
-                }
-
-                setTimeout(function() {
-                    if (typeof loadPracticeFull === 'function') {
-                        loadPracticeFull(nextStt);
-                    }
-                    setTimeout(function() {
-                        window.__favRedirecting = false;
-                        if (typeof favRefreshQuestionDropdown === 'function') {
-                            favRefreshQuestionDropdown();
-                        }
-                    }, 150);
-                }, 60);
-
-                return;
-            }
-
-            /* ═══ Cùng dataset → load trực tiếp ═══ */
-            window.__favRedirecting = true;
-
-            if (typeof loadPracticeFull === 'function') {
-                loadPracticeFull(nextStt);
-            }
-
-            setTimeout(function() {
-                window.__favRedirecting = false;
-                if (typeof favRefreshQuestionDropdown === 'function') {
-                    favRefreshQuestionDropdown();
-                }
-            }, 120);
-        };
-
-        window[fnName].__favFilterPatched = true;
-        return true;
-    }
-
-    var fns = ['pfNavigate', 'pfNext', 'pfPrev', 'practiceNext', 'practicePrev', 'nextPractice', 'prevPractice'];
-    var _tries = 0;
-    var _iv = setInterval(function() {
-        _tries++;
-        fns.forEach(function(fn) {
-            if (typeof window[fn] === 'function' && !window[fn].__favFilterPatched) {
-                patchNavigateFn(fn);
-            }
-        });
-        if (_tries > 40) clearInterval(_iv);
-    }, 200);
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   PUBLIC API
-   ═══════════════════════════════════════════════════════════════ */
-window.favUpdateLockState = favUpdateLockState;
-window.favNotifyChanged = favNotifyChanged;
-window.favSyncFloatVisibility = favSyncFloatVisibility;
-window.favUpdatePfFloatBtn = favUpdatePfFloatBtn;
-window.favUpdatePfOnlyFavBtn = favUpdatePfOnlyFavBtn;
-window.favGetRecords = favGetRecords;
-window.favGetQuestionsForDropdown = favGetQuestionsForDropdown;
-window.favRefreshQuestionDropdown = favRefreshQuestionDropdown;
-window.favHas = favHas;
-window.favCount = favCount;
-window.favCountInCurrentDataset = favCountInCurrentDataset;
-window.favExitFilterMode = favExitFilterMode;
-window.favState = favState;
-window.favBuildKey = favBuildKey;
-window.favParseKey = favParseKey;
-window.favMigrateLocalToCloud = favMigrateLocalToCloud;
-
-window.favRefreshUI = function() {
-    favUpdateLockState();
-    favNotifyChanged();
-    if (favCanUse() && !favState.loaded) {
-        favLoadFromCloud();
-    }
-    if (!favIsLoggedIn()) {
-        favState.items = {};
-        favState.loaded = false;
-        if (favState.listener) {
-            try { favState.listener(); } catch(e) {}
-            favState.listener = null;
+            }, false);
         }
-        favUpdateLockState();
+
+        updateTabLockState();
+
+        setInterval(function() {
+            updateTabLockState();
+            if (_isVocabMode()) injectVocabWarningBanner();
+        }, 2000);
+
+        watchVocabMode();
+        setInterval(watchVocabMode, 800);
     }
-};
-
-/* ═══════════════════════════════════════════════════════════════
-   AUTO-INIT
-   ═══════════════════════════════════════════════════════════════ */
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        if (typeof initFavorites === 'function') initFavorites();
-        setTimeout(function() {
-            if (typeof favSyncFloatVisibility === 'function') favSyncFloatVisibility();
-        }, 100);
-    });
-} else {
-    setTimeout(function() {
-        if (typeof initFavorites === 'function') initFavorites();
-        if (typeof favSyncFloatVisibility === 'function') favSyncFloatVisibility();
-    }, 0);
-}
-
-/* Auto-refresh khi tier thay đổi */
-(function() {
-    var _lastTier = null;
-    setInterval(function() {
-        var t = (typeof window.APP_TIER !== 'undefined') ? window.APP_TIER : null;
-        if (t !== _lastTier) {
-            _lastTier = t;
-            if (typeof window.favRefreshUI === 'function') window.favRefreshUI();
-        }
-    }, 800);
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   FIX: Dời nút toggle sang góc phải, TRÊN nút tim
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    function injectCSS() {
-        if (document.getElementById('favOnlyFloatFix')) return;
-        var style = document.createElement('style');
-        style.id = 'favOnlyFloatFix';
-        style.textContent = [
-            '/* Fix: nút toggle chỉ câu yêu thích — góc PHẢI, TRÊN nút tim */',
-            '.pf-fav-only-float {',
-            '    left: auto !important;',
-            '    right: clamp(14px, 2vw, 22px) !important;',
-            '    bottom: calc(140px + env(safe-area-inset-bottom)) !important;',
-            '}',
-            '@media (max-width:500px) {',
-            '    .pf-fav-only-float {',
-            '        bottom: calc(130px + env(safe-area-inset-bottom)) !important;',
-            '    }',
-            '}',
-            '@media (max-height:550px) and (orientation:landscape) {',
-            '    .pf-fav-only-float {',
-            '        bottom: calc(114px + env(safe-area-inset-bottom)) !important;',
-            '        transform-origin: right bottom !important;',
-            '    }',
-            '}'
-        ].join('\n');
-        document.head.appendChild(style);
-    }
-    if (document.head) injectCSS();
-    else document.addEventListener('DOMContentLoaded', injectCSS);
-})();
-
-/* ═══════════════════════════════════════════════════════════════
-   FIX: favRefreshQuestionDropdown — ưu tiên pfBuildQuickNav
-   ═══════════════════════════════════════════════════════════════ */
-(function() {
-    if (typeof window.favRefreshQuestionDropdown !== 'function') return;
-    if (window.favRefreshQuestionDropdown.__favFixed) return;
-
-    var _origRefresh = window.favRefreshQuestionDropdown;
-    window.favRefreshQuestionDropdown = function() {
-        if (typeof window.pfBuildQuickNav === 'function') {
-            try {
-                window.pfBuildQuickNav();
-                return true;
-            } catch(e) {
-                console.warn('[Favorites] pfBuildQuickNav error:', e);
-            }
-        }
-        return _origRefresh.apply(this, arguments);
-    };
-    window.favRefreshQuestionDropdown.__favFixed = true;
+    setTimeout(patchLoop, 800);
 })();
 """
+
+
+# =================================================================
+#  IMPORT VOCAB MODULE
+# =================================================================
+if not os.path.isfile(CONFIG_JSON) and os.path.isfile(os.path.join("..", CONFIG_JSON)):
+    os.chdir("..")
+    print("[fix.py] Phat hien chay tu scripts/ -> chuyen ve root")
+
+try:
+    from vocab_premium import (
+        read_vocab_excel,
+        build_vocab_css,
+        build_vocab_tab_html,
+        build_vocab_modal_html,
+        build_vocab_js_override,
+    )
+    HAS_VOCAB_MODULE = True
+    print("[fix.py] OK - Da load module vocab_premium")
+except ImportError as e:
+    HAS_VOCAB_MODULE = False
+    print("[fix.py] WARN - Khong load duoc vocab_premium: " + str(e))
+
+
+# =================================================================
+#  CN2AN
+# =================================================================
+try:
+    import cn2an
+    HAS_CN2AN = True
+except ImportError:
+    HAS_CN2AN = False
+
+_CN_DIGITS = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
+_CN_UNITS = ['', '十', '百', '千']
+
+
+def _num_to_chinese_basic(num):
+    if num == 0:
+        return '零'
+    if num < 0:
+        return '负' + _num_to_chinese_basic(-num)
+    result = ''
+    unit_idx = 0
+    n = num
+    while n > 0:
+        digit = n % 10
+        if digit != 0:
+            if not (unit_idx == 1 and digit == 1 and n < 20 and result == ''):
+                result = _CN_DIGITS[digit] + _CN_UNITS[unit_idx] + result
+            else:
+                result = _CN_UNITS[unit_idx] + result
+        else:
+            if result and not result.startswith('零'):
+                result = '零' + result
+        n //= 10
+        unit_idx += 1
+    if result.startswith('一十'):
+        result = result[1:]
+    return result
+
+
+def _num_to_chinese(num):
+    if HAS_CN2AN:
+        try:
+            return cn2an.an2cn(num)
+        except Exception:
+            pass
+    return _num_to_chinese_basic(num)
+
+
+def _digits_to_chinese(digits_str):
+    return ''.join([_CN_DIGITS[int(d)] for d in digits_str])
+
+
+def convert_arabic_to_chinese(text):
+    if not text or not isinstance(text, str):
+        return text
+
+    def replace_percent(match):
+        num_str = match.group(1)
+        if '.' in num_str:
+            parts = num_str.split('.')
+            int_part = _num_to_chinese(int(parts[0]))
+            dec_part = _digits_to_chinese(parts[1])
+            return '百分之' + int_part + '点' + dec_part
+        return '百分之' + _num_to_chinese(int(num_str))
+
+    text = re.sub(r'(\d+(?:\.\d+)?)%', replace_percent, text)
+
+    def replace_decimal(match):
+        num_str = match.group(0)
+        parts = num_str.split('.')
+        int_part = _num_to_chinese(int(parts[0]))
+        dec_part = _digits_to_chinese(parts[1])
+        return int_part + '点' + dec_part
+
+    text = re.sub(
+        r'(?<![A-Za-z\-\.])\d+\.\d+(?![A-Za-z])',
+        replace_decimal, text
+    )
+
+    def replace_int(match):
+        return _num_to_chinese(int(match.group(0)))
+
+    text = re.sub(
+        r'(?<![A-Za-z\-\.])\d+(?![A-Za-z]|\.\d)',
+        replace_int, text
+    )
+
+    return text
+
+
+def _clean(s):
+    if s is None:
+        return ""
+    return (str(s).replace('\n', ' ').replace('\r', ' ')
+            .replace('\t', ' ').replace('\\', '\\\\'))
+
+
+# =================================================================
+#  HELPERS
+# =================================================================
+def _slugify(filename):
+    base = filename.rsplit(".", 1)[0]
+    base = unicodedata.normalize("NFD", base)
+    base = "".join(c for c in base if unicodedata.category(c) != "Mn")
+    base = base.replace("đ", "d").replace("Đ", "D")
+    return re.sub(r"[^a-zA-Z0-9]+", "-", base).strip("-").lower() or "dataset"
+
+
+def _display_name(filename):
+    name = filename.rsplit(".", 1)[0].replace("_", " ").strip()
+    name = unicodedata.normalize("NFC", name)
+    if name.islower() or name.isupper():
+        name = name.title()
+    return name
+
+
+def _escape_json_for_script(obj):
+    s = json.dumps(obj, ensure_ascii=False, separators=(",", ":"))
+    return s.replace("</", "<\\/")
+
+
+def _js_str(s):
+    if s is None:
+        return ""
+    return (str(s)
+            .replace("\\", "\\\\")
+            .replace('"', '\\"')
+            .replace("'", "\\'")
+            .replace("\n", "\\n")
+            .replace("\r", "\\r")
+            .replace("</", "<\\/"))
+
+
+def _find_file_safe(filepath):
+    if os.path.isfile(filepath):
+        return filepath
+    dirname = os.path.dirname(filepath) or "."
+    basename = os.path.basename(filepath)
+    if not os.path.isdir(dirname):
+        return None
+    variants = set()
+    variants.add(basename)
+    variants.add(unicodedata.normalize("NFC", basename))
+    variants.add(unicodedata.normalize("NFD", basename))
+    try:
+        for fname in os.listdir(dirname):
+            fname_nfc = unicodedata.normalize("NFC", fname)
+            fname_nfd = unicodedata.normalize("NFD", fname)
+            for variant in variants:
+                if (fname == variant
+                        or fname_nfc == unicodedata.normalize("NFC", variant)
+                        or fname_nfd == unicodedata.normalize("NFD", variant)):
+                    return os.path.join(dirname, fname)
+    except Exception:
+        pass
+    return None
+
+
+def _read_excel_rows(filepath):
+    real_path = _find_file_safe(filepath)
+    if not real_path:
+        print("      [X] Khong tim thay file: " + os.path.basename(filepath))
+        return []
+
+    try:
+        wb = openpyxl.load_workbook(real_path, data_only=True)
+    except Exception as e:
+        print("      [X] Loi load: " + type(e).__name__ + ": " + str(e))
+        return []
+
+    try:
+        ws = wb.worksheets[0]
+    except Exception as e:
+        print("      [X] Loi sheet: " + str(e))
+        return []
+
+    print("      Sheet: " + ws.title
+          + " - " + str(ws.max_row) + " dong, "
+          + str(ws.max_column) + " cot")
+
+    COL_STT = 0
+    COL_HSK = 1
+    COL_TOPIC = 2
+    COL_SUBJECT = 3
+    COL_VI = 4
+    COL_ZH = 5
+    COL_PINYIN = 6
+    DATA_START = 2
+
+    rows = []
+    converted_count = 0
+    skipped_empty = 0
+
+    for row in ws.iter_rows(min_row=DATA_START, values_only=True):
+        if not row or len(row) <= max(COL_VI, COL_ZH):
+            skipped_empty += 1
+            continue
+
+        stt_val = row[COL_STT] if COL_STT < len(row) and row[COL_STT] is not None else ""
+        hsk = _clean(row[COL_HSK]) if COL_HSK < len(row) else ""
+        topic = _clean(row[COL_TOPIC]) if COL_TOPIC < len(row) else ""
+        subject = _clean(row[COL_SUBJECT]) if COL_SUBJECT < len(row) else ""
+        vi = _clean(row[COL_VI]) if COL_VI < len(row) else ""
+        zh = _clean(row[COL_ZH]) if COL_ZH < len(row) else ""
+        pinyin = _clean(row[COL_PINYIN]) if COL_PINYIN < len(row) else ""
+
+        if not vi and not zh:
+            skipped_empty += 1
+            continue
+
+        zh_original = zh
+        zh = convert_arabic_to_chinese(zh)
+        if zh != zh_original:
+            converted_count += 1
+
+        rows.append({
+            "stt": str(stt_val),
+            "hsk": hsk,
+            "topic": topic,
+            "subject": subject,
+            "vi": vi,
+            "zh": zh,
+            "pinyin": pinyin,
+        })
+
+    print("      [OK] " + str(len(rows)) + " cau (bo qua "
+          + str(skipped_empty) + " dong rong)")
+    if converted_count > 0:
+        print("      [OK] Chuyen so A Rap -> Han: " + str(converted_count) + " cau")
+
+    return rows
+
+
+# =================================================================
+#  SCAN data/
+# =================================================================
+def scan_data_dir():
+    if not os.path.isdir(DATA_DIR):
+        print("[fix.py] Khong thay thu muc '" + DATA_DIR + "/' - bo qua.")
+        return []
+
+    files = []
+    for ext in ("*.xlsx", "*.xls", "*.csv"):
+        files.extend(glob.glob(os.path.join(DATA_DIR, ext)))
+    files = sorted(set(files))
+
+    if not files:
+        print("[fix.py] Khong co file Excel trong '" + DATA_DIR + "/'")
+        return []
+
+    print("")
+    print("[fix.py] Quet '" + DATA_DIR + "/' - " + str(len(files)) + " file")
+
+    datasets = []
+    used_ids = set()
+
+    vocab_basename = os.path.basename(VOCAB_FILE).lower()
+
+    for filepath in files:
+        fname = os.path.basename(filepath)
+
+        if fname.startswith("~$"):
+            print("   [skip] " + fname + " - file tam")
+            continue
+
+        if fname.lower() in SKIP_FILES:
+            print("   [skip] " + fname + " - da la tab Tong hop")
+            continue
+
+        if fname.lower() == vocab_basename:
+            print("   [skip] " + fname + " - se tao tab Tu vung Premium rieng")
+            continue
+
+        print("   [file] " + fname)
+        rows = _read_excel_rows(filepath)
+        if not rows:
+            print("   [!] " + fname + " - rong hoac loi, bo qua")
+            continue
+
+        base_id = _slugify(fname)
+        dataset_id = base_id
+        counter = 2
+        while dataset_id in used_ids:
+            dataset_id = base_id + "-" + str(counter)
+            counter += 1
+        used_ids.add(dataset_id)
+
+        idx = len(datasets)
+        icon = TAB_ICONS[idx % len(TAB_ICONS)]
+        color = TAB_COLORS[idx % len(TAB_COLORS)]
+
+        display = _display_name(fname)
+        datasets.append({
+            "id": dataset_id,
+            "name": display,
+            "icon": icon,
+            "color": color,
+            "data": rows,
+            "count": len(rows),
+            "source": fname,
+            "type": "main",
+            "group": "fixpy",
+        })
+        print("   [OK] " + fname + " -> tab '" + display
+              + "' (" + str(len(rows)) + " cau)")
+
+    return datasets
+
+
+# =================================================================
+#  BUILD JS OVERRIDE
+# =================================================================
+def build_js_override(ids_js, datasets_meta_json):
+    L = []
+    add = L.append
+
+    add("")
+    add("<script>")
+    add("/* FIX.PY - Lazy load data tu JSON + patch search cho Practice Full */")
+    add("(function() {")
+    add("    'use strict';")
+    add("    var NEW_IDS = " + ids_js + ";")
+    add("")
+
+    add("    window.FIXPY_DATASETS = {};")
+    add("    window.__fixpyDataLoaded = false;")
+    add("    window.__fixpyMeta = " + datasets_meta_json + ";")
+    add("")
+    add("    (function() {")
+    add("        fetch('data/fixpy_datasets.json')")
+    add("            .then(function(r) { return r.ok ? r.json() : {}; })")
+    add("            .then(function(d) {")
+    add("                window.FIXPY_DATASETS = d || {};")
+    add("                window.__fixpyDataLoaded = true;")
+    add("                console.log('[fix.py] loaded', Object.keys(d).length, 'datasets');")
+    add("                if (typeof window.__fixpyOnDataReady === 'function') {")
+    add("                    window.__fixpyOnDataReady();")
+    add("                }")
+    add("            })")
+    add("            .catch(function(e) {")
+    add("                console.error('[fix.py] load error:', e);")
+    add("                window.__fixpyDataLoaded = true;")
+    add("            });")
+    add("    })();")
+    add("")
+
+    add("    window.__findByHskStt = function(hskTarget, sttTarget) {")
+    add("        var pool = (typeof RAW_DATA !== 'undefined' && Array.isArray(RAW_DATA))")
+    add("                   ? RAW_DATA : [];")
+    add("        var target = String(hskTarget || '').toUpperCase().replace(/\\s+/g, '');")
+    add("        if (target === 'HSK7' || target === 'HSK8' || target === 'HSK9') {")
+    add("            target = 'HSK7-9';")
+    add("        }")
+    add("        return pool.filter(function(r) {")
+    add("            var rh = String(r.hsk || '').toUpperCase().replace(/\\s+/g, '');")
+    add("            if (rh !== target) return false;")
+    add("            if (sttTarget === null) return true;")
+    add("            var sttStr = (r.stt_original != null && String(r.stt_original).trim() !== '')")
+    add("                       ? String(r.stt_original).trim()")
+    add("                       : String(r.stt || '').replace(/^[^0-9]*-/, '');")
+    add("            var n = parseInt(sttStr, 10);")
+    add("            if (isNaN(n)) return false;")
+    add("            return n >= sttTarget;")
+    add("        });")
+    add("    };")
+    add("")
+
+    add("    window.__fixpyParseHskStt = function(rawQuery) {")
+    add("        if (!rawQuery) return null;")
+    add("        var m = rawQuery.toLowerCase().match(/^hsk\\s*(7[-\\s]*9|\\d+)\\s*(?:(\\d+)(?:\\s+(\\d+))?)?$/);")
+    add("        if (!m) return null;")
+    add("        var hskNum = m[1].replace(/\\s+/g, '');")
+    add("        if (hskNum === '7' || hskNum === '8' || hskNum === '9') hskNum = '7-9';")
+    add("        var startStt = m[2] ? parseInt(m[2], 10) : null;")
+    add("        var endStt = m[3] ? parseInt(m[3], 10) : (startStt !== null ? startStt : null);")
+    add("        if (startStt !== : null && endStt < String startStt) {")
+    add("(r            var tmp = startStt; startStt =.st endStt; endStt = tmp;t")
+    add("        }")
+    add("        return {")
+    add("            hsk: (hskNum === '7-9') ? 'HSK7-9' : ('HSK' + hskNum),")
+    add("            hskNum: hskNum,")
+    add("            startStt: startStt,")
+    add("            endStt: endStt")
+    add("        };")
+    add("    };")
+    add("")
+
+    add("    window.__fixpyFilterByHskStt = function(parsed) {")
+    add("        var pool = window.__findByHskStt(parsed.hsk, null);")
+    add("        if (parsed.startStt === null) return pool;")
+    add("        return pool.filter(function(r) {")
+    add("            var sttStr = (r.stt_original != null && String(r.stt_original).trim() !== '')")
+    add("                       ? String(r.stt_original).trim()")
+    add("                       || '').replace(/^[^0-9]*-/, '');")
+    add("            var n = parseInt(sttStr, 10);")
+    add("            if (isNaN(n)) return false;")
+    add("            return n >= parsed.startStt && n <= parsed.endStt;")
+    add("        });")
+    add("    };")
+    add("")
+
+    add("    function patchSwitchRawData() {")
+    add("        if (window.__fixPySwitchPatched) return;")
+    add("        var origSwitch = window.__switchRawData;")
+    add("        if (typeof origSwitch !== 'function') {")
+    add("            setTimeout(patchSwitchRawData, 100);")
+    add("            return;")
+    add("        }")
+    add("        window.__switchRawData = function(datasetId) {")
+    add("            if (!window.__fixpyDataLoaded && window.__fixpyMeta && window.__fixpyMeta[datasetId]) {")
+    add("                console.log('[fix.py] data chua load, doi...');")
+    add("                if (!window.__fixpyPendingSwitch) window.__fixpyPendingSwitch = [];")
+    add("                window.__fixpyPendingSwitch.push(datasetId);")
+    add("                return true;")
+    add("            }")
+    add("            if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[datasetId]) {")
+    add("                RAW_DATA = window.FIXPY_DATASETS[datasetId].data || [];")
+    add("                CURRENT_DATASET = datasetId;")
+    add("                console.log('[fix.py] switch FIXPY:', datasetId, '->', RAW_DATA.length, 'cau');")
+    add("                return true;")
+    add("            }")
+    add("            return origSwitch.apply(this, arguments);")
+    add("        };")
+    add("        window.__fixPySwitchPatched = true;")
+    add("    }")
+    add("    patchSwitchRawData();")
+    add("")
+    add("    window.__fixpyOnDataReady = function() {")
+    add("        var pending = window.__fixpyPendingSwitch || [];")
+    add("        window.__fixpyPendingSwitch = [];")
+    add("        pending.forEach(function(dsId) {")
+    add("            window.__switchRawData(dsId);")
+    add("        });")
+    add("        var curDs = (typeof CURRENT_DATASET !== 'undefined') ? CURRENT_DATASET : 'tonghop';")
+    add("        if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[curDs]) {")
+    add("            if (typeof applyFilter === 'function') applyFilter();")
+    add("            if (typeof updateResultCount === 'function') updateResultCount();")
+    add("        }")
+    add("    };")
+    add("")
+
+    add("    function patchMarkActive() {")
+    add("        if (window.__fixPyMarkPatched) return;")
+    add("        window.markCurrentDatasetActive = function() {")
+    add("            var cur = (typeof CURRENT_DATASET !== 'undefined')")
+    add("                      ? CURRENT_DATASET : 'tonghop';")
+    add("            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
+    add("                b.classList.remove('active');")
+    add("            });")
+    add("            if (cur === 'tonghop') {")
+    add("                var tonghopBtn = document.querySelector('.ds-btn[data-dataset=\"tonghop\"]');")
+    add("                if (tonghopBtn) tonghopBtn.classList.add('active');")
+    add("                return;")
+    add("            }")
+    add("            if (window.FIXPY_DATASETS && window.FIXPY_DATASETS[cur]) {")
+    add("                var fxBtn = document.querySelector('.ds-btn[data-dataset=\"' + cur + '\"]');")
+    add("                if (fxBtn) fxBtn.classList.add('active');")
+    add("                return;")
+    add("            }")
+    add("            var subBtn = document.querySelector('.ds-sub-btn[data-dataset=\"' + cur + '\"]');")
+    add("            if (subBtn) subBtn.classList.add('active');")
+    add("            var cnBtn = document.querySelector('.ds-btn[data-dataset-group=\"chuyen-nganh\"]');")
+    add("            if (cnBtn && subBtn) cnBtn.classList.add('active');")
+    add("        };")
+    add("        window.__fixPyMarkPatched = true;")
+    add("    }")
+    add("")
+
+    add("    function patchGetLimitedData() {")
+    add("        if (window.__fixPyLimitedPatched) return;")
+    add("        var origGet = window.getLimitedData")
+    add("                    || (typeof getLimitedData !== 'undefined' ? getLimitedData : null);")
+    add("        if (typeof origGet !== 'function') return;")
+    add("        window.getLimitedData = function() {")
+    add("            if (!window.__fixpyDataLoaded) return [];")
+    add("            var currentDs = (typeof CURRENT_DATASET !== 'undefined')")
+    add("                            ? CURRENT_DATASET : 'tonghop';")
+    add("            if (currentDs === 'tonghop') {")
+    add("                return origGet.apply(this, arguments);")
+    add("            }")
+    add("            if (!window.FIXPY_DATASETS || !window.FIXPY_DATASETS[currentDs]) {")
+    add("                return origGet.apply(this, arguments);")
+    add("            }")
+    add("            var info = (typeof getTierInfo === 'function')")
+    add("                       ? getTierInfo() : {};")
+    add("            if (info.tier === 'active') {")
+    add("                return RAW_DATA;")
+    add("            }")
+    add("            var override = window.__onboardingOverride;")
+    add("            if (override && Array.isArray(override) && override.length > 0")
+    add("                && typeof state !== 'undefined' && state")
+    add("                && !state.search && !state.hsk && !state.subject) {")
+    add("                var currentStts = {};")
+    add("                RAW_DATA.forEach(function(r) { currentStts[r.stt] = true; });")
+    add("                var filtered = override.filter(function(r) {")
+    add("                    return currentStts[r.stt];")
+    add("                });")
+    add("                if (filtered.length > 0) {")
+    add("                    var max = info.maxQuestions || 60;")
+    add("                    return filtered.slice(0, max);")
+    add("                }")
+    add("            }")
+    add("            var max2 = info.maxQuestions || 60;")
+    add("            return RAW_DATA.slice(0, max2);")
+    add("        };")
+    add("        window.__fixPyLimitedPatched = true;")
+    add("    }")
+    add("")
+
+    add("    function patchApplyFilter() {")
+    add("        if (window.__fixPyApplyFilterPatched) return;")
+    add("        var origApply = window.applyFilter;")
+    add("        if (typeof origApply !== 'function') {")
+    add("            setTimeout(patchApplyFilter, 100);")
+    add("            return;")
+    add("        }")
+    add("        window.applyFilter = function() {")
+    add("            if (!window.__fixpyDataLoaded) return;")
+    add("            var curDs = (typeof CURRENT_DATASET !== 'undefined')")
+    add("                        ? CURRENT_DATASET : 'tonghop';")
+    add("            if (curDs === 'tonghop') {")
+    add("                return origApply.apply(this, arguments);")
+    add("            }")
+    add("            if (!window.FIXPY_DATASETS || !window.FIXPY_DATASETS[curDs]) {")
+    add("                return origApply.apply(this, arguments);")
+    add("            }")
+    add("            var si = document.getElementById('searchInput');")
+    add("            var raw = si ? si.value.trim() : '';")
+    add("            var parsed = window.__fixpyParseHskStt(raw);")
+    add("            if (!parsed) {")
+    add("                return origApply.apply(this, arguments);")
+    add("            }")
+    add("            var result = window.__fixpyFilterByHskStt(parsed);")
+    add("            try {")
+    add("                filtered = result;")
+    add("            } catch(e) {")
+    add("                window.filtered = result;")
+    add("            }")
+    add("            if (typeof render === 'function') render(true);")
+    add("            if (typeof updateResultCount === 'function') updateResultCount();")
+    add("            if (typeof updateFilterUI === 'function') updateFilterUI();")
+    add("            var clearBtn = document.getElementById('clearSearchBtn');")
+    add("            if (clearBtn) clearBtn.classList.add('show');")
+    add("            if (typeof showSearchToast === 'function') {")
+    add("                var hskDisplay = parsed.hskNum;")
+    add("                var msg;")
+    add("                if (parsed.startStt === null) {")
+    add("                    msg = 'HSK' + hskDisplay + ': ' + result.length + ' cau';")
+    add("                } else if (parsed.startStt === parsed.endStt) {")
+    add("                    msg = 'HSK' + hskDisplay + ' cau ' + parsed.startStt + ': ' + result.length + ' ket qua';")
+    add("                } else {")
+    add("                    msg = 'HSK' + hskDisplay + ' cau ' + parsed.startStt + '->' + parsed.endStt + ': ' + result.length + ' ket qua';")
+    add("                }")
+    add("                showSearchToast(msg);")
+    add("            }")
+    add("        };")
+    add("        window.__fixPyApplyFilterPatched = true;")
+    add("        console.log('[fix.py] applyFilter patched');")
+    add("    }")
+    add("")
+
+    add("    function patchPfApplyFilter() {")
+    add("        if (window.__fixPyPfApplyFilterPatched) return;")
+    add("        var origPfApply = window.pfApplyFilter;")
+    add("        if (typeof origPfApply !== 'function') {")
+    add("            setTimeout(patchPfApplyFilter, 100);")
+    add("            return;")
+    add("        }")
+    add("        window.pfApplyFilter = function() {")
+    add("            if (!window.__fixpyDataLoaded) return;")
+    add("            var curDs = (typeof CURRENT_DATASET !== 'undefined')")
+    add("                        ? CURRENT_DATASET : 'tonghop';")
+    add("            if (curDs === 'tonghop') {")
+    add("                return origPfApply.apply(this, arguments);")
+    add("            }")
+    add("            if (!window.FIXPY_DATASETS || !window.FIXPY_DATASETS[curDs]) {")
+    add("                return origPfApply.apply(this, arguments);")
+    add("            }")
+    add("            var si = document.getElementById('pfSearchInput');")
+    add("            var raw = si ? si.value.trim() : '';")
+    add("            var parsed = window.__fixpyParseHskStt(raw);")
+    add("            if (!parsed) {")
+    add("                return origPfApply.apply(this, arguments);")
+    add("            }")
+    add("            /* Sync ra ngoai man hinh chinh */")
+    add("            var si2 = document.getElementById('searchInput');")
+    add("            if (si2) si2.value = raw;")
+    add("            if (typeof state !== 'undefined' && state) {")
+    add("                state.search = raw.toLowerCase();")
+    add("            }")
+    add("            /* Filter */")
+    add("            var result = window.__fixpyFilterByHskStt(parsed);")
+    add("            try {")
+    add("                filtered = result;")
+    add("            } catch(e) {")
+    add("                window.filtered = result;")
+    add("            }")
+    add("            /* Update UI trong modal */")
+    add("            if (typeof pfBuildQuickNav === 'function') pfBuildQuickNav();")
+    add("            if (typeof pfUpdateFilterUI === 'function') pfUpdateFilterUI();")
+    add("            var clearBtn = document.getElementById('pfClearSearchBtn');")
+    add("            if (clearBtn) clearBtn.classList.add('show');")
+    add("            /* Load cau dau tien */")
+    add("            if (result.length > 0) {")
+    add("                if (typeof loadPracticeFull === 'function') {")
+    add("                    loadPracticeFull(result[0].stt);")
+    add("                }")
+    add("            } else {")
+    add("                var pfViEl = document.getElementById('pfVi');")
+    add("                if (pfViEl) pfViEl.textContent = 'Không tìm thấy câu nào';")
+    add("                var pfCounter = document.getElementById('pfCounter');")
+    add("                if (pfCounter) pfCounter.textContent = 'Câu 0 / 0';")
+    add("                var pfTags = document.getElementById('pfTags');")
+    add("                if (pfTags) pfTags.innerHTML = '';")
+    add("                var pfPrev = document.getElementById('pfPrevBtn');")
+    add("                if (pfPrev) pfPrev.disabled = true;")
+    add("                var pfNext = document.getElementById('pfNextBtn');")
+    add("                if (pfNext) pfNext.disabled = true;")
+    add("            }")
+    add("        };")
+    add("        window.__fixPyPfApplyFilterPatched = true;")
+    add("        console.log('[fix.py] pfApplyFilter patched');")
+    add("    }")
+    add("")
+
+    add("    function bindTab(dsId) {")
+    add("        var btn = document.querySelector('.ds-btn[data-dataset=\"' + dsId + '\"]');")
+    add("        if (!btn) return;")
+    add("        if (btn.__fixPyBound) return;")
+    add("        var cloned = btn.cloneNode(true);")
+    add("        btn.parentNode.replaceChild(cloned, btn);")
+    add("        cloned.__fixPyBound = true;")
+    add("        cloned.addEventListener('click', function(e) {")
+    add("            e.stopImmediatePropagation();")
+    add("            e.stopPropagation();")
+    add("            e.preventDefault();")
+    add("            var sub = document.getElementById('dsSubWrap');")
+    add("            if (sub) sub.style.display = 'none';")
+    add("            document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
+    add("                b.classList.remove('active');")
+    add("            });")
+    add("            this.classList.add('active');")
+    add("            if (typeof window.__switchRawData === 'function') {")
+    add("                window.__switchRawData(dsId);")
+    add("            }")
+    add("            if (typeof state !== 'undefined' && state) {")
+    add("                state.search = '';")
+    add("                state.hsk = '';")
+    add("                state.subject = '';")
+    add("            }")
+    add("            try {")
+    add("                var si = document.getElementById('searchInput');")
+    add("                var hf = document.getElementById('hskFilter');")
+    add("                var sf = document.getElementById('subjectFilter');")
+    add("                if (si) si.value = '';")
+    add("                if (hf) hf.value = '';")
+    add("                if (sf) sf.value = '';")
+    add("                var cb = document.getElementById('clearSearchBtn');")
+    add("                if (cb) cb.classList.remove('show');")
+    add("            } catch(err) {}")
+    add("            var savedTopics = null;")
+    add("            if (typeof loadOnboardingSelection === 'function') {")
+    add("                try {")
+    add("                    var saved = loadOnboardingSelection();")
+    add("                    if (saved && saved.topics && saved.topics.length > 0) {")
+    add("                        savedTopics = saved.topics;")
+    add("                    }")
+    add("                } catch(e) {}")
+    add("            }")
+    add("            try {")
+    add("                if (typeof buildFilters === 'function') buildFilters();")
+    add("                if (typeof applyFilter === 'function') applyFilter();")
+    add("                if (typeof updateResultCount === 'function') updateResultCount();")
+    add("                if (savedTopics && savedTopics.length > 0")
+    add("                    && typeof applyOnboardingSelection === 'function') {")
+    add("                    try {")
+    add("                        var cfg = (typeof getOnboardingConfig === 'function')")
+    add("                                  ? getOnboardingConfig() : add null;")
+   ("                        if (cfg) {")
+    add("                            var saved2 = loadOnboardingSelection();")
+    add("                            window.__onboardingAutoPicked = saved2 ? !!saved2.auto_picked : false;")
+    add("                            applyOnboardingSelection(savedTopics, false);")
+    add("                        }")
+    add("                    } catch(e2) {}")
+    add("                }")
+    add("                document.querySelectorAll('.ds-btn, .ds-sub-btn').forEach(function(b) {")
+    add("                    b.classList.remove('active');")
+    add("                });")
+    add("                this.classList.add('active');")
+    add("            } catch(err) {}")
+    add("            setTimeout(function() {")
+    add("                var mainEl = document.getElementById('mainContent');")
+    add("                if (mainEl) {")
+    add("                    var yOffset = mainEl.getBoundingClientRect().top")
+    add("                                + window.scrollY - 100;")
+    add("                    window.scrollTo({ top: yOffset, behavior: 'smooth' });")
+    add("                }")
+    add("            }, 100);")
+    add("        }, true);")
+    add("    }")
+    add("")
+
+    add("    function patchApplyOnboarding() {")
+    add("        if (window.__fixPyApplyOnbPatched) return;")
+    add("        var origApply = window.applyOnboardingSelection")
+    add("                      || (typeof applyOnboardingSelection !== 'undefined'")
+    add("                          ? applyOnboardingSelection : null);")
+    add("        if (typeof origApply !== 'function') return;")
+    add("        window.applyOnboardingSelection = function(topics, scrollTop) {")
+    add("            var currentDs = (typeof CURRENT_DATASET !== 'undefined')")
+    add("                            ? CURRENT_DATASET : 'tonghop';")
+    add("            if (!window.FIXPY_DATASETS || !window.FIXPY_DATASETS[currentDs]) {")
+    add("                return origApply.apply(this, arguments);")
+    add("            }")
+    add("            var cfg = (typeof getOnboardingConfig === 'function')")
+    add("                      ? getOnboardingConfig() : null;")
+    add("            if (!cfg) return;")
+    add("            var maxQ = cfg.max_questions;")
+    add("            var isUnlimitedQ = (maxQ === -1 || maxQ === Infinity);")
+    add("            var allowedHsk;")
+    add("            if (cfg.hsk_allowed && Array.isArray(cfg.hsk_allowed) && cfg.hsk_allowed.length > 0) {")
+    add("                allowedHsk = cfg.hsk_allowed.map(function(n) { return 'HSK' + n; });")
+    add("            } else {")
+    add("                allowedHsk = (typeof getAllowedHskList === 'function')")
+    add("                             ? getAllowedHskList()")
+    add("                             : ['HSK1','HSK2','HSK3','HSK4','HSK5','HSK6'];")
+    add("            }")
+    add("            var pool = RAW_DATA.filter(function(r) {")
+    add("                if (allowedHsk.indexOf(r.hsk) === -1) return false;")
+    add("                var s = (r.subject || '').trim();")
+    add("                return topics.indexOf(s) !== -1;")
+    add("            });")
+    add("            pool.sort(function(a, b) {")
+    add("                return (parseInt(a.stt) || 0) - (parseInt(b.stt) || 0);")
+    add("            });")
+    add("            var final = [];")
+    add("            if (isUnlimitedQ) {")
+    add("                final = pool.slice();")
+    add("            } else {")
+    add("                var maxPerTopic = (typeof getMaxPerTopic === 'function')")
+    add("                                 ? getMaxPerTopic(maxQ, RAW_DATA)")
+    add("                                 : Math.max(1, Math.ceil(maxQ / Math.max(1, topics.length)));")
+    add("                var topicCount = {};")
+    add("                var perHsk = Math.ceil(maxQ / allowedHsk.length);")
+    add("                var hskCount = {};")
+    add("                allowedHsk.forEach(function(h) { hskCount[h] = 0; });")
+    add("                for (var i = 0; i < pool.length && final.length < maxQ; i++) {")
+    add("                    var r = pool[i];")
+    add("                    var s = (r.subject || '').trim() || '__no_subject__';")
+    add("                    if ((topicCount[s] || 0) >= maxPerTopic) continue;")
+    add("                    if (r.hsk && hskCount[r.hsk] !== undefined && hskCount[r.hsk] >= perHsk) continue;")
+    add("                    final.push(r);")
+    add("                    topicCount[s] = (topicCount[s] || 0) + 1;")
+    add("                    if (r.hsk && hskCount[r.hsk] !== undefined) hskCount[r.hsk]++;")
+    add("                }")
+    add("                if (final.length < maxQ) {")
+    add("                    var usedIds = {};")
+    add("                    final.forEach(function(r) { usedIds[r.stt] = true; });")
+    add("                    for (var p = 0; p < pool.length && final.length < maxQ; p++) {")
+    add("                        var rp = pool[p];")
+    add("                        if (usedIds[rp.stt]) continue;")
+    add("                        var sp = (rp.subject || '').trim() || '__no_subject__';")
+    add("                        if ((topicCount[sp] || 0) >= maxPerTopic) continue;")
+    add("                        final.push(rp);")
+    add("                        usedIds[rp.stt] = true;")
+    add("                        topicCount[sp] = (topicCount[sp] || 0) + 1;")
+    add("                    }")
+    add("                }")
+    add("                if (final.length > maxQ) final = final.slice(0, maxQ);")
+    add("            }")
+    add("            final.sort(function(a, b) {")
+    add("                return (parseInt(a.stt) || 0) - (parseInt(b.stt) || 0);")
+    add("            });")
+    add("            window.__onboardingOverride = final;")
+    add("            if (typeof state !== 'undefined' && state) {")
+    add("                state.search = '';")
+    add("                state.hsk = '';")
+    add("                state.subject = '';")
+    add("            }")
+    add("            try {")
+    add("                var si = document.getElementById('searchInput');")
+    add("                if (si) si.value = '';")
+    add("                var cb = document.getElementById('clearSearchBtn');")
+    add("                if (cb) cb.classList.remove('show');")
+    add("            } catch(e) {}")
+    add("            if (typeof applyFilter === 'function') applyFilter();")
+    add("            if (typeof updateResultCount === 'function') updateResultCount();")
+    add("            if (typeof showOnboardingActiveBanner === 'function') {")
+    add("                showOnboardingActiveBanner(topics, final.length);")
+    add("            }")
+    add("            if (scrollTop) {")
+    add("                setTimeout(function() {")
+    add("                    var mainEl = document.getElementById('mainContent');")
+    add("                    if (mainEl) {")
+    add("                        var yOffset = mainEl.getBoundingClientRect().top")
+    add("                                    + window.scrollY - 100;")
+    add("                        window.scrollTo({ top: yOffset, behavior: 'smooth' });")
+    add("                    }")
+    add("                }, 200);")
+    add("            }")
+    add("        };")
+    add("        window.__fixPyApplyOnbPatched = true;")
+    add("    }")
+    add("")
+
+    add("    function bindAll() {")
+    add("        patchSwitchRawData();")
+    add("        patchGetLimitedData();")
+    add("        patchApplyOnboarding();")
+    add("        patchApplyFilter();")
+    add("        patchPfApplyFilter();")
+    add("        NEW_IDS.forEach(bindTab);")
+    add("        patchMarkActive();")
+    add("    }")
+    add("")
+    add("    if (document.readyState === 'loading') {")
+    add("        document.addEventListener('DOMContentLoaded', bindAll);")
+    add("    } else {")
+    add("        bindAll();")
+    add("    }")
+    add("")
+    add("    var _timer = null;")
+    add("    var observer = new MutationObserver(function() {")
+    add("        clearTimeout(_timer);")
+    add("        _timer = setTimeout(bindAll, 200);")
+    add("    });")
+    add("    if (document.body) {")
+    add("        observer.observe(document.body, { childList: true, subtree: true });")
+    add("    }")
+    add("")
+    add("    console.log('[fix.py] Da bind ' + NEW_IDS.length + ' tab:', NEW_IDS);")
+    add("})();")
+    add("</script>")
+
+    return "\n".join(L)
+# =================================================================
+#  BUILD CSS LAYOUT
+# =================================================================
+def build_layout_css(new_datasets, add_vocab):
+    css_lines = []
+    css_lines.append("")
+    css_lines.append("/* FIX.PY: AUTO-FIT LAYOUT */")
+    css_lines.append("@media (max-width: 768px) {")
+    css_lines.append("    .ds-main-row {")
+    css_lines.append("        grid-template-columns: repeat(2, minmax(0, 1fr) ) !important;")
+    css_lines.append("        gap: .5rem !important;")
+    css_lines.append("    }")
+    css_lines.append("}")
+    css_lines.append("@media (min-width: 769px) {")
+    css_lines.append("    .ds-main-row {")
+    css_lines.append("        grid-template-columns: repeat(4, minmax(0, 1fr) ) !important;")
+    css_lines.append("        gap: .55rem !important;")
+    css_lines.append("    }")
+    css_lines.append("}")
+
+    css_lines.append("")
+    css_lines.append("/* GRID DEU CHO TAB CON CHUYEN NGANH */")
+    css_lines.append(".ds-sub-grid {")
+    css_lines.append("    display: grid !important;")
+    css_lines.append("    grid-template-columns: repeat(2, minmax(0, 1fr) ) !important;")
+    css_lines.append("    gap: .55rem !important;")
+    css_lines.append("    align-items: stretch !important;")
+    css_lines.append("}")
+    css_lines.append("@media (min-width: 600px) {")
+    css_lines.append("    .ds-sub-grid { grid-template-columns: repeat(3, minmax(0, 1fr) ) !important; }")
+    css_lines.append("}")
+    css_lines.append("@media (min-width: 900px) {")
+    css_lines.append("    .ds-sub-grid { grid-template-columns: repeat(4, minmax(0, 1fr) ) !important; }")
+    css_lines.append("}")
+    css_lines.append(".ds-sub-btn {")
+    css_lines.append("    width: 100% !important;")
+    css_lines.append("    min-width: 0 !important;")
+    css_lines.append("    max-width: 100% !important;")
+    css_lines.append("    height: 100% !important;")
+    css_lines.append("    min-height: 44px !important;")
+    css_lines.append("    padding: .55rem .7rem !important;")
+    css_lines.append("    justify-content: flex-start !important;")
+    css_lines.append("    border-radius: 12px !important;")
+    css_lines.append("    font-size: clamp(.68rem, 1.9vw, .82rem) !important;")
+    css_lines.append("    white-space: normal !important;")
+    css_lines.append("    word-break: break-word !important;")
+    css_lines.append("    overflow-wrap: anywhere !important;")
+    css_lines.append("    line-height: 1.25 !important;")
+    css_lines.append("    text-align: left !important;")
+    css_lines.append("}")
+    css_lines.append(".ds-sub-btn span {")
+    css_lines.append("    flex: 1 1 auto !important;")
+    css_lines.append("    min-width: 0 !important;")
+    css_lines.append("    display: -webkit-box !important;")
+    css_lines.append("    -webkit-line-clamp: 2 !important;")
+    css_lines.append("    -webkit-box-orient: vertical !important;")
+    css_lines.append("    overflow: hidden !important;")
+    css_lines.append("}")
+
+    for ds in new_datasets:
+        i = ds["id"]
+        sel = '.ds-btn[data-dataset="' + i + '"]'
+        css_lines.append("")
+        css_lines.append("/* Style cho tab " + i + " */")
+        css_lines.append(sel + " {")
+        css_lines.append("    background: var(--surface) !important;")
+        css_lines.append("    border-color: var(--border) !important;")
+        css_lines.append("    color: var(--text) !important;")
+        css_lines.append("}")
+        css_lines.append(sel + " i:first-child { color: var(--primary) !important; }")
+        css_lines.append(sel + ":hover {")
+        css_lines.append("    border-color: var(--primary) !important;")
+        css_lines.append("    background: var(--primary-light) !important;")
+        css_lines.append("}")
+        css_lines.append(sel + ".active {")
+        css_lines.append("    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;")
+        css_lines.append("    color: #fff !important;")
+        css_lines.append("    border-color: transparent !important;")
+        css_lines.append("    box-shadow: 0 4px 12px rgba(124, 58, 237, .35) !important;")
+        css_lines.append("}")
+        css_lines.append(sel + ".active i:first-child { color: #fff !important; }")
+        css_lines.append('[data-theme="dark"] ' + sel + " {")
+        css_lines.append("    background: var(--surface) !important;")
+        css_lines.append("    border-color: var(--border) !important;")
+        css_lines.append("}")
+        css_lines.append('[data-theme="dark"] ' + sel + ".active {")
+        css_lines.append("    background: linear-gradient(135deg, #4f46e5, #7c3aed) !important;")
+        css_lines.append("    border-color: transparent !important;")
+        css_lines.append("}")
+
+    if add_vocab:
+        css_lines.append("")
+        css_lines.append("/* VOCAB PREMIUM CSS */")
+        css_lines.append(build_vocab_css(VOCAB_ID))
+        css_lines.append(VOCAB_WARNING_CSS)
+
+    return "\n".join(css_lines) + "\n"
+
+
+# =================================================================
+#  MAIN
+# =================================================================
+def main():
+    print("=" * 62)
+    print("[fix.py] Auto-scan data/ -> them tab rieng cho moi file")
+    print("=" * 62)
+
+    if not os.path.isfile(INDEX_HTML):
+        print("[X] Khong thay " + INDEX_HTML + ". Chay convert.py truoc.")
+        sys.exit(1)
+
+    with open(INDEX_HTML, "r", encoding="utf-8") as f:
+        html = f.read()
+
+    datasets = scan_data_dir()
+
+    vocab_data = []
+    vocab_real_path = None
+    if HAS_VOCAB_MODULE:
+        print("")
+        print("[VOCAB] Kiem tra file tu vung: " + VOCAB_FILE)
+        vocab_real_path = _find_file_safe(VOCAB_FILE)
+        if vocab_real_path:
+            print("[VOCAB] Tim thay: " + os.path.basename(vocab_real_path))
+            vocab_data = read_vocab_excel(vocab_real_path)
+            if not vocab_data:
+                print("[VOCAB] [!] File rong hoac loi")
+        else:
+            print("[VOCAB] Khong co file tu vung - bo qua")
+
+    all_new = []
+    for ds in datasets:
+        marker = 'data-dataset="' + ds["id"] + '"'
+        if marker not in html:
+            all_new.append(ds)
+        else:
+            print("   [skip] '" + ds["id"] + "' da co trong HTML")
+
+    vocab_exists_in_html = 'data-dataset="' + VOCAB_ID + '"' in html
+    add_vocab = bool(vocab_data) and not vocab_exists_in_html
+
+    if not all_new and not add_vocab:
+        print("")
+        print("[fix.py] Tat ca da co - khong can patch.")
+        return
+
+    print("")
+    print("[fix.py] Se them:")
+    for ds in all_new:
+        print("   - [tab] " + ds["name"] + " (" + str(ds["count"]) + " cau)")
+    if add_vocab:
+        print("   - [PREMIUM] " + VOCAB_LABEL + " (" + str(len(vocab_data)) + " tu)")
+
+    print("")
+    print("[PATCH 2] Them button tabs...")
+    new_btns = ""
+    for ds in all_new:
+        label = ds["name"]
+        new_btns += (
+            '\n        <button class="ds-btn ds-btn-primary" '
+            'data-dataset="' + ds["id"] + '">\n'
+            '            <i class="fas ' + ds["icon"] + '"></i>\n'
+            '            <span>' + _js_str(label) + '</span>\n'
+            '        </button>'
+        )
+
+    if add_vocab:
+        new_btns += build_vocab_tab_html(VOCAB_ID, VOCAB_LABEL)
+
+    pat_after_tonghop = re.compile(
+        r'(<button[^>]*class="[^"]*ds-btn[^"]*"[^>]*data-dataset="tonghop"[^>]*>.*?</button>)',
+        re.MULTILINE | re.DOTALL
+    )
+    html, n = pat_after_tonghop.subn(
+        lambda m: m.group(1) + new_btns,
+        html, count=1
+    )
+
+    if n > 0:
+        print("   [OK] Da chen button (sau 'Tong hop')")
+    else:
+        print("   [!] Khong thay nut 'tonghop' -> fallback truoc 'chuyen-nganh'")
+        pat_before_cn = re.compile(
+            r'(\s*)(<button\s+class="[^"]*ds-btn[^"]*"\s+[^>]*data-dataset-group="chuyen-nganh")',
+            re.MULTILINE
+        )
+        html, n = pat_before_cn.subn(
+            lambda m: m.group(1) + new_btns + '\n        ' + m.group(2),
+            html, count=1
+        )
+        if n == 0:
+            print("[X] Khong tim thay ca nut 'tonghop' lan 'chuyen-nganh'")
+            sys.exit(1)
+        print("   [OK] Da chen button (fallback)")
+
+    print("")
+    print("[PATCH 3] CSS layout...")
+    css = build_layout_css(all_new, add_vocab)
+    pat_style = re.compile(r'(\s*)(</style>)', re.MULTILINE)
+    html, n = pat_style.subn(
+        lambda m: m.group(1) + css + m.group(1) + m.group(2),
+        html, count=1
+    )
+    if n == 0:
+        print("   [!] Khong tim thay </style>")
+    else:
+        print("   [OK] Da inject CSS")
+
+    print("")
+    print("[PATCH 4] JS binding...")
+
+    ids_js = json.dumps([ds["id"] for ds in all_new])
+
+    datasets_dict = {}
+    for ds in all_new:
+        datasets_dict[ds["id"]] = ds
+
+    if add_vocab:
+        datasets_dict[VOCAB_ID] = {
+            "id": VOCAB_ID,
+            "name": VOCAB_LABEL,
+            "icon": "fa-book",
+            "color": "#f59e0b",
+            "data": vocab_data,
+            "count": len(vocab_data),
+            "source": os.path.basename(vocab_real_path),
+            "type": "premium",
+            "group": "fixpy",
+        }
+
+    _data_dir = "data"
+    os.makedirs(_data_dir, exist_ok=True)
+    _fixpy_path = os.path.join(_data_dir, "fixpy_datasets.json")
+    with open(_fixpy_path, "w", encoding="utf-8") as _f:
+        json.dump(datasets_dict, _f, ensure_ascii=False, separators=(",", ":"))
+    _size_kb = os.path.getsize(_fixpy_path) / 1024
+    print(f"   Ghi data/fixpy_datasets.json ({_size_kb:.1f} KB)")
+
+    datasets_meta = {}
+    for _id, _ds in datasets_dict.items():
+        datasets_meta[_id] = {
+            "id": _ds["id"],
+            "name": _ds["name"],
+            "icon": _ds["icon"],
+            "color": _ds["color"],
+            "count": _ds["count"],
+            "source": _ds["source"],
+            "type": _ds.get("type", "main"),
+            "group": _ds.get("group", "fixpy"),
+        }
+
+    datasets_json = _escape_json_for_script(datasets_meta)
+
+    js = build_js_override(ids_js, datasets_json)
+
+    if add_vocab:
+        js += '\n<script>\n'
+        js += build_vocab_js_override(VOCAB_ID)
+        js += '\n' + build_vocab_js_patch()
+        js += '\n</script>\n'
+
+    modal_html = ""
+    if add_vocab:
+        modal_html = build_vocab_modal_html()
+
+    pat_body = re.compile(r'(\s*)(</body>)', re.MULTILINE)
+    html, n = pat_body.subn(
+        lambda m: m.group(1) + modal_html + '\n' + js + m.group(1) + m.group(2),
+        html, count=1
+    )
+    if n == 0:
+        print("[X] Khong tim thay </body>")
+        sys.exit(1)
+    print("   [OK] Da inject JS + modal")
+
+    with open(INDEX_HTML, "w", encoding="utf-8") as f:
+        f.write(html)
+
+    size_kb = os.path.getsize(INDEX_HTML) / 1024
+
+    print("")
+    print("=" * 62)
+    print("[fix.py] HOAN TAT! Da patch " + INDEX_HTML)
+    print("[fix.py] Kich thuoc HTML: " + str(round(size_kb, 1)) + " KB")
+    if add_vocab or all_new:
+        _fx_kb = os.path.getsize(_fixpy_path) / 1024
+        print(f"[fix.py] Data JSON (tai rieng): {_fx_kb:.1f} KB")
+
+    if all_new:
+        print("[fix.py] Tab thuong da them:")
+        for ds in all_new:
+            print("   - " + ds["name"] + " (" + str(ds["count"]) + " cau)")
+
+    if add_vocab:
+        print("[fix.py] Tab Tu vung PREMIUM: " + str(len(vocab_data)) + " tu")
+
+    print("[fix.py] Layout: PC 4 cot - Mobile 2 cot")
+    print("=" * 62)
+
+    print("")
+    print("=" * 62)
+    print("[fix.py] Chay patch_buttons.py de cover 4 nut...")
+    print("=" * 62)
+    try:
+        _here = os.path.dirname(os.path.abspath(__file__))
+        if _here not in sys.path:
+            sys.path.insert(0, _here)
+
+        from patch_buttons import patch_all_buttons
+        _ok = patch_all_buttons(INDEX_HTML)
+        if _ok:
+            print("[fix.py] patch_buttons.py -> THANH CONG")
+        else:
+            print("[fix.py] patch_buttons.py -> THAT BAI (tra ve False)")
+    except ImportError as _e:
+        print("[fix.py] Khong tim thay patch_buttons.py: " + str(_e))
+        print("[fix.py] Bo qua buoc nay")
+    except Exception as _e:
+        print("[fix.py] Loi khi chay patch_buttons.py: " + str(_e))
+        import traceback
+        traceback.print_exc()
+
+
+if __name__ == "__main__":
+    main()
